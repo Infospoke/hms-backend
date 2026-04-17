@@ -17,4 +17,6 @@ public interface IConfigurationService {
     
     ApiResponse<List<UserDropDownResponse>> getUserTypes();
 
+	ApiResponse<?> getAllModules();
+
 }

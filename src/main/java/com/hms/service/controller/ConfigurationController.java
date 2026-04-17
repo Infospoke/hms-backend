@@ -59,4 +59,15 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	
+	
+	@GetMapping("/get-all-modules")
+	public ResponseEntity<ApiResponse<?>> getAllModules() {
+
+		ApiResponse<?> response = iConfigurationService.getAllModules();
+
+		return ResponseEntity.ok(response);
+
+	}
 }

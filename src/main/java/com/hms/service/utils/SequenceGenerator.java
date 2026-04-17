@@ -9,7 +9,6 @@ import jakarta.persistence.PersistenceContext;
 @Configuration
 public class SequenceGenerator {
 
-
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -23,53 +22,52 @@ public class SequenceGenerator {
             // ignore if already exists
         }
     }
-   
-    public String generateUserId() {
-        Long seq = ((Number) entityManager
+
+    public Integer generateUserId() {
+        return ((Number) entityManager
                 .createNativeQuery("SELECT nextval('user_seq')")
-                .getSingleResult()).longValue();
-
-        return "" + seq;
+                .getSingleResult()).intValue();
     }
-    
-    public String generateDepartmentId() {
-        Long seq = ((Number) entityManager
+
+    public Integer generateDepartmentId() {
+        return ((Number) entityManager
                 .createNativeQuery("SELECT nextval('dept_seq')")
-                .getSingleResult()).longValue();
-
-        return "" + seq;
+                .getSingleResult()).intValue();
     }
-    
-    public String generateBusinessId() {
-        Long seq = ((Number) entityManager
+
+    public Integer generateBusinessId() {
+        return ((Number) entityManager
                 .createNativeQuery("SELECT nextval('bus_seq')")
-                .getSingleResult()).longValue();
-
-        return "" + seq;
+                .getSingleResult()).intValue();
     }
-    
-    public String generateEmployementTypeId() {
-        Long seq = ((Number) entityManager
+
+    public Integer generateEmployementTypeId() {
+        return ((Number) entityManager
                 .createNativeQuery("SELECT nextval('emp_seq')")
-                .getSingleResult()).longValue();
-
-        return "" + seq;
+                .getSingleResult()).intValue();
     }
-    
-    public String generateUserTypeId() {
-        Long seq = ((Number) entityManager
+
+    public Integer generateUserTypeId() {
+        return ((Number) entityManager
                 .createNativeQuery("SELECT nextval('usertype_seq')")
-                .getSingleResult()).longValue();
+                .getSingleResult()).intValue();
+    }
 
-        return "" + seq;
+    public Integer generateRoleId() {
+        return ((Number) entityManager
+                .createNativeQuery("SELECT nextval('role_seq')")
+                .getSingleResult()).intValue();
+    }
+
+    public Integer generateModuleId() {
+        return ((Number) entityManager
+                .createNativeQuery("SELECT nextval('module_seq')")
+                .getSingleResult()).intValue();
     }
     
-    public String generateRoleId() {
-        Long seq = ((Number) entityManager
-                .createNativeQuery("SELECT nextval('role_seq')")
-                .getSingleResult()).longValue();
-
-        return "" + seq;
+    public Integer generatePermissionId() {
+        return ((Number) entityManager
+                .createNativeQuery("SELECT nextval('permission_seq')")
+                .getSingleResult()).intValue();
     }
-   
 }

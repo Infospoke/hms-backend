@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,8 +23,13 @@ public class BusinessUnitEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
     
+    @SequenceGenerator(
+            name = "bus_seq_gen",
+            sequenceName = "bus_seq",
+            allocationSize = 1
+    )
     @Column(name = "business_id", unique = true)
-    private String businessId;
+    private Integer businessId;
 
     @Column(name = "business_name")
     private String businessName;
