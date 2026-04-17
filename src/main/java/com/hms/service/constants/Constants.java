@@ -41,6 +41,15 @@ public class Constants {
 	public static final String EMPLOYMENT_TYPE_FETCHED_SUCCESSFULLY = "Employment types fetched successfully";
 	public static final String ROLES_FETCHED_SUCCESSFULLY = "Roles fetched successfully";
 	public static final String USER_TYPES_FETCHED_SUCCESSFULLY = "User types fetched successfully";
-	
+	public static final String ROLE_NAME_IS_REQUIRED = "Role name is required";
+	public static final String DESCRIPTION_IS_REQUIRED = "Description is required";
+	public static final String NO_MODULES_FOUND = "Modules not found";
+	public static final String MODULE_FETCH_SUCCESS = "Module Details Fetched sucessfully";
+	public static final String MODULE_NAME_ALREADY_EXISTS = "Module already exists";
+	public static final String MODULE_ADDED_SUCCESSFULLY = "Module Added sucessfully";
+	public static final String ROLE_NAME_ALREADY_EXISTS = "Role name already exits";
+	public static final String ROLE_ADDED_SUCCESSFULLY = "Role added successfully";
+	public static final String MODULE_REQUIRED = "Module name required";
 
+	
 }

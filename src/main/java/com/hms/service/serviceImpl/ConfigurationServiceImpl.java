@@ -8,11 +8,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.entity.ModuleEntity;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
+import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserTypeRepository;
+import com.hms.service.response.ModuleResponse;
 import com.hms.service.response.UserDropDownResponse;
 import com.hms.service.service.IConfigurationService;
 import com.hms.service.wrappers.ApiResponse;
@@ -38,6 +41,9 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	
 	@Autowired
 	private UserTypeRepository userTypeRepository;
+	
+	@Autowired
+	private ModuleRepository moduleRepository;
 	
 
 	
@@ -105,5 +111,27 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	            .toList();
 	    log.info("ConfigurationServiceImpl::Exit from the getUserTypes method"); 
 	    return ApiResponse.success(ResponseCode.SUCCESS, Constants.USER_TYPES_FETCHED_SUCCESSFULLY, response);
+	}
+	
+	@Override
+	public ApiResponse<?> getAllModules() {
+
+		log.info("ConfigurationServiceImpl: Inside getAllModules method");
+
+		List<ModuleEntity> moduleEntity = moduleRepository.findAll();
+
+		if (moduleEntity.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_MODULES_FOUND);
+		}
+		List<ModuleResponse> moduleList = moduleEntity.stream()
+	            .map(module -> new ModuleResponse(
+	                    module.getModuleId(),
+	                    module.getModuleName()
+	            ))
+	            .toList();
+
+		log.info("ConfigurationServiceImpl: Exit from getAllModules method");
+
+		return ApiResponse.success(Constants.MODULE_FETCH_SUCCESS, moduleList, moduleList.size());
 	}
 }

@@ -15,8 +15,14 @@ public class UserTypeEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
     
+    @SequenceGenerator(
+            name = "usertype_seq_gen",
+            sequenceName = "usertype_seq",
+            allocationSize = 1
+    )
+    
     @Column(name = "user_type_id", unique = true)
-    private String userTypeId;
+    private Integer userTypeId;
 
     @Column(name = "user_type")
     private String userType;

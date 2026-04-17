@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,8 +25,14 @@ public class DepartmentsEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
     
+    @SequenceGenerator(
+            name = "dept_seq_gen",
+            sequenceName = "dept_seq",
+            allocationSize = 1
+    )
+    
     @Column(name = "department_id", unique = true)
-    private String departmentId;
+    private Integer departmentId;
     
     @Column(name = "department_name")
     private String departmentName;

@@ -37,7 +37,7 @@ public class UserEntity {
             allocationSize = 1
     )
     @Column(name = "user_id", unique = true, nullable = false)
-    private String userId;
+    private Integer userId;
 
     @Column(name = "user_type_id", nullable = false)
     private Integer userTypeId;

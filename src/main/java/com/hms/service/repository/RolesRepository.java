@@ -12,4 +12,6 @@ import com.hms.service.entity.RolesEntity;
 public interface RolesRepository extends JpaRepository<RolesEntity, Integer> {
 
     List<RolesEntity> findByDepartmentId(Integer departmentId, Sort sort);
+
+	RolesEntity findByRoleNameIgnoreCase(String roleName);
 }
