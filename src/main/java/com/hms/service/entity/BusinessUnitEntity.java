@@ -21,6 +21,9 @@ public class BusinessUnitEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
+    
+    @Column(name = "business_id", unique = true)
+    private String businessId;
 
     @Column(name = "business_name")
     private String businessName;

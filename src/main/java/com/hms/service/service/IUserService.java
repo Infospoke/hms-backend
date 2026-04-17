@@ -2,13 +2,25 @@ package com.hms.service.service;
 
 import java.util.List;
 
-import com.hms.service.response.UserDropDownResponse;
+import com.hms.service.enums.UserStatus;
+import com.hms.service.request.UserCreationRequest;
+import com.hms.service.request.UserStatusRequest;
+import com.hms.service.response.UserResponse;
+import com.hms.service.wrappers.ApiResponse;
+
 
 public interface IUserService {
+    
+    ApiResponse<?> createUser(UserCreationRequest request);
 
-    List<UserDropDownResponse> getAllBusinessUnits();
+    ApiResponse<Long> getTotalUsers();
 
-    List<UserDropDownResponse> getDepartmentsByBusinessUnit(Integer businessUnitId);
+    ApiResponse<Long> getUsersByRole(Integer roleId);
 
-    List<UserDropDownResponse> getRolesByDepartment(Integer departmentId);
+	ApiResponse<List<UserResponse>> getAllUsers(int page, int size);
+
+	ApiResponse<String> updateUserStatus(UserStatusRequest request);
+
+	ApiResponse<Long> getUsersByStatus(UserStatus status);
+    
 }

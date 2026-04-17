@@ -5,32 +5,30 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
+
 @Entity
-@Table(name = "tb_role")
+@Table(name = "tb_employement_type")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RolesEntity {
+public class EmployementTypeEntity {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
     
-    @Column(name = "role_id", unique = true)
-    private String roleId;
+    @Column(name = "employment_id", unique = true)
+    private String employementId;
 
-    @Column(name = "role_name")
-    private String roleName;
+    @Column(name = "employement_type")
+    private String employementType;
 
-    @ManyToOne
-    @JoinColumn(name = "tb_department_id")
-    private DepartmentsEntity department;
 }

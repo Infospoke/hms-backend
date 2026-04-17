@@ -24,6 +24,9 @@ public class DepartmentsEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
     
+    @Column(name = "department_id", unique = true)
+    private String departmentId;
+    
     @Column(name = "department_name")
     private String departmentName;
 
