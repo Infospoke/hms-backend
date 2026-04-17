@@ -17,6 +17,7 @@ import com.hms.service.constants.Constants;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.UserStatus;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
 import com.hms.service.response.UserResponse;
 import com.hms.service.service.IUserService;
@@ -155,6 +156,44 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	public ApiResponse<Long> getUsersByStatus(UserStatus status) {
 		return ApiResponse.success(ResponseCode.SUCCESS, userRepository.countByStatus(status));
+	}
+	
+	@Override
+	public ApiResponse<String> updateUser(Integer id, UpdateUserRequest request) {
+
+	    UserEntity user = userRepository.findById(id)
+	            .orElseThrow(() -> new RuntimeException("User not found"));
+
+	    if (request.getRoleId() != null) {
+	        if (!request.getRoleId().equals(user.getRoleId())) {
+	            user.setRoleId(request.getRoleId());
+
+	            
+	            user.setAssignedBy("ADMIN"); 
+	            user.setAssignedAt(LocalDateTime.now());
+	        }
+	    }
+
+	    if (request.getBusinessUnitId() != null) {
+	        user.setBusinessUnitId(request.getBusinessUnitId());
+	    }
+
+	    if (request.getDepartmentId() != null) {
+	        user.setDepartmentId(request.getDepartmentId());
+	    }
+
+	   
+	    if (request.getStatus() != null) {
+	        user.setStatus(UserStatus.valueOf(request.getStatus()));
+	    }
+
+	    
+	    user.setUpdatedBy("ADMIN"); 
+	    user.setUpdatedAt(LocalDateTime.now());
+
+	    userRepository.save(user);
+
+	    return ApiResponse.success(Constants.USER_UPDATED_SUCCESSFULLY);
 	}
 	
 	

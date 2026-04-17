@@ -1,17 +1,14 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
-import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.repository.PermissionRepository;
@@ -19,7 +16,6 @@ import com.hms.service.repository.RolesRepository;
 import com.hms.service.request.ModulePermissionRequest;
 import com.hms.service.request.PermissionRequest;
 import com.hms.service.request.RolesRequest;
-import com.hms.service.response.RolesInfoResponse;
 import com.hms.service.service.IRoleService;
 import com.hms.service.utils.SequenceGenerator;
 import com.hms.service.wrappers.ApiResponse;
@@ -57,8 +53,8 @@ public class RolesServiceImpl implements IRoleService {
 		entity.setRoleId(sequenceGenerator.generateRoleId());
 		entity.setDescription(request.getDescription());
 		entity.setCreatedDate(LocalDateTime.now());
-		entity.setBusinessUnit(request.getBusinessUnit());
-		entity.setDepartmentName(request.getDepartmentName());
+		entity.setBusinessUnitId(request.getBusinessUnitId());
+		entity.setDepartmentId(request.getDepartmentId());
 
 		RolesEntity savedRole = roleInfoRepository.save(entity);
 

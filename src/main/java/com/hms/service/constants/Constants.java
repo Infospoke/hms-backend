@@ -50,6 +50,8 @@ public class Constants {
 	public static final String MODULE_REQUIRED = "Module name required";
 	public static final String USER_TYPES_FETCHED_SUCCESSFULLY = "user types fetched successfully";
 	public static final String ROLE_NAME_IS_REQUIRED = "Role name is required";
+	public static final String USER_UPDATED_SUCCESSFULLY = "User updated successfully";
+
 
 
 	

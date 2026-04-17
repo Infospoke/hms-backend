@@ -8,12 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.enums.UserStatus;
+import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
 import com.hms.service.response.UserResponse;
 import com.hms.service.service.IUserService;
@@ -61,5 +63,15 @@ public class UserController {
 	        ApiResponse<Long> response = iUserService.getUsersByStatus(status);
 	        return new ResponseEntity<>(response, HttpStatus.OK);
 	    }
+	 
+	 @PutMapping("/update/{id}")
+	 public ResponseEntity<ApiResponse<String>> updateUser(
+			 @PathVariable("id") Integer id,
+	         @RequestBody UpdateUserRequest request) {
+		 
+		 ApiResponse<String> response = iUserService.updateUser(id, request);
+	        return new ResponseEntity<>(response, HttpStatus.OK);
+	 
+	 }
 
 }

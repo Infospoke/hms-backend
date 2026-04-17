@@ -18,10 +18,10 @@ public class RolesRequest {
 	private String roleName;
 
 	@NotBlank(message = Constants.BUSINESS_UNIT_REQUIRED)
-	private String businessUnit;
+	private Integer businessUnitId;
 
 	@NotBlank(message = Constants.DEPARTMENT_REQUIRED)
-	private String departmentName;
+	private Integer departmentId;
 
 	private String description;
 
