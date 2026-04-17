@@ -41,6 +41,7 @@ public class Constants {
 	public static final String EMPLOYMENT_TYPE_FETCHED_SUCCESSFULLY = "Employment types fetched successfully";
 	public static final String ROLES_FETCHED_SUCCESSFULLY = "Roles fetched successfully";
 	public static final String USER_TYPES_FETCHED_SUCCESSFULLY = "User types fetched successfully";
+	public static final String ROLE_NAME_REQUIRED = "Role Name Required";
 	
 
 }

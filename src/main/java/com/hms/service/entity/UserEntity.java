@@ -84,15 +84,18 @@ public class UserEntity {
     @Column(name = "pin")
     private String pin;     
 
-    @Column(name = "created_by")
-    private String createdBy;
+    @Column(name = "assigned_by")
+    private String assignedBy;
     
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
 
     @Column(name = "updated_by")
     private String updatedBy;
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "role_name")
+    private String roleName;
 }

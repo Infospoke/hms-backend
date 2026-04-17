@@ -18,7 +18,6 @@ import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.UserStatus;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.UserCreationRequest;
-import com.hms.service.request.UserStatusRequest;
 import com.hms.service.response.UserResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.utils.PasswordGenerator;
@@ -94,14 +93,15 @@ public class UserServiceImpl implements IUserService {
 	    user.setBusinessUnitId(request.getBusinessUnitId());
 	    user.setDepartmentId(request.getDepartmentId());
 	    user.setRoleId(request.getRoleId());
+	    user.setRoleName(request.getRoleName());
 	    
 	    user.setPassword(encryptedPassword);
 	    user.setPin(encryptedPin);
 
-	    user.setStatus(UserStatus.INVITE_PENDING);
+	    user.setStatus(UserStatus.ACTIVE);
 
-	    user.setCreatedBy("ADMIN");
-	    user.setCreatedAt(LocalDateTime.now());
+	    user.setAssignedBy("ADMIN");
+	    user.setAssignedAt(LocalDateTime.now());
 
 	    user.setUserId(sequenceGenerator.generateUserId());
 
@@ -122,35 +122,23 @@ public class UserServiceImpl implements IUserService {
 
 	    Page<UserEntity> users = userRepository.findAll(pageable);
 
-	    List<UserResponse> list = users.getContent().stream()
-	            .map(u -> new UserResponse(
-	                    u.getId(),
-	                    u.getFirstName() + " " + u.getLastName(),
-	                    u.getEmail(),
-	                    u.getRoleId(),
-	                    u.getStatus()
+	    List<UserResponse> list = users.getContent()
+	            .stream()
+	            .map(user -> new UserResponse(
+	                    user.getId(),
+	                    user.getFirstName() + " " + user.getLastName(),
+	                    user.getRoleId(),
+	                    user.getEmail(),
+	                    user.getRoleName(),
+	                    user.getStatus()
 	            ))
 	            .toList();
+	    
 
 		log.info("UserServiceImpl::Exit from the getAllUsers method");
 	    return ApiResponse.success(Constants.USER_FETCHED, list, (int) users.getTotalElements());
 	}
 	
-	
-	 @Override
-	    public ApiResponse<String> updateUserStatus(UserStatusRequest request) {
-
-		 log.info("UserServiceImpl::Inside the updateUserStatus method"); 
-			UserEntity user = userRepository.findById(request.getId())
-	                .orElseThrow(() -> new RuntimeException(Constants.USER_NOT_FOUND));
-
-	        user.setStatus(request.getStatus());
-	        user.setUpdatedAt(LocalDateTime.now());
-	        user.setUpdatedBy(request.getUpdatedBy());
-	        userRepository.save(user);
-	        log.info("UserServiceImpl::Exit from the updateUserStatus method"); 
-	        return ApiResponse.success(Constants.STATUS_UPDATED_SUCCESSFULLY);
-	    }
 
 	 @Override
 	    public ApiResponse<Long> getTotalUsers() {
