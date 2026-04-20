@@ -50,6 +50,8 @@ public class Constants {
 	public static final String ROLE_NAME_ALREADY_EXISTS = "Role name already exits";
 	public static final String ROLE_ADDED_SUCCESSFULLY = "Role added successfully";
 	public static final String MODULE_REQUIRED = "Module name required";
+	public static final String SENIORITY_FETCHED_SUCCESSFULLY = "Seniority level fetched successfully";
+	public static final String TRAVEL_REQUIREMENTS_FETCHED_SUCCESSFULLY = "Travel Requirements Fteched Successfully";
 
 	
 }
