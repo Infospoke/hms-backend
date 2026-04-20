@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.RolesRequest;
+import com.hms.service.request.UpdatePermissionRequest;
 import com.hms.service.service.IRoleService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -29,9 +30,23 @@ import jakarta.validation.Valid;
 		private IRoleService iRoleService;
 
 		@PostMapping("/add-role")
-		public ResponseEntity<ApiResponse<?>> addRole(@Valid@RequestBody RolesRequest request) {
-			ApiResponse<?> response = iRoleService.addRole(request);
+		public ResponseEntity<ApiResponse<?>> addRolePermissions(@Valid@RequestBody RolesRequest request) {
+			ApiResponse<?> response = iRoleService.addRolePermissions(request);
 			return new ResponseEntity<>(response, HttpStatus.CREATED);
+		}
+		
+		@GetMapping("/get-all-role-permissions")
+		public ResponseEntity<ApiResponse<?>> getAllRolePermissions() {
+
+		    ApiResponse<?> response = iRoleService.getAllRolePermissions();
+
+		    return new ResponseEntity<>(response, HttpStatus.OK);
+		}
+		
+		@PutMapping("/update-role-permissions")
+		public ResponseEntity<ApiResponse<?>> updateRolePermissions(@Valid @RequestBody UpdatePermissionRequest request) {
+           ApiResponse<?> response = iRoleService.updateRolePermissions(request);
+			return new ResponseEntity<>(response,HttpStatus.OK);
 		}
 
 	
