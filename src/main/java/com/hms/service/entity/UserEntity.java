@@ -25,74 +25,72 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, updatable = false)
-    private Integer id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", nullable = false, updatable = false)
+	private Integer id;
 
-    
-    @SequenceGenerator(
-            name = "user_seq_gen",
-            sequenceName = "user_seq",
-            allocationSize = 1
-    )
-    @Column(name = "user_id", unique = true, nullable = false)
-    private Integer userId;
+	@SequenceGenerator(name = "user_seq_gen", sequenceName = "user_seq", allocationSize = 1)
+	@Column(name = "user_id", unique = true, nullable = false)
+	private Integer userId;
 
-    @Column(name = "user_type_id", nullable = false)
-    private Integer userTypeId;
+	@Column(name = "user_type_id", nullable = false)
+	private Integer userTypeId;
 
-    @Column(name = "first_name", nullable = false, length = 50)
-    private String firstName;
+	@Column(name = "first_name", nullable = false, length = 50)
+	private String firstName;
 
-    @Column(name = "last_name", nullable = false, length = 50)
-    private String lastName;
+	@Column(name = "last_name", nullable = false, length = 50)
+	private String lastName;
 
-    @Column(name = "employee_id", nullable = false, unique = true, updatable = false)
-    private Integer employeeId;
+	@Column(name = "employee_id", nullable = false, unique = true, updatable = false)
+	private Integer employeeId;
 
-    @Column(name = "email", nullable = false, unique = true)
-    private String email;
+	@Column(name = "email", nullable = false, unique = true)
+	private String email;
 
-    @Column(name = "mobile_number", nullable = false)
-    private String mobileNumber;
+	@Column(name = "mobile_number", nullable = false)
+	private String mobileNumber;
 
-    @Column(name = "alternate_contact")
-    private String alternateContact;
+	@Column(name = "alternate_contact")
+	private String alternateContact;
 
-    @Column(name = "date_of_birth", nullable = false)
-    private LocalDate dateOfBirth;
+	@Column(name = "date_of_birth", nullable = false)
+	private LocalDate dateOfBirth;
 
-    @Column(name = "employment_type_id", nullable = false)
-    private Integer employmentTypeId;
+	@Column(name = "employment_type_id", nullable = false)
+	private Integer employmentTypeId;
 
-    @Column(name = "business_unit_id", nullable = false)
-    private Integer businessUnitId;
+	@Column(name = "business_unit_id", nullable = false)
+	private Integer businessUnitId;
 
-    @Column(name = "department_id", nullable = false)
-    private Integer departmentId;
+	@Column(name = "department_id", nullable = false)
+	private Integer departmentId;
 
-    @Column(name = "role_id", nullable = false)
-    private Integer roleId;
-    
-    @Enumerated(EnumType.STRING)
-    private UserStatus status;
-    
-    @Column(name = "password")
-    private String password; 
-    
-    @Column(name = "pin")
-    private String pin;     
+	@Column(name = "role_id", nullable = false)
+	private Integer roleId;
 
-    @Column(name = "created_by")
-    private String createdBy;
-    
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+	@Enumerated(EnumType.STRING)
+	private UserStatus status;
 
-    @Column(name = "updated_by")
-    private String updatedBy;
-    
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+	@Column(name = "password")
+	private String password;
+
+	@Column(name = "pin")
+	private String pin;
+
+	@Column(name = "assigned_by")
+	private String assignedBy;
+
+	@Column(name = "assigned_at")
+	private LocalDateTime assignedAt;
+
+	@Column(name = "updated_by")
+	private String updatedBy;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
+	@Column(name = "role_name")
+	private String roleName;
 }

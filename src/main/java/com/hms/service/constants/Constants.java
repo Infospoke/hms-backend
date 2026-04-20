@@ -2,6 +2,9 @@ package com.hms.service.constants;
 
 public class Constants {
 
+	
+	public static final String BUCKET = "srdemandsupportingdocumentsbucket";
+	public static final String UNDER_SCORE = "_";
     public static final String USER_TYPE_REQUIRED = "User Type is required";
     public static final String FIRST_NAME_REQUIRED = "First Name is required";
     public static final String FIRST_NAME_SIZE = "First Name must be between 2 and 50 characters";
@@ -40,8 +43,6 @@ public class Constants {
 	public static final String DEPARTMENTS_FETCHED_SUCCESSFULLY = "Departments fetched successfully";
 	public static final String EMPLOYMENT_TYPE_FETCHED_SUCCESSFULLY = "Employment types fetched successfully";
 	public static final String ROLES_FETCHED_SUCCESSFULLY = "Roles fetched successfully";
-	public static final String USER_TYPES_FETCHED_SUCCESSFULLY = "User types fetched successfully";
-	public static final String ROLE_NAME_IS_REQUIRED = "Role name is required";
 	public static final String DESCRIPTION_IS_REQUIRED = "Description is required";
 	public static final String NO_MODULES_FOUND = "Modules not found";
 	public static final String MODULE_FETCH_SUCCESS = "Module Details Fetched sucessfully";
@@ -52,6 +53,10 @@ public class Constants {
 	public static final String MODULE_REQUIRED = "Module name required";
 	public static final String SENIORITY_FETCHED_SUCCESSFULLY = "Seniority level fetched successfully";
 	public static final String TRAVEL_REQUIREMENTS_FETCHED_SUCCESSFULLY = "Travel Requirements Fteched Successfully";
-
+	public static final String USER_TYPES_FETCHED_SUCCESSFULLY = "user types fetched successfully";
+	public static final String ROLE_NAME_IS_REQUIRED = "Role name is required";
+	public static final String USER_UPDATED_SUCCESSFULLY = "User updated successfully";
 	
 }
+
+

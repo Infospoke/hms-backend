@@ -5,8 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -37,7 +35,6 @@ public class DepartmentsEntity {
     @Column(name = "department_name")
     private String departmentName;
 
-    @ManyToOne
-    @JoinColumn(name = "tb_business_unit_id")
-    private BusinessUnitEntity businessUnit;
+    @Column(name = "business_unit_id")
+    private Integer businessUnitId;
 }

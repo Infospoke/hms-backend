@@ -57,6 +57,9 @@ public class UserCreationRequest {
 
     @NotNull(message = Constants.ROLE_REQUIRED)
     private Integer roleId;
+
+	@NotBlank(message = Constants.ROLE_NAME_IS_REQUIRED)
+    private String roleName;
     
     
 }
