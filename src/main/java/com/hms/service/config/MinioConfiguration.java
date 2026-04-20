@@ -1,4 +1,4 @@
-package com.hms.service.configuration;
+package com.hms.service.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

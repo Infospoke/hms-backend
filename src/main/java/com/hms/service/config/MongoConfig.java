@@ -1,4 +1,4 @@
-package com.hms.service.configuration;
+package com.hms.service.config;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import org.springframework.context.annotation.Bean;
