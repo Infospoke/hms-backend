@@ -1,7 +1,12 @@
 package com.hms.service.constants;
 
+import com.hms.service.wrappers.ResponseCode;
+
 public class Constants {
 
+	
+	public static final String BUCKET = "srdemandsupportingdocumentsbucket";
+	public static final String UNDER_SCORE = "_";
     public static final String USER_TYPE_REQUIRED = "User Type is required";
     public static final String FIRST_NAME_REQUIRED = "First Name is required";
     public static final String FIRST_NAME_SIZE = "First Name must be between 2 and 50 characters";
@@ -48,6 +53,15 @@ public class Constants {
 	public static final String ROLE_NAME_ALREADY_EXISTS = "Role name already exits";
 	public static final String ROLE_ADDED_SUCCESSFULLY = "Role added successfully";
 	public static final String MODULE_REQUIRED = "Module name required";
+
+	public static final String MODULE_ID_REQUIRED = "Module id required";
+	public static final String ROLES_PERMISSION_FETCHED_SUCCESSFULLY = "Roles and permission are fetched successfully";
+	public static final String ROLE_PERMISSION_DETAILS_FETCHED_SUCCESSFULLY = "Role permission details fetched successfully";
+	public static final String ROLE_PERMISSION_UPDATED_SUCCESSFULLY = "Role Permission updated sucessfully";
+
+
+	public static final String SENIORITY_FETCHED_SUCCESSFULLY = "Seniority level fetched successfully";
+	public static final String TRAVEL_REQUIREMENTS_FETCHED_SUCCESSFULLY = "Travel Requirements Fteched Successfully";
 	public static final String USER_TYPES_FETCHED_SUCCESSFULLY = "user types fetched successfully";
 	public static final String ROLE_NAME_IS_REQUIRED = "Role name is required";
 	public static final String USER_UPDATED_SUCCESSFULLY = "User updated successfully";
@@ -56,7 +70,7 @@ public class Constants {
 	public static final String PASSWORD_IS_REQUIRED = "Password is required";
 	public static final String CHANNEL_IS_REQUIRED = "Channel is required";
 
-
-
 	
 }
+
+
