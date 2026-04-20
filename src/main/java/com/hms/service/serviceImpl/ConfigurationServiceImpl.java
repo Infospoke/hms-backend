@@ -9,11 +9,15 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.ModuleEntity;
+import com.hms.service.entity.SeniorityLevelEntity;
+import com.hms.service.entity.TravelRequirementEntity;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.RolesRepository;
+import com.hms.service.repository.SeniorityLevelRepository;
+import com.hms.service.repository.TravelRequirementRepository;
 import com.hms.service.repository.UserTypeRepository;
 import com.hms.service.response.ModuleResponse;
 import com.hms.service.response.UserDropDownResponse;
@@ -44,6 +48,12 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	
 	@Autowired
 	private ModuleRepository moduleRepository;
+	
+	@Autowired
+	private SeniorityLevelRepository seniorityLevelRepository;
+	
+	@Autowired
+	private TravelRequirementRepository travelRequirementRepository;
 	
 
 	
@@ -133,5 +143,42 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		log.info("ConfigurationServiceImpl: Exit from getAllModules method");
 
 		return ApiResponse.success(Constants.MODULE_FETCH_SUCCESS, moduleList, moduleList.size());
+	}
+
+
+
+	@Override
+	public ApiResponse<List<UserDropDownResponse>> getSeniorityLevels() {
+	    log.info("ConfigurationServiceImpl::Inside the getSeniorityLevels method");
+	    List<UserDropDownResponse> response = seniorityLevelRepository.findAll(Sort.by("id"))
+	            .stream()
+	            .map(level -> new UserDropDownResponse(
+	                    level.getId(),
+	                    level.getSeniorityLevel() 
+	            )).toList();
+	    log.info("ConfigurationServiceImpl::Exit from getSeniorityLevels method");
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            Constants.SENIORITY_FETCHED_SUCCESSFULLY,
+	            response
+	    );
+	    
+	}
+
+	@Override
+	public ApiResponse<List<UserDropDownResponse>> getTravelRequirements() {
+	    log.info("ConfigurationServiceImpl::Inside getTravelRequirements method");
+	    List<UserDropDownResponse> response = travelRequirementRepository.findAll(Sort.by("id"))
+	            .stream()
+	            .map(travel -> new UserDropDownResponse(
+	                    travel.getId(),
+	                    travel.getTravelRequirement()
+	            )).toList();
+	    log.info("ConfigurationServiceImpl::Exit from getTravelRequirements method");
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            Constants.TRAVEL_REQUIREMENTS_FETCHED_SUCCESSFULLY,
+	            response
+	    );
 	}
 }

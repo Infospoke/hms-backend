@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
-import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.request.ModulePermissionRequest;
@@ -40,9 +39,6 @@ public class RolesServiceImpl implements IRoleService {
 	private PermissionRepository permissionRepository;
 
 	@Autowired
-	private ModuleRepository moduleRepository;
-
-	@Autowired
 	private SequenceGenerator sequenceGenerator;
 
 	@Override
@@ -61,8 +57,8 @@ public class RolesServiceImpl implements IRoleService {
 		entity.setRoleId(sequenceGenerator.generateRoleId());
 		entity.setDescription(request.getDescription());
 		entity.setCreatedDate(LocalDateTime.now());
-		entity.setBusinessUnit(request.getBusinessUnit());
-		entity.setDepartmentName(request.getDepartmentName());
+		entity.setBusinessUnitId(request.getBusinessUnitId());
+		entity.setDepartmentId(request.getDepartmentId());
 
 		RolesEntity savedRole = roleInfoRepository.save(entity);
 
@@ -139,7 +135,8 @@ public class RolesServiceImpl implements IRoleService {
 
 		List<RolePermissionResponse> rolesList = new ArrayList<>(roleMap.values());
 		log.info("RoleInfoServiceImpl::Exit from the getAllRolePermissions method");
-		return ApiResponse.success(ResponseCode.SUCCESS, Constants.ROLE_PERMISSION_DETAILS_FETCHED_SUCCESSFULLY,rolesList);
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.ROLE_PERMISSION_DETAILS_FETCHED_SUCCESSFULLY,
+				rolesList);
 	}
 
 	@Override
@@ -148,7 +145,7 @@ public class RolesServiceImpl implements IRoleService {
 		log.info("RoleInfoServiceImpl::Inside the updateRolePermissions method");
 
 		Integer roleId = request.getRoleId();
-		if(roleId==null) {
+		if (roleId == null) {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ROLE_REQUIRED);
 		}
 
@@ -201,9 +198,9 @@ public class RolesServiceImpl implements IRoleService {
 		}
 
 		permissionRepository.saveAll(permissionEntityList);
- 
+
 		log.info("RoleInfoServiceImpl::Exit from the the updateRolePermissions method");
-		
+
 		return ApiResponse.success(Constants.ROLE_PERMISSION_UPDATED_SUCCESSFULLY);
 	}
 }

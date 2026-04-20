@@ -1,6 +1,9 @@
 package com.hms.service.request;
 
 
+import com.hms.service.constants.Constants;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +14,7 @@ import lombok.NoArgsConstructor;
 
 public class ModulePermissionRequest {
 	
+	@NotNull(message = Constants.MODULE_ID_REQUIRED)
 	private Integer moduleId;
 	
 	private Boolean create;

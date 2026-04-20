@@ -32,15 +32,17 @@ public class ConfigurationController {
 	public ResponseEntity<ApiResponse<List<UserDropDownResponse>>> getDepartments(
 			@PathVariable("businessUnitId") Integer businessUnitId) {
 
-		ApiResponse<List<UserDropDownResponse>> response = iConfigurationService.getDepartmentsByBusinessUnit(businessUnitId);
+		ApiResponse<List<UserDropDownResponse>> response = iConfigurationService
+				.getDepartmentsByBusinessUnit(businessUnitId);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/roles/{departmentId}")
-	public ResponseEntity<ApiResponse<List<UserDropDownResponse>>> getRoles(@PathVariable("departmentId") Integer departmentId) {
+	public ResponseEntity<ApiResponse<List<UserDropDownResponse>>> getRoles(
+			@PathVariable("departmentId") Integer departmentId) {
 		ApiResponse<List<UserDropDownResponse>> response = iConfigurationService.getRolesByDepartment(departmentId);
-		
+
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -59,9 +61,7 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
-	
-	
+
 	@GetMapping("/get-all-modules")
 	public ResponseEntity<ApiResponse<?>> getAllModules() {
 
@@ -70,4 +70,19 @@ public class ConfigurationController {
 		return ResponseEntity.ok(response);
 
 	}
+
+	@GetMapping("/position-basic-seniority-levels")
+	public ResponseEntity<ApiResponse<List<UserDropDownResponse>>> getSeniorityLevels() {
+		ApiResponse<List<UserDropDownResponse>> response = iConfigurationService.getSeniorityLevels();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@GetMapping("/travel-requirements")
+	public ResponseEntity<ApiResponse<List<UserDropDownResponse>>> getTravelRequirements() {
+
+		ApiResponse<List<UserDropDownResponse>> response = iConfigurationService.getTravelRequirements();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 }
