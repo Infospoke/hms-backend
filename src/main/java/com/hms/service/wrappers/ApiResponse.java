@@ -19,7 +19,7 @@ public class ApiResponse<T> {
 	private String message;
 	private T data;
 	private List<String> errors;
-	private int totalRecords;
+	private Integer totalRecords;
 
 	public ApiResponse(ResponseCode responsecode, String message) {
 		this.responsecode = responsecode.getCode();
