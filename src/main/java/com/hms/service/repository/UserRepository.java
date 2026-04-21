@@ -21,4 +21,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     long countByStatus(UserStatus status);
     
     long countByRoleId(Integer roleId);
+
+	UserEntity findByEmail(String email);
 }

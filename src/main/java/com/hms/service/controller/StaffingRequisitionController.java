@@ -15,7 +15,7 @@ import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.service.IStaffingRequisitionService;
 import com.hms.service.wrappers.ApiResponse;
 
-@RequestMapping("/staffing-requisition")
+@RequestMapping("/hms/staffing-requisition")
 @RestController()
 public class StaffingRequisitionController {
 	
