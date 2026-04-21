@@ -24,7 +24,7 @@ public class StaffingRequisitionRequest {
 	
 	@Valid
 	private SourcingStrategyRequest sourcingStrategyRequest;
-	
+
 
 	
 	

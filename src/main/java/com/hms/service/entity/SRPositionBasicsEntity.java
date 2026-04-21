@@ -20,7 +20,7 @@ import jakarta.persistence.JoinColumn;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class StaffingRequisitionEntity {
+public class SRPositionBasicsEntity {
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
