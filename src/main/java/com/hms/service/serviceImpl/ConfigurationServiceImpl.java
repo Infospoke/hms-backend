@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.ModuleEntity;
-import com.hms.service.entity.SeniorityLevelEntity;
-import com.hms.service.entity.TravelRequirementEntity;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;

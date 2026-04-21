@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hms.service.dto.LoginData;
 import com.hms.service.request.LoginRequest;
+import com.hms.service.response.LoginResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -26,7 +26,7 @@ public class LoginController {
 	}
 
 	@PostMapping("/user-login")
-	public ApiResponse<LoginData> login(@RequestHeader("X-Channel") String channel,@Valid @RequestBody LoginRequest request) {
+	public ApiResponse<LoginResponse> login(@RequestHeader("X-Channel") String channel,@Valid @RequestBody LoginRequest request) {
 
 		return userService.login(request, channel);
 	}

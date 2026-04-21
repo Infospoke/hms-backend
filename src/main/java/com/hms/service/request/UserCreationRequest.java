@@ -37,12 +37,14 @@ public class UserCreationRequest {
     private String email;
 
     @NotBlank(message = Constants.MOBILE_REQUIRED)
+    @Size(min = 10, max = 15, message = Constants.MOBILE_INVALID)
     @Pattern(regexp = "^\\+?[0-9]+$", message = Constants.MOBILE_INVALID)
     private String mobileNumber;
 
+    @Size(min = 10, max = 15, message = Constants.ALT_MOBILE_INVALID)
     @Pattern(regexp = "^\\+?[0-9]*$", message = Constants.ALT_MOBILE_INVALID)
     private String alternateContact;
-
+    
     @NotNull(message = Constants.DOB_REQUIRED)
     private String dateOfBirth; 
 
@@ -57,9 +59,6 @@ public class UserCreationRequest {
 
     @NotNull(message = Constants.ROLE_REQUIRED)
     private Integer roleId;
-
-	@NotBlank(message = Constants.ROLE_NAME_IS_REQUIRED)
-    private String roleName;
     
     
 }

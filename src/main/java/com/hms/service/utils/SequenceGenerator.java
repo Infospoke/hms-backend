@@ -70,4 +70,10 @@ public class SequenceGenerator {
                 .createNativeQuery("SELECT nextval('permission_seq')")
                 .getSingleResult()).intValue();
     }
+
+	 public Integer generateAssignRoleId() {
+        return ((Number) entityManager
+                .createNativeQuery("SELECT nextval('permission_seq')")
+                .getSingleResult()).intValue();
+    }
 }
