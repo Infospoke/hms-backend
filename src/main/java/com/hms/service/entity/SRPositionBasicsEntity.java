@@ -62,51 +62,22 @@ public class SRPositionBasicsEntity {
 	@Column(name="priority")
 	private String priority;
 	
-	@Column(name="requisition_type")
-	private String requisitionType;
+	@Column(name="draft")
+	private Boolean draft;
 	
-	@Column(name="business_case",length = 2000)
-	private String businessCase;
+	@Column(name="submitted")
+	private Boolean submitted;
 	
-	@Column(name="impact_if_not_filled",length=2000)
-	private String impactIfNotFilled;
+	@Column(name="approved")
+	private Boolean approved;
 	
-	@Column(name="replaces_employee")
-	private Integer replacesEmployee;
+	@Column(name="sr_id")
+	private String srId;
 	
-	@Column(name="document")
-	private String document;
+	@Column(name="created_on")
+	private LocalDate createdOn;
 	
-	@Column(name="proposed_total_compensation")
-	private Integer proposedTotalCompensation;
-	
-	@Column(name="signing_bonus")
-	private Boolean signingBonus;
-	
-	@Column(name="equity")
-	private Boolean equity;
-	
-	@Column(name="relocationBudget")
-	private Boolean relocationBudget;
-	
-	@Column(name="signing_bonus_amount")
-	private Integer signingBonusAmount;
-	
-	@Column(name="equityAmount")
-	private Integer equityAmount;
-	
-	@Column(name="relocation_budget_amount")
-	private Integer relocationBudgetAmount;
-	
-	@Column(name="annual_hiring_cost")
-	private Integer AnnualHiringCost;
-	
-	
-	
-	
-	
-   
-	
-	
-
+	@Column(name="created_by")
+	private String createdBy;
+ 
 }

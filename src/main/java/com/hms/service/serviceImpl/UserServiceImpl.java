@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +18,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
-
-
 import com.hms.service.entity.AssignRolesEntity;
-
 import com.hms.service.entity.UserEntity;
-
-
 import com.hms.service.repository.AssignRolesRepository;
-
-
+import com.hms.service.repository.BusinessUnitRepository;
+import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
@@ -34,11 +30,9 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
-
 import com.hms.service.request.UserFilterRequest;
-import com.hms.service.response.UserListResponse;
 import com.hms.service.response.LoginResponse;
-
+import com.hms.service.response.UserListResponse;
 import com.hms.service.response.UserResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.utils.PasswordGenerator;
@@ -78,9 +72,15 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private SequenceGenerator sequenceGenerator;
-
+	
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
+	
+	@Autowired
+	private BusinessUnitRepository businessUnitRepository;
+ 
+	@Autowired
+	private DepartmentsRepository departmentsRepository;
 
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
@@ -92,10 +92,12 @@ public class UserServiceImpl implements IUserService {
 		log.info("UserServiceImpl:: Inside the createUser Method");
 
 		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
+			log.info("employee is already exists");
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
 		}
 
 		if (userRepository.existsByEmail(request.getEmail())) {
+			log.info("email already exists");
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
 		}
 
@@ -103,17 +105,21 @@ public class UserServiceImpl implements IUserService {
 		try {
 			dob = LocalDate.parse(request.getDateOfBirth());
 		} catch (Exception e) {
+			log.error("exception occured at dob "+e.getMessage());
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
 		}
 
 		if (dob.isAfter(LocalDate.now().minusYears(18))) {
+			log.info("user age must be above 18");
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
 		}
 
 		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
-
+			log.info("alternative number must be different");
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
 		}
+		
+		
 
 		String rawPassword = PasswordGenerator.generatePassword(8);
 		String rawPin = PasswordGenerator.generatePin(4);
@@ -132,11 +138,23 @@ public class UserServiceImpl implements IUserService {
 
 		user.setDateOfBirth(dob);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
-		user.setBusinessUnitId(request.getBusinessUnitId());
-		user.setDepartmentId(request.getDepartmentId());
+		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
+			user.setBusinessUnitId(request.getBusinessUnitId());
+		} else {
+			log.info("BusinessUnit Id is required");
+            return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.BUSINESS_UNIT_REQUIRED));
+		}
+		if (departmentsRepository.existsById(request.getDepartmentId())) {
+			user.setDepartmentId(request.getDepartmentId());
+		} else {
+			log.info("Department Id is required");
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.DEPARTMENT_REQUIRED));
+		}
 
 		user.setPassword(passwordEncoder.encode(rawPassword));
 		user.setPin(passwordEncoder.encode(rawPin));
+		log.info("PIN"+rawPin);
+		log.info("password"+rawPassword);
 
 		user.setActive(true);
 		user.setDeactivated(false);
@@ -163,16 +181,17 @@ public class UserServiceImpl implements IUserService {
 		Map<String, Object> data = new HashMap<>();
 		data.put("userId", userId);
 		data.put("username", request.getFirstName());
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", data);
+		log.info("UserServiceImpl:: Exit from the createUser Method");
+		return ApiResponse.success(ResponseCode.SUCCESS,Constants.SUCCESS, data);
 	}
 
 	@Override
 	public ApiResponse<?> getUsers(UserFilterRequest request) {
 
-		log.info("getUsers - Started");
+		log.info("UserServiceImpl:: Inside the getUsers Method");
 
 		if (request.getPage() == null || request.getSize() == null) {
+			log.info("Page size must be provided");
 			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
 		}
 
@@ -191,6 +210,7 @@ public class UserServiceImpl implements IUserService {
 
 		log.info("Users fetched. Total: {}, Filtered: {}", total, filtered);
 
+		log.info("UserServiceImpl:: exit from the getUsers Method");
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 

@@ -68,6 +68,7 @@ public class Constants {
 	public static final String PIN_IS_REQUIRED = "Pin is required";
 	public static final String PASSWORD_IS_REQUIRED = "Password is required";
 	public static final String CHANNEL_IS_REQUIRED = "Channel is required";
+	public static final String SUCCESS =  "success";
 
 	
 }
