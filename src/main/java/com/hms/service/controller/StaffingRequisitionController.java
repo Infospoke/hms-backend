@@ -29,12 +29,4 @@ public class StaffingRequisitionController {
 		
 	}
 
-	@GetMapping("/test")
-    public String testMongo() {
-       iStaffingRequisitionService.test();
-        return "Data inserted!";
-    }
-	
-	
-
 }
