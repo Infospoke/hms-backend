@@ -9,8 +9,4 @@ public interface IStaffingRequisitionService {
 
 	ApiResponse<?> newStaffingRequisition(StaffingRequisitionRequest request, MultipartFile file);
 
-	void test();
-
-	
-
 }
