@@ -16,7 +16,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.JoinColumn;
 @Entity
-@Table(name="tb_staffing_requisition")
+@Table(name="tb_sr_position_basics")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,9 +29,6 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="job_title")
 	private String jobTitle;
-	
-	@Column(name = "sr_id", unique = true, nullable = false)
-	private String srId;
 	
 	@Column(name="business_unit")
 	private Integer businessUnitId;
@@ -56,10 +53,10 @@ public class SRPositionBasicsEntity {
 	@Column(name="target_start_date")
 	private LocalDate targetStartDate;
 	
-	@Column(name="workMode")
+	@Column(name="work_mode")
 	private String workMode;
 	
-	@Column(name="employmentType")
+	@Column(name="employment_type")
 	private String employmentType;
 	
 	@Column(name="priority")
@@ -82,5 +79,6 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="created_by")
 	private String createdBy;
+
  
 }

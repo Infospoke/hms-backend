@@ -3,7 +3,7 @@ package com.hms.service.response;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.hms.service.enums.UserStatus;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class StaffingRequisitionResponse {
 
 	    private String srId;
@@ -39,8 +40,6 @@ public class StaffingRequisitionResponse {
 	    private Integer equityAmount;
 	    private Integer relocationBudgetAmount;
 	    private Integer annualHiringCost;
-
-	    // ===== STEP 4: ROLE =====
 	    private String skillsMustHave;
 	    private String niceToHaveSkills;
 	    private String educationRequirement;
