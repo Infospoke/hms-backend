@@ -1,6 +1,7 @@
 package com.hms.service.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -11,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
 public class SourcingStrategyEntity {
 	 
 	    @Id
@@ -18,7 +20,7 @@ public class SourcingStrategyEntity {
 	    @Column(name="id",updatable=false,nullable=false)
 	    private Integer id;
 	 
-	    @Column(name="sr_id")
+	    @Column(name = "sr_id", unique = true, nullable = false)
 	    private String srId;
 	 
 	    @Column(name = "internal_board")

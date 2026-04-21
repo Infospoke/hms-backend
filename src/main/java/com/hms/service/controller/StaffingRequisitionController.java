@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,4 +30,17 @@ public class StaffingRequisitionController {
 		
 	}
 
+	 @GetMapping("/get-by-id")
+	    public ResponseEntity<ApiResponse<?>> getBySrId(@RequestParam (value="request") String srId) {
+	        return ResponseEntity.ok(iStaffingRequisitionService.getBySrId(srId));
+	    }
+
+	    @GetMapping("/list")
+	    public ResponseEntity<ApiResponse<?>> getAll(
+	            @RequestParam(defaultValue = "0") int page,
+	            @RequestParam(defaultValue = "10") int size) {
+
+	        return ResponseEntity.ok(iStaffingRequisitionService.getAll(page, size));
+	}
+	
 }

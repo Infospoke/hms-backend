@@ -30,6 +30,9 @@ public class SRPositionBasicsEntity {
 	@Column(name="job_title")
 	private String jobTitle;
 	
+	@Column(name = "sr_id", unique = true, nullable = false)
+	private String srId;
+	
 	@Column(name="business_unit")
 	private Integer businessUnitId;
 	

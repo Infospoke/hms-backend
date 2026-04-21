@@ -22,7 +22,7 @@ public class RolesAndRequirementsEntity {
 	@Column(name="id",updatable=false,nullable=false)
 	private Integer id;
 	
-	@Column(name="sr_id")
+	@Column(name = "sr_id", unique = true, nullable = false)
 	private String srId;
 	
 	@Column(name="skills_must_have")
