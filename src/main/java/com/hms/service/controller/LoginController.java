@@ -13,6 +13,8 @@ import com.hms.service.request.LoginRequest;
 import com.hms.service.service.IUserService;
 import com.hms.service.wrappers.ApiResponse;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/hms/login")
 public class LoginController {
@@ -24,7 +26,7 @@ public class LoginController {
 	}
 
 	@PostMapping("/user-login")
-	public ApiResponse<LoginData> login(@RequestHeader("X-Channel") String channel, @RequestBody LoginRequest request) {
+	public ApiResponse<LoginData> login(@RequestHeader("X-Channel") String channel,@Valid @RequestBody LoginRequest request) {
 
 		return userService.login(request, channel);
 	}
@@ -32,12 +34,6 @@ public class LoginController {
 	@GetMapping("/validate")
 	public boolean validateToken(@RequestParam("token") String token) {
 		return userService.validateToken(token);
-	}
-
-	@GetMapping("/profile")
-	public ApiResponse<?> getProfile() {
-
-		return ApiResponse.success("User profile fetched", "Welcome Geethu!", 1);
 	}
 
 }
