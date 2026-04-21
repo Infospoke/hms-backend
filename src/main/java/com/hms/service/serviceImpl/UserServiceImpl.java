@@ -21,13 +21,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
-import com.hms.service.dto.LoginData;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ChannelTypes;
 import com.hms.service.enums.UserStatus;
+import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
@@ -35,6 +35,7 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
+import com.hms.service.response.LoginResponse;
 import com.hms.service.response.UserResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.utils.PasswordGenerator;
@@ -262,7 +263,7 @@ public class UserServiceImpl implements IUserService {
 	}
 
 	@Override
-	public ApiResponse<LoginData> login(LoginRequest request, String channel) {
+	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {
 
 		UserEntity user = userRepository.findByEmail(request.getEmail());
 
@@ -299,7 +300,7 @@ public class UserServiceImpl implements IUserService {
 		}
 
 		RolesEntity role = rolesRepository.findById(user.getRoleId())
-				.orElseThrow(() -> new RuntimeException("Role not found"));
+				.orElseThrow(() -> new CustomSystemErrorException("Role not found"));
 
 		String roleName = role.getRoleName();
 
@@ -317,10 +318,9 @@ public class UserServiceImpl implements IUserService {
 
 		String token = generateToken(user.getEmail(), roleName, modules);
 
-		LoginData data = new LoginData();
-		data.setEmail(user.getEmail());
-		data.setToken(token);
+		LoginResponse loginResponse = new LoginResponse();
+		loginResponse.setToken(token);
 
-		return new ApiResponse<>(ResponseCode.SUCCESS, "Success", data);
+		return new ApiResponse<>(ResponseCode.SUCCESS, "Success", loginResponse);
 	}
 }
