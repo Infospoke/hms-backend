@@ -34,12 +34,12 @@ public class StaffingRequisitionController {
 		
 	}
 
-	 @GetMapping("/get-by-id")
+	 @GetMapping("/by-sr-id")
 	    public ResponseEntity<ApiResponse<?>> getBySrId(@RequestParam (value="request") String srId) {
 	        return ResponseEntity.ok(iStaffingRequisitionService.getBySrId(srId));
 	    }
 	 
-	 @PostMapping("/get-all")
+	 @PostMapping("/sr-list")
 	 public ApiResponse<?> getAll(@RequestBody SRFilterRequest request) {
 	     return iStaffingRequisitionService.getAll(request);
 	 }
