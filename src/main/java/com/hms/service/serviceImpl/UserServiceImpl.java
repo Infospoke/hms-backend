@@ -3,7 +3,6 @@ package com.hms.service.serviceImpl;
 import java.security.Key;
 import java.sql.Date;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,12 +21,13 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.LoginData;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ChannelTypes;
-import com.hms.service.enums.UserStatus;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
@@ -35,6 +35,8 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
+import com.hms.service.request.UserFilterRequest;
+import com.hms.service.response.UserListResponse;
 import com.hms.service.response.UserResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.utils.PasswordGenerator;
@@ -50,6 +52,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -74,13 +77,18 @@ public class UserServiceImpl implements IUserService {
 	@Autowired
 	private SequenceGenerator sequenceGenerator;
 
+	@Autowired
+	private AssignRolesRepository assignRolesRepository;
+
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
 	@Override
+	@Transactional
 	public ApiResponse<?> createUser(UserCreationRequest request) {
 
-		log.info("UserServiceImpl::Inside the createUser method");
+		log.info("UserServiceImpl:: Inside the createUser Method");
+
 		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
 		}
@@ -105,11 +113,8 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
 		}
 
-		String rawPassword = PasswordGenerator.generatePassword(Constants.PASSWORD_LENGTH);
-		String rawPin = PasswordGenerator.generatePin(Constants.PIN_LENGTH);
-
-		String encryptedPassword = passwordEncoder.encode(rawPassword);
-		String encryptedPin = passwordEncoder.encode(rawPin);
+		String rawPassword = PasswordGenerator.generatePassword(8);
+		String rawPin = PasswordGenerator.generatePin(4);
 
 		UserEntity user = new UserEntity();
 
@@ -121,95 +126,142 @@ public class UserServiceImpl implements IUserService {
 		user.setMobileNumber(request.getMobileNumber());
 		user.setAlternateContact(request.getAlternateContact());
 
-		user.setDateOfBirth(LocalDate.parse(request.getDateOfBirth()));
+		user.setUsername(request.getFirstName());
+
+		user.setDateOfBirth(dob);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
 		user.setBusinessUnitId(request.getBusinessUnitId());
 		user.setDepartmentId(request.getDepartmentId());
-		user.setRoleId(request.getRoleId());
-		user.setRoleName(request.getRoleName());
 
-		user.setPassword(encryptedPassword);
-		user.setPin(encryptedPin);
+		user.setPassword(passwordEncoder.encode(rawPassword));
+		user.setPin(passwordEncoder.encode(rawPin));
 
-		user.setStatus(UserStatus.ACTIVE);
+		user.setActive(true);
+		user.setDeactivated(false);
+		user.setUpdatedBy("ADMIN");
+		user.setUpdatedAt(LocalDate.now());
 
-		user.setAssignedBy("ADMIN");
-		user.setAssignedAt(LocalDateTime.now());
+		Integer userId = sequenceGenerator.generateUserId();
+		user.setUserId(userId);
 
-		user.setUserId(sequenceGenerator.generateUserId());
-
+		log.info("Saving user: {}", userId);
 		userRepository.save(user);
 
-		System.out.println("Generated Password: " + rawPassword);
-		System.out.println("Generated PIN: " + rawPin);
-		log.info("UserServiceImpl::Exit from the createUser method");
-		return ApiResponse.success(Constants.USER_CREATED_SUCCESSFULLY);
+		AssignRolesEntity role = new AssignRolesEntity();
+		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
+		role.setUserId(userId);
+		role.setRoleId(request.getRoleId());
+		role.setAssignedBy("ADMIN");
+		role.setAssignedAt(LocalDate.now());
 
+		assignRolesRepository.save(role);
+
+		log.info("User created successfully: {}", userId);
+
+		Map<String, Object> data = new HashMap<>();
+		data.put("userId", userId);
+		data.put("username", request.getFirstName());
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", data);
 	}
 
 	@Override
-	public ApiResponse<List<UserResponse>> getAllUsers(int page, int size) {
-		log.info("UserServiceImpl::Inside the getAllUsers method");
-		Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+	public ApiResponse<?> getUsers(UserFilterRequest request) {
 
-		Page<UserEntity> users = userRepository.findAll(pageable);
+		log.info("getUsers - Started");
 
-		List<UserResponse> list = users.getContent().stream()
-				.map(user -> new UserResponse(user.getId(), user.getFirstName() + " " + user.getLastName(),
-						user.getRoleId(), user.getEmail(), user.getRoleName(), user.getStatus()))
-				.toList();
+		if (request.getPage() == null || request.getSize() == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+		}
 
-		log.info("UserServiceImpl::Exit from the getAllUsers method");
-		return ApiResponse.success(Constants.USER_FETCHED, list, (int) users.getTotalElements());
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), Sort.by("userId").descending());
+
+		log.info("Fetching user list for roleId: {}", request.getRoleId());
+
+		Page<UserResponse> pageResult = userRepository.findUsersByRole(request.getRoleId(), pageable);
+
+		Long total = userRepository.getTotalUsers();
+		Long active = userRepository.getActiveUsers();
+		Long deactivated = userRepository.getDeactivatedUsers();
+		Long filtered = userRepository.getFilteredUsers(request.getRoleId());
+
+		UserListResponse response = new UserListResponse(pageResult.getContent(), total, active, deactivated, filtered);
+
+		log.info("Users fetched. Total: {}, Filtered: {}", total, filtered);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 
 	@Override
-	public ApiResponse<Long> getTotalUsers() {
-		return ApiResponse.success(ResponseCode.SUCCESS, userRepository.count());
-	}
-
-	@Override
-	public ApiResponse<Long> getUsersByRole(Integer roleId) {
-		return ApiResponse.success(ResponseCode.SUCCESS, userRepository.countByRoleId(roleId));
-	}
-
-	@Override
-	public ApiResponse<Long> getUsersByStatus(UserStatus status) {
-		return ApiResponse.success(ResponseCode.SUCCESS, userRepository.countByStatus(status));
-	}
-
-	@Override
+	@Transactional
 	public ApiResponse<String> updateUser(Integer id, UpdateUserRequest request) {
 
-		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+	    log.info("updateUser - Started for userId: {}", id);
 
-		if (request.getRoleId() != null) {
-			if (!request.getRoleId().equals(user.getRoleId())) {
-				user.setRoleId(request.getRoleId());
+	    
+	    UserEntity user = userRepository.findByUserId(id)
+	            .orElseThrow(() -> new RuntimeException("User not found"));
 
-				user.setAssignedBy("ADMIN");
-				user.setAssignedAt(LocalDateTime.now());
-			}
-		}
+	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-		if (request.getBusinessUnitId() != null) {
-			user.setBusinessUnitId(request.getBusinessUnitId());
-		}
+	    if (request.getRoleId() != null &&
+	            !request.getRoleId().equals(roleEntity.getRoleId())) {
 
-		if (request.getDepartmentId() != null) {
-			user.setDepartmentId(request.getDepartmentId());
-		}
+	        log.info("Role change detected for userId: {}", id);
 
-		if (request.getStatus() != null) {
-			user.setStatus(UserStatus.valueOf(request.getStatus()));
-		}
+	        roleEntity.setRoleId(request.getRoleId());
+	        roleEntity.setAssignedBy("ADMIN");
+	        roleEntity.setAssignedAt(LocalDate.now());
 
-		user.setUpdatedBy("ADMIN");
-		user.setUpdatedAt(LocalDateTime.now());
+	        assignRolesRepository.save(roleEntity);
 
-		userRepository.save(user);
+	        log.info("Role updated successfully");
+	    }
 
-		return ApiResponse.success(Constants.USER_UPDATED_SUCCESSFULLY);
+	    if (request.getBusinessUnitId() != null) {
+	        user.setBusinessUnitId(request.getBusinessUnitId());
+	        log.info("Business Unit updated");
+	    }
+
+	    if (request.getDepartmentId() != null) {
+	        user.setDepartmentId(request.getDepartmentId());
+	        log.info("Department updated");
+	    }
+
+	   
+	   
+	    if (Boolean.TRUE.equals(request.getDeactivate())) {
+
+	        user.setActive(false);
+	        user.setDeactivated(true);
+
+	        user.setUpdatedBy("ADMIN");
+	        user.setUpdatedAt(LocalDate.now());
+
+	        userRepository.save(user);
+
+	        log.info("User deactivated successfully");
+
+	        return ApiResponse.success(
+	                ResponseCode.SUCCESS,
+	                "User deactivated successfully",
+	                null
+	        );
+	    }
+
+	    user.setUpdatedBy("ADMIN");
+	    user.setUpdatedAt(LocalDate.now());
+
+	    userRepository.save(user);
+
+	    log.info("User updated successfully");
+
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "User updated successfully",
+	            null
+	    );
 	}
 
 	@Override
@@ -263,64 +315,71 @@ public class UserServiceImpl implements IUserService {
 
 	@Override
 	public ApiResponse<LoginData> login(LoginRequest request, String channel) {
-
-		UserEntity user = userRepository.findByEmail(request.getEmail());
-
-		if (user == null) {
-			return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
-		}
-
-		if (channel == null || channel.isBlank()) {
-			return ApiResponse.failure("Channel is required");
-		}
-
-		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
-
-			if (request.getPassword() == null || request.getPassword().isBlank()) {
-				return ApiResponse.failure("Password is required");
-			}
-
-			if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-				return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
-			}
-
-		} else if (ChannelTypes.MOBILE.getChannelName().equalsIgnoreCase(channel)) {
-
-			if (request.getPin() == null || request.getPin().isBlank()) {
-				return ApiResponse.failure("Pin is required");
-			}
-
-			if (!passwordEncoder.matches(request.getPin(), user.getPin())) {
-				return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
-			}
-
-		} else {
-			return ApiResponse.failure("Invalid channel");
-		}
-
-		RolesEntity role = rolesRepository.findById(user.getRoleId())
-				.orElseThrow(() -> new RuntimeException("Role not found"));
-
-		String roleName = role.getRoleName();
-
-		List<PermissionEntity> permissionEntities = permissionRepository.findByRoleId(user.getRoleId());
-
-		if (permissionEntities == null || permissionEntities.isEmpty()) {
-			return ApiResponse.failure("Permissions not found for this role");
-		}
-
-		Map<Integer, String> moduleMap = moduleRepository.findAll().stream()
-				.collect(Collectors.toMap(ModuleEntity::getModuleId, ModuleEntity::getModuleName));
-		List<String> modules = permissionEntities.stream().map(p -> moduleMap.get(p.getModuleId()))
-				.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct()
-				.collect(Collectors.toList());
-
-		String token = generateToken(user.getEmail(), roleName, modules);
-
-		LoginData data = new LoginData();
-		data.setEmail(user.getEmail());
-		data.setToken(token);
-
-		return new ApiResponse<>(ResponseCode.SUCCESS, "Success", data);
+		// TODO Auto-generated method stub
+		return null;
 	}
+
+//	@Override
+//	public ApiResponse<LoginData> login(LoginRequest request, String channel) {
+//
+//		UserEntity user = userRepository.findByEmail(request.getEmail());
+//
+//		if (user == null) {
+//			return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
+//		}
+//
+//		if (channel == null || channel.isBlank()) {
+//			return ApiResponse.failure("Channel is required");
+//		}
+//
+//		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+//
+//			if (request.getPassword() == null || request.getPassword().isBlank()) {
+//				return ApiResponse.failure("Password is required");
+//			}
+//
+//			if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+//				return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
+//			}
+//
+//		} else if (ChannelTypes.MOBILE.getChannelName().equalsIgnoreCase(channel)) {
+//
+//			if (request.getPin() == null || request.getPin().isBlank()) {
+//				return ApiResponse.failure("Pin is required");
+//			}
+//
+//			if (!passwordEncoder.matches(request.getPin(), user.getPin())) {
+//				return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
+//			}
+//
+//		} else {
+//			return ApiResponse.failure("Invalid channel");
+//		}
+//
+//		RolesEntity role = rolesRepository.findById(user.getRoleId())
+//				.orElseThrow(() -> new RuntimeException("Role not found"));
+//
+//		String roleName = role.getRoleName();
+//
+//		List<PermissionEntity> permissionEntities = permissionRepository.findByRoleId(user.getRoleId());
+//
+//		if (permissionEntities == null || permissionEntities.isEmpty()) {
+//			return ApiResponse.failure("Permissions not found for this role");
+//		}
+//
+//		Map<Integer, String> moduleMap = moduleRepository.findAll().stream()
+//				.collect(Collectors.toMap(ModuleEntity::getModuleId, ModuleEntity::getModuleName));
+//		List<String> modules = permissionEntities.stream().map(p -> moduleMap.get(p.getModuleId()))
+//				.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct()
+//				.collect(Collectors.toList());
+//
+//		String token = generateToken(user.getEmail(), roleName, modules);
+//
+//		LoginData data = new LoginData();
+//		data.setEmail(user.getEmail());
+//		data.setToken(token);
+//
+//		return new ApiResponse<>(ResponseCode.SUCCESS, "Success", data);
+//	}
+//}
 }

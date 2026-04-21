@@ -1,6 +1,5 @@
 package com.hms.service.constants;
 
-import com.hms.service.wrappers.ResponseCode;
 
 public class Constants {
 

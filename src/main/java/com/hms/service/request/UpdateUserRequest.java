@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 public class UpdateUserRequest {
 
     private Integer roleId;
+    private Integer userId;
     private Integer businessUnitId;
     private Integer departmentId;
-    private Integer designationId;
-    private String status; 
+    private Boolean deactivate;
 }
