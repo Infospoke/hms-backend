@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BusinessJustificationRequest {
 	
+	    private Integer id;
+    
+        private String srId;
+	
 		private String requisitionType;
 	 
 		private String businessCase;
