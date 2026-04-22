@@ -17,4 +17,6 @@ public interface IStaffingRequisitionService {
 
 	ApiResponse<?> getAll(SRFilterRequest request);
 
+	void test();
+
 }

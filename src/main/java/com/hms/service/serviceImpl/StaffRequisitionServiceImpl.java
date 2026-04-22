@@ -3,12 +3,14 @@ package com.hms.service.serviceImpl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +28,7 @@ import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.SourceStrategyRepository;
 import com.hms.service.repository.Staffing;
 import com.hms.service.repository.StaffingRequisitionRepository;
+import com.hms.service.request.PositonBascicsRequest;
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.response.StaffingRequisitionResponse;
@@ -68,8 +71,116 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Override
 	public ApiResponse<?> newStaffingRequisition(StaffingRequisitionRequest request, MultipartFile file) {
-		// TODO Auto-generated method stub
+		if (request.getPositonBascicsRequest() != null) {
+			PositonBascicsRequest positonBasicsRequest = request.getPositonBascicsRequest();
+			if (request.getPositonBascicsRequest().getId() == null) {
+
+				validatePositonBasicsRequest(positonBasicsRequest);
+				
+				ApiResponse<?> error;
+				error = validateObject(positonBasicsRequest.getJobTitle(), "jobTitle");
+				if (error != null) {
+					return error;
+				}
+				error = validateObject(String.valueOf(positonBasicsRequest.getDepartmentId()), "departmentId");
+				if (error != null) {
+					return error;
+				}
+				for (int i = 0; i < positonBasicsRequest.getReportingManagerInfo().size(); i++) {
+					error = validateObject(String.valueOf(positonBasicsRequest.getReportingManagerInfo().get(i)),
+							"reportingManagerInfo");
+					if (error != null) {
+						return error;
+					}
+				}
+				error = validateObject(positonBasicsRequest.getLocation(), "location");
+				if (error != null) {
+					return error;
+				}
+				error = validateObject(positonBasicsRequest.getSeniorityLevel(), "seniorityLevel");
+				if (error != null) {
+					return error;
+				}
+				error = validateObject(String.valueOf(positonBasicsRequest.getOpenings()), "openings");
+				if (error != null) {
+					return error;
+				}
+				error = validateObject(String.valueOf(positonBasicsRequest.getTargetStartDate()), "targetStartDate");
+				if (error != null) {
+					return error;
+				}
+				error = validateObject(positonBasicsRequest.getEmploymentType(), "employementType");
+				if (error != null) {
+					return error;
+				}
+				error = validateObject(positonBasicsRequest.getWorkMode(), "workMode");
+				if (error != null) {
+					return error;
+				}
+				error = validateObject(positonBasicsRequest.getPriority(), "priority");
+				if (error != null) {
+					return error;
+				}
+				SRPositionBasicsEntity srPositionBasicsEntity = new SRPositionBasicsEntity();
+				srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
+				srPositionBasicsEntity.setBusinessUnitId(positonBasicsRequest.getBusinessUnitId());
+				srPositionBasicsEntity.setDepartmentId(positonBasicsRequest.getDepartmentId());
+				srPositionBasicsEntity.setReportingManagerInfo(positonBasicsRequest.getReportingManagerInfo());
+				srPositionBasicsEntity.setLocation(positonBasicsRequest.getLocation());
+				srPositionBasicsEntity.setSeniorityLevel(positonBasicsRequest.getSeniorityLevel());
+				srPositionBasicsEntity.setOpenings(positonBasicsRequest.getOpenings());
+				srPositionBasicsEntity.setTargetStartDate(positonBasicsRequest.getTargetStartDate());
+				srPositionBasicsEntity.setEmploymentType(positonBasicsRequest.getEmploymentType());
+				srPositionBasicsEntity.setWorkMode(positonBasicsRequest.getWorkMode());
+				srPositionBasicsEntity.setPriority(positonBasicsRequest.getPriority());
+				
+				staffingRequisitionRepository.save(srPositionBasicsEntity);
+				
+		        
+			}
+			else
+			{
+				
+				Optional<SRPositionBasicsEntity> entity = staffingRequisitionRepository.findById(positonBasicsRequest.getId());
+				
+				
+				
+			}
+
+		}
+		
 		return null;
+
+	}
+		
+	private ApiResponse<?> validateObject(String value, String fieldName) {
+		if (value == null || value.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, fieldName + " is required",
+					List.of(fieldName + " is required"));
+		}
+		return null;
+	}
+		
+	private void uploadToMinio(MultipartFile offerLetter, String fileKey) throws Exception {
+
+		log.info("staffingRequisitonServiceImpl::Inside uploadToMinio method");
+
+		minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKET).object(fileKey)
+				.stream(offerLetter.getInputStream(), offerLetter.getSize(), -1)
+				.contentType(offerLetter.getContentType()).build());
+
+		log.info("staffingRequisitionServiceImpl::Exit from uploadToMinio method");
+	}
+
+	@Override
+	public void test() {
+		// TODO Auto-generated method stub
+
+	}
+
+
+	public ResponseEntity <?> validatePositonBasicsRequest(PositonBascicsRequest positonBasicsRequest){
+		return null;		
 	}
 
 	@Override
