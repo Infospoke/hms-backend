@@ -1,6 +1,6 @@
 package com.hms.service.entity;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,17 +26,17 @@ public class RolesEntity {
 	private Integer id;
 
 	@SequenceGenerator(name = "role_seq_gen", allocationSize = 1)
-	@Column(name = "role_id", unique = true)
+	@Column(name = "role_id",nullable=false, unique = true)
 	private Integer roleId;
 
-	@Column(name = "role_name")
+	@Column(name = "role_name",unique=true)
 	private String roleName;
 
 	@Column(name = "department_id")
 	private Integer departmentId;
 
 	@Column(name = "created_date")
-	private LocalDateTime createdDate;
+	private LocalDate createdDate;
 
 	@Column(name = "created_by")
 	private String createdBy;
@@ -45,7 +45,7 @@ public class RolesEntity {
 	private String updatedBy;
 
 	@Column(name = "updated_date")
-	private LocalDateTime updatedDate;
+	private LocalDate updatedDate;
 
 	@Column(name = "business_unit_id")
 	private Integer businessUnitId;

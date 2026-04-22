@@ -142,13 +142,13 @@ public class UserServiceImpl implements IUserService {
 			user.setBusinessUnitId(request.getBusinessUnitId());
 		} else {
 			log.info("BusinessUnit Id is required");
-            return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.BUSINESS_UNIT_REQUIRED));
+            return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
 		}
 		if (departmentsRepository.existsById(request.getDepartmentId())) {
 			user.setDepartmentId(request.getDepartmentId());
 		} else {
 			log.info("Department Id is required");
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.DEPARTMENT_REQUIRED));
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
 		}
 
 		user.setPassword(passwordEncoder.encode(rawPassword));
