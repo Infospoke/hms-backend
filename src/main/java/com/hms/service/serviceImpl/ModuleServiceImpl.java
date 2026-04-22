@@ -1,6 +1,7 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,7 @@ public class ModuleServiceImpl implements IModuleService {
 
 		ModuleEntity moduleEntity = new ModuleEntity();
 		moduleEntity.setModuleName(request.getModuleName());
-        moduleEntity.setCreatedDate(LocalDateTime.now());
+        moduleEntity.setCreatedDate(LocalDate.now());
         moduleEntity.setCreatedBy(request.getCreatedBy());
         moduleEntity.setModuleId(sequenceGenerator.generateModuleId());
       

@@ -90,6 +90,8 @@ public class Constants {
 	public static final String CURRENT_PAGE = "currentPage";
 	public static final String TOTAL_PAGES = "totalPages";
 	public static final Object TOTAL_ELEMENTS = "totalElements";
+	public static final String INVALID_BUSINESS_UNIT_ID = "Invalid business unit id";
+	public static final String INVALID_DEPARTMENT_ID = "Invalid deparment id";
 
 	
 }

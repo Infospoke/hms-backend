@@ -1,6 +1,7 @@
 package com.hms.service.repository;
 
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -58,6 +59,15 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     """)
     Long getFilteredUsers(@Param("roleId") Integer roleId);
     
+    
+    @Query("""
+    	    SELECT r.roleId, COUNT(u)
+    	    FROM UserEntity u
+    	    JOIN AssignRolesEntity r ON u.userId = r.userId
+    	    GROUP BY r.roleId
+    	""")
+    	List<Object[]> getUserCountByRole();
+    	
     Optional<UserEntity> findByUserId(Integer userId);
 
 	UserEntity findByEmail(String email);
