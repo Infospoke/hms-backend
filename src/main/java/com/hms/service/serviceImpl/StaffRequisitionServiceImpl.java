@@ -16,14 +16,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
-import com.hms.service.entity.ApprovalEntity;
+
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingStrategyEntity;
-import com.hms.service.repository.ApprovalRepository;
+
 import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.BusinessJustificationRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -35,6 +35,7 @@ import com.hms.service.repository.StaffingRequisitionRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
 import com.hms.service.request.PositonBascicsRequest;
+import com.hms.service.request.ReviewRequest;
 import com.hms.service.request.RolesAndRequirementsRequest;
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.SourcingStrategyRequest;
@@ -45,6 +46,7 @@ import com.hms.service.response.PositonBasicsResponse;
 import com.hms.service.response.RolesAndRequirementsResponse;
 import com.hms.service.response.SourcingStrategyResponse;
 import com.hms.service.service.IStaffingRequisitionService;
+import com.hms.service.utils.SequenceGenerator;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
@@ -85,7 +87,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	private DepartmentsRepository departmentsRepository;
 
 	@Autowired
-	private ApprovalRepository approvalRepository;
+	private SequenceGenerator sequenceGenerator;
 
 	@Override
 	public ApiResponse<?> newStaffingRequisition(StaffingRequisitionRequest request, MultipartFile file) {
@@ -123,13 +125,14 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			entity.setEmploymentType(positonBasicsRequest.getEmploymentType());
 			entity.setWorkMode(positonBasicsRequest.getWorkMode());
 			entity.setPriority(positonBasicsRequest.getPriority());
-			staffingRequisitionRepository.save(entity);
+			Integer seq = sequenceGenerator.generateSrSequence();
 
-			if (entity.getSrId() == null) {
-				srId = generateSrId(entity);
-				entity.setSrId(srId);
-				staffingRequisitionRepository.save(entity);
-			}
+			entity.setSrSequence(seq);
+
+			srId = generateSrId(entity);
+			entity.setSrId(srId);
+
+			entity = staffingRequisitionRepository.save(entity);
 		}
 		// business screen logic
 		if (request.getBusinessJustificationRequest() != null) {
@@ -186,6 +189,12 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			BudgetAndCompensationRequest budgetRequest = request.getBudgetAndCompensationRequest();
 
 			ApiResponse<?> validationResponse = validateBudgetAndCompensation(budgetRequest);
+			System.out.println("Validation Response: " + validationResponse);
+
+			if (validationResponse != null
+					&& ResponseCode.FAILURE.getCode().equals(validationResponse.getResponsecode())) {
+				return validationResponse;
+			}
 
 			BudgetAndCompensationEntity budgetEntity = null;
 
@@ -241,7 +250,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				entity = new RolesAndRequirementsEntity();
 
-				 srId = rolesReq.getSrId();
+				srId = rolesReq.getSrId();
 
 				if (srId == null || srId.isEmpty()) {
 					return ApiResponse.failure(ResponseCode.FAILURE, "srId is required", List.of("srId is required"));
@@ -292,13 +301,17 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		if (request.getSourcingStrategyRequest() != null) {
 
 			SourcingStrategyRequest req = request.getSourcingStrategyRequest();
+
 			ApiResponse<?> error = validateSourcingStrategyRequest(req);
 			if (error != null)
 				return error;
 
+			srId = req.getSrId();
+
 			if (srId == null || srId.isBlank()) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "srId is required", List.of("srId is required"));
 			}
+
 			SourcingStrategyEntity entity = sourceStrategyRepository.findBySrId(srId).orElse(null);
 
 			if (entity == null) {
@@ -324,51 +337,55 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			entity.setDiversityTags(req.getDiversityTags());
 
 			sourceStrategyRepository.save(entity);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Sourcing Strategy saved successfully", srId);
 		}
-		return ApiResponse.success(ResponseCode.SUCCESS, "Staffing Requisition created successfully", srId);
 
-	}
+		if (request.getReviewRequest() != null) {
+			ReviewRequest reviewRequest = request.getReviewRequest();
 
-	public ApiResponse<?> submitForApproval(String srId) {
+			srId = reviewRequest.getSrId();
 
-		if (srId == null || srId.isBlank()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "srId is required",
-					List.of("srId cannot be null or empty"));
+			if (srId == null || srId.isBlank()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "srId is required",
+						List.of("srId cannot be null or empty"));
+			}
+			try {
+				positionBasicsRepository.findBySrId(srId).ifPresent(entity -> {
+					entity.setDraft(false);
+					entity.setSubmitted(true);
+					positionBasicsRepository.save(entity);
+				});
+
+				businessJustificationRepository.findBySrId(srId).ifPresent(entity -> {
+					entity.setDraft(false);
+					entity.setSubmitted(true);
+					businessJustificationRepository.save(entity);
+				});
+
+				budgetAndCompensationRepository.findBySrId(srId).ifPresent(entity -> {
+					entity.setDraft(false);
+					entity.setSubmitted(true);
+					budgetAndCompensationRepository.save(entity);
+				});
+				rolesAndRequirementsRepository.findBySrId(srId).ifPresent(entity -> {
+					entity.setDraft(false);
+					entity.setSubmitted(true);
+					rolesAndRequirementsRepository.save(entity);
+				});
+				sourceStrategyRepository.findBySrId(srId).ifPresent(entity -> {
+					entity.setDraft(false);
+					entity.setSubmitted(true);
+					sourceStrategyRepository.save(entity);
+				});
+				return ApiResponse.success(ResponseCode.SUCCESS, "SR submitted for approval successfully", srId);
+
+			} catch (Exception e) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failed to submit SR", List.of(e.getMessage()));
+			}
 		}
-		try {
-			positionBasicsRepository.findBySrId(srId).ifPresent(entity -> {
-				entity.setDraft(false);
-				entity.setSubmitted(true);
-				positionBasicsRepository.save(entity);
-			});
+		return null;
 
-			businessJustificationRepository.findBySrId(srId).ifPresent(entity -> {
-				entity.setDraft(false);
-				entity.setSubmitted(true);
-				businessJustificationRepository.save(entity);
-			});
-
-			budgetAndCompensationRepository.findBySrId(srId).ifPresent(entity -> {
-				entity.setDraft(false);
-				entity.setSubmitted(true);
-				budgetAndCompensationRepository.save(entity);
-			});
-			rolesAndRequirementsRepository.findBySrId(srId).ifPresent(entity -> {
-				entity.setDraft(false);
-				entity.setSubmitted(true);
-				rolesAndRequirementsRepository.save(entity);
-			});
-			sourceStrategyRepository.findBySrId(srId).ifPresent(entity -> {
-				entity.setDraft(false);
-				entity.setSubmitted(true);
-				sourceStrategyRepository.save(entity);
-			});
-			ApprovalEntity approvalEntity = approvalRepository.findBySrId(srId).orElse(null);
-			return ApiResponse.success(ResponseCode.SUCCESS, "SR submitted for approval successfully", srId);
-
-		} catch (Exception e) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to submit SR", List.of(e.getMessage()));
-		}
 	}
 
 	private ApiResponse<?> validateObject(String value, String fieldName) {
@@ -424,121 +441,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		return null;
 	}
 
-	/// method for businessvalidations
-	private ApiResponse<?> validateBusinessJustification(BusinessJustificationRequest bj, MultipartFile file) {
-
-		ApiResponse<?> error;
-
-		error = validateObject(bj.getRequisitionType(), "requisitionType");
-		if (error != null)
-			return error;
-
-		if (!List.of("New Headcount", "Backfill", "Replacement", "Contract to Perm")
-				.contains(bj.getRequisitionType())) {
-
-			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid requisitionType",
-					List.of("Allowed values: New Headcount, Backfill, Replacement, Contract to Perm"));
-		}
-
-		error = validateObject(bj.getBusinessCase(), "businessCase");
-		if (error != null)
-			return error;
-
-		error = validateObject(bj.getImpactIfNotFilled(), "impactIfNotFilled");
-		if (error != null)
-			return error;
-
-		if ("Backfill".equalsIgnoreCase(bj.getRequisitionType())
-				|| "Replacement".equalsIgnoreCase(bj.getRequisitionType())) {
-
-			if (bj.getReplacesEmployee() == null) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "replacesEmployee is required",
-						List.of("replacesEmployee is required"));
-			}
-		}
-
-		error = validateFile(file, "document");
-		if (error != null)
-			return error;
-
-		return null;
-	}
-
-	// method for budget and compensation validations
-
-	private ApiResponse<?> validateBudgetAndCompensation(BudgetAndCompensationRequest req) {
-
-		ApiResponse<?> error;
-
-		error = validateObject(String.valueOf(req.getMinSalary()), "minSalary");
-		if (error != null)
-			return error;
-
-		error = validateObject(String.valueOf(req.getMaxSalary()), "maxSalary");
-		if (error != null)
-			return error;
-
-		error = validateObject(String.valueOf(req.getProposedTotalCompensation()), "proposedTotalCompensation");
-		if (error != null)
-			return error;
-
-		if (Boolean.TRUE.equals(req.getSigningBonus())) {
-			if (req.getSigningBonusAmount() == null) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "signingBonusAmount is required",
-						List.of("Enter signing bonus amount"));
-			}
-		}
-
-		if (Boolean.TRUE.equals(req.getEquity())) {
-			if (req.getEquityAmount() == null) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "equityAmount is required",
-						List.of("Enter equity amount"));
-			}
-		}
-
-		if (Boolean.TRUE.equals(req.getRelocationBudget())) {
-			if (req.getRelocationBudgetAmount() == null) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "relocationBudgetAmount is required",
-						List.of("Enter relocation budget amount"));
-			}
-		}
-
-		int total = req.getProposedTotalCompensation() + req.getSigningBonusAmount() + req.getEquityAmount()
-				+ req.getRelocationBudgetAmount();
-
-		if (req.getAnnualHiringCost() == null || total != req.getAnnualHiringCost()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "AnnualHiringCost mismatch",
-					List.of("Sum of all components must equal Annual Hiring Cost"));
-		}
-
-		int min = req.getMinSalary();
-		int max = req.getMaxSalary();
-		int proposed = req.getProposedTotalCompensation();
-
-		if (min > max) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid salary range",
-					List.of("minSalary cannot be greater than maxSalary"));
-		}
-
-		double maxWith5Percent = max + (max * 0.05);
-
-		if (proposed >= min && proposed <= max) {
-			return ApiResponse.success(ResponseCode.SUCCESS, "Within Range", "GREEN");
-		}
-
-		else if (proposed < min) {
-			return ApiResponse.success(ResponseCode.SUCCESS, "Offer Risk", "YELLOW");
-		}
-
-		else if (proposed > max && proposed <= maxWith5Percent) {
-			return ApiResponse.success(ResponseCode.SUCCESS, "Range Review Required", "YELLOW");
-		}
-
-		else {
-			return ApiResponse.success(ResponseCode.SUCCESS, "Out of Range", "RED");
-		}
-	}
-
 	private void uploadToMinio(MultipartFile offerLetter, String fileKey) throws Exception {
 
 		log.info("staffingRequisitonServiceImpl::Inside uploadToMinio method");
@@ -552,169 +454,422 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	public ApiResponse<?> validatePositonBasicsRequest(PositonBascicsRequest req) {
 		ApiResponse<?> error;
-		error = validateObject(req.getJobTitle(), "jobTitle");
-		if (error != null)
-			return error;
-		error = validateObject(String.valueOf(req.getDepartmentId()), "departmentId");
-		if (error != null)
-			return error;
+
+		if (req.getJobTitle() != null) {
+			error = validateObject(req.getJobTitle(), "jobTitle");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getDepartmentId() != null) {
+			error = validateObject(req.getDepartmentId(), "departmentId");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getBusinessUnitId() != null) {
+			error = validateObject(req.getBusinessUnitId(), "businessUnitId");
+			if (error != null)
+				return error;
+		}
+
 		if (req.getReportingManagerInfo() != null) {
-			for (int i = 0; i < req.getReportingManagerInfo().size(); i++) {
-				error = validateObject(String.valueOf(req.getReportingManagerInfo().get(i)), "reportingManagerInfo");
-				if (error != null)
-					return error;
+
+			if (req.getReportingManagerInfo().isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "reportingManagerInfo cannot be empty",
+						List.of("reportingManagerInfo cannot be empty"));
+			}
+
+			for (Integer managerId : req.getReportingManagerInfo()) {
+				if (managerId == null || managerId <= 0) {
+					return ApiResponse.failure(ResponseCode.FAILURE, "Invalid reportingManagerInfo",
+							List.of("Each managerId must be valid"));
+				}
 			}
 		}
-		error = validateObject(req.getLocation(), "location");
-		if (error != null)
-			return error;
-		error = validateObject(req.getSeniorityLevel(), "seniorityLevel");
-		if (error != null)
-			return error;
-		error = validateObject(String.valueOf(req.getOpenings()), "openings");
-		if (error != null)
-			return error;
-		error = validateObject(String.valueOf(req.getTargetStartDate()), "targetStartDate");
-		if (error != null)
-			return error;
-		error = validateObject(req.getEmploymentType(), "employmentType");
-		if (error != null)
-			return error;
-		error = validateObject(req.getWorkMode(), "workMode");
-		if (error != null)
-			return error;
-		error = validateObject(req.getPriority(), "priority");
-		if (error != null)
-			return error;
+
+		if (req.getLocation() != null) {
+			error = validateObject(req.getLocation(), "location");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getSeniorityLevel() != null) {
+			error = validateObject(req.getSeniorityLevel(), "seniorityLevel");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getOpenings() != null) {
+			error = validateObject(req.getOpenings(), "openings");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getTargetStartDate() != null) {
+			error = validateObject(req.getTargetStartDate().toString(), "targetStartDate");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getEmploymentType() != null) {
+			error = validateObject(req.getEmploymentType(), "employmentType");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getWorkMode() != null) {
+			error = validateObject(req.getWorkMode(), "workMode");
+			if (error != null)
+				return error;
+		}
+
+		if (req.getPriority() != null) {
+			error = validateObject(req.getPriority(), "priority");
+			if (error != null)
+				return error;
+		}
+
 		return null;
 	}
 
-	public ApiResponse<?> validateSourcingStrategyRequest(SourcingStrategyRequest req) {
+	// method for businessvalidations
+	private ApiResponse<?> validateBusinessJustification(BusinessJustificationRequest bj, MultipartFile file) {
 
 		ApiResponse<?> error;
 
-		error = validateObject(req.getInternalFirstPolicy(), "internalFirstPolicy");
-		if (error != null)
-			return error;
+		if (bj.getRequisitionType() != null) {
+			error = validateObject(bj.getRequisitionType(), "requisitionType");
+			if (error != null)
+				return error;
+			if (!List.of("New Headcount", "Backfill", "Replacement", "Contract to Perm")
+					.contains(bj.getRequisitionType())) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid requisitionType",
+						List.of("Allowed values: New Headcount, Backfill, Replacement, Contract to Perm"));
+			}
+		}
+
+		if (bj.getBusinessCase() != null) {
+			error = validateObject(bj.getBusinessCase(), "businessCase");
+			if (error != null)
+				return error;
+		}
+
+		if (bj.getImpactIfNotFilled() != null) {
+			error = validateObject(bj.getImpactIfNotFilled(), "impactIfNotFilled");
+			if (error != null)
+				return error;
+		}
+		if (bj.getRequisitionType() != null && ("Backfill".equalsIgnoreCase(bj.getRequisitionType())
+				|| "Replacement".equalsIgnoreCase(bj.getRequisitionType()))) {
+
+			if (bj.getReplacesEmployee() == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "replacesEmployee is required",
+						List.of("replacesEmployee is required"));
+			}
+		}
+
+		if (file != null && !file.isEmpty()) {
+			error = validateFile(file, "document");
+			if (error != null)
+				return error;
+		}
+		return null;
+	}
+
+	// method for budget and compensation validations
+
+	private ApiResponse<?> validateBudgetAndCompensation(BudgetAndCompensationRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getMinSalary() != null) {
+
+			error = validateObject(req.getMinSalary(), "minSalary");
+
+			if (error != null)
+
+				return error;
+
+		}
+
+		if (req.getMaxSalary() != null) {
+
+			error = validateObject(req.getMaxSalary(), "maxSalary");
+
+			if (error != null)
+
+				return error;
+
+		}
+
+		if (req.getProposedTotalCompensation() != null) {
+
+			error = validateObject(req.getProposedTotalCompensation(), "proposedTotalCompensation");
+
+			if (error != null)
+
+				return error;
+
+		}
+
+		if (Boolean.TRUE.equals(req.getSigningBonus())) {
+
+			if (req.getSigningBonusAmount() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "signingBonusAmount is required",
+
+						List.of("Enter signing bonus amount"));
+
+			}
+
+		}
+
+		if (Boolean.TRUE.equals(req.getEquity())) {
+
+			if (req.getEquityAmount() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "equityAmount is required",
+
+						List.of("Enter equity amount"));
+
+			}
+
+		}
+
+		if (Boolean.TRUE.equals(req.getRelocationBudget())) {
+
+			if (req.getRelocationBudgetAmount() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "relocationBudgetAmount is required",
+
+						List.of("Enter relocation budget amount"));
+
+			}
+
+		}
+
+		int total =
+
+				(req.getProposedTotalCompensation() != null ? req.getProposedTotalCompensation() : 0) +
+
+						(req.getSigningBonusAmount() != null ? req.getSigningBonusAmount() : 0) +
+
+						(req.getEquityAmount() != null ? req.getEquityAmount() : 0) +
+
+						(req.getRelocationBudgetAmount() != null ? req.getRelocationBudgetAmount() : 0);
+
+		if (req.getAnnualHiringCost() != null) {
+
+			if (total != req.getAnnualHiringCost()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "AnnualHiringCost mismatch",
+
+						List.of("Sum of all components must equal Annual Hiring Cost"));
+
+			}
+
+		}
+
+		if (req.getMinSalary() != null &&
+
+				req.getMaxSalary() != null &&
+
+				req.getProposedTotalCompensation() != null) {
+
+			int min = req.getMinSalary();
+
+			int max = req.getMaxSalary();
+
+			int proposed = req.getProposedTotalCompensation();
+
+			if (min > max) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid salary range",
+
+						List.of("minSalary cannot be greater than maxSalary"));
+
+			}
+
+			double maxWith5Percent = max + (max * 0.05);
+
+			if (proposed >= min && proposed <= max) {
+
+				return ApiResponse.success(ResponseCode.SUCCESS, Constants.WITHIN_RANGE, "GREEN");
+
+			}
+
+			else if (proposed < min) {
+
+				return ApiResponse.success(ResponseCode.SUCCESS, "Offer Risk", "YELLOW");
+
+			}
+
+			else if (proposed > max && proposed <= maxWith5Percent) {
+
+				return ApiResponse.success(ResponseCode.SUCCESS, "Range Review Required", "YELLOW");
+
+			}
+
+			else {
+
+				return ApiResponse.success(ResponseCode.SUCCESS, "Out of Range", "RED");
+
+			}
+
+		}
+		return null;
+
+	}
+
+	private ApiResponse<?> validateRoleRequirements(RolesAndRequirementsRequest req) {
+
+		ApiResponse<?> error;
+
+		// ✅ srId (MANDATORY)
+		if (req.getSrId() == null || req.getSrId().isBlank()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "srId is required",
+					List.of("srId cannot be null or empty"));
+		}
+
+		// ✅ skillsMustHave (MANDATORY)
+		if (req.getSkillsMustHave() != null) {
+			if (req.getSkillsMustHave().isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "skillsMustHave cannot be empty",
+						List.of("Provide at least one must-have skill"));
+			}
+		}
+
+		// ✅ niceToHaveSkills (OPTIONAL but validate if present)
+		if (req.getNiceToHaveSkills() != null) {
+			if (req.getNiceToHaveSkills().isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "niceToHaveSkills cannot be empty",
+						List.of("Remove empty list or provide values"));
+			}
+		}
+
+		// ✅ educationRequirement (OPTIONAL but not blank)
+		if (req.getEducationRequirement() != null) {
+			error = validateObject(req.getEducationRequirement(), "educationRequirement");
+			if (error != null)
+				return error;
+		}
+
+		// ✅ travelRequirement (OPTIONAL but not blank)
+		if (req.getTravelRequirement() != null) {
+			error = validateObject(req.getTravelRequirement(), "travelRequirement");
+			if (error != null)
+				return error;
+		}
+
+		// ✅ Experience validation
+		if (req.getMinExperience() != null && req.getMaxExperience() != null) {
+
+			if (req.getMinExperience() < 0 || req.getMaxExperience() < 0) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid experience",
+						List.of("Experience cannot be negative"));
+			}
+
+			if (req.getMinExperience() > req.getMaxExperience()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid experience range",
+						List.of("minExperience cannot be greater than maxExperience"));
+			}
+		}
+
+		// ✅ Interview rounds validation
+		if (req.getMinInterviewRounds() != null && req.getMaxInterviewRounds() != null) {
+
+			if (req.getMinInterviewRounds() <= 0 || req.getMaxInterviewRounds() <= 0) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid interview rounds",
+						List.of("Interview rounds must be greater than 0"));
+			}
+
+			if (req.getMinInterviewRounds() > req.getMaxInterviewRounds()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid interview range",
+						List.of("minInterviewRounds cannot be greater than maxInterviewRounds"));
+			}
+		}
+
+		// ✅ certificationsRequired (OPTIONAL)
+		if (req.getCertificationsRequired() != null && req.getCertificationsRequired().isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "certificationsRequired cannot be empty",
+					List.of("Provide valid certifications or remove field"));
+		}
+
+		// ✅ languages (OPTIONAL)
+		if (req.getLanguages() != null && req.getLanguages().isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "languages cannot be empty",
+					List.of("Provide valid languages or remove field"));
+		}
+
+		// ✅ assessmentRequired (no validation needed, default false)
+
+		return null;
+	}
+
+	private ApiResponse<?> validateSourcingStrategyRequest(SourcingStrategyRequest req) {
+
+		ApiResponse<?> error;
+
+		// ✅ 1. Request null check
+		if (req == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Request is required",
+					List.of("SourcingStrategyRequest cannot be null"));
+		}
+
+		// ✅ 2. srId validation (important)
+		if (req.getSrId() == null || req.getSrId().isBlank()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "srId is required",
+					List.of("srId cannot be null or empty"));
+		}
+
+		// ✅ 3. internalFirstPolicy (optional but validate if present)
+		if (req.getInternalFirstPolicy() != null) {
+			error = validateObject(req.getInternalFirstPolicy(), "internalFirstPolicy");
+			if (error != null)
+				return error;
+		}
+
+		// ✅ 4. At least one job board must be selected
 		boolean hasJobBoard = Boolean.TRUE.equals(req.getInternalBoard()) || Boolean.TRUE.equals(req.getLinkedIn())
-				|| Boolean.TRUE.equals(req.getNaukri()) || Boolean.TRUE.equals(req.getIndeed())
-				|| Boolean.TRUE.equals(req.getCompanySite());
+				|| Boolean.TRUE.equals(req.getNaukri()) || // 🔥 FIX typo here
+				Boolean.TRUE.equals(req.getIndeed()) || Boolean.TRUE.equals(req.getCompanySite());
 
 		if (!hasJobBoard) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "targetJobBoard is required",
 					List.of("At least one job board must be selected"));
 		}
-		if (Boolean.TRUE.equals(req.getReferralEnabled())) {
-			error = validateObject(req.getReferralAmount(), "referralAmount");
-			if (error != null)
-				return error;
 
-			if (req.getReferralAmount() != null && req.getReferralAmount() <= 0) {
+		// ✅ 5. Referral validation
+		if (Boolean.TRUE.equals(req.getReferralEnabled())) {
+
+			if (req.getReferralAmount() == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "referralAmount is required",
+						List.of("Provide referral amount"));
+			}
+
+			if (req.getReferralAmount() <= 0) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "referralAmount must be greater than 0",
 						List.of("Referral amount must be positive"));
 			}
 		}
+
+		// ✅ 6. Diversity validation
 		if (Boolean.TRUE.equals(req.getDiversityEnabled())) {
-			error = validateObject(req.getDiversityTags(), "diversityTags");
-			if (error != null)
-				return error;
+
+			if (req.getDiversityTags() == null || req.getDiversityTags().isBlank()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "diversityTags is required",
+						List.of("Provide diversity tags"));
+			}
 		}
-		return null;
-	}
-	private ApiResponse<?> validateRoleRequirements(RolesAndRequirementsRequest request) {
 
-	    ApiResponse<?> error;
+		// ✅ 7. Optional: Sourcing budget validation
+		if (req.getSourcingBudget() != null && req.getSourcingBudget() < 0) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid sourcingBudget",
+					List.of("Sourcing budget cannot be negative"));
+		}
 
-	   
-	    if (request.getSkillsMustHave() == null || request.getSkillsMustHave().size() < 3) {
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Minimum 3 must-have skills required",
-	                List.of("Add at least 3 skills"));
-	    }
-
-	    if (request.getSkillsMustHave().size() > 10) {
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Maximum 10 must-have skills allowed",
-	                List.of("Reduce skills to 10"));
-	    }
-
-	
-	    if (request.getNiceToHaveSkills() != null &&
-	            request.getNiceToHaveSkills().size() > 10) {
-
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Max 10 nice-to-have skills allowed",
-	                List.of("Reduce skills"));
-	    }
-
-	    error = validateObject(request.getEducationRequirement(), "educationRequirement");
-	    if (error != null) return error;
-
-	    if (!List.of("None", "Degree Preferred", "Degree Required")
-	            .contains(request.getEducationRequirement())) {
-
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Invalid educationRequirement",
-	                List.of("Allowed: None, Degree Preferred, Degree Required"));
-	    }
-
-	    
-	    if (request.getMinExperience() == null || request.getMaxExperience() == null) {
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Experience range required",
-	                List.of("minExperience and maxExperience required"));
-	    }
-
-	    if (request.getMinExperience() < 0 || request.getMaxExperience() > 25) {
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Invalid experience range",
-	                List.of("Allowed range 0 to 25+"));
-	    }
-
-	    if (request.getMinExperience() > request.getMaxExperience()) {
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Invalid range",
-	                List.of("minExperience cannot be greater than maxExperience"));
-	    }
-
-	   
-	    if (request.getMinInterviewRounds() == null ||
-	        request.getMaxInterviewRounds() == null) {
-
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Interview rounds required",
-	                List.of("minInterviewRounds and maxInterviewRounds required"));
-	    }
-
-	    if (request.getMinInterviewRounds() < 1 ||
-	        request.getMaxInterviewRounds() > 8) {
-
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Invalid interview rounds",
-	                List.of("Range: 1 to 8"));
-	    }
-
-	    if (request.getMinInterviewRounds() > request.getMaxInterviewRounds()) {
-	        return ApiResponse.failure(ResponseCode.FAILURE,
-	                "Invalid interview range",
-	                List.of("minInterviewRounds cannot be greater than maxInterviewRounds"));
-	    }
-
-	    
-	    if (request.getTravelRequirement() != null) {
-
-	        List<String> allowedTravel = List.of(
-	                "None", "<10%", "10–25%", "25–50%", "50%+"
-	        );
-
-	        if (!allowedTravel.contains(request.getTravelRequirement())) {
-	            return ApiResponse.failure(ResponseCode.FAILURE,
-	                    "Invalid travelRequirement",
-	                    List.of("Allowed: None, <10%, 10–25%, 25–50%, 50%+"));
-	        }
-	    }
-
-	    return null;
+		return null; // ✅ valid
 	}
 
 	@Override
@@ -923,7 +1078,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				}
 			}
 		}
-		Long sequenceNumber = staffingRequisitionRepository.getNextSrSequence();
+		Integer sequenceNumber = entity.getSrSequence();
 		String formattedSeq = String.format("%04d", sequenceNumber);
 		return "SR-" + year + "-" + prefix + "-" + formattedSeq;
 	}

@@ -31,6 +31,6 @@ public class BudgetAndCompensationRequest {
 	
 	private Integer relocationBudgetAmount;
 	
-	private Integer AnnualHiringCost;
+	private Integer annualHiringCost;
 
 }

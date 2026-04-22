@@ -15,6 +15,6 @@ import com.hms.service.entity.SourcingStrategyEntity;
 public interface StaffingRequisitionRepository extends JpaRepository<SRPositionBasicsEntity,Integer> {
 	
 	@Query(value = "SELECT nextval('sr_sequence')", nativeQuery = true)
-	Long getNextSrSequence();
+	Integer getNextSrSequence();
 	
 }

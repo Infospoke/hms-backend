@@ -26,7 +26,7 @@ public class StaffingRequisitionRequest {
 	private SourcingStrategyRequest sourcingStrategyRequest;
 
 	@Valid
-	private ApprovalRequest approvalRequest;
+	private ReviewRequest reviewRequest;
 	
 
 }

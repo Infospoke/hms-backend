@@ -76,4 +76,10 @@ public class SequenceGenerator {
                 .createNativeQuery("SELECT nextval('permission_seq')")
                 .getSingleResult()).intValue();
     }
+	 
+	 public Integer generateSrSequence() {
+	        return ((Number) entityManager
+	                .createNativeQuery("SELECT nextval('sr_seq')")
+	                .getSingleResult()).intValue();
+	    }
 }
