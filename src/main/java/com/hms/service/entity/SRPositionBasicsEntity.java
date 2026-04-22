@@ -71,7 +71,7 @@ public class SRPositionBasicsEntity {
 	@Column(name="approved")
 	private Boolean approved;
 	
-	@Column(name="sr_id")
+	@Column(name = "sr_id", unique = true)
 	private String srId;
 	
 	@Column(name="created_on")
@@ -79,6 +79,8 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="created_by")
 	private String createdBy;
-
+	
+	@Column(name = "sr_sequence", unique = true)
+	private Long srSequence;
  
 }
