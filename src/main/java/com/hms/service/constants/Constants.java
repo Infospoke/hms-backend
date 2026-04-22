@@ -69,6 +69,29 @@ public class Constants {
 	public static final String PASSWORD_IS_REQUIRED = "Password is required";
 	public static final String CHANNEL_IS_REQUIRED = "Channel is required";
 	public static final String SUCCESS =  "success";
+	public static final String SR_ID_IS_REQUIRED = "SR ID is required";
+	public static final String SR_ID_CANNOT_BE_NULL_OR_EMPTY = "SR Id cannot be null or empty";
+	public static final String NO_DATA_FOUND = "No data found";
+	public static final String INVALID_SR_ID_IS = "Invalid SR ID: ";
+	public static final String SR_DATA_FETCHED_SUCCESSFULLY = "SR data fetched successfully";
+	public static final String FAILED_TO_FETCH_SR_DATA = "Failed to fetch SR data";
+	public static final String PAGE = "page";
+	public static final String SIZE = "size";
+	public static final String CREATED_ON = "createdOn";
+	public static final String NO_RECORDS_FOUND_IN_THE_DATABASE = "No records found in the database";
+	public static final String SR_ID = "srId";
+	public static final String JOB_TITLE = "jobTitle";
+	public static final String CREATED_DATE = "createdDate";
+	public static final String APPROVED = "APPROVED";
+	public static final String SUBMITTED = "SUBMITTED";
+	public static final String DRAFT = "DRAFT";
+	public static final String STATUS = "status";
+	public static final String CONTENT = "content";
+	public static final String CURRENT_PAGE = "currentPage";
+	public static final String TOTAL_PAGES = "totalPages";
+	public static final Object TOTAL_ELEMENTS = "totalElements";
+	public static final String INVALID_BUSINESS_UNIT_ID = "Invalid business unit id";
+	public static final String INVALID_DEPARTMENT_ID = "Invalid deparment id";
 
 	
 }

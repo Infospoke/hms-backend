@@ -1,6 +1,6 @@
 package com.hms.service.entity;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,14 +31,17 @@ public class ModuleEntity {
             sequenceName = "module_seq",
             allocationSize = 1
     )    
-	@Column(name = "module_id")
+	@Column(name = "module_id",nullable=false)
     private Integer moduleId;
+    
+    @Column(name="parent_id",nullable=false)
+    private Integer parentId;
 	
 	@Column(name = "module_name")
 	private String moduleName;
 
 	@Column(name = "created_date")
-	private LocalDateTime createdDate;
+	private LocalDate createdDate;
 
 	@Column(name = "created_by")
 	private String createdBy;
@@ -47,6 +50,6 @@ public class ModuleEntity {
 	private String updatedBy;
 
 	@Column(name = "updated_date")
-	private LocalDateTime updatedDate;
+	private LocalDate updatedDate;
 
 }

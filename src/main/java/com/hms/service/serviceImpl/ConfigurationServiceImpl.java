@@ -1,7 +1,11 @@
 package com.hms.service.serviceImpl;
 
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -124,23 +128,59 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	@Override
 	public ApiResponse<?> getAllModules() {
 
-		log.info("ConfigurationServiceImpl: Inside getAllModules method");
+	    log.info("ConfigurationServiceImpl: Inside getAllModules method");
 
-		List<ModuleEntity> moduleEntity = moduleRepository.findAll();
+	    List<ModuleEntity> moduleEntity = moduleRepository.findAll();
 
-		if (moduleEntity.isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_MODULES_FOUND);
-		}
-		List<ModuleResponse> moduleList = moduleEntity.stream()
-	            .map(module -> new ModuleResponse(
-	                    module.getModuleId(),
-	                    module.getModuleName()
-	            ))
+	    if (moduleEntity.isEmpty()) {
+	        return ApiResponse.failure(
+	                ResponseCode.FAILURE,
+	                Constants.NO_MODULES_FOUND
+	        );
+	    }
+
+	    Map<Integer, List<ModuleEntity>> grouped =
+	            moduleEntity.stream().collect(Collectors.groupingBy(
+	                    m -> m.getParentId() == null ? 0 : m.getParentId()
+	            ));
+
+	    List<ModuleEntity> parents = grouped.getOrDefault(0, Collections.emptyList());
+
+	    List<ModuleResponse> moduleList = parents.stream()
+	            .sorted(Comparator.comparing(ModuleEntity::getModuleId)) 
+	            .map(parent -> {
+
+	                ModuleResponse parentRes = new ModuleResponse();
+	                parentRes.setModuleId(parent.getModuleId());
+	                parentRes.setModuleName(parent.getModuleName());
+
+	            
+	                List<ModuleResponse> subModules =
+	                        grouped.getOrDefault(parent.getModuleId(), Collections.emptyList())
+	                                .stream()
+	                                .sorted(Comparator.comparing(ModuleEntity::getModuleId)) 
+	                                .map(child -> {
+	                                    ModuleResponse sub = new ModuleResponse();
+	                                    sub.setModuleId(child.getModuleId());
+	                                    sub.setModuleName(child.getModuleName());
+	                                    return sub; 
+	                                })
+	                                .toList();
+
+	                parentRes.setSubModules(subModules);
+
+	                return parentRes;
+
+	            })
 	            .toList();
 
-		log.info("ConfigurationServiceImpl: Exit from getAllModules method");
+	    log.info("ConfigurationServiceImpl: Exit from getAllModules method");
 
-		return ApiResponse.success(Constants.MODULE_FETCH_SUCCESS, moduleList, moduleList.size());
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            Constants.MODULE_FETCH_SUCCESS,
+	            moduleList
+	    );
 	}
 
 

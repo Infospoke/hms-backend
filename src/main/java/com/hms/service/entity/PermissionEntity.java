@@ -1,6 +1,6 @@
 package com.hms.service.entity;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,14 +31,14 @@ public class PermissionEntity {
             sequenceName = "permission_seq",
             allocationSize = 1
     )    
-	@Column(name = "permission_id")
+	@Column(name = "permission_id",nullable=false)
     private Integer permissionId;
 	
 	
-	@Column(name="module_id")
+	@Column(name="module_id",nullable=false)
 	private Integer moduleId;
 	
-	@Column(name="role_id")
+	@Column(name="role_id",nullable=false)
 	private Integer roleId;
 	
 	@Column(name="can_create")
@@ -54,7 +54,7 @@ public class PermissionEntity {
    private Boolean delete=false;
    
    @Column(name = "created_date")
-	private LocalDateTime createdDate;
+	private LocalDate createdDate;
 	
 	@Column(name="created_by")
 	private String createdBy;
@@ -63,6 +63,6 @@ public class PermissionEntity {
 	private String updatedBy;
 	
 	@Column(name="updated_date")
-	private LocalDateTime updatedDate;
+	private LocalDate updatedDate;
 	
 }

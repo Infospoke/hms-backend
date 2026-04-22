@@ -1,6 +1,6 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
+import com.hms.service.repository.BusinessUnitRepository;
+import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.request.ModulePermissionRequest;
@@ -37,6 +39,13 @@ public class RolesServiceImpl implements IRoleService {
 
 	@Autowired
 	private PermissionRepository permissionRepository;
+	
+
+	@Autowired
+	private BusinessUnitRepository businessUnitRepository;
+
+	@Autowired
+	private DepartmentsRepository departmentsRepository;
 
 	@Autowired
 	private SequenceGenerator sequenceGenerator;
@@ -56,9 +65,19 @@ public class RolesServiceImpl implements IRoleService {
 		entity.setRoleName(request.getRoleName());
 		entity.setRoleId(sequenceGenerator.generateRoleId());
 		entity.setDescription(request.getDescription());
-		entity.setCreatedDate(LocalDateTime.now());
-		entity.setBusinessUnitId(request.getBusinessUnitId());
-		entity.setDepartmentId(request.getDepartmentId());
+		entity.setCreatedDate(LocalDate.now());
+		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
+			entity.setBusinessUnitId(request.getBusinessUnitId());
+		} else {
+			log.info("BusinessUnit Id is required");
+            return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
+		}
+		if (departmentsRepository.existsById(request.getDepartmentId())) {
+			entity.setDepartmentId(request.getDepartmentId());
+		} else {
+			log.info("Department Id is required");
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
+		}
 
 		RolesEntity savedRole = roleInfoRepository.save(entity);
 
@@ -81,7 +100,7 @@ public class RolesServiceImpl implements IRoleService {
 			permissionEntity.setDelete(module.getDelete());
 
 			permissionEntity.setCreatedBy(permReq.getCreatedBy());
-			permissionEntity.setCreatedDate(LocalDateTime.now());
+			permissionEntity.setCreatedDate(LocalDate.now());
 
 			permissionList.add(permissionEntity);
 		}
@@ -175,7 +194,7 @@ public class RolesServiceImpl implements IRoleService {
 				permissionEntity.setDelete(module.getDelete());
 
 				permissionEntity.setUpdatedBy(permReq.getUpdatedBy());
-				permissionEntity.setUpdatedDate(LocalDateTime.now());
+				permissionEntity.setUpdatedDate(LocalDate.now());
 
 			} else {
 
@@ -191,7 +210,7 @@ public class RolesServiceImpl implements IRoleService {
 				permissionEntity.setDelete(module.getDelete());
 
 				permissionEntity.setCreatedBy(permReq.getCreatedBy());
-				permissionEntity.setCreatedDate(LocalDateTime.now());
+				permissionEntity.setCreatedDate(LocalDate.now());
 			}
 
 			permissionEntityList.add(permissionEntity);
