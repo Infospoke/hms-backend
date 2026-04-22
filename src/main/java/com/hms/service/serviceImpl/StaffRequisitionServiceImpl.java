@@ -35,6 +35,7 @@ import com.hms.service.repository.StaffingRequisitionRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
 import com.hms.service.request.PositonBascicsRequest;
+import com.hms.service.request.RolesAndRequirementsRequest;
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.SourcingStrategyRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
@@ -220,6 +221,72 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			budgetAndCompensationRepository.save(budgetEntity);
 
 			return validationResponse;
+		}
+
+		if (request.getRolesAndRequirementsRequest() != null) {
+
+			RolesAndRequirementsRequest rolesReq = request.getRolesAndRequirementsRequest();
+
+			ApiResponse<?> error = validateRoleRequirements(rolesReq);
+			if (error != null)
+				return error;
+
+			RolesAndRequirementsEntity entity = null;
+
+			if (rolesReq.getSrId() != null) {
+				entity = rolesAndRequirementsRepository.findBySrId(rolesReq.getSrId()).orElse(null);
+			}
+
+			if (entity == null) {
+
+				entity = new RolesAndRequirementsEntity();
+
+				 srId = rolesReq.getSrId();
+
+				if (srId == null || srId.isEmpty()) {
+					return ApiResponse.failure(ResponseCode.FAILURE, "srId is required", List.of("srId is required"));
+				}
+
+				entity.setSrId(srId);
+				entity.setDraft(true);
+				entity.setSubmitted(false);
+				entity.setApproved(false);
+			}
+
+			else {
+				entity.setDraft(true);
+			}
+
+			entity.setSkillsMustHave(
+					rolesReq.getSkillsMustHave() != null ? String.join(",", rolesReq.getSkillsMustHave()) : null);
+
+			entity.setNiceToHaveSkills(
+					(rolesReq.getNiceToHaveSkills() != null && !rolesReq.getNiceToHaveSkills().isEmpty())
+							? String.join(",", rolesReq.getNiceToHaveSkills())
+							: null);
+
+			entity.setEducationRequirement(rolesReq.getEducationRequirement());
+			entity.setMinExperience(rolesReq.getMinExperience());
+			entity.setMaxExperience(rolesReq.getMaxExperience());
+
+			entity.setCertificationsRequired(
+					(rolesReq.getCertificationsRequired() != null && !rolesReq.getCertificationsRequired().isEmpty())
+							? String.join(",", rolesReq.getCertificationsRequired())
+							: null);
+
+			entity.setMinInterviewRounds(rolesReq.getMinInterviewRounds());
+			entity.setMaxInterviewRounds(rolesReq.getMaxInterviewRounds());
+
+			entity.setAssessmentRequired(rolesReq.getAssessmentRequired());
+			entity.setTravelRequirement(rolesReq.getTravelRequirement());
+
+			entity.setLanguages((rolesReq.getLanguages() != null && !rolesReq.getLanguages().isEmpty())
+					? String.join(",", rolesReq.getLanguages())
+					: null);
+
+			rolesAndRequirementsRepository.save(entity);
+			return ApiResponse.success("Role Requirements saved successfully");
+
 		}
 
 		if (request.getSourcingStrategyRequest() != null) {
@@ -553,6 +620,101 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return error;
 		}
 		return null;
+	}
+	private ApiResponse<?> validateRoleRequirements(RolesAndRequirementsRequest request) {
+
+	    ApiResponse<?> error;
+
+	   
+	    if (request.getSkillsMustHave() == null || request.getSkillsMustHave().size() < 3) {
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Minimum 3 must-have skills required",
+	                List.of("Add at least 3 skills"));
+	    }
+
+	    if (request.getSkillsMustHave().size() > 10) {
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Maximum 10 must-have skills allowed",
+	                List.of("Reduce skills to 10"));
+	    }
+
+	
+	    if (request.getNiceToHaveSkills() != null &&
+	            request.getNiceToHaveSkills().size() > 10) {
+
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Max 10 nice-to-have skills allowed",
+	                List.of("Reduce skills"));
+	    }
+
+	    error = validateObject(request.getEducationRequirement(), "educationRequirement");
+	    if (error != null) return error;
+
+	    if (!List.of("None", "Degree Preferred", "Degree Required")
+	            .contains(request.getEducationRequirement())) {
+
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Invalid educationRequirement",
+	                List.of("Allowed: None, Degree Preferred, Degree Required"));
+	    }
+
+	    
+	    if (request.getMinExperience() == null || request.getMaxExperience() == null) {
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Experience range required",
+	                List.of("minExperience and maxExperience required"));
+	    }
+
+	    if (request.getMinExperience() < 0 || request.getMaxExperience() > 25) {
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Invalid experience range",
+	                List.of("Allowed range 0 to 25+"));
+	    }
+
+	    if (request.getMinExperience() > request.getMaxExperience()) {
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Invalid range",
+	                List.of("minExperience cannot be greater than maxExperience"));
+	    }
+
+	   
+	    if (request.getMinInterviewRounds() == null ||
+	        request.getMaxInterviewRounds() == null) {
+
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Interview rounds required",
+	                List.of("minInterviewRounds and maxInterviewRounds required"));
+	    }
+
+	    if (request.getMinInterviewRounds() < 1 ||
+	        request.getMaxInterviewRounds() > 8) {
+
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Invalid interview rounds",
+	                List.of("Range: 1 to 8"));
+	    }
+
+	    if (request.getMinInterviewRounds() > request.getMaxInterviewRounds()) {
+	        return ApiResponse.failure(ResponseCode.FAILURE,
+	                "Invalid interview range",
+	                List.of("minInterviewRounds cannot be greater than maxInterviewRounds"));
+	    }
+
+	    
+	    if (request.getTravelRequirement() != null) {
+
+	        List<String> allowedTravel = List.of(
+	                "None", "<10%", "10–25%", "25–50%", "50%+"
+	        );
+
+	        if (!allowedTravel.contains(request.getTravelRequirement())) {
+	            return ApiResponse.failure(ResponseCode.FAILURE,
+	                    "Invalid travelRequirement",
+	                    List.of("Allowed: None, <10%, 10–25%, 25–50%, 50%+"));
+	        }
+	    }
+
+	    return null;
 	}
 
 	@Override
