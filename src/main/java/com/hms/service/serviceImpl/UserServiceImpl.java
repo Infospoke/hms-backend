@@ -204,14 +204,32 @@ public class UserServiceImpl implements IUserService {
 		Long total = userRepository.getTotalUsers();
 		Long active = userRepository.getActiveUsers();
 		Long deactivated = userRepository.getDeactivatedUsers();
-		Long filtered = userRepository.getFilteredUsers(request.getRoleId());
+		Long filteredCount = null;
+		List<Map<String, Object>> roleCounts = null;
 
-		UserListResponse response = new UserListResponse(pageResult.getContent(), total, active, deactivated, filtered);
+		if (request.getRoleId() != null) {
+		    filteredCount = userRepository.getFilteredUsers(request.getRoleId());
+		} else {
+		    List<Object[]> result = userRepository.getUserCountByRole();
 
-		log.info("Users fetched. Total: {}, Filtered: {}", total, filtered);
+		    roleCounts = result.stream().map(obj -> {
+		        Map<String, Object> map = new HashMap<>();
+		        map.put("roleId", obj[0]);
+		        map.put("count", obj[1]);
+		        return map;
+		    }).toList();
+		}
+		UserListResponse response = new UserListResponse(
+		        pageResult.getContent(),
+		        total,
+		        active,
+		        deactivated,
+		        filteredCount,
+		        roleCounts
+		);
+	    log.info("UserServiceImpl:: exit from the getUsers Method");
 
-		log.info("UserServiceImpl:: exit from the getUsers Method");
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 
 	@Override

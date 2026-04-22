@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class UpdateUserRequest {
 
     private Integer roleId;
-    private Integer userId;
     private Integer businessUnitId;
     private Integer departmentId;
     private Boolean deactivate;
