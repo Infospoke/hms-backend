@@ -59,6 +59,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -433,6 +434,7 @@ public class UserServiceImpl implements IUserService {
 	public List<String> extractModules(String token) {
 		return decodeToken(token).get("modules", List.class);
 	}
+	
 
 	@Override
 	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {

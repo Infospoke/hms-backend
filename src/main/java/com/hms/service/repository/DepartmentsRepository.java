@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.DepartmentsEntity;
@@ -15,5 +17,8 @@ public interface DepartmentsRepository extends JpaRepository<DepartmentsEntity, 
 	List<DepartmentsEntity> findByBusinessUnitId(Integer businessUnitId, Sort sort);
 	
 	Optional<DepartmentsEntity> findByBusinessUnitId(Integer businessUnitId);
+
+	@Query("SELECT d.deptCode FROM DepartmentsEntity d WHERE d.businessUnitId = :businessUnitId")
+	String findDeptCodeByBusinessUnitId(@Param("businessUnitId") Integer businessUnitId);
 	
 }
