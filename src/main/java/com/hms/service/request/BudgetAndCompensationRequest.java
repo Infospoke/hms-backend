@@ -1,10 +1,6 @@
 package com.hms.service.request;
 
-import org.springframework.boot.convert.DataSizeUnit;
 
-import com.hms.service.constants.Constants;
-
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +8,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BudgetAndCompensationRequest {
+	
+	private String id;
+	
+	private String srId;
+	
+    private Integer minSalary;
+	
+	private Integer maxSalary;
 
 	private Integer proposedTotalCompensation;
 	
@@ -27,6 +31,6 @@ public class BudgetAndCompensationRequest {
 	
 	private Integer relocationBudgetAmount;
 	
-	private Integer AnnualHiringCost;
+	private Integer annualHiringCost;
 
 }

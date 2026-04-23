@@ -29,7 +29,7 @@ public class PositonBascicsRequest {
 
 	private String workMode;
 
-	private String EmploymentType;
+	private String employmentType;
 
 	private String priority;
 

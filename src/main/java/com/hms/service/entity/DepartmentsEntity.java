@@ -27,7 +27,8 @@ public class DepartmentsEntity {
 
     @Column(name = "business_unit_id")
     private Integer businessUnitId;
-    
+
     @Column(name="dept_code")
     private String deptCode;
+
 }

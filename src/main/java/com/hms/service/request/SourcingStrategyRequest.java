@@ -33,4 +33,6 @@ public class SourcingStrategyRequest {
  
 	private String diversityTags;
 
+	private String srId;
+
 }

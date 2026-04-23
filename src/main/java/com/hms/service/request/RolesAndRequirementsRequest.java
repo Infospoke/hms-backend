@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class RolesAndRequirementsRequest {
 
+	private String srId;
 	private List<String> skillsMustHave;
 
 	
