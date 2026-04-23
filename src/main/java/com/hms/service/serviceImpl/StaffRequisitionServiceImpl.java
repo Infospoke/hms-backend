@@ -106,7 +106,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			if (srPositionBasicsEntity == null) {
 				srPositionBasicsEntity = new SRPositionBasicsEntity();
-				srPositionBasicsEntity.setDraft(true);
 				srPositionBasicsEntity.setSubmitted(false);
 				srPositionBasicsEntity.setApproved(false);
 
@@ -155,7 +154,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				businessJustificationEntity = new BusinessJustificationEntity();
 
 				businessJustificationEntity.setSrId(srId);
-				businessJustificationEntity.setDraft(true);
 				businessJustificationEntity.setSubmitted(false);
 				businessJustificationEntity.setApproved(false);
 			}
@@ -211,7 +209,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				budgetEntity.setSrId(budgetRequest.getSrId());
 
-				budgetEntity.setDraft(true);
 				budgetEntity.setSubmitted(false);
 				budgetEntity.setApproved(false);
 			}
@@ -261,13 +258,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				}
 
 				entity.setSrId(srId);
-				entity.setDraft(true);
 				entity.setSubmitted(false);
 				entity.setApproved(false);
-			}
-
-			else {
-				entity.setDraft(true);
 			}
 
 			entity.setSkillsMustHave(rolesAndRequirementsRequest.getSkillsMustHave() != null
@@ -323,7 +315,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				entity = new SourcingStrategyEntity();
 
 				entity.setSrId(srId);
-				entity.setDraft(true);
 				entity.setSubmitted(false);
 				entity.setApproved(false);
 			}
@@ -356,29 +347,29 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 			try {
 				positionBasicsRepository.findBySrId(srId).ifPresent(entity -> {
-					entity.setDraft(false);
+
 					entity.setSubmitted(true);
 					positionBasicsRepository.save(entity);
 				});
 
 				businessJustificationRepository.findBySrId(srId).ifPresent(entity -> {
-					entity.setDraft(false);
+
 					entity.setSubmitted(true);
 					businessJustificationRepository.save(entity);
 				});
 
 				budgetAndCompensationRepository.findBySrId(srId).ifPresent(entity -> {
-					entity.setDraft(false);
+
 					entity.setSubmitted(true);
 					budgetAndCompensationRepository.save(entity);
 				});
 				rolesAndRequirementsRepository.findBySrId(srId).ifPresent(entity -> {
-					entity.setDraft(false);
+
 					entity.setSubmitted(true);
 					rolesAndRequirementsRepository.save(entity);
 				});
 				sourceStrategyRepository.findBySrId(srId).ifPresent(entity -> {
-					entity.setDraft(false);
+
 					entity.setSubmitted(true);
 					sourceStrategyRepository.save(entity);
 				});
@@ -848,7 +839,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				posRes.setWorkMode(posEntity.getWorkMode());
 				posRes.setEmploymentType(posEntity.getEmploymentType());
 				posRes.setPriority(posEntity.getPriority());
-				posRes.setDraft(posEntity.getDraft());
+
 				posRes.setSubmitted(posEntity.getSubmitted());
 				posRes.setApproved(posEntity.getApproved());
 				posRes.setCreatedOn(posEntity.getCreatedOn());
@@ -867,7 +858,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				bjRes.setImpactIfNotFilled(bjEntity.getImpactIfNotFilled());
 				bjRes.setReplacesEmployee(bjEntity.getReplacesEmployee());
 				bjRes.setDocument(bjEntity.getDocument());
-				bjRes.setDraft(bjEntity.getDraft());
+
 				bjRes.setSubmitted(bjEntity.getSubmitted());
 				bjRes.setApproved(bjEntity.getApproved());
 
@@ -887,7 +878,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				budRes.setEquityAmount(budgetEntity.getEquityAmount());
 				budRes.setRelocationBudgetAmount(budgetEntity.getRelocationBudgetAmount());
 				budRes.setAnnualHiringCost(budgetEntity.getAnnualHiringCost());
-				budRes.setDraft(budgetEntity.getDraft());
+
 				budRes.setSubmitted(budgetEntity.getSubmitted());
 				budRes.setApproved(budgetEntity.getApproved());
 
@@ -910,7 +901,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				roleRes.setCertificationsRequired(roleEntity.getCertificationsRequired());
 				roleRes.setLanguages(roleEntity.getLanguages());
 				roleRes.setAssessmentRequired(roleEntity.getAssessmentRequired());
-				roleRes.setDraft(roleEntity.getDraft());
+
 				roleRes.setSubmitted(roleEntity.getSubmitted());
 				roleRes.setApproved(roleEntity.getApproved());
 
@@ -935,7 +926,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srcRes.setReferralAmount(sourcingEntity.getReferralAmount());
 				srcRes.setDiversityEnabled(sourcingEntity.getDiversityEnabled());
 				srcRes.setDiversityTags(sourcingEntity.getDiversityTags());
-				srcRes.setDraft(sourcingEntity.getDraft());
+
 				srcRes.setSubmitted(sourcingEntity.getSubmitted());
 				srcRes.setApproved(sourcingEntity.getApproved());
 

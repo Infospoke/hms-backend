@@ -65,9 +65,7 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="priority")
 	private String priority;
-	
-	@Column(name="draft")
-	private Boolean draft;
+
 	
 	@Column(name="submitted")
 	private Boolean submitted;
@@ -87,9 +85,5 @@ public class SRPositionBasicsEntity {
 	@SequenceGenerator(name = "sr_seq_gen", allocationSize = 1)
 	@Column(name = "sr_sequence",nullable=false, unique = true)
 	private Integer srSequence;
-	
-//	@SequenceGenerator(name = "role_seq_gen", allocationSize = 1)
-//	@Column(name = "role_id",nullable=false, unique = true)
-//	private Integer roleId;
-// 
+
 }
