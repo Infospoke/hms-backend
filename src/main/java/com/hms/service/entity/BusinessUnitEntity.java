@@ -23,14 +23,6 @@ public class BusinessUnitEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
     
-    @SequenceGenerator(
-            name = "bus_seq_gen",
-            sequenceName = "bus_seq",
-            allocationSize = 1
-    )
-    @Column(name = "business_id", unique = true)
-    private Integer businessId;
-
     @Column(name = "business_name")
     private String businessName;
 }

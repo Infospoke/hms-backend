@@ -29,29 +29,6 @@ public class SequenceGenerator {
                 .getSingleResult()).intValue();
     }
 
-    public Integer generateDepartmentId() {
-        return ((Number) entityManager
-                .createNativeQuery("SELECT nextval('dept_seq')")
-                .getSingleResult()).intValue();
-    }
-
-    public Integer generateBusinessId() {
-        return ((Number) entityManager
-                .createNativeQuery("SELECT nextval('bus_seq')")
-                .getSingleResult()).intValue();
-    }
-
-    public Integer generateEmployementTypeId() {
-        return ((Number) entityManager
-                .createNativeQuery("SELECT nextval('emp_seq')")
-                .getSingleResult()).intValue();
-    }
-
-    public Integer generateUserTypeId() {
-        return ((Number) entityManager
-                .createNativeQuery("SELECT nextval('usertype_seq')")
-                .getSingleResult()).intValue();
-    }
 
     public Integer generateRoleId() {
         return ((Number) entityManager

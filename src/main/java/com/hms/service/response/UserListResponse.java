@@ -18,7 +18,7 @@ public class UserListResponse {
     private Long activeCount;       
     private Long deactivatedCount; 
 
-    private Long filteredCount; // when roleId present
+    private Long filteredCount; 
 
-    private List<Map<String, Object>> roleCounts; // when roleId null
+    private List<Map<String, Object>> roleCounts; 
 }

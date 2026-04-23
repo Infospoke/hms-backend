@@ -3,15 +3,18 @@ package com.hms.service.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.hms.service.request.FilterRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
-import com.hms.service.request.UserFilterRequest;
+import com.hms.service.response.UserUpdationResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -32,19 +35,28 @@ public class UserController {
 	}
 
 	@PostMapping("/list")
-    public ApiResponse<?> getUsers(@RequestBody UserFilterRequest request) {
-        return iUserService.getUsers(request);
-    }
-
+	public ApiResponse<?> getUsers(@RequestBody FilterRequest request) {
+	    return iUserService.getUsersList(request);
+	}
 	 
 	 @PutMapping("/update/{id}")
-	 public ResponseEntity<ApiResponse<String>> updateUser(
+	 public ResponseEntity<ApiResponse<?>> updateUser(
 			 @PathVariable("id") Integer id,
 	         @RequestBody UpdateUserRequest request) {
 		 
-		 ApiResponse<String> response = iUserService.updateUser(id, request);
+		 ApiResponse<?> response = iUserService.updateUser(id, request);
 	        return new ResponseEntity<>(response, HttpStatus.OK);
 	 
+	 }
+	 
+	 @PostMapping("/count")
+	 public ApiResponse<?> getUserCounts() {
+	     return iUserService.getUserCounts();
+	 }
+	 
+	 @GetMapping("/details/{id}")
+	 public ResponseEntity<ApiResponse<UserUpdationResponse>> getUserById(@PathVariable("id") Integer id) {
+	     return ResponseEntity.ok(iUserService.getUserById(id));
 	 }
 	 
 }

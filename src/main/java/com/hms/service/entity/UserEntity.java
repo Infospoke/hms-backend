@@ -10,7 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Pattern;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -78,9 +77,6 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
-    @Column(name = "role_name",unique=true)
-    private String roleName;
-
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
@@ -89,5 +85,6 @@ public class UserEntity {
 
 	 @Column(name = "username")
     private String username;
+	
 
 }
