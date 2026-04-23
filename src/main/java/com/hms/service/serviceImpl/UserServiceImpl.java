@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +24,10 @@ import org.springframework.stereotype.Service;
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
-import com.hms.service.entity.PasswordHistoryEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ChannelTypes;
-import com.hms.service.enums.CredentialType;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -39,7 +38,6 @@ import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
-import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
 import com.hms.service.response.LoginResponse;
@@ -96,7 +94,13 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
+	
+	@Autowired
+	private MailServiceImpl mailService;
 
+	@Value("${spring.mail.username}")
+	private String fromEmail;
+	
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
@@ -574,9 +578,58 @@ public class UserServiceImpl implements IUserService {
 	}
 
 	@Override
-	public ApiResponse<?> resetPassword(ResetPasswordRequest request, String channel) {
-		// TODO Auto-generated method stub
-		return null;
+	public ApiResponse<?> forgotPassword(String email) {
+
+	    UserEntity user = userRepository.findByEmailAndActiveTrue(email)
+	            .orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+
+	    String rawPassword = PasswordGenerator.generatePassword(8);
+	    String rawPin = PasswordGenerator.generatePin(4);
+
+	    String encodedPassword = passwordEncoder.encode(rawPassword);
+	    String encodedPin = passwordEncoder.encode(rawPin);
+
+	    user.setPassword(encodedPassword);
+	    user.setPin(encodedPin);
+
+	    user.setPasswordUpdatedAt(LocalDateTime.now());
+	    user.setPinUpdatedAt(LocalDateTime.now());
+
+	    user.setFailedAttempts(0);
+	    user.setAccountLocked(false);
+	    user.setLockTime(null);
+	    user.setForcePasswordReset(false);
+
+	    userRepository.save(user);
+	    sendForgotPasswordMail(user, rawPassword, rawPin);
+
+	    return ApiResponse.success("New credentials sent to registered email");
+	}
+	
+	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
+
+	    String subject = "Your New Login Credentials";
+
+	    String body = "<html><body>"
+	            + "<p>Dear " + user.getFirstName() + ",</p>"
+	            + "<p>Your password has been reset successfully.</p>"
+	            + "<p><b>Username:</b> " + user.getEmail() + "</p>"
+	            + "<p><b>Password:</b> " + password + "</p>"
+	            + "<p><b>PIN:</b> " + pin + "</p>"
+	            + "<br/>"
+	            + "<p>Please login and change your credentials immediately.</p>"
+	            + "<br/>"
+	            + "<p>Regards,<br/>Infospoke</p>"
+	            + "</body></html>";
+
+	    mailService.sendMail(
+	            fromEmail, 
+	            user.getEmail(),        
+	            null,                  
+	            subject,
+	            body,
+	            null                   
+	    );
 	}
 
 

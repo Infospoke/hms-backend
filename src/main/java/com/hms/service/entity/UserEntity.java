@@ -99,5 +99,7 @@ public class UserEntity {
 	private Boolean forcePasswordReset = false;
 
 	private LocalDateTime passwordUpdatedAt;
+	
+	private LocalDateTime pinUpdatedAt;
 
 }

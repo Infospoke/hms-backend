@@ -93,6 +93,8 @@ public class Constants {
 	public static final String INVALID_BUSINESS_UNIT_ID = "Invalid business unit id";
 	public static final String INVALID_DEPARTMENT_ID = "Invalid deparment id";
 	public static final String WITHIN_RANGE = "Within Range";
+	public static final String COULD_NOT_ATTACH_FILE = "We couldn’t attach the file. Please try again.";
+	public static final String MAIL_FAILURE = "Failed to send the email";
 
 	
 }
