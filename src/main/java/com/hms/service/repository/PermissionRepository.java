@@ -20,7 +20,7 @@ public interface PermissionRepository  extends JpaRepository<PermissionEntity, I
 		""")
 		List<Object[]> fetchPermissionDetails();
 
-
+		
 	List<PermissionEntity> findByRoleId(Integer roleId);
 
 }

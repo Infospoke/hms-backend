@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.LoginRequest;
+import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.response.LoginResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.wrappers.ApiResponse;
@@ -34,6 +35,12 @@ public class LoginController {
 	@GetMapping("/validate")
 	public boolean validateToken(@RequestParam("token") String token) {
 		return userService.validateToken(token);
+	}
+	
+	@PostMapping("/reset-password")
+	public ApiResponse<?> resetPassword(@RequestBody ResetPasswordRequest request,
+	                                    @RequestHeader("X-Channel") String channel) {
+	    return userService.resetPassword(request, channel);
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.hms.service.service;
 
 import com.hms.service.request.LoginRequest;
+import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
 import com.hms.service.request.UserFilterRequest;
@@ -20,6 +21,8 @@ public interface IUserService {
 	boolean validateToken(String token);
 
 	ApiResponse<?> getUsers(UserFilterRequest request);
+
+	ApiResponse<?> resetPassword(ResetPasswordRequest request, String channel);
 	
     
 }

@@ -1,6 +1,7 @@
 package com.hms.service.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Pattern;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -89,5 +89,18 @@ public class UserEntity {
 
 	 @Column(name = "username")
     private String username;
+	 
+	 @Column(name = "failed_attempts")
+	 private Integer failedAttempts = 0;
+
+	 @Column(name = "account_locked")
+	 private Boolean accountLocked = false;
+
+	 @Column(name = "lock_time")
+	 private LocalDateTime lockTime;
+	 
+	 private Boolean forcePasswordReset = false;
+
+	 private LocalDateTime passwordUpdatedAt;
 
 }
