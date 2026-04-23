@@ -92,6 +92,7 @@ public class Constants {
 	public static final Object TOTAL_ELEMENTS = "totalElements";
 	public static final String INVALID_BUSINESS_UNIT_ID = "Invalid business unit id";
 	public static final String INVALID_DEPARTMENT_ID = "Invalid deparment id";
+	public static final String WITHIN_RANGE = "Within Range";
 
 	
 }

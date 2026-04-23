@@ -20,54 +20,59 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     boolean existsByEmployeeId(Integer employeeId);
 
     boolean existsByEmail(String email);
+    @Query(value = """
+    	    SELECT 
+    	        u.id AS id,
+    	        u.username AS username,
+    	        u.email AS email,
+    	        ar.role_id AS roleId,
+    	        r.role_name AS roleName,
+    	        CASE 
+    	            WHEN u.active = true THEN true 
+    	            ELSE false 
+    	        END AS active
+    	    FROM tb_user u
+    	    JOIN tb_assign_roles ar ON u.user_id = ar.user_id
+    	    JOIN tb_role r ON ar.role_id = r.role_id
+    	    WHERE (:roleId IS NULL OR ar.role_id = :roleId)
+    	""",
+    	countQuery = """
+    	    SELECT COUNT(*)
+    	    FROM tb_user u
+    	    JOIN tb_assign_roles ar ON u.user_id = ar.user_id
+    	    WHERE (:roleId IS NULL OR ar.role_id = :roleId)
+    	""",
+    	nativeQuery = true)
+    	Page<UserResponse> findUsersByRole(@Param("roleId") Integer roleId, Pageable pageable);
     
-    @Query("""
-    	    SELECT new com.hms.service.response.UserResponse(
-    	        u.userId,
-    	        u.firstName,
-    	        r.roleId,
-    	        u.email,
-    	        null,
-    	        u.active
-    	    )
-    	    FROM UserEntity u
-    	    JOIN AssignRolesEntity r ON u.userId = r.userId
-    	    WHERE (:roleId IS NULL OR r.roleId = :roleId)
-    	""")
-    	Page<UserResponse> findUsersByRole(
-    	        @Param("roleId") Integer roleId,
-    	        Pageable pageable
-    	);
     boolean existsByUsername(String username);
     
     @Query("SELECT COUNT(u) FROM UserEntity u")
     Long getTotalUsers();
 
-   
     @Query("SELECT COUNT(u) FROM UserEntity u WHERE u.active = true")
     Long getActiveUsers();
 
-   
     @Query("SELECT COUNT(u) FROM UserEntity u WHERE u.active = false")
     Long getDeactivatedUsers();
-
-    @Query("""
-        SELECT COUNT(u)
-        FROM UserEntity u
-        JOIN AssignRolesEntity r ON u.userId = r.userId
-        WHERE (:roleId IS NULL OR r.roleId = :roleId)
-    """)
-    Long getFilteredUsers(@Param("roleId") Integer roleId);
-    
     
     @Query("""
-    	    SELECT r.roleId, COUNT(u)
+    	    SELECT ro.roleId, ro.roleName, COUNT(u)
     	    FROM UserEntity u
     	    JOIN AssignRolesEntity r ON u.userId = r.userId
-    	    GROUP BY r.roleId
+    	    JOIN RolesEntity ro ON r.roleId = ro.roleId
+    	    GROUP BY ro.roleId, ro.roleName
     	""")
     	List<Object[]> getUserCountByRole();
-    	
+    
+    	@Query("""
+    		    SELECT COUNT(u)
+    		    FROM UserEntity u
+    		    JOIN AssignRolesEntity r ON u.userId = r.userId
+    		    WHERE (:roleId IS NULL OR r.roleId = :roleId)
+    		""")
+    		Long getFilteredUsers(@Param("roleId") Integer roleId);
+   
     Optional<UserEntity> findByUserId(Integer userId);
 
 
