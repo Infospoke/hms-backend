@@ -18,9 +18,6 @@ public interface IUserService {
 
 	boolean validateToken(String token);
 
-
-	ApiResponse<?> resetPassword(ResetPasswordRequest request, String channel);
-
 	ApiResponse<?> getUserCounts();
 
 	ApiResponse<?> getUsersList(FilterRequest request);
@@ -28,6 +25,8 @@ public interface IUserService {
 	ApiResponse<?> updateUser(Integer id, UpdateUserRequest request);
 
 	ApiResponse<UserUpdationResponse> getUserById(Integer id);
+
+	ApiResponse<?> forgotPassword(String email);
 
 	
     

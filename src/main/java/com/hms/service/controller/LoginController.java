@@ -37,10 +37,9 @@ public class LoginController {
 		return userService.validateToken(token);
 	}
 	
-	@PostMapping("/reset-password")
-	public ApiResponse<?> resetPassword(@RequestBody ResetPasswordRequest request,
-	                                    @RequestHeader("X-Channel") String channel) {
-	    return userService.resetPassword(request, channel);
+	@PostMapping("/forgot-password")
+	public ApiResponse<?> forgotPassword(@RequestParam("email") String email) {
+	    return userService.forgotPassword(email);
 	}
 
 }
