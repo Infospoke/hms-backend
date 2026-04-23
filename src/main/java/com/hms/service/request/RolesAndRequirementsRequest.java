@@ -33,9 +33,9 @@ public class RolesAndRequirementsRequest {
 
 	private Integer maxInterviewRounds;
 
-	private String certificationsRequired;
+	private List<String> certificationsRequired;
 
-	private String languages;
+	private List<String> languages;
 
 	private Boolean assessmentRequired = false;
 

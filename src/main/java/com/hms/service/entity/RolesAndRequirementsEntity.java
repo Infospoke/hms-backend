@@ -58,8 +58,6 @@ public class RolesAndRequirementsEntity {
 	@Column(name="assessment_required")
 	private Boolean assessmentRequired = false;
 	
-	@Column(name="draft")
-	private Boolean draft;
 	
 	@Column(name="submitted")
 	private Boolean submitted;

@@ -60,9 +60,6 @@ public class SourcingStrategyEntity {
 	 
 	    @Column(name = "diversity_tags", columnDefinition = "TEXT")
 	    private String diversityTags;
-	    
-	    @Column(name="draft")
-		private Boolean draft;
 		
 		@Column(name="submitted")
 		private Boolean submitted;

@@ -3,6 +3,7 @@ package com.hms.service.serviceImpl;
 import java.security.Key;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,15 +28,23 @@ import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ChannelTypes;
+import com.hms.service.entity.PasswordHistoryEntity;
+import com.hms.service.entity.PermissionEntity;
+import com.hms.service.entity.RolesEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.enums.ChannelTypes;
+import com.hms.service.enums.CredentialType;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.ModuleRepository;
+import com.hms.service.repository.PasswordHistoryRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
+import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
 import com.hms.service.response.LoginResponse;
@@ -85,6 +94,9 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private BusinessUnitRepository businessUnitRepository;
+
+	@Autowired
+	private PasswordHistoryRepository passwordHistoryRepository;
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
@@ -388,11 +400,12 @@ public class UserServiceImpl implements IUserService {
 		}
 	}
 
-	public String generateToken(String userName, String roleName, List<String> modules) {
+	public String generateToken(String email, String userName, String roleName, List<String> modules) {
 		Map<String, Object> claims = new HashMap<>();
+		claims.put("username", userName);
 		claims.put("role", roleName);
 		claims.put("modules", modules);
-		return createToken(claims, userName);
+		return createToken(claims, email);
 	}
 
 	private String createToken(Map<String, Object> claims, String userName) {
@@ -412,6 +425,10 @@ public class UserServiceImpl implements IUserService {
 
 	public String extractUsername(String token) {
 		return decodeToken(token).getSubject();
+	}
+	
+	public String extractUsernameFromClaims(String token) {
+	    return decodeToken(token).get("username", String.class);
 	}
 
 	public String extractRole(String token) {
@@ -445,6 +462,71 @@ public class UserServiceImpl implements IUserService {
 				}
 			}
 
+			if (Boolean.TRUE.equals(user.getAccountLocked())) {
+
+				if (Boolean.TRUE.equals(user.getForcePasswordReset())) {
+					throw new IllegalArgumentException("Please reset your password");
+				}
+
+				if (user.getLockTime() != null && user.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
+
+					throw new IllegalArgumentException("Account is locked. Try after 2 minutes");
+
+				} else {
+					user.setAccountLocked(false);
+					user.setLockTime(null);
+					userRepository.save(user);
+				}
+			}
+
+			if (user.getPasswordUpdatedAt() != null
+					&& user.getPasswordUpdatedAt().plusMonths(3).isBefore(LocalDateTime.now())) {
+
+				user.setForcePasswordReset(true);
+				userRepository.save(user);
+
+				throw new IllegalArgumentException("Password expired. Please reset your password");
+			}
+
+			boolean isValid;
+
+			if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+				isValid = passwordEncoder.matches(request.getPassword(), user.getPassword());
+			} else {
+				isValid = passwordEncoder.matches(request.getPin(), user.getPin());
+			}
+
+			if (!isValid) {
+
+				int attempts = user.getFailedAttempts() == null ? 0 : user.getFailedAttempts();
+				attempts++;
+				user.setFailedAttempts(attempts);
+
+				if (attempts == 3) {
+					user.setAccountLocked(true);
+					user.setLockTime(LocalDateTime.now());
+					userRepository.save(user);
+
+					throw new IllegalArgumentException("Account locked for 2 minutes");
+				}
+
+				if (attempts > 3) {
+					user.setAccountLocked(true);
+					user.setForcePasswordReset(true);
+					userRepository.save(user);
+
+					throw new IllegalArgumentException("Too many attempts. Please reset password");
+				}
+
+				userRepository.save(user);
+				throw new IllegalArgumentException("Invalid credentials");
+			}
+
+			user.setFailedAttempts(0);
+			user.setAccountLocked(false);
+			user.setLockTime(null);
+			userRepository.save(user);
+
 			AssignRolesEntity assignRole = assignRolesRepository.findByUserId(user.getUserId())
 					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
 
@@ -463,16 +545,21 @@ public class UserServiceImpl implements IUserService {
 			List<String> modules = permissions.stream().map(p -> moduleMap.get(p.getModuleId()))
 					.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct().toList();
 
-			String token = generateToken(user.getEmail(), role.getRoleName(), modules);
+
+			String token = generateToken(user.getEmail(),user.getUsername(), role.getRoleName(), modules);
+
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
 
-			return new ApiResponse<>(ResponseCode.SUCCESS, "Success", response);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successfull", response);
+
 
 		} catch (Exception e) {
 			return ApiResponse.failure(e.getMessage());
 		}
+
 	}
 
 	private void validateLogin(LoginRequest request, String channel) {
@@ -507,4 +594,12 @@ public class UserServiceImpl implements IUserService {
 			}
 		}
 	}
+
+	@Override
+	public ApiResponse<?> resetPassword(ResetPasswordRequest request, String channel) {
+		// TODO Auto-generated method stub
+		return null;
+
+	}
+
 }
