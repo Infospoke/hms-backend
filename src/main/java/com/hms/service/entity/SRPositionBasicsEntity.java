@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.SequenceGenerator;
 @Entity
 @Table(name="tb_sr_position_basics")
 @Data
@@ -37,9 +38,12 @@ public class SRPositionBasicsEntity {
 	private Integer departmentId;
 	
 	@ElementCollection
-    @CollectionTable(name = "tb_child_reporting_manager_info", joinColumns = @JoinColumn(name = "staffing_requisition_id"))
-    @Column(name = "reporting_manager_ids")
-    private List<Integer> reportingManagerInfo;						
+	@CollectionTable(
+	    name = "tb_child_reporting_manager_info",
+	    joinColumns = @JoinColumn(name = "staffing_requisition_id", referencedColumnName = "id")
+	)
+	@Column(name = "reporting_manager_ids")
+	private List<Integer> reportingManagerInfo;				
 	
 	@Column(name="location")
 	private String location;
@@ -71,7 +75,7 @@ public class SRPositionBasicsEntity {
 	@Column(name="approved")
 	private Boolean approved;
 	
-	@Column(name="sr_id")
+	@Column(name = "sr_id", unique = true)
 	private String srId;
 	
 	@Column(name="created_on")
@@ -79,6 +83,13 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="created_by")
 	private String createdBy;
-
- 
+	
+	@SequenceGenerator(name = "sr_seq_gen", allocationSize = 1)
+	@Column(name = "sr_sequence",nullable=false, unique = true)
+	private Integer srSequence;
+	
+//	@SequenceGenerator(name = "role_seq_gen", allocationSize = 1)
+//	@Column(name = "role_id",nullable=false, unique = true)
+//	private Integer roleId;
+// 
 }

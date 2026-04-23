@@ -23,6 +23,7 @@ import com.hms.service.constants.Constants;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PermissionEntity;
+
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ChannelTypes;
@@ -33,13 +34,13 @@ import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
-import com.hms.service.request.UserFilterRequest;
 import com.hms.service.response.LoginResponse;
-import com.hms.service.response.UserListResponse;
 import com.hms.service.response.UserResponse;
+import com.hms.service.response.UserUpdationResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.utils.PasswordGenerator;
 import com.hms.service.utils.SequenceGenerator;
@@ -188,51 +189,103 @@ public class UserServiceImpl implements IUserService {
 		log.info("UserServiceImpl:: Exit from the createUser Method");
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
 	}
-
 	@Override
-	public ApiResponse<?> getUsers(UserFilterRequest request) {
+	public ApiResponse<?> getUserCounts() {
 
-		log.info("UserServiceImpl:: Inside the getUsers Method");
+	    log.info("UserServiceImpl:: Inside getUserCounts");
 
-		if (request.getPage() == null || request.getSize() == null) {
-			log.info("Page size must be provided");
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
-		}
+	    Long total = userRepository.getTotalUsers();
+	    Long active = userRepository.getActiveUsers();
+	    Long deactivated = userRepository.getDeactivatedUsers();
 
-		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), Sort.by("userId").descending());
+	    List<Object[]> result = userRepository.getUserCountByRole();
 
-		log.info("Fetching user list for roleId: {}", request.getRoleId());
+	    List<Map<String, Object>> roleCounts = result.stream().map(obj -> {
+	        Map<String, Object> map = new HashMap<>();
+	        map.put("roleId", obj[0]);
+	        map.put("roleName", obj[1]);
+	        map.put("count", obj[2]);
+	        return map;
+	    }).toList();
 
-		Page<UserResponse> pageResult = userRepository.findUsersByRole(request.getRoleId(), pageable);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("total", total);
+	    response.put("active", active);
+	    response.put("deactivated", deactivated);
+	    response.put("roleCounts", roleCounts);
 
-		Long total = userRepository.getTotalUsers();
-		Long active = userRepository.getActiveUsers();
-		Long deactivated = userRepository.getDeactivatedUsers();
-		Long filteredCount = null;
-		List<Map<String, Object>> roleCounts = null;
+	    log.info("UserServiceImpl:: Exit getUserCounts");
 
-		if (request.getRoleId() != null) {
-			filteredCount = userRepository.getFilteredUsers(request.getRoleId());
-		} else {
-			List<Object[]> result = userRepository.getUserCountByRole();
-
-			roleCounts = result.stream().map(obj -> {
-				Map<String, Object> map = new HashMap<>();
-				map.put("roleId", obj[0]);
-				map.put("count", obj[1]);
-				return map;
-			}).toList();
-		}
-		UserListResponse response = new UserListResponse(pageResult.getContent(), total, active, deactivated,
-				filteredCount, roleCounts);
-		log.info("UserServiceImpl:: exit from the getUsers Method");
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
+	
+	
+	@Override
+	public ApiResponse<?> getUsersList(FilterRequest request) {
 
+	    log.info("UserServiceImpl:: Inside getUsersList");
+
+	    if (request.getPage() == null || request.getSize() == null) {
+	        return ApiResponse.failure(
+	            ResponseCode.FAILURE,
+	            "failure",
+	            List.of("page and size must be provided")
+	        );
+	    }
+
+	    if (request.getPage() < 0 || request.getSize() <= 0) {
+	        return ApiResponse.failure(
+	            ResponseCode.FAILURE,
+	            "failure",
+	            List.of("Invalid page or size values")
+	        );
+	    }
+
+	    
+	    Sort sort = Sort.by(
+	        "DESC".equalsIgnoreCase(request.getDirection())
+	            ? Sort.Direction.DESC
+	            : Sort.Direction.ASC,
+	        request.getSortBy() != null ? request.getSortBy() : "userId"
+	    );
+
+	    Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+	 
+	    Integer roleId = null;
+
+	    if (request.getFilters() != null && request.getFilters().containsKey("roleId")) {
+	        try {
+	            roleId = Integer.parseInt(request.getFilters().get("roleId").toString());
+	        } catch (Exception e) {
+	            return ApiResponse.failure(
+	                ResponseCode.FAILURE,
+	                "failure",
+	                List.of("roleId must be a valid number")
+	            );
+	        }
+	    }
+
+	    log.info("Fetching users for roleId: {}", roleId);
+
+	    
+	    Page<UserResponse> pageResult = userRepository.findUsersByRole(roleId, pageable);
+
+	    
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("users", pageResult.getContent());
+	    response.put("currentPage", pageResult.getNumber());
+	    response.put("totalPages", pageResult.getTotalPages());
+	    response.put("totalElements", pageResult.getTotalElements());
+
+	    log.info("UserServiceImpl:: Exit getUsersList");
+
+	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	}
+	
 	@Override
 	@Transactional
-	public ApiResponse<String> updateUser(Integer id, UpdateUserRequest request) {
+	public ApiResponse<?> updateUser(Integer id, UpdateUserRequest request) {
 
 		log.info("updateUser - Started for userId: {}", id);
 
@@ -288,6 +341,37 @@ public class UserServiceImpl implements IUserService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
+	
+	@Override
+	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
+
+	    log.info("getUserById - Started for userId: {}", id);
+
+	    UserEntity user = userRepository.findByUserId(id)
+	            .orElseThrow(() -> new RuntimeException("User not found"));
+
+	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
+
+	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+	            .orElseThrow(() -> new RuntimeException("Role not found"));
+
+	    UserUpdationResponse response = new UserUpdationResponse(
+	            user.getUsername(),
+	            user.getEmail(),
+	            user.getActive(),
+	            role.getRoleName(),
+	            roleEntity.getAssignedBy(),
+	            roleEntity.getAssignedAt()
+	    );
+
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "User details fetched successfully",
+	            response
+	    );
+	}
+
 
 	@Override
 	public boolean validateToken(String token) {

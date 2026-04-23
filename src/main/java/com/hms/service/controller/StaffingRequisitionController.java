@@ -1,7 +1,5 @@
 package com.hms.service.controller;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
-import com.hms.service.request.UserFilterRequest;
+
 import com.hms.service.service.IStaffingRequisitionService;
 import com.hms.service.wrappers.ApiResponse;
 
