@@ -55,7 +55,7 @@ public class ApiResponse<T> {
 	
 	public ApiResponse(ResponseCode responseCode, String message,T data) {
 		this.responsecode = responseCode.getCode();
-		this.message = responseCode.getMessage();
+		this.message = message;
 		this.data = data;
 	}
 

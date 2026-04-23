@@ -2,6 +2,7 @@ package com.hms.service.service;
 
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
+import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.request.UpdateUserRequest;
 import com.hms.service.request.UserCreationRequest;
 import com.hms.service.response.LoginResponse;
@@ -17,13 +18,17 @@ public interface IUserService {
 
 	boolean validateToken(String token);
 
+
+	ApiResponse<?> resetPassword(ResetPasswordRequest request, String channel);
+
 	ApiResponse<?> getUserCounts();
 
 	ApiResponse<?> getUsersList(FilterRequest request);
 
 	ApiResponse<?> updateUser(Integer id, UpdateUserRequest request);
 
-	 ApiResponse<UserUpdationResponse> getUserById(Integer id);
+	ApiResponse<UserUpdationResponse> getUserById(Integer id);
+
 	
     
 }
