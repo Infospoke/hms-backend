@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +21,11 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.AssignRolesEntity;
+import com.hms.service.entity.ModuleEntity;
+import com.hms.service.entity.PermissionEntity;
+import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.enums.ChannelTypes;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -72,13 +78,13 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private SequenceGenerator sequenceGenerator;
-	
+
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
-	
+
 	@Autowired
 	private BusinessUnitRepository businessUnitRepository;
- 
+
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
 
@@ -105,7 +111,7 @@ public class UserServiceImpl implements IUserService {
 		try {
 			dob = LocalDate.parse(request.getDateOfBirth());
 		} catch (Exception e) {
-			log.error("exception occured at dob "+e.getMessage());
+			log.error("exception occured at dob " + e.getMessage());
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
 		}
 
@@ -118,8 +124,6 @@ public class UserServiceImpl implements IUserService {
 			log.info("alternative number must be different");
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
 		}
-		
-		
 
 		String rawPassword = PasswordGenerator.generatePassword(8);
 		String rawPin = PasswordGenerator.generatePin(4);
@@ -142,7 +146,7 @@ public class UserServiceImpl implements IUserService {
 			user.setBusinessUnitId(request.getBusinessUnitId());
 		} else {
 			log.info("BusinessUnit Id is required");
-            return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
 		}
 		if (departmentsRepository.existsById(request.getDepartmentId())) {
 			user.setDepartmentId(request.getDepartmentId());
@@ -153,8 +157,8 @@ public class UserServiceImpl implements IUserService {
 
 		user.setPassword(passwordEncoder.encode(rawPassword));
 		user.setPin(passwordEncoder.encode(rawPin));
-		log.info("PIN"+rawPin);
-		log.info("password"+rawPassword);
+		log.info("PIN" + rawPin);
+		log.info("password" + rawPassword);
 
 		user.setActive(true);
 		user.setDeactivated(false);
@@ -182,7 +186,7 @@ public class UserServiceImpl implements IUserService {
 		data.put("userId", userId);
 		data.put("username", request.getFirstName());
 		log.info("UserServiceImpl:: Exit from the createUser Method");
-		return ApiResponse.success(ResponseCode.SUCCESS,Constants.SUCCESS, data);
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
 	}
 
 	@Override
@@ -208,100 +212,81 @@ public class UserServiceImpl implements IUserService {
 		List<Map<String, Object>> roleCounts = null;
 
 		if (request.getRoleId() != null) {
-		    filteredCount = userRepository.getFilteredUsers(request.getRoleId());
+			filteredCount = userRepository.getFilteredUsers(request.getRoleId());
 		} else {
-		    List<Object[]> result = userRepository.getUserCountByRole();
+			List<Object[]> result = userRepository.getUserCountByRole();
 
-		    roleCounts = result.stream().map(obj -> {
-		        Map<String, Object> map = new HashMap<>();
-		        map.put("roleId", obj[0]);
-		        map.put("count", obj[1]);
-		        return map;
-		    }).toList();
+			roleCounts = result.stream().map(obj -> {
+				Map<String, Object> map = new HashMap<>();
+				map.put("roleId", obj[0]);
+				map.put("count", obj[1]);
+				return map;
+			}).toList();
 		}
-		UserListResponse response = new UserListResponse(
-		        pageResult.getContent(),
-		        total,
-		        active,
-		        deactivated,
-		        filteredCount,
-		        roleCounts
-		);
-	    log.info("UserServiceImpl:: exit from the getUsers Method");
+		UserListResponse response = new UserListResponse(pageResult.getContent(), total, active, deactivated,
+				filteredCount, roleCounts);
+		log.info("UserServiceImpl:: exit from the getUsers Method");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 
 	@Override
 	@Transactional
 	public ApiResponse<String> updateUser(Integer id, UpdateUserRequest request) {
 
-	    log.info("updateUser - Started for userId: {}", id);
+		log.info("updateUser - Started for userId: {}", id);
 
-	    
-	    UserEntity user = userRepository.findByUserId(id)
-	            .orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
-	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
+		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-	    if (request.getRoleId() != null &&
-	            !request.getRoleId().equals(roleEntity.getRoleId())) {
+		if (request.getRoleId() != null && !request.getRoleId().equals(roleEntity.getRoleId())) {
 
-	        log.info("Role change detected for userId: {}", id);
+			log.info("Role change detected for userId: {}", id);
 
-	        roleEntity.setRoleId(request.getRoleId());
-	        roleEntity.setAssignedBy("ADMIN");
-	        roleEntity.setAssignedAt(LocalDate.now());
+			roleEntity.setRoleId(request.getRoleId());
+			roleEntity.setAssignedBy("ADMIN");
+			roleEntity.setAssignedAt(LocalDate.now());
 
-	        assignRolesRepository.save(roleEntity);
+			assignRolesRepository.save(roleEntity);
 
-	        log.info("Role updated successfully");
-	    }
+			log.info("Role updated successfully");
+		}
 
-	    if (request.getBusinessUnitId() != null) {
-	        user.setBusinessUnitId(request.getBusinessUnitId());
-	        log.info("Business Unit updated");
-	    }
+		if (request.getBusinessUnitId() != null) {
+			user.setBusinessUnitId(request.getBusinessUnitId());
+			log.info("Business Unit updated");
+		}
 
-	    if (request.getDepartmentId() != null) {
-	        user.setDepartmentId(request.getDepartmentId());
-	        log.info("Department updated");
-	    }
+		if (request.getDepartmentId() != null) {
+			user.setDepartmentId(request.getDepartmentId());
+			log.info("Department updated");
+		}
 
-	   
-	   
-	    if (Boolean.TRUE.equals(request.getDeactivate())) {
+		if (Boolean.TRUE.equals(request.getDeactivate())) {
 
-	        user.setActive(false);
-	        user.setDeactivated(true);
+			user.setActive(false);
+			user.setDeactivated(true);
 
-	        user.setUpdatedBy("ADMIN");
-	        user.setUpdatedAt(LocalDate.now());
+			user.setUpdatedBy("ADMIN");
+			user.setUpdatedAt(LocalDate.now());
 
-	        userRepository.save(user);
+			userRepository.save(user);
 
-	        log.info("User deactivated successfully");
+			log.info("User deactivated successfully");
 
-	        return ApiResponse.success(
-	                ResponseCode.SUCCESS,
-	                "User deactivated successfully",
-	                null
-	        );
-	    }
+			return ApiResponse.success(ResponseCode.SUCCESS, "User deactivated successfully", null);
+		}
 
-	    user.setUpdatedBy("ADMIN");
-	    user.setUpdatedAt(LocalDate.now());
+		user.setUpdatedBy("ADMIN");
+		user.setUpdatedAt(LocalDate.now());
 
-	    userRepository.save(user);
+		userRepository.save(user);
 
-	    log.info("User updated successfully");
+		log.info("User updated successfully");
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "User updated successfully",
-	            null
-	    );
+		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
 
 	@Override
@@ -355,70 +340,87 @@ public class UserServiceImpl implements IUserService {
 
 	@Override
 	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {
-		// TODO Auto-generated method stub
-		return null;
+
+		try {
+
+			validateLogin(request, channel);
+
+			UserEntity user = userRepository.findByEmailAndActiveTrue(request.getEmail())
+					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+
+			if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+
+				if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+					throw new IllegalArgumentException(Constants.INVALID_CREDENTIALS);
+				}
+
+			} else {
+
+				if (!passwordEncoder.matches(request.getPin(), user.getPin())) {
+					throw new IllegalArgumentException(Constants.INVALID_CREDENTIALS);
+				}
+			}
+
+			AssignRolesEntity assignRole = assignRolesRepository.findByUserId(user.getUserId())
+					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+
+			RolesEntity role = rolesRepository.findByRoleId(assignRole.getRoleId())
+					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+
+			List<PermissionEntity> permissions = permissionRepository.findByRoleId(assignRole.getRoleId());
+
+			if (permissions == null || permissions.isEmpty()) {
+				throw new IllegalArgumentException("User is deactivated");
+			}
+
+			Map<Integer, String> moduleMap = moduleRepository.findAll().stream()
+					.collect(Collectors.toMap(ModuleEntity::getModuleId, ModuleEntity::getModuleName));
+
+			List<String> modules = permissions.stream().map(p -> moduleMap.get(p.getModuleId()))
+					.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct().toList();
+
+			String token = generateToken(user.getEmail(), role.getRoleName(), modules);
+
+			LoginResponse response = new LoginResponse();
+			response.setToken(token);
+
+			return new ApiResponse<>(ResponseCode.SUCCESS, "Success", response);
+
+		} catch (Exception e) {
+			return ApiResponse.failure(e.getMessage());
+		}
 	}
 
+	private void validateLogin(LoginRequest request, String channel) {
 
-//	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {
-//
-//		UserEntity user = userRepository.findByEmail(request.getEmail());
-//
-//		if (user == null) {
-//			return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
-//		}
-//
-//		if (channel == null || channel.isBlank()) {
-//			return ApiResponse.failure("Channel is required");
-//		}
-//
-//		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
-//
-//			if (request.getPassword() == null || request.getPassword().isBlank()) {
-//				return ApiResponse.failure("Password is required");
-//			}
-//
-//			if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-//				return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
-//			}
-//
-//		} else if (ChannelTypes.MOBILE.getChannelName().equalsIgnoreCase(channel)) {
-//
-//			if (request.getPin() == null || request.getPin().isBlank()) {
-//				return ApiResponse.failure("Pin is required");
-//			}
-//
-//			if (!passwordEncoder.matches(request.getPin(), user.getPin())) {
-//				return ApiResponse.failure(Constants.INVALID_CREDENTIALS);
-//			}
-//
-//		} else {
-//			return ApiResponse.failure("Invalid channel");
-//		}
-//
-//		RolesEntity role = rolesRepository.findById(user.getRoleId())
-//				.orElseThrow(() -> new CustomSystemErrorException("Role not found"));
-//
-//		String roleName = role.getRoleName();
-//
-//		List<PermissionEntity> permissionEntities = permissionRepository.findByRoleId(user.getRoleId());
-//
-//		if (permissionEntities == null || permissionEntities.isEmpty()) {
-//			return ApiResponse.failure("Permissions not found for this role");
-//		}
-//
-//		Map<Integer, String> moduleMap = moduleRepository.findAll().stream()
-//				.collect(Collectors.toMap(ModuleEntity::getModuleId, ModuleEntity::getModuleName));
-//		List<String> modules = permissionEntities.stream().map(p -> moduleMap.get(p.getModuleId()))
-//				.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct()
-//				.collect(Collectors.toList());
-//
-//		String token = generateToken(user.getEmail(), roleName, modules);
-//
-//		LoginResponse loginResponse = new LoginResponse();
-//		loginResponse.setToken(token);
-//
-//		return new ApiResponse<>(ResponseCode.SUCCESS, "Success", loginResponse);
-//
-//	}
+		if (request == null) {
+			throw new IllegalArgumentException("Invalid request");
+		}
+
+		if (request.getEmail() == null || request.getEmail().isBlank()) {
+			throw new IllegalArgumentException("Email is required");
+		}
+
+		if (channel == null || channel.isBlank()) {
+			throw new IllegalArgumentException("Channel is required");
+		}
+
+		if (!ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)
+				&& !ChannelTypes.MOBILE.getChannelName().equalsIgnoreCase(channel)) {
+			throw new IllegalArgumentException("Invalid channel");
+		}
+
+		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+
+			if (request.getPassword() == null || request.getPassword().isBlank()) {
+				throw new IllegalArgumentException("Password is required");
+			}
+
+		} else {
+
+			if (request.getPin() == null || request.getPin().isBlank()) {
+				throw new IllegalArgumentException("Pin is required");
+			}
+		}
+	}
 }
