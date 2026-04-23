@@ -54,9 +54,7 @@ public class BudgetAndCompensationEntity {
 	
 	@Column(name="status")
 	private String status;
-	
-	@Column(name="draft")
-	private Boolean draft;
+
 	
 	@Column(name="submitted")
 	private Boolean submitted;
