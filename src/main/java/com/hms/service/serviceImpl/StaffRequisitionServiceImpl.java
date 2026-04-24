@@ -661,8 +661,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 		}
 		if (req.getMinSalary() != null && req.getMaxSalary() != null && req.getProposedTotalCompensation() != null) {
-			int min = req.getMinSalary();
-			int max = req.getMaxSalary();
+			Long min = req.getMinSalary();
+			Long max = req.getMaxSalary();
 			int proposed = req.getProposedTotalCompensation();
 			if (min > max) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid salary range",

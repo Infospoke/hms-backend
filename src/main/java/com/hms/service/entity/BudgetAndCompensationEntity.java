@@ -47,7 +47,7 @@ public class BudgetAndCompensationEntity {
 	private Integer relocationBudgetAmount;
 	
 	@Column(name="annual_hiring_cost")
-	private Integer AnnualHiringCost;
+	private Long AnnualHiringCost;
 	
 	@Column(name="budget_compensation_status")
 	private String budgetCompensationStatus;
