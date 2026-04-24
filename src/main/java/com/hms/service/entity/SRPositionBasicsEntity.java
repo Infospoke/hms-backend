@@ -81,9 +81,6 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="created_by")
 	private String createdBy;
-	
-	@SequenceGenerator(name = "sr_seq_gen", allocationSize = 1)
-	@Column(name = "sr_sequence",nullable=false, unique = true)
-	private Integer srSequence;
+
 
 }

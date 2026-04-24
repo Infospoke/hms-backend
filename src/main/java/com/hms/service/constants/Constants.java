@@ -93,6 +93,16 @@ public class Constants {
 	public static final String INVALID_BUSINESS_UNIT_ID = "Invalid business unit id";
 	public static final String INVALID_DEPARTMENT_ID = "Invalid deparment id";
 	public static final String WITHIN_RANGE = "Within Range";
+	public static final String COULD_NOT_ATTACH_FILE = "We couldn’t attach the file. Please try again.";
+	public static final String MAIL_FAILURE = "Failed to send the email";
+	public static final String USER_CREATED_MAIL_SUBJECT = "User Account Created - HMS";
+    public static final String USER_CREATED_MAIL_BODY =
+            "<h3>Welcome to NEXUS HMS</h3>" +
+            "<p><b>Username:</b> %s</p>" +
+            "<p><b>Email:</b> %s</p>" +
+            "<p><b>Password:</b> %s</p>" +
+            "<p><b>PIN:</b> %s</p>" +
+            "<br><p>Please change your password after login.</p>";
 
 	
 }

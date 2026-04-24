@@ -20,7 +20,7 @@ public class BudgetAndCompensationResponse {
     private Integer signingBonusAmount;
     private Integer equityAmount;
     private Integer relocationBudgetAmount;
-    private Integer annualHiringCost;
+    private Long annualHiringCost;
 
     private Boolean draft;
     private Boolean submitted;
