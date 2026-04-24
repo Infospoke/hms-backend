@@ -27,7 +27,6 @@ import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.SourceStrategyRepository;
-import com.hms.service.repository.StaffingRequisitionRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
 import com.hms.service.request.PositonBascicsRequest;
@@ -57,8 +56,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StaffRequisitionServiceImpl implements IStaffingRequisitionService {
 
-	@Autowired
-	private StaffingRequisitionRepository staffingRequisitionRepository;
 
 	@Autowired
 	private MinioClient minioClient;
@@ -106,8 +103,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return error;
 
 			SRPositionBasicsEntity srPositionBasicsEntity = null;
-			if (positonBasicsRequest.getId() != null) {
-				srPositionBasicsEntity = staffingRequisitionRepository.findById(positonBasicsRequest.getId())
+			if (positonBasicsRequest.getSrId() != null) {
+				srPositionBasicsEntity = positionBasicsRepository.findBySrId(positonBasicsRequest.getSrId())
 						.orElse(null);
 			}
 
@@ -154,7 +151,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			srPositionBasicsEntity.setPriority(positonBasicsRequest.getPriority());
 
 			
-			srPositionBasicsEntity = staffingRequisitionRepository.save(srPositionBasicsEntity);
+			srPositionBasicsEntity = positionBasicsRepository.save(srPositionBasicsEntity);
 		}
 		// business screen logic
 		if (request.getBusinessJustificationRequest() != null) {
@@ -706,12 +703,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 		}
 
-		if (req.getNiceToHaveSkills() != null) {
-			if (req.getNiceToHaveSkills().isEmpty()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "niceToHaveSkills cannot be empty",
-						List.of("Remove empty list or provide values"));
-			}
-		}
 
 		if (req.getEducationRequirement() != null) {
 			error = validateObject(req.getEducationRequirement(), "educationRequirement");
@@ -719,11 +710,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return error;
 		}
 
-		if (req.getTravelRequirement() != null) {
-			error = validateObject(req.getTravelRequirement(), "travelRequirement");
-			if (error != null)
-				return error;
-		}
 
 		if (req.getMinExperience() != null && req.getMaxExperience() != null) {
 
@@ -756,10 +742,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					List.of("Provide valid certifications or remove field"));
 		}
 
-		if (req.getLanguages() != null && req.getLanguages().isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "languages cannot be empty",
-					List.of("Provide valid languages or remove field"));
-		}
 
 		return null;
 	}
