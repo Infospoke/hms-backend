@@ -116,6 +116,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity.setSubmitted(false);
 				srPositionBasicsEntity.setApproved(false);
 				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
+				srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
+				srPositionBasicsEntity.setSrId(srId);
 				
 	            String authHeader = httpServletRequest.getHeader("Authorization");
 	            String username = "System";
@@ -151,8 +153,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			srPositionBasicsEntity.setWorkMode(positonBasicsRequest.getWorkMode());
 			srPositionBasicsEntity.setPriority(positonBasicsRequest.getPriority());
 
-			srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
-			srPositionBasicsEntity.setSrId(srId);
+			
 			srPositionBasicsEntity = staffingRequisitionRepository.save(srPositionBasicsEntity);
 		}
 		// business screen logic
@@ -970,7 +971,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		try {
 			int page = request.getPage();
 			int size = request.getSize();
-			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.CREATED_ON));
+			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.SR_ID));
 			Page<SRPositionBasicsEntity> pageData = positionBasicsRepository.findAll(pageable);
 			if (pageData.isEmpty()) {
 				log.warn("No SR records found");
