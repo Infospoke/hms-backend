@@ -18,16 +18,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
+import com.hms.service.entity.PasswordHistoryEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ChannelTypes;
+import com.hms.service.enums.CredentialType;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -36,6 +39,7 @@ import com.hms.service.repository.PasswordHistoryRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.UpdateUserRequest;
@@ -93,13 +97,13 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
-	
+
 	@Autowired
 	private MailServiceImpl mailService;
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
-	
+
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
@@ -200,100 +204,80 @@ public class UserServiceImpl implements IUserService {
 		log.info("UserServiceImpl:: Exit from the createUser Method");
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
 	}
+
 	@Override
 	public ApiResponse<?> getUserCounts() {
 
-	    log.info("UserServiceImpl:: Inside getUserCounts");
+		log.info("UserServiceImpl:: Inside getUserCounts");
 
-	    Long total = userRepository.getTotalUsers();
-	    Long active = userRepository.getActiveUsers();
-	    Long deactivated = userRepository.getDeactivatedUsers();
+		Long total = userRepository.getTotalUsers();
+		Long active = userRepository.getActiveUsers();
+		Long deactivated = userRepository.getDeactivatedUsers();
 
-	    List<Object[]> result = userRepository.getUserCountByRole();
+		List<Object[]> result = userRepository.getUserCountByRole();
 
-	    List<Map<String, Object>> roleCounts = result.stream().map(obj -> {
-	        Map<String, Object> map = new HashMap<>();
-	        map.put("roleId", obj[0]);
-	        map.put("roleName", obj[1]);
-	        map.put("count", obj[2]);
-	        return map;
-	    }).toList();
+		List<Map<String, Object>> roleCounts = result.stream().map(obj -> {
+			Map<String, Object> map = new HashMap<>();
+			map.put("roleId", obj[0]);
+			map.put("roleName", obj[1]);
+			map.put("count", obj[2]);
+			return map;
+		}).toList();
 
-	    Map<String, Object> response = new HashMap<>();
-	    response.put("total", total);
-	    response.put("active", active);
-	    response.put("deactivated", deactivated);
-	    response.put("roleCounts", roleCounts);
+		Map<String, Object> response = new HashMap<>();
+		response.put("total", total);
+		response.put("active", active);
+		response.put("deactivated", deactivated);
+		response.put("roleCounts", roleCounts);
 
-	    log.info("UserServiceImpl:: Exit getUserCounts");
+		log.info("UserServiceImpl:: Exit getUserCounts");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
-	
-	
+
 	@Override
 	public ApiResponse<?> getUsersList(FilterRequest request) {
 
-	    log.info("UserServiceImpl:: Inside getUsersList");
+		log.info("UserServiceImpl:: Inside getUsersList");
 
-	    if (request.getPage() == null || request.getSize() == null) {
-	        return ApiResponse.failure(
-	            ResponseCode.FAILURE,
-	            "failure",
-	            List.of("page and size must be provided")
-	        );
-	    }
+		if (request.getPage() == null || request.getSize() == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+		}
 
-	    if (request.getPage() < 0 || request.getSize() <= 0) {
-	        return ApiResponse.failure(
-	            ResponseCode.FAILURE,
-	            "failure",
-	            List.of("Invalid page or size values")
-	        );
-	    }
+		if (request.getPage() < 0 || request.getSize() <= 0) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+		}
 
-	    
-	    Sort sort = Sort.by(
-	        "DESC".equalsIgnoreCase(request.getDirection())
-	            ? Sort.Direction.DESC
-	            : Sort.Direction.ASC,
-	        request.getSortBy() != null ? request.getSortBy() : "userId"
-	    );
+		Sort sort = Sort.by("DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+				request.getSortBy() != null ? request.getSortBy() : "userId");
 
-	    Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
-	 
-	    Integer roleId = null;
+		Integer roleId = null;
 
-	    if (request.getFilters() != null && request.getFilters().containsKey("roleId")) {
-	        try {
-	            roleId = Integer.parseInt(request.getFilters().get("roleId").toString());
-	        } catch (Exception e) {
-	            return ApiResponse.failure(
-	                ResponseCode.FAILURE,
-	                "failure",
-	                List.of("roleId must be a valid number")
-	            );
-	        }
-	    }
+		if (request.getFilters() != null && request.getFilters().containsKey("roleId")) {
+			try {
+				roleId = Integer.parseInt(request.getFilters().get("roleId").toString());
+			} catch (Exception e) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("roleId must be a valid number"));
+			}
+		}
 
-	    log.info("Fetching users for roleId: {}", roleId);
+		log.info("Fetching users for roleId: {}", roleId);
 
-	    
-	    Page<UserResponse> pageResult = userRepository.findUsersByRole(roleId, pageable);
+		Page<UserResponse> pageResult = userRepository.findUsersByRole(roleId, pageable);
 
-	    
-	    Map<String, Object> response = new HashMap<>();
-	    response.put("users", pageResult.getContent());
-	    response.put("currentPage", pageResult.getNumber());
-	    response.put("totalPages", pageResult.getTotalPages());
-	    response.put("totalElements", pageResult.getTotalElements());
+		Map<String, Object> response = new HashMap<>();
+		response.put("users", pageResult.getContent());
+		response.put("currentPage", pageResult.getNumber());
+		response.put("totalPages", pageResult.getTotalPages());
+		response.put("totalElements", pageResult.getTotalElements());
 
-	    log.info("UserServiceImpl:: Exit getUsersList");
+		log.info("UserServiceImpl:: Exit getUsersList");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
-	
+
 	@Override
 	@Transactional
 	public ApiResponse<?> updateUser(Integer id, UpdateUserRequest request) {
@@ -352,37 +336,25 @@ public class UserServiceImpl implements IUserService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
-	
+
 	@Override
 	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
 
-	    log.info("getUserById - Started for userId: {}", id);
+		log.info("getUserById - Started for userId: {}", id);
 
-	    UserEntity user = userRepository.findByUserId(id)
-	            .orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
-	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
+		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
-	            .orElseThrow(() -> new RuntimeException("Role not found"));
+		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+				.orElseThrow(() -> new RuntimeException("Role not found"));
 
-	    UserUpdationResponse response = new UserUpdationResponse(
-	            user.getUsername(),
-	            user.getEmail(),
-	            user.getActive(),
-	            role.getRoleName(),
-	            roleEntity.getAssignedBy(),
-	            roleEntity.getAssignedAt()
-	    );
+		UserUpdationResponse response = new UserUpdationResponse(user.getUsername(), user.getEmail(), user.getActive(),
+				role.getRoleName(), roleEntity.getAssignedBy(), roleEntity.getAssignedAt());
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "User details fetched successfully",
-	            response
-	    );
+		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
 	}
-
 
 	@Override
 	public boolean validateToken(String token) {
@@ -425,9 +397,9 @@ public class UserServiceImpl implements IUserService {
 	public String extractUsername(String token) {
 		return decodeToken(token).getSubject();
 	}
-	
+
 	public String extractUsernameFromClaims(String token) {
-	    return decodeToken(token).get("username", String.class);
+		return decodeToken(token).get("username", String.class);
 	}
 
 	public String extractRole(String token) {
@@ -442,22 +414,27 @@ public class UserServiceImpl implements IUserService {
 	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {
 
 		try {
+			LOGGER.info("UserManagement::UserServiceImpl::Inside the login method");
+
 			validateLogin(request, channel);
 
 			UserEntity user = userRepository.findByEmailAndActiveTrue(request.getEmail())
 					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
 
+			log.info("User fetched");
+
 			if (Boolean.TRUE.equals(user.getAccountLocked())) {
+
+				log.info("Account is locked");
 
 				if (Boolean.TRUE.equals(user.getForcePasswordReset())) {
 					throw new IllegalArgumentException("Please reset your password");
 				}
 
 				if (user.getLockTime() != null && user.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
-
 					throw new IllegalArgumentException("Account is locked. Try after 2 minutes");
-
 				} else {
+					log.info("Unlocking account");
 					user.setAccountLocked(false);
 					user.setLockTime(null);
 					userRepository.save(user);
@@ -466,6 +443,8 @@ public class UserServiceImpl implements IUserService {
 
 			if (user.getPasswordUpdatedAt() != null
 					&& user.getPasswordUpdatedAt().plusMonths(3).isBefore(LocalDateTime.now())) {
+
+				log.info("Password expired");
 
 				user.setForcePasswordReset(true);
 				userRepository.save(user);
@@ -476,8 +455,10 @@ public class UserServiceImpl implements IUserService {
 			boolean isValid;
 
 			if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+				log.info("Validating password");
 				isValid = passwordEncoder.matches(request.getPassword(), user.getPassword());
 			} else {
+				log.info("Validating pin");
 				isValid = passwordEncoder.matches(request.getPin(), user.getPin());
 			}
 
@@ -486,6 +467,8 @@ public class UserServiceImpl implements IUserService {
 				int attempts = user.getFailedAttempts() == null ? 0 : user.getFailedAttempts();
 				attempts++;
 				user.setFailedAttempts(attempts);
+
+				log.info("Invalid credentials attempt: {}", attempts);
 
 				if (attempts == 3) {
 					user.setAccountLocked(true);
@@ -506,6 +489,8 @@ public class UserServiceImpl implements IUserService {
 				userRepository.save(user);
 				throw new IllegalArgumentException("Invalid credentials");
 			}
+
+			log.info("Login successful");
 
 			user.setFailedAttempts(0);
 			user.setAccountLocked(false);
@@ -530,7 +515,9 @@ public class UserServiceImpl implements IUserService {
 			List<String> modules = permissions.stream().map(p -> moduleMap.get(p.getModuleId()))
 					.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct().toList();
 
-			String token = generateToken(user.getEmail(),user.getUsername(), role.getRoleName(), modules);
+			log.info("Generating token");
+
+			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules);
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -538,11 +525,14 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successfull", response);
 
 		} catch (Exception e) {
+			log.error("Login failed: {}", e.getMessage());
 			return ApiResponse.failure(e.getMessage());
 		}
 	}
 
 	private void validateLogin(LoginRequest request, String channel) {
+		
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the validateLogin method");
 
 		if (request == null) {
 			throw new IllegalArgumentException("Invalid request");
@@ -575,60 +565,148 @@ public class UserServiceImpl implements IUserService {
 		}
 	}
 
+	@Transactional
 	@Override
 	public ApiResponse<?> forgotPassword(String email) {
 
-	    UserEntity user = userRepository.findByEmailAndActiveTrue(email)
-	            .orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
 
-	    String rawPassword = PasswordGenerator.generatePassword(8);
-	    String rawPin = PasswordGenerator.generatePin(4);
+		UserEntity user = userRepository.findByEmailAndActiveTrue(email)
+				.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
 
-	    String encodedPassword = passwordEncoder.encode(rawPassword);
-	    String encodedPin = passwordEncoder.encode(rawPin);
+		String rawPassword = PasswordGenerator.generatePassword(8);
+		String rawPin = PasswordGenerator.generatePin(4);
 
-	    user.setPassword(encodedPassword);
-	    user.setPin(encodedPin);
+		String encodedPassword = passwordEncoder.encode(rawPassword);
+		String encodedPin = passwordEncoder.encode(rawPin);
 
-	    user.setPasswordUpdatedAt(LocalDateTime.now());
-	    user.setPinUpdatedAt(LocalDateTime.now());
+		savePasswordHistory(user.getUserId(), encodedPassword, CredentialType.PASSWORD);
+		savePasswordHistory(user.getUserId(), encodedPin, CredentialType.PIN);
 
-	    user.setFailedAttempts(0);
-	    user.setAccountLocked(false);
-	    user.setLockTime(null);
-	    user.setForcePasswordReset(false);
+		user.setPassword(encodedPassword);
+		user.setPin(encodedPin);
 
-	    userRepository.save(user);
-	    sendForgotPasswordMail(user, rawPassword, rawPin);
+		user.setPasswordUpdatedAt(LocalDateTime.now());
+		user.setPinUpdatedAt(LocalDateTime.now());
 
-	    return ApiResponse.success("New credentials sent to registered email");
+		user.setFailedAttempts(0);
+		user.setAccountLocked(false);
+		user.setLockTime(null);
+		user.setForcePasswordReset(false);
+
+		userRepository.save(user);
+
+		try {
+			sendForgotPasswordMail(user, rawPassword, rawPin);
+		} catch (Exception e) {
+			log.error("Mail failed");
+			throw new RuntimeException("Failed to send email");
+		}
+
+		log.info("Forgot password completed");
+
+		return ApiResponse.success("New credentials sent to registered email");
 	}
-	
+
 	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
+		
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPasswordMail method");
 
-	    String subject = "Your New Login Credentials";
+		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
 
-	    String body = "<html><body>"
-	            + "<p>Dear " + user.getFirstName() + ",</p>"
-	            + "<p>Your password has been reset successfully.</p>"
-	            + "<p><b>Username:</b> " + user.getEmail() + "</p>"
-	            + "<p><b>Password:</b> " + password + "</p>"
-	            + "<p><b>PIN:</b> " + pin + "</p>"
-	            + "<br/>"
-	            + "<p>Please login and change your credentials immediately.</p>"
-	            + "<br/>"
-	            + "<p>Regards,<br/>Infospoke</p>"
-	            + "</body></html>";
+		String body = String.format(Constants.FORGOT_PASSWORD_BODY, user.getFirstName(), user.getEmail(), password,
+				pin);
 
-	    mailService.sendMail(
-	            fromEmail, 
-	            user.getEmail(),        
-	            null,                  
-	            subject,
-	            body,
-	            null                   
-	    );
+		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 	}
 
+	@Override
+	public ApiResponse<?> changePassword(ChangePasswordRequest request, String channel) {
+
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the changePassword method");
+
+		String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		UserEntity user = userRepository.findByEmailAndActiveTrue(email)
+				.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+
+		log.info("User fetched");
+
+		String encodedValue;
+
+		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+
+			log.info("Validating old password");
+
+			if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+				throw new IllegalArgumentException("Old password is incorrect");
+			}
+
+			log.info("Checking password history");
+
+			validatePasswordHistory(user.getUserId(), request.getNewPassword(), CredentialType.PASSWORD);
+
+			encodedValue = passwordEncoder.encode(request.getNewPassword());
+
+			user.setPassword(encodedValue);
+			user.setPasswordUpdatedAt(LocalDateTime.now());
+
+			savePasswordHistory(user.getUserId(), encodedValue, CredentialType.PASSWORD);
+
+		} else {
+
+			log.info("Validating old pin");
+
+			if (!passwordEncoder.matches(request.getOldPin(), user.getPin())) {
+				throw new IllegalArgumentException("Old PIN is incorrect");
+			}
+
+			log.info("Checking pin history");
+
+			validatePasswordHistory(user.getUserId(), request.getNewPin(), CredentialType.PIN);
+
+			encodedValue = passwordEncoder.encode(request.getNewPin());
+
+			user.setPin(encodedValue);
+			user.setPinUpdatedAt(LocalDateTime.now());
+
+			savePasswordHistory(user.getUserId(), encodedValue, CredentialType.PIN);
+		}
+
+		user.setForcePasswordReset(false);
+		userRepository.save(user);
+
+		log.info("Change password completed");
+
+		return ApiResponse.success("Credentials updated successfully");
+	}
+
+	private void validatePasswordHistory(Integer userId, String newValue, CredentialType type) {
+		
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the validatePasswordHistory method");
+
+		List<PasswordHistoryEntity> historyList = passwordHistoryRepository
+				.findTop5ByUserIdAndCredentialTypeOrderByCreatedAtDesc(userId, type);
+
+		for (PasswordHistoryEntity history : historyList) {
+
+			if (passwordEncoder.matches(newValue, history.getCredential())) {
+				throw new IllegalArgumentException("New " + type.name().toLowerCase() + " must not match last 5");
+			}
+		}
+	}
+
+	private void savePasswordHistory(Integer userId, String encodedValue, CredentialType type) {
+		
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the savePasswordHistory method");
+
+		PasswordHistoryEntity history = new PasswordHistoryEntity();
+		history.setUserId(userId);
+		history.setCredential(encodedValue);
+		history.setCredentialType(type);
+		history.setCreatedAt(LocalDateTime.now());
+
+		passwordHistoryRepository.save(history);
+	}
 
 }
