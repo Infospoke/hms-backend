@@ -93,6 +93,118 @@ public class Constants {
 	public static final String INVALID_BUSINESS_UNIT_ID = "Invalid business unit id";
 	public static final String INVALID_DEPARTMENT_ID = "Invalid deparment id";
 	public static final String WITHIN_RANGE = "Within Range";
+	public static final String CANDIDATE_ALREADY_EXISTS = "Candidate already exists";
+	public static final String VALID_TOKEN = "Valid token";
+	public static final String STATUS_CODE_SUCCESS = "1";
+	public static final String OFFER_SENT = "Offer Sent";
+	public static final String BUCKET_FOLDER = "upload-documents/";
+	public static final String REGION = "Asia/Kolkata";
+	public static final String CANDIDATE_JOINED_SUBJECT = "Kindly arrange IT assets for new employee";
+	public static final String IT_MAIL_BODY = "<p>Dear IT Team</p>"
+			+ "<p>This is to inform you that a new employee has joined our organization.</p>"
+			+ "<p> Kindly arrange the required IT assets and system access for the employee at the earliest.</p>"
+			+ "<p> <b>Employee Details</b></p>" + "<b><ul><li><p>First name : %s </p></li>"
+			+ "<li><p>Job Role : %s </p></li></ul></b>" + "<br>" + "<br>" + "<br>" + "<br>"
+			+ "<p>Please let us know if any additional information is required from our end to proceed with the setup.</p>"
+			+ "<p>Best regards,<br/>" + "<b>HR Team</b><br/>" + "<b>Infospoke Integrated Solutions LLP</b></p>";
+
+	public static final String CAREERS_INDIA = "careers@infospoke.in";
+	public static final String CAREERS_USA = "careers@infospokellc.com";
+	public static final String INDIA = "India";
+	public static final String USA = "USA";
+	public static final String NOREPLY_INDIA = "noreply@infospoke.in";
+	public static final String NOREPLY_USA = "noreply@infospokellc.com";
+	public static final String CANDIDATE_CREATION_SUBJECT = "Congratulations! You have moved ahead in our recruitment process";
+	public static final String OFFER_LETTER = "offerLetter_";
+
+	public static final String OFFER_LETTER_MAIL_BODY = "<p>Dear <b>%s</b>,</p>" + "<p>Congratulations!</p>"
+			+ "<p>We are pleased to offer you the position of "
+			+ "<b>%s</b> at <b>Infospoke Integrated Solutions LLP</b>.</p>"
+			+ "<p>Your joining date will be communicated shortly by our HR team.</p>"
+			+ "<p>Please find the offer details attached in this email.</p>" + "<br/>"
+			+ "<p>We look forward to having you on our team.</p>" + "<p>Best regards,<br/>" + "<b>HR Team</b><br/>"
+			+ "<b>Infospoke Integrated Solutions LLP</b></p>";
+
+	public static final String CANDIDATE_NOT_FOUND = "Candidate not found";
+	public static final String CANDIDATE_UPDATED_SUCCESSFULLY = "Candidate updated successfully";
+	public static final String CANDIDATE_DELETED_SUCCESSFULLY = "Candidate deleted successfully";
+	public static final String FAILED_TO_DELETE_PRE_ONBOARDING_DOCUMENTS = "Failed to delete Pre OnBoarding documents";
+	public static final String CANDIDATE_PRE_ONBOARDED_SUCCESSFULLY = "Candidate pre-onboarded successfully";
+	public static final String PRE_ONBOARDING_ALLOWED_ONLY_FOR_APPROVED_CANDIDATES = "Pre-onboarding allowed only for APPROVED candidates";
+	public static final String CANDIDATE_ALREADY_PREONBOARDED = "The Candidate is already pre-onboarded..!";
+	public static final String BGV_CLEARED = "Background Verification Cleared";
+	public static final String BGV_REJECTED = "Background Verification Rejected";
+	public static final String BGV_INITIATED = "Background Verification Initiated";
+	public static final String REJECTED = "Rejected";
+	public static final String JOINED = "Joined";
+	public static final String OFFER_REJECTED = "Offer Rejected";
+	public static final String IT_MAIL_ID = "satya.k@infospoke.in";
+	public static final String STATUS_CODE_FAILURE = "0";
+	public static final String CTC = "ctc";
+	public static final String OFFERLETTER = "offerLetter";
+	public static final String BGV_FILE = "bgvFile";
+	public static final String ISSUED_DATE = "issuedDate";
+	public static final String VIEW = "View";
+	public static final String INVALID_FILE_TYPE = "Invalid file type";
+	public static final String CONVERTED_FROM_APPLICANT_TO_CANDIDATE = " converted from applicant to candidate.";
+	public static final String JOINED_IN_THE_ORGANIZATION = " joined in the Organization";
+	public static final String FAILED_TO_DELETE_FILE_FROM_MINIO = "Failed to delete file from MinIO";
+	public static final String FAILED_TO_DOWNLOAD_FILE_FROM_MINIO = "Failed to delete file from MinIO";
+	public static final String CANDIDATE_CREATION = "Candidate created successfully. Offer letter sent.";
+	public static final String ACCEPTED = "Accepted";
+	public static final String EXCEPTION_OCCURED = "Exception occured";
+	public static final String ONBOARDING = "Pre Onboarding";
+	public static final String ORGANISATION_NAME = "Organization name";
+	public static final String RELIEVING_LETTER = "relievingLetter_";
+	public static final String EMPTY_STRING = " ";
+	public static final String PAY_SLIP = "payslip";
+	public static final String FAILED_TO_PROCESS_EXPERIENCED_DETAILS = "Failed to process experience details";
+	public static final String AADHAR = "aadhar";
+	public static final String PREONBOARDING_INITIATED_FOR = "Pre-Onboarding initiated for ";
+	public static final String EDUCATION = "education";
+	public static final String FAILED_TO_UPLOAD_PAYSLIPS = "Failed to upload payslips";
+	public static final String FAILED_TO_UPLOAD_DOCUMENTS = "Failed to upload documents";
+	public static final String FIRST_MONTH = "1";
+	public static final String ZERO_FILTER = "0";
+	public static final String SECOND_MONTH = "2";
+	public static final String THIRD_MONTH = "3";
+	public static final String CUSTOM_FILTERING = "5";
+	public static final String WEEK_FILTERING = "4";
+	public static final String PNG = "png";
+	public static final String JPG = "jpg";
+	public static final String JPEG = "jpeg";
+	public static final String PDF = "pdf";
+	public static final String JOB_CODE_ALREADY_EXISTS = "Job code already exists";
+	public static final String JOB_ADDED_SUCCESSFULLY = "Job added sucessfully";
+	public static final String NO_JOB_FOUND = "No job found";
+	public static final String JOB_DELETED_SUCCESSFULLY = "Job deleted successfully";
+	public static final String JOB_UPDATED_SUCCESSFULLY = "Job details updated successfully";
+	public static final String JOB_ID = "jobId";
+	public static final String EXPERIENCE = "Experience";
+	public static final String NO_QUESTION_FOUND_FOR_SKILL_ID = "No question found for skillId=";
+	public static final String EXPERIENCE_LEVEL = ", expLevel=";
+	public static final String WEIGHTAGE = ", weightage=";
+	public static final String SHORTLISTED = "SHORTLISTED";
+	public static final String NOT_SHORTLISTED = "NOT SHORTLISTED";
+	public static final String APPLICANTS_FETCHING_SUCCESS = "Applicant records loaded";
+	public static final String APPLICANTS_FETCHING_FAILURE = "Something went wrong while loading";
+	public static final String INTERVIEW = "INTERVIEW";
+	public static final String SCREENED = "SCREENED";
+	public static final String APPLIED = "APPLIED";
+	public static final String OFFER = "OFFER";
+	public static final String HIRED = "HIRED";
+	public static final String UNABLE_TO_FETCH = "Unable to fetch applicant details for id : ";
+	public static final String JOB_MAPPED_TO_APPLICANT_NOT_FOUND = "Job mapped to the applicant not found. jobId: ";
+	public static final String NO_APPLICANTS_FOUND = "No applicants found";
+
+	public static final String INVALID_JOB_TITLE = "Invalid job title";
+	public static final String INVALID_JOB_CODE = "Invalid job code";
+	public static final String JOB = "Job ";
+	public static final String WAS_PUBLISHED = " was published";
+	public static final String JOB_CODE = "jobCode";
+	public static final String FROM_DATE = "fromDate";
+	public static final String TO_DATE = "toDate";
+	public static final String MONTH_CODE = "monthCode";
 
 	
 }
