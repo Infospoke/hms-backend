@@ -13,9 +13,9 @@ public class BudgetAndCompensationRequest {
 	
 	private String srId;
 	
-    private Integer minSalary;
+    private Long minSalary;
 	
-	private Integer maxSalary;
+	private Long maxSalary;
 
 	private Integer proposedTotalCompensation;
 	
@@ -31,6 +31,6 @@ public class BudgetAndCompensationRequest {
 	
 	private Integer relocationBudgetAmount;
 	
-	private Integer annualHiringCost;
+	private Long annualHiringCost;
 
 }

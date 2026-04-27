@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
+import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.response.LoginResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.wrappers.ApiResponse;
@@ -26,7 +28,8 @@ public class LoginController {
 	}
 
 	@PostMapping("/user-login")
-	public ApiResponse<LoginResponse> login(@RequestHeader("X-Channel") String channel,@Valid @RequestBody LoginRequest request) {
+	public ApiResponse<LoginResponse> login(@RequestHeader("X-Channel") String channel,
+			@Valid @RequestBody LoginRequest request) {
 
 		return userService.login(request, channel);
 	}
@@ -34,6 +37,18 @@ public class LoginController {
 	@GetMapping("/validate")
 	public boolean validateToken(@RequestParam("token") String token) {
 		return userService.validateToken(token);
+	}
+
+	@PostMapping("/forgot-password")
+	public ApiResponse<?> forgotPassword(@RequestParam("email") String email) {
+		return userService.forgotPassword(email);
+	}
+
+	@PostMapping("/change-password")
+	public ApiResponse<?> changePassword(@RequestBody ChangePasswordRequest request,
+			@RequestHeader("X-Channel") String channel) {
+
+		return userService.changePassword(request, channel);
 	}
 
 }

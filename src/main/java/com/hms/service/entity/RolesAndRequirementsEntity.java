@@ -25,10 +25,10 @@ public class RolesAndRequirementsEntity {
 	@Column(name = "sr_id", unique = true, nullable = false)
 	private String srId;
 	
-	@Column(name="skills_must_have")
+	@Column(name="skills_must_have",length=1000)
 	private String skillsMustHave;
 	
-	@Column(name="nice_to_have_skills")
+	@Column(name="nice_to_have_skills",length=1000)
 	private String niceToHaveSkills;
 	
 	@Column(name="educationRequirements")
@@ -49,7 +49,7 @@ public class RolesAndRequirementsEntity {
 	@Column(name="max_interviews")
 	private Integer maxInterviewRounds;
 	
-	@Column(name="certifications_required")
+	@Column(name="certifications_required",length=1000)
 	private String certificationsRequired;
 	
 	@Column(name="languages")
@@ -58,8 +58,6 @@ public class RolesAndRequirementsEntity {
 	@Column(name="assessment_required")
 	private Boolean assessmentRequired = false;
 	
-	@Column(name="draft")
-	private Boolean draft;
 	
 	@Column(name="submitted")
 	private Boolean submitted;

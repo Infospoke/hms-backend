@@ -38,9 +38,7 @@ public class BusinessJustificationEntity {
 	
 	@Column(name="document")
 	private String document;
-	
-	@Column(name="draft")
-	private Boolean draft;
+
 	
 	@Column(name="submitted")
 	private Boolean submitted;

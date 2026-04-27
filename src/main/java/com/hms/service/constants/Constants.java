@@ -205,6 +205,30 @@ public class Constants {
 	public static final String FROM_DATE = "fromDate";
 	public static final String TO_DATE = "toDate";
 	public static final String MONTH_CODE = "monthCode";
+	public static final String COULD_NOT_ATTACH_FILE = "We couldn’t attach the file. Please try again.";
+	public static final String MAIL_FAILURE = "Failed to send the email";
+	public static final String FORGOT_PASSWORD_SUBJECT = "Your New Login Credentials";
+
+    public static final String FORGOT_PASSWORD_BODY =
+            "<html><body>"
+            + "<p>Dear %s,</p>"
+            + "<p>Your password has been reset successfully.</p>"
+            + "<p><b>Username:</b> %s</p>"
+            + "<p><b>Password:</b> %s</p>"
+            + "<p><b>PIN:</b> %s</p>"
+            + "<br/>"
+            + "<p>Please login and change your credentials immediately.</p>"
+            + "<br/>"
+            + "<p>Regards,<br/>Infospoke</p>"
+            + "</body></html>";
+	public static final String USER_CREATED_MAIL_SUBJECT = "User Account Created - HMS";
+    public static final String USER_CREATED_MAIL_BODY =
+            "<h3>Welcome to NEXUS HMS</h3>" +
+            "<p><b>Username:</b> %s</p>" +
+            "<p><b>Email:</b> %s</p>" +
+            "<p><b>Password:</b> %s</p>" +
+            "<p><b>PIN:</b> %s</p>" +
+            "<br><p>Please change your password after login.</p>";
 
 	
 }
