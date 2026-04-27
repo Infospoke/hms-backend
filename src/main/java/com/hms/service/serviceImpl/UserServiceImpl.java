@@ -251,6 +251,7 @@ public class UserServiceImpl implements IUserService {
 
 		user.setUsername(request.getFirstName());
 		user.setDateOfBirth(dob);
+		user.setFirstTimeLogin(true);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
 
 		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
@@ -487,11 +488,15 @@ public class UserServiceImpl implements IUserService {
 		}
 	}
 
-	public String generateToken(String email, String userName, String roleName, List<String> modules) {
+	public String generateToken(String email, String userName, String roleName, List<String> modules,
+			Boolean firstTimeLogin) {
+
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("username", userName);
 		claims.put("role", roleName);
 		claims.put("modules", modules);
+		claims.put("firstTimeLogin", firstTimeLogin); 
+
 		return createToken(claims, email);
 	}
 
@@ -633,7 +638,7 @@ public class UserServiceImpl implements IUserService {
 
 			log.info("Generating token");
 
-			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules);
+			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules, user.getFirstTimeLogin());
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -685,43 +690,43 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	public ApiResponse<?> forgotPassword(String email) {
 
-	    LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
 
-	    UserEntity user = userRepository.findByEmailAndActiveTrue(email)
-	            .orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+		UserEntity user = userRepository.findByEmailAndActiveTrue(email)
+				.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
 
-	    String rawPassword = PasswordGenerator.generatePassword(8);
-	    String rawPin = PasswordGenerator.generatePin(4);
+		String rawPassword = PasswordGenerator.generatePassword(8);
+		String rawPin = PasswordGenerator.generatePin(4);
 
-	    String encodedPassword = passwordEncoder.encode(rawPassword);
-	    String encodedPin = passwordEncoder.encode(rawPin);
+		String encodedPassword = passwordEncoder.encode(rawPassword);
+		String encodedPin = passwordEncoder.encode(rawPin);
 
-	    savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
-	    savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
+		savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
+		savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
 
-	    user.setPassword(encodedPassword);
-	    user.setPin(encodedPin);
+		user.setPassword(encodedPassword);
+		user.setPin(encodedPin);
 
-	    user.setPasswordUpdatedAt(LocalDateTime.now());
-	    user.setPinUpdatedAt(LocalDateTime.now());
+		user.setPasswordUpdatedAt(LocalDateTime.now());
+		user.setPinUpdatedAt(LocalDateTime.now());
 
-	    user.setFailedAttempts(0);
-	    user.setAccountLocked(false);
-	    user.setLockTime(null);
-	    user.setForcePasswordReset(false);
+		user.setFailedAttempts(0);
+		user.setAccountLocked(false);
+		user.setLockTime(null);
+		user.setForcePasswordReset(false);
 
-	    userRepository.save(user);
+		userRepository.save(user);
 
-	    try {
-	        sendForgotPasswordMail(user, rawPassword, rawPin);
-	    } catch (Exception e) {
-	        log.error("Mail failed");
-	        throw new RuntimeException("Failed to send email");
-	    }
+		try {
+			sendForgotPasswordMail(user, rawPassword, rawPin);
+		} catch (Exception e) {
+			log.error("Mail failed");
+			throw new RuntimeException("Failed to send email");
+		}
 
-	    log.info("Forgot password completed");
+		log.info("Forgot password completed");
 
-	    return ApiResponse.success("New credentials sent to registered email");
+		return ApiResponse.success("New credentials sent to registered email");
 	}
 
 	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
@@ -788,6 +793,7 @@ public class UserServiceImpl implements IUserService {
 		}
 
 		user.setForcePasswordReset(false);
+		user.setFirstTimeLogin(false);
 		userRepository.save(user);
 
 		log.info("Change password completed");

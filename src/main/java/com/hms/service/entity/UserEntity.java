@@ -101,5 +101,7 @@ public class UserEntity {
 	private LocalDateTime passwordUpdatedAt;
 	
 	private LocalDateTime pinUpdatedAt;
+	
+	private Boolean firstTimeLogin;
 
 }
