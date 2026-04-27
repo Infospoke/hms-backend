@@ -95,370 +95,221 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
-	
+
 	@Autowired
 	private MailServiceImpl mailService;
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
-	
+
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
-//	@Override
-//	@Transactional
-//	public ApiResponse<?> createUser(UserCreationRequest request) {
-//
-//		log.info("UserServiceImpl:: Inside the createUser Method");
-//
-//		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
-//			log.info("employee is already exists");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
-//		}
-//
-//		if (userRepository.existsByEmail(request.getEmail())) {
-//			log.info("email already exists");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
-//		}
-//
-//		LocalDate dob;
-//		try {
-//			dob = LocalDate.parse(request.getDateOfBirth());
-//		} catch (Exception e) {
-//			log.error("exception occured at dob " + e.getMessage());
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
-//		}
-//
-//		if (dob.isAfter(LocalDate.now().minusYears(18))) {
-//			log.info("user age must be above 18");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
-//		}
-//
-//		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
-//			log.info("alternative number must be different");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
-//		}
-//
-//		String rawPassword = PasswordGenerator.generatePassword(8);
-//		String rawPin = PasswordGenerator.generatePin(4);
-//
-//		UserEntity user = new UserEntity();
-//
-//		user.setUserTypeId(request.getUserTypeId());
-//		user.setFirstName(request.getFirstName());
-//		user.setLastName(request.getLastName());
-//		user.setEmail(request.getEmail());
-//		user.setEmployeeId(request.getEmployeeId());
-//		user.setMobileNumber(request.getMobileNumber());
-//		user.setAlternateContact(request.getAlternateContact());
-//
-//		user.setUsername(request.getFirstName());
-//
-//		user.setDateOfBirth(dob);
-//		user.setEmploymentTypeId(request.getEmploymentTypeId());
-//		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-//			user.setBusinessUnitId(request.getBusinessUnitId());
-//		} else {
-//			log.info("BusinessUnit Id is required");
-//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
-//		}
-//		if (departmentsRepository.existsById(request.getDepartmentId())) {
-//			user.setDepartmentId(request.getDepartmentId());
-//		} else {
-//			log.info("Department Id is required");
-//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
-//		}
-//
-//		user.setPassword(passwordEncoder.encode(rawPassword));
-//		user.setPin(passwordEncoder.encode(rawPin));
-//		log.info("PIN" + rawPin);
-//		log.info("password" + rawPassword);
-//
-//		user.setActive(true);
-//		user.setDeactivated(false);
-//		user.setUpdatedBy("ADMIN");
-//		user.setUpdatedAt(LocalDate.now());
-//
-//		Integer userId = sequenceGenerator.generateUserId();
-//		user.setUserId(userId);
-//
-//		log.info("Saving user: {}", userId);
-//		userRepository.save(user);
-//
-//		AssignRolesEntity role = new AssignRolesEntity();
-//		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
-//		role.setUserId(userId);
-//		role.setRoleId(request.getRoleId());
-//		role.setAssignedBy("ADMIN");
-//		role.setAssignedAt(LocalDate.now());
-//
-//		assignRolesRepository.save(role);
-//
-//		log.info("User created successfully: {}", userId);
-//
-//		Map<String, Object> data = new HashMap<>();
-//		data.put("userId", userId);
-//		data.put("username", request.getFirstName());
-//		log.info("UserServiceImpl:: Exit from the createUser Method");
-//		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
-//	}
-	
-	 @Override
-	    @Transactional
-	    public ApiResponse<?> createUser(UserCreationRequest request) {
+	@Override
+	@Transactional
+	public ApiResponse<?> createUser(UserCreationRequest request) {
 
-	        log.info("UserServiceImpl:: Inside createUser method");
+		log.info("UserServiceImpl:: Inside createUser method");
 
-	        
-	        if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
-	            log.warn("Employee already exists with ID: {}", request.getEmployeeId());
-	            return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
-	        }
+		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
+			log.warn("Employee already exists with ID: {}", request.getEmployeeId());
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
+		}
 
-	       
-	        if (userRepository.existsByEmail(request.getEmail())) {
-	            log.warn("Email already exists: {}", request.getEmail());
-	            return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
-	        }
+		if (userRepository.existsByEmail(request.getEmail())) {
+			log.warn("Email already exists: {}", request.getEmail());
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
+		}
 
-	     
-	        LocalDate dob;
-	        try {
-	            dob = LocalDate.parse(request.getDateOfBirth());
-	        } catch (Exception e) {
-	            log.error("Invalid DOB format: {}", e.getMessage());
-	            return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
-	        }
+		LocalDate dob;
+		try {
+			dob = LocalDate.parse(request.getDateOfBirth());
+		} catch (Exception e) {
+			log.error("Invalid DOB format: {}", e.getMessage());
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
+		}
 
-	        if (dob.isAfter(LocalDate.now().minusYears(18))) {
-	            log.warn("User age must be above 18");
-	            return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
-	        }
+		if (dob.isAfter(LocalDate.now().minusYears(18))) {
+			log.warn("User age must be above 18");
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
+		}
 
-	        
-	        if (request.getAlternateContact() != null &&
-	                request.getAlternateContact().equals(request.getMobileNumber())) {
-	            log.warn("Alternate number same as mobile number");
-	            return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
-	        }
+		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
+			log.warn("Alternate number same as mobile number");
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
+		}
 
-	        String rawPassword = PasswordGenerator.generatePassword(8);
-	        String rawPin = PasswordGenerator.generatePin(4);
+		String rawPassword = PasswordGenerator.generatePassword(8);
+		String rawPin = PasswordGenerator.generatePin(4);
 
-	        log.info("Generated credentials for user: password & PIN");
+		log.info("Generated credentials for user: password & PIN");
 
-	        UserEntity user = new UserEntity();
+		UserEntity user = new UserEntity();
 
-	        user.setUserTypeId(request.getUserTypeId());
-	        user.setFirstName(request.getFirstName());
-	        user.setLastName(request.getLastName());
-	        user.setEmail(request.getEmail());
-	        user.setEmployeeId(request.getEmployeeId());
-	        user.setMobileNumber(request.getMobileNumber());
-	        user.setAlternateContact(request.getAlternateContact());
+		user.setUserTypeId(request.getUserTypeId());
+		user.setFirstName(request.getFirstName());
+		user.setLastName(request.getLastName());
+		user.setEmail(request.getEmail());
+		user.setEmployeeId(request.getEmployeeId());
+		user.setMobileNumber(request.getMobileNumber());
+		user.setAlternateContact(request.getAlternateContact());
 
-	        user.setUsername(request.getFirstName());
-	        user.setDateOfBirth(dob);
-	        user.setEmploymentTypeId(request.getEmploymentTypeId());
+		user.setUsername(request.getFirstName());
+		user.setDateOfBirth(dob);
+		user.setEmploymentTypeId(request.getEmploymentTypeId());
 
-	        
-	        if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-	            user.setBusinessUnitId(request.getBusinessUnitId());
-	        } else {
-	            log.warn("Invalid Business Unit ID: {}", request.getBusinessUnitId());
-	            return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-	                    List.of(Constants.INVALID_BUSINESS_UNIT_ID));
-	        }
+		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
+			user.setBusinessUnitId(request.getBusinessUnitId());
+		} else {
+			log.warn("Invalid Business Unit ID: {}", request.getBusinessUnitId());
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
+		}
 
-	       
-	        if (departmentsRepository.existsById(request.getDepartmentId())) {
-	            user.setDepartmentId(request.getDepartmentId());
-	        } else {
-	            log.warn("Invalid Department ID: {}", request.getDepartmentId());
-	            return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-	                    List.of(Constants.INVALID_DEPARTMENT_ID));
-	        }
+		if (departmentsRepository.existsById(request.getDepartmentId())) {
+			user.setDepartmentId(request.getDepartmentId());
+		} else {
+			log.warn("Invalid Department ID: {}", request.getDepartmentId());
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
+		}
 
-	      
-	        user.setPassword(passwordEncoder.encode(rawPassword));
-	        user.setPin(passwordEncoder.encode(rawPin));
+		user.setPassword(passwordEncoder.encode(rawPassword));
+		user.setPin(passwordEncoder.encode(rawPin));
 
-	        user.setActive(true);
-	        user.setDeactivated(false);
-	        user.setUpdatedBy("ADMIN");
-	        user.setUpdatedAt(LocalDate.now());
+		user.setActive(true);
+		user.setDeactivated(false);
+		user.setUpdatedBy("ADMIN");
+		user.setUpdatedAt(LocalDate.now());
 
-	       
-	        Integer userId = sequenceGenerator.generateUserId();
-	        user.setUserId(userId);
+		Integer userId = sequenceGenerator.generateUserId();
+		user.setUserId(userId);
 
-	        log.info("Saving user with ID: {}", userId);
-	        userRepository.save(user);
+		log.info("Saving user with ID: {}", userId);
+		userRepository.save(user);
 
-	        
-	        AssignRolesEntity role = new AssignRolesEntity();
-	        role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
-	        role.setUserId(userId);
-	        role.setRoleId(request.getRoleId());
-	        role.setAssignedBy("ADMIN");
-	        role.setAssignedAt(LocalDate.now());
+		AssignRolesEntity role = new AssignRolesEntity();
+		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
+		role.setUserId(userId);
+		role.setRoleId(request.getRoleId());
+		role.setAssignedBy("ADMIN");
+		role.setAssignedAt(LocalDate.now());
 
-	        assignRolesRepository.save(role);
-	        log.info("Role assigned to user: {}", userId);
+		assignRolesRepository.save(role);
+		log.info("Role assigned to user: {}", userId);
 
-	        
-	        savePasswordHistory(userId, rawPassword, CredentialType.PASSWORD);
-	        savePasswordHistory(userId, rawPin, CredentialType.PIN);
+		savePasswordHistory(userId, rawPassword, CredentialType.PASSWORD);
+		savePasswordHistory(userId, rawPin, CredentialType.PIN);
 
-	       
-	        String subject = Constants.USER_CREATED_MAIL_SUBJECT;
+		String subject = Constants.USER_CREATED_MAIL_SUBJECT;
 
-	        String body = String.format(
-	                Constants.USER_CREATED_MAIL_BODY,
-	                request.getFirstName(),
-	                request.getEmail(),
-	                rawPassword,
-	                rawPin
-	        );
+		String body = String.format(Constants.USER_CREATED_MAIL_BODY, request.getFirstName(), request.getEmail(),
+				rawPassword, rawPin);
 
-	       
-	        try {
-	            log.info("Sending email to: {}", request.getEmail());
-	            mailService.sendMail(
-	                    fromEmail,
-	                    request.getEmail(),
-	                    null,
-	                    subject,
-	                    body,
-	                    null
-	            );
-	            log.info("Email sent successfully to: {}", request.getEmail());
-	        } catch (Exception e) {
-	            log.error("Failed to send email: {}", e.getMessage());
-	        }
+		try {
+			log.info("Sending email to: {}", request.getEmail());
+			mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
+			log.info("Email sent successfully to: {}", request.getEmail());
+		} catch (Exception e) {
+			log.error("Failed to send email: {}", e.getMessage());
+		}
 
-	      
-	        Map<String, Object> data = new HashMap<>();
-	        data.put("userId", userId);
-	        data.put("username", request.getFirstName());
+		Map<String, Object> data = new HashMap<>();
+		data.put("userId", userId);
+		data.put("username", request.getFirstName());
 
-	        log.info("UserServiceImpl:: User created successfully with ID: {}", userId);
-	        log.info("UserServiceImpl:: Exit from createUser method");
+		log.info("UserServiceImpl:: User created successfully with ID: {}", userId);
+		log.info("UserServiceImpl:: Exit from createUser method");
 
-	        return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
-	    }
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
+	}
 
-	    
-	    private void savePasswordHistory(Integer userId, String credential, CredentialType type) {
+	private void savePasswordHistory(Integer userId, String credential, CredentialType type) {
 
-	        log.info("Saving {} history for userId: {}", type, userId);
+		log.info("Saving {} history for userId: {}", type, userId);
 
-	        PasswordHistoryEntity history = new PasswordHistoryEntity();
-	        history.setUserId(userId);
-	        history.setCredential(passwordEncoder.encode(credential));
-	        history.setCredentialType(type);
-	        history.setCreatedAt(LocalDateTime.now());
+		PasswordHistoryEntity history = new PasswordHistoryEntity();
+		history.setUserId(userId);
+		history.setCredential(passwordEncoder.encode(credential));
+		history.setCredentialType(type);
+		history.setCreatedAt(LocalDateTime.now());
 
-	        passwordHistoryRepository.save(history);
+		passwordHistoryRepository.save(history);
 
-	        log.info("{} history saved successfully for userId: {}", type, userId);
-	    }
-	
-	
+		log.info("{} history saved successfully for userId: {}", type, userId);
+	}
+
 	@Override
 	public ApiResponse<?> getUserCounts() {
 
-	    log.info("UserServiceImpl:: Inside getUserCounts");
+		log.info("UserServiceImpl:: Inside getUserCounts");
 
-	    Long total = userRepository.getTotalUsers();
-	    Long active = userRepository.getActiveUsers();
-	    Long deactivated = userRepository.getDeactivatedUsers();
+		Long total = userRepository.getTotalUsers();
+		Long active = userRepository.getActiveUsers();
+		Long deactivated = userRepository.getDeactivatedUsers();
 
-	    List<Object[]> result = userRepository.getUserCountByRole();
+		List<Object[]> result = userRepository.getUserCountByRole();
 
-	    List<Map<String, Object>> roleCounts = result.stream().map(obj -> {
-	        Map<String, Object> map = new HashMap<>();
-	        map.put("roleId", obj[0]);
-	        map.put("roleName", obj[1]);
-	        map.put("count", obj[2]);
-	        return map;
-	    }).toList();
+		List<Map<String, Object>> roleCounts = result.stream().map(obj -> {
+			Map<String, Object> map = new HashMap<>();
+			map.put("roleId", obj[0]);
+			map.put("roleName", obj[1]);
+			map.put("count", obj[2]);
+			return map;
+		}).toList();
 
-	    Map<String, Object> response = new HashMap<>();
-	    response.put("total", total);
-	    response.put("active", active);
-	    response.put("deactivated", deactivated);
-	    response.put("roleCounts", roleCounts);
+		Map<String, Object> response = new HashMap<>();
+		response.put("total", total);
+		response.put("active", active);
+		response.put("deactivated", deactivated);
+		response.put("roleCounts", roleCounts);
 
-	    log.info("UserServiceImpl:: Exit getUserCounts");
+		log.info("UserServiceImpl:: Exit getUserCounts");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
-	
-	
+
 	@Override
 	public ApiResponse<?> getUsersList(FilterRequest request) {
 
-	    log.info("UserServiceImpl:: Inside getUsersList");
+		log.info("UserServiceImpl:: Inside getUsersList");
 
-	    if (request.getPage() == null || request.getSize() == null) {
-	        return ApiResponse.failure(
-	            ResponseCode.FAILURE,
-	            "failure",
-	            List.of("page and size must be provided")
-	        );
-	    }
+		if (request.getPage() == null || request.getSize() == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+		}
 
-	    if (request.getPage() < 0 || request.getSize() <= 0) {
-	        return ApiResponse.failure(
-	            ResponseCode.FAILURE,
-	            "failure",
-	            List.of("Invalid page or size values")
-	        );
-	    }
+		if (request.getPage() < 0 || request.getSize() <= 0) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+		}
 
-	    
-	    Sort sort = Sort.by(
-	        "DESC".equalsIgnoreCase(request.getDirection())
-	            ? Sort.Direction.DESC
-	            : Sort.Direction.ASC,
-	        request.getSortBy() != null ? request.getSortBy() : "userId"
-	    );
+		Sort sort = Sort.by("DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+				request.getSortBy() != null ? request.getSortBy() : "userId");
 
-	    Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
-	 
-	    Integer roleId = null;
+		Integer roleId = null;
 
-	    if (request.getFilters() != null && request.getFilters().containsKey("roleId")) {
-	        try {
-	            roleId = Integer.parseInt(request.getFilters().get("roleId").toString());
-	        } catch (Exception e) {
-	            return ApiResponse.failure(
-	                ResponseCode.FAILURE,
-	                "failure",
-	                List.of("roleId must be a valid number")
-	            );
-	        }
-	    }
+		if (request.getFilters() != null && request.getFilters().containsKey("roleId")) {
+			try {
+				roleId = Integer.parseInt(request.getFilters().get("roleId").toString());
+			} catch (Exception e) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("roleId must be a valid number"));
+			}
+		}
 
-	    log.info("Fetching users for roleId: {}", roleId);
+		log.info("Fetching users for roleId: {}", roleId);
 
-	    
-	    Page<UserResponse> pageResult = userRepository.findUsersByRole(roleId, pageable);
+		Page<UserResponse> pageResult = userRepository.findUsersByRole(roleId, pageable);
 
-	    
-	    Map<String, Object> response = new HashMap<>();
-	    response.put("users", pageResult.getContent());
-	    response.put("currentPage", pageResult.getNumber());
-	    response.put("totalPages", pageResult.getTotalPages());
-	    response.put("totalElements", pageResult.getTotalElements());
+		Map<String, Object> response = new HashMap<>();
+		response.put("users", pageResult.getContent());
+		response.put("currentPage", pageResult.getNumber());
+		response.put("totalPages", pageResult.getTotalPages());
+		response.put("totalElements", pageResult.getTotalElements());
 
-	    log.info("UserServiceImpl:: Exit getUsersList");
+		log.info("UserServiceImpl:: Exit getUsersList");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
-	
+
 	@Override
 	@Transactional
 	public ApiResponse<?> updateUser(Integer id, UpdateUserRequest request) {
@@ -517,37 +368,25 @@ public class UserServiceImpl implements IUserService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
-	
+
 	@Override
 	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
 
-	    log.info("getUserById - Started for userId: {}", id);
+		log.info("getUserById - Started for userId: {}", id);
 
-	    UserEntity user = userRepository.findByUserId(id)
-	            .orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
-	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
+		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
-	            .orElseThrow(() -> new RuntimeException("Role not found"));
+		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+				.orElseThrow(() -> new RuntimeException("Role not found"));
 
-	    UserUpdationResponse response = new UserUpdationResponse(
-	            user.getUsername(),
-	            user.getEmail(),
-	            user.getActive(),
-	            role.getRoleName(),
-	            roleEntity.getAssignedBy(),
-	            roleEntity.getAssignedAt()
-	    );
+		UserUpdationResponse response = new UserUpdationResponse(user.getUsername(), user.getEmail(), user.getActive(),
+				role.getRoleName(), roleEntity.getAssignedBy(), roleEntity.getAssignedAt());
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "User details fetched successfully",
-	            response
-	    );
+		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
 	}
-
 
 	@Override
 	public boolean validateToken(String token) {
@@ -590,9 +429,9 @@ public class UserServiceImpl implements IUserService {
 	public String extractUsername(String token) {
 		return decodeToken(token).getSubject();
 	}
-	
+
 	public String extractUsernameFromClaims(String token) {
-	    return decodeToken(token).get("username", String.class);
+		return decodeToken(token).get("username", String.class);
 	}
 
 	public String extractRole(String token) {
@@ -602,7 +441,6 @@ public class UserServiceImpl implements IUserService {
 	public List<String> extractModules(String token) {
 		return decodeToken(token).get("modules", List.class);
 	}
-	
 
 	@Override
 	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {
@@ -696,7 +534,7 @@ public class UserServiceImpl implements IUserService {
 			List<String> modules = permissions.stream().map(p -> moduleMap.get(p.getModuleId()))
 					.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct().toList();
 
-			String token = generateToken(user.getEmail(),user.getUsername(), role.getRoleName(), modules);
+			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules);
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -744,57 +582,43 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	public ApiResponse<?> forgotPassword(String email) {
 
-	    UserEntity user = userRepository.findByEmailAndActiveTrue(email)
-	            .orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+		UserEntity user = userRepository.findByEmailAndActiveTrue(email)
+				.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
 
-	    String rawPassword = PasswordGenerator.generatePassword(8);
-	    String rawPin = PasswordGenerator.generatePin(4);
+		String rawPassword = PasswordGenerator.generatePassword(8);
+		String rawPin = PasswordGenerator.generatePin(4);
 
-	    String encodedPassword = passwordEncoder.encode(rawPassword);
-	    String encodedPin = passwordEncoder.encode(rawPin);
+		String encodedPassword = passwordEncoder.encode(rawPassword);
+		String encodedPin = passwordEncoder.encode(rawPin);
 
-	    user.setPassword(encodedPassword);
-	    user.setPin(encodedPin);
+		user.setPassword(encodedPassword);
+		user.setPin(encodedPin);
 
-	    user.setPasswordUpdatedAt(LocalDateTime.now());
-	    user.setPinUpdatedAt(LocalDateTime.now());
+		user.setPasswordUpdatedAt(LocalDateTime.now());
+		user.setPinUpdatedAt(LocalDateTime.now());
 
-	    user.setFailedAttempts(0);
-	    user.setAccountLocked(false);
-	    user.setLockTime(null);
-	    user.setForcePasswordReset(false);
+		user.setFailedAttempts(0);
+		user.setAccountLocked(false);
+		user.setLockTime(null);
+		user.setForcePasswordReset(false);
 
-	    userRepository.save(user);
-	    sendForgotPasswordMail(user, rawPassword, rawPin);
+		userRepository.save(user);
+		sendForgotPasswordMail(user, rawPassword, rawPin);
 
-	    return ApiResponse.success("New credentials sent to registered email");
+		return ApiResponse.success("New credentials sent to registered email");
 	}
-	
+
 	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
 
-	    String subject = "Your New Login Credentials";
+		String subject = "Your New Login Credentials";
 
-	    String body = "<html><body>"
-	            + "<p>Dear " + user.getFirstName() + ",</p>"
-	            + "<p>Your password has been reset successfully.</p>"
-	            + "<p><b>Username:</b> " + user.getEmail() + "</p>"
-	            + "<p><b>Password:</b> " + password + "</p>"
-	            + "<p><b>PIN:</b> " + pin + "</p>"
-	            + "<br/>"
-	            + "<p>Please login and change your credentials immediately.</p>"
-	            + "<br/>"
-	            + "<p>Regards,<br/>Infospoke</p>"
-	            + "</body></html>";
+		String body = "<html><body>" + "<p>Dear " + user.getFirstName() + ",</p>"
+				+ "<p>Your password has been reset successfully.</p>" + "<p><b>Username:</b> " + user.getEmail()
+				+ "</p>" + "<p><b>Password:</b> " + password + "</p>" + "<p><b>PIN:</b> " + pin + "</p>" + "<br/>"
+				+ "<p>Please login and change your credentials immediately.</p>" + "<br/>"
+				+ "<p>Regards,<br/>Infospoke</p>" + "</body></html>";
 
-	    mailService.sendMail(
-	            fromEmail, 
-	            user.getEmail(),        
-	            null,                  
-	            subject,
-	            body,
-	            null                   
-	    );
+		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 	}
-
 
 }
