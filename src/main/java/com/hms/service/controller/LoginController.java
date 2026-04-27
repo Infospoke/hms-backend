@@ -1,5 +1,6 @@
 package com.hms.service.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
-import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.response.LoginResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.wrappers.ApiResponse;
@@ -51,4 +51,8 @@ public class LoginController {
 		return userService.changePassword(request, channel);
 	}
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<?>> logout() {
+        return ResponseEntity.ok(userService.logout());
+    }
 }

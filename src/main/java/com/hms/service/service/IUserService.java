@@ -1,5 +1,7 @@
 package com.hms.service.service;
 
+import org.jspecify.annotations.Nullable;
+
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
@@ -30,6 +32,8 @@ public interface IUserService {
 	ApiResponse<?> forgotPassword(String email);
 
 	ApiResponse<?> changePassword(ChangePasswordRequest request, String channel);
+
+	ApiResponse<?> logout();
 
 	
     
