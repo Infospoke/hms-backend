@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
-import com.hms.service.request.ResetPasswordRequest;
 import com.hms.service.response.LoginResponse;
 import com.hms.service.service.IUserService;
 import com.hms.service.wrappers.ApiResponse;

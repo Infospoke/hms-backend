@@ -78,6 +78,9 @@ public class CandidateServiceImpl implements CandidateService {
 	
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
+	
+	@Autowired
+	private MailServiceImpl mailService;
 
 	
 	@Override
@@ -151,8 +154,8 @@ public class CandidateServiceImpl implements CandidateService {
 					candidateCreationRequest.getFirstName(),
 					candidateInfoEntity.getJobTitle());
  
-//			mailServiceImpl.sendMail(from, candidateCreationRequest.getEmail(), null,
-//					Constants.CANDIDATE_CREATION_SUBJECT, mailbody, offerLetter);
+			mailService.sendMail(from, candidateCreationRequest.getEmail(), null,
+					Constants.CANDIDATE_CREATION_SUBJECT, mailbody, offerLetter);
 		}
  
 		if (candidateCreationRequest.getStatus().equals(Constants.JOINED)) {
@@ -167,8 +170,8 @@ public class CandidateServiceImpl implements CandidateService {
 					candidateCreationRequest.getFirstName(),
 					candidateInfoEntity.getJobTitle());
  
-//			mailServiceImpl.sendMail(from, Constants.IT_MAIL_ID, null,
-//					Constants.CANDIDATE_JOINED_SUBJECT, mailbody, null);
+			mailService.sendMail(from, Constants.IT_MAIL_ID, null,
+					Constants.CANDIDATE_JOINED_SUBJECT, mailbody, null);
 		}
  
 		candidateRepository.save(candidateInfoEntity);
@@ -317,8 +320,8 @@ public class CandidateServiceImpl implements CandidateService {
 						candidateInfoEntity.getFirstName(),
 						candidateInfoEntity.getJobTitle());
  
-//				mailServiceImpl.sendMail(from, Constants.IT_MAIL_ID, null, Constants.CANDIDATE_JOINED_SUBJECT, mailbody,
-//						null);
+				mailService.sendMail(from, Constants.IT_MAIL_ID, null, Constants.CANDIDATE_JOINED_SUBJECT, mailbody,
+						null);
  
 				ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
 				activityFeedEntity.setTimeStamp(LocalDateTime.now());
