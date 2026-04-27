@@ -1,9 +1,5 @@
 package com.hms.service.request;
 
-import java.time.LocalDateTime;
-
-import com.hms.service.entity.PasswordHistoryEntity;
-import com.hms.service.enums.CredentialType;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

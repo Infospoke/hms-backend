@@ -15,7 +15,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.SequenceGenerator;
 @Entity
 @Table(name="tb_sr_position_basics")
 @Data

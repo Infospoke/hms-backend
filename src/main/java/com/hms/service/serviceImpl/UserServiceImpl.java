@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -398,7 +399,7 @@ public class UserServiceImpl implements IUserService {
 		claims.put("username", userName);
 		claims.put("role", roleName);
 		claims.put("modules", modules);
-		claims.put("firstTimeLogin", firstTimeLogin); 
+		claims.put("firstTimeLogin", firstTimeLogin);
 
 		return createToken(claims, email);
 	}
@@ -541,7 +542,8 @@ public class UserServiceImpl implements IUserService {
 
 			log.info("Generating token");
 
-			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules, user.getFirstTimeLogin());
+			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules,
+					user.getFirstTimeLogin());
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -633,17 +635,17 @@ public class UserServiceImpl implements IUserService {
 	}
 
 	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
-		 
+
 		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPasswordMail method");
- 
+
 		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
- 
+
 		String body = String.format(Constants.FORGOT_PASSWORD_BODY, user.getFirstName(), user.getEmail(), password,
 				pin);
- 
+
 		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 	}
- 
+
 	@Override
 	public ApiResponse<?> changePassword(ChangePasswordRequest request, String channel) {
 
@@ -730,5 +732,19 @@ public class UserServiceImpl implements IUserService {
 		history.setCreatedAt(LocalDateTime.now());
 		log.info("{} history saved successfully for userId: {}", type, userId);
 		passwordHistoryRepository.save(history);
+	}
+
+	@Override
+	public ApiResponse<?> logout() {
+
+	    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+	    if (auth == null || !auth.isAuthenticated()) {
+	        return ApiResponse.failure("Invalid or missing token");
+	    }
+
+	    log.info("User logged out: {}", auth.getPrincipal());
+
+	    return ApiResponse.success("Logged out successfully");
 	}
 }
