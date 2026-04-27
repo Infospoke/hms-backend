@@ -107,104 +107,6 @@ public class UserServiceImpl implements IUserService {
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
-//	@Override
-//	@Transactional
-//	public ApiResponse<?> createUser(UserCreationRequest request) {
-//
-//		log.info("UserServiceImpl:: Inside the createUser Method");
-//
-//		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
-//			log.info("employee is already exists");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
-//		}
-//
-//		if (userRepository.existsByEmail(request.getEmail())) {
-//			log.info("email already exists");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
-//		}
-//
-//		LocalDate dob;
-//		try {
-//			dob = LocalDate.parse(request.getDateOfBirth());
-//		} catch (Exception e) {
-//			log.error("exception occured at dob " + e.getMessage());
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
-//		}
-//
-//		if (dob.isAfter(LocalDate.now().minusYears(18))) {
-//			log.info("user age must be above 18");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
-//		}
-//
-//		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
-//			log.info("alternative number must be different");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
-//		}
-//
-//		String rawPassword = PasswordGenerator.generatePassword(8);
-//		String rawPin = PasswordGenerator.generatePin(4);
-//
-//		UserEntity user = new UserEntity();
-//
-//		user.setUserTypeId(request.getUserTypeId());
-//		user.setFirstName(request.getFirstName());
-//		user.setLastName(request.getLastName());
-//		user.setEmail(request.getEmail());
-//		user.setEmployeeId(request.getEmployeeId());
-//		user.setMobileNumber(request.getMobileNumber());
-//		user.setAlternateContact(request.getAlternateContact());
-//
-//		user.setUsername(request.getFirstName());
-//
-//		user.setDateOfBirth(dob);
-//		user.setEmploymentTypeId(request.getEmploymentTypeId());
-//		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-//			user.setBusinessUnitId(request.getBusinessUnitId());
-//		} else {
-//			log.info("BusinessUnit Id is required");
-//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
-//		}
-//		if (departmentsRepository.existsById(request.getDepartmentId())) {
-//			user.setDepartmentId(request.getDepartmentId());
-//		} else {
-//			log.info("Department Id is required");
-//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
-//		}
-//
-//		user.setPassword(passwordEncoder.encode(rawPassword));
-//		user.setPin(passwordEncoder.encode(rawPin));
-//		log.info("PIN" + rawPin);
-//		log.info("password" + rawPassword);
-//
-//		user.setActive(true);
-//		user.setDeactivated(false);
-//		user.setUpdatedBy("ADMIN");
-//		user.setUpdatedAt(LocalDate.now());
-//
-//		Integer userId = sequenceGenerator.generateUserId();
-//		user.setUserId(userId);
-//
-//		log.info("Saving user: {}", userId);
-//		userRepository.save(user);
-//
-//		AssignRolesEntity role = new AssignRolesEntity();
-//		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
-//		role.setUserId(userId);
-//		role.setRoleId(request.getRoleId());
-//		role.setAssignedBy("ADMIN");
-//		role.setAssignedAt(LocalDate.now());
-//
-//		assignRolesRepository.save(role);
-//
-//		log.info("User created successfully: {}", userId);
-//
-//		Map<String, Object> data = new HashMap<>();
-//		data.put("userId", userId);
-//		data.put("username", request.getFirstName());
-//		log.info("UserServiceImpl:: Exit from the createUser Method");
-//		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
-//	}
-
 	@Override
 	@Transactional
 	public ApiResponse<?> createUser(UserCreationRequest request) {
@@ -320,6 +222,7 @@ public class UserServiceImpl implements IUserService {
 		log.info("Create user completed");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
+
 	}
 
 	@Override
@@ -730,17 +633,17 @@ public class UserServiceImpl implements IUserService {
 	}
 
 	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
-
+		 
 		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPasswordMail method");
-
+ 
 		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
-
+ 
 		String body = String.format(Constants.FORGOT_PASSWORD_BODY, user.getFirstName(), user.getEmail(), password,
 				pin);
-
+ 
 		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 	}
-
+ 
 	@Override
 	public ApiResponse<?> changePassword(ChangePasswordRequest request, String channel) {
 
