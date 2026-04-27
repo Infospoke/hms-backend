@@ -1,5 +1,7 @@
 package com.hms.service.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,18 +13,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_business_unit")
+@Table(name="tb_activity_feed")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BusinessUnitEntity {
+public class ActivityFeedEntity {
+	
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@Column(name ="id",insertable = false , updatable = false)
+	private Integer id;
+	
+	@Column(name="timestamp")
+	private LocalDateTime timeStamp;
+	
+	@Column(name="activity")
+	private String activity;
+	
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, updatable = false)
-    private Integer id;
-    
-    @Column(name = "business_name")
-    private String businessName;
 }
-

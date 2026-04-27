@@ -1,6 +1,5 @@
 package com.hms.service.entity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,18 +10,24 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_business_unit")
+@Table(name = "tb_job_skill_weightage")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BusinessUnitEntity {
+public class JobSkillWeightageEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, updatable = false)
-    private Integer id;
-    
-    @Column(name = "business_name")
-    private String businessName;
-}
+    private Integer jobSkillId;
 
+    private Integer jobId;
+
+    private Integer skillId;
+
+    private Integer categoryId;
+
+    private Integer experienceLevel;
+
+    private Integer weightage;
+
+}

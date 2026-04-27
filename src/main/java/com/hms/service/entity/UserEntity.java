@@ -99,9 +99,13 @@ public class UserEntity {
 	private Boolean forcePasswordReset = false;
 
 	private LocalDateTime passwordUpdatedAt;
-	
+
+	 @Column(name = "candidate_id")
+	 private Integer candidateId;
+
 	private LocalDateTime pinUpdatedAt;
 	
 	private Boolean firstTimeLogin;
+
 
 }
