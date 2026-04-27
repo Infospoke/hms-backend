@@ -107,104 +107,6 @@ public class UserServiceImpl implements IUserService {
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
-//	@Override
-//	@Transactional
-//	public ApiResponse<?> createUser(UserCreationRequest request) {
-//
-//		log.info("UserServiceImpl:: Inside the createUser Method");
-//
-//		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
-//			log.info("employee is already exists");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
-//		}
-//
-//		if (userRepository.existsByEmail(request.getEmail())) {
-//			log.info("email already exists");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
-//		}
-//
-//		LocalDate dob;
-//		try {
-//			dob = LocalDate.parse(request.getDateOfBirth());
-//		} catch (Exception e) {
-//			log.error("exception occured at dob " + e.getMessage());
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
-//		}
-//
-//		if (dob.isAfter(LocalDate.now().minusYears(18))) {
-//			log.info("user age must be above 18");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
-//		}
-//
-//		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
-//			log.info("alternative number must be different");
-//			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
-//		}
-//
-//		String rawPassword = PasswordGenerator.generatePassword(8);
-//		String rawPin = PasswordGenerator.generatePin(4);
-//
-//		UserEntity user = new UserEntity();
-//
-//		user.setUserTypeId(request.getUserTypeId());
-//		user.setFirstName(request.getFirstName());
-//		user.setLastName(request.getLastName());
-//		user.setEmail(request.getEmail());
-//		user.setEmployeeId(request.getEmployeeId());
-//		user.setMobileNumber(request.getMobileNumber());
-//		user.setAlternateContact(request.getAlternateContact());
-//
-//		user.setUsername(request.getFirstName());
-//
-//		user.setDateOfBirth(dob);
-//		user.setEmploymentTypeId(request.getEmploymentTypeId());
-//		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-//			user.setBusinessUnitId(request.getBusinessUnitId());
-//		} else {
-//			log.info("BusinessUnit Id is required");
-//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
-//		}
-//		if (departmentsRepository.existsById(request.getDepartmentId())) {
-//			user.setDepartmentId(request.getDepartmentId());
-//		} else {
-//			log.info("Department Id is required");
-//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
-//		}
-//
-//		user.setPassword(passwordEncoder.encode(rawPassword));
-//		user.setPin(passwordEncoder.encode(rawPin));
-//		log.info("PIN" + rawPin);
-//		log.info("password" + rawPassword);
-//
-//		user.setActive(true);
-//		user.setDeactivated(false);
-//		user.setUpdatedBy("ADMIN");
-//		user.setUpdatedAt(LocalDate.now());
-//
-//		Integer userId = sequenceGenerator.generateUserId();
-//		user.setUserId(userId);
-//
-//		log.info("Saving user: {}", userId);
-//		userRepository.save(user);
-//
-//		AssignRolesEntity role = new AssignRolesEntity();
-//		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
-//		role.setUserId(userId);
-//		role.setRoleId(request.getRoleId());
-//		role.setAssignedBy("ADMIN");
-//		role.setAssignedAt(LocalDate.now());
-//
-//		assignRolesRepository.save(role);
-//
-//		log.info("User created successfully: {}", userId);
-//
-//		Map<String, Object> data = new HashMap<>();
-//		data.put("userId", userId);
-//		data.put("username", request.getFirstName());
-//		log.info("UserServiceImpl:: Exit from the createUser Method");
-//		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
-//	}
-
 	@Override
 	@Transactional
 	public ApiResponse<?> createUser(UserCreationRequest request) {
@@ -251,6 +153,7 @@ public class UserServiceImpl implements IUserService {
 
 		user.setUsername(request.getFirstName());
 		user.setDateOfBirth(dob);
+		user.setFirstTimeLogin(true);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
 
 		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
@@ -319,6 +222,7 @@ public class UserServiceImpl implements IUserService {
 		log.info("Create user completed");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
+
 	}
 
 	@Override
@@ -487,11 +391,15 @@ public class UserServiceImpl implements IUserService {
 		}
 	}
 
-	public String generateToken(String email, String userName, String roleName, List<String> modules) {
+	public String generateToken(String email, String userName, String roleName, List<String> modules,
+			Boolean firstTimeLogin) {
+
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("username", userName);
 		claims.put("role", roleName);
 		claims.put("modules", modules);
+		claims.put("firstTimeLogin", firstTimeLogin); 
+
 		return createToken(claims, email);
 	}
 
@@ -633,7 +541,7 @@ public class UserServiceImpl implements IUserService {
 
 			log.info("Generating token");
 
-			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules);
+			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules, user.getFirstTimeLogin());
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -685,57 +593,57 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	public ApiResponse<?> forgotPassword(String email) {
 
-	    LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
 
-	    UserEntity user = userRepository.findByEmailAndActiveTrue(email)
-	            .orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+		UserEntity user = userRepository.findByEmailAndActiveTrue(email)
+				.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
 
-	    String rawPassword = PasswordGenerator.generatePassword(8);
-	    String rawPin = PasswordGenerator.generatePin(4);
+		String rawPassword = PasswordGenerator.generatePassword(8);
+		String rawPin = PasswordGenerator.generatePin(4);
 
-	    String encodedPassword = passwordEncoder.encode(rawPassword);
-	    String encodedPin = passwordEncoder.encode(rawPin);
+		String encodedPassword = passwordEncoder.encode(rawPassword);
+		String encodedPin = passwordEncoder.encode(rawPin);
 
-	    savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
-	    savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
+		savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
+		savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
 
-	    user.setPassword(encodedPassword);
-	    user.setPin(encodedPin);
+		user.setPassword(encodedPassword);
+		user.setPin(encodedPin);
 
-	    user.setPasswordUpdatedAt(LocalDateTime.now());
-	    user.setPinUpdatedAt(LocalDateTime.now());
+		user.setPasswordUpdatedAt(LocalDateTime.now());
+		user.setPinUpdatedAt(LocalDateTime.now());
 
-	    user.setFailedAttempts(0);
-	    user.setAccountLocked(false);
-	    user.setLockTime(null);
-	    user.setForcePasswordReset(false);
+		user.setFailedAttempts(0);
+		user.setAccountLocked(false);
+		user.setLockTime(null);
+		user.setForcePasswordReset(false);
 
-	    userRepository.save(user);
+		userRepository.save(user);
 
-	    try {
-	        sendForgotPasswordMail(user, rawPassword, rawPin);
-	    } catch (Exception e) {
-	        log.error("Mail failed");
-	        throw new RuntimeException("Failed to send email");
-	    }
+		try {
+			sendForgotPasswordMail(user, rawPassword, rawPin);
+		} catch (Exception e) {
+			log.error("Mail failed");
+			throw new RuntimeException("Failed to send email");
+		}
 
-	    log.info("Forgot password completed");
+		log.info("Forgot password completed");
 
-	    return ApiResponse.success("New credentials sent to registered email");
+		return ApiResponse.success("New credentials sent to registered email");
 	}
 
 	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
-
+		 
 		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPasswordMail method");
-
+ 
 		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
-
+ 
 		String body = String.format(Constants.FORGOT_PASSWORD_BODY, user.getFirstName(), user.getEmail(), password,
 				pin);
-
+ 
 		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 	}
-
+ 
 	@Override
 	public ApiResponse<?> changePassword(ChangePasswordRequest request, String channel) {
 
@@ -788,6 +696,7 @@ public class UserServiceImpl implements IUserService {
 		}
 
 		user.setForcePasswordReset(false);
+		user.setFirstTimeLogin(false);
 		userRepository.save(user);
 
 		log.info("Change password completed");

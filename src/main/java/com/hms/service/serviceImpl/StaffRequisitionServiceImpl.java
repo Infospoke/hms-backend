@@ -737,12 +737,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 		}
 
-		if (req.getCertificationsRequired() != null && req.getCertificationsRequired().isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "certificationsRequired cannot be empty",
-					List.of("Provide valid certifications or remove field"));
-		}
-
-
 		return null;
 	}
 
