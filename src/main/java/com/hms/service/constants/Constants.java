@@ -109,6 +109,14 @@ public class Constants {
             + "<br/>"
             + "<p>Regards,<br/>Infospoke</p>"
             + "</body></html>";
+	public static final String USER_CREATED_MAIL_SUBJECT = "User Account Created - HMS";
+    public static final String USER_CREATED_MAIL_BODY =
+            "<h3>Welcome to NEXUS HMS</h3>" +
+            "<p><b>Username:</b> %s</p>" +
+            "<p><b>Email:</b> %s</p>" +
+            "<p><b>Password:</b> %s</p>" +
+            "<p><b>PIN:</b> %s</p>" +
+            "<br><p>Please change your password after login.</p>";
 
 	
 }
