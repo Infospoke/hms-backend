@@ -75,7 +75,7 @@ public class CandidateServiceImpl implements CandidateService {
 
 	@Autowired
 	private ObjectMapper objectMapper;
-
+	
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
 
