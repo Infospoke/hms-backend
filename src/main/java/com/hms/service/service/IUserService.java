@@ -1,5 +1,6 @@
 package com.hms.service.service;
 
+import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.ResetPasswordRequest;
@@ -27,6 +28,8 @@ public interface IUserService {
 	ApiResponse<UserUpdationResponse> getUserById(Integer id);
 
 	ApiResponse<?> forgotPassword(String email);
+
+	ApiResponse<?> changePassword(ChangePasswordRequest request, String channel);
 
 	
     
