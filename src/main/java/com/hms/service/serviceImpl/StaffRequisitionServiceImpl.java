@@ -27,7 +27,6 @@ import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.SourceStrategyRepository;
-import com.hms.service.repository.StaffingRequisitionRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
 import com.hms.service.request.PositonBascicsRequest;
@@ -57,8 +56,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StaffRequisitionServiceImpl implements IStaffingRequisitionService {
 
-	@Autowired
-	private StaffingRequisitionRepository staffingRequisitionRepository;
 
 	@Autowired
 	private MinioClient minioClient;
@@ -106,8 +103,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return error;
 
 			SRPositionBasicsEntity srPositionBasicsEntity = null;
-			if (positonBasicsRequest.getId() != null) {
-				srPositionBasicsEntity = staffingRequisitionRepository.findById(positonBasicsRequest.getId())
+			if (positonBasicsRequest.getSrId() != null) {
+				srPositionBasicsEntity = positionBasicsRepository.findBySrId(positonBasicsRequest.getSrId())
 						.orElse(null);
 			}
 
@@ -116,6 +113,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity.setSubmitted(false);
 				srPositionBasicsEntity.setApproved(false);
 				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
+				srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
+				srPositionBasicsEntity.setSrId(srId);
 				
 	            String authHeader = httpServletRequest.getHeader("Authorization");
 	            String username = "System";
@@ -151,9 +150,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			srPositionBasicsEntity.setWorkMode(positonBasicsRequest.getWorkMode());
 			srPositionBasicsEntity.setPriority(positonBasicsRequest.getPriority());
 
-			srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
-			srPositionBasicsEntity.setSrId(srId);
-			srPositionBasicsEntity = staffingRequisitionRepository.save(srPositionBasicsEntity);
+			
+			srPositionBasicsEntity = positionBasicsRepository.save(srPositionBasicsEntity);
 		}
 		// business screen logic
 		if (request.getBusinessJustificationRequest() != null) {
@@ -705,12 +703,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 		}
 
-		if (req.getNiceToHaveSkills() != null) {
-			if (req.getNiceToHaveSkills().isEmpty()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "niceToHaveSkills cannot be empty",
-						List.of("Remove empty list or provide values"));
-			}
-		}
 
 		if (req.getEducationRequirement() != null) {
 			error = validateObject(req.getEducationRequirement(), "educationRequirement");
@@ -718,11 +710,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return error;
 		}
 
-		if (req.getTravelRequirement() != null) {
-			error = validateObject(req.getTravelRequirement(), "travelRequirement");
-			if (error != null)
-				return error;
-		}
 
 		if (req.getMinExperience() != null && req.getMaxExperience() != null) {
 
@@ -748,16 +735,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid interview range",
 						List.of("minInterviewRounds cannot be greater than maxInterviewRounds"));
 			}
-		}
-
-		if (req.getCertificationsRequired() != null && req.getCertificationsRequired().isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "certificationsRequired cannot be empty",
-					List.of("Provide valid certifications or remove field"));
-		}
-
-		if (req.getLanguages() != null && req.getLanguages().isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "languages cannot be empty",
-					List.of("Provide valid languages or remove field"));
 		}
 
 		return null;
@@ -970,7 +947,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		try {
 			int page = request.getPage();
 			int size = request.getSize();
-			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.CREATED_ON));
+			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.SR_ID));
 			Page<SRPositionBasicsEntity> pageData = positionBasicsRepository.findAll(pageable);
 			if (pageData.isEmpty()) {
 				log.warn("No SR records found");

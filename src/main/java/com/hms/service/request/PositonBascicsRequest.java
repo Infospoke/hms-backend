@@ -33,5 +33,7 @@ public class PositonBascicsRequest {
 
 	private String priority;
 
+	private String srId;
+
 
 }

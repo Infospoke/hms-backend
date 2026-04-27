@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ import com.hms.service.repository.PasswordHistoryRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.UpdateUserRequest;
@@ -109,15 +111,13 @@ public class UserServiceImpl implements IUserService {
 	@Transactional
 	public ApiResponse<?> createUser(UserCreationRequest request) {
 
-		log.info("UserServiceImpl:: Inside createUser method");
+		log.info("Create user started");
 
 		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
-			log.warn("Employee already exists with ID: {}", request.getEmployeeId());
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
 		}
 
 		if (userRepository.existsByEmail(request.getEmail())) {
-			log.warn("Email already exists: {}", request.getEmail());
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
 		}
 
@@ -125,24 +125,21 @@ public class UserServiceImpl implements IUserService {
 		try {
 			dob = LocalDate.parse(request.getDateOfBirth());
 		} catch (Exception e) {
-			log.error("Invalid DOB format: {}", e.getMessage());
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
 		}
 
 		if (dob.isAfter(LocalDate.now().minusYears(18))) {
-			log.warn("User age must be above 18");
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
 		}
 
 		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
-			log.warn("Alternate number same as mobile number");
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
 		}
 
 		String rawPassword = PasswordGenerator.generatePassword(8);
 		String rawPin = PasswordGenerator.generatePin(4);
 
-		log.info("Generated credentials for user: password & PIN");
+		log.info("Credentials generated");
 
 		UserEntity user = new UserEntity();
 
@@ -161,14 +158,12 @@ public class UserServiceImpl implements IUserService {
 		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
 			user.setBusinessUnitId(request.getBusinessUnitId());
 		} else {
-			log.warn("Invalid Business Unit ID: {}", request.getBusinessUnitId());
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
 		}
 
 		if (departmentsRepository.existsById(request.getDepartmentId())) {
 			user.setDepartmentId(request.getDepartmentId());
 		} else {
-			log.warn("Invalid Department ID: {}", request.getDepartmentId());
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
 		}
 
@@ -183,8 +178,9 @@ public class UserServiceImpl implements IUserService {
 		Integer userId = sequenceGenerator.generateUserId();
 		user.setUserId(userId);
 
-		log.info("Saving user with ID: {}", userId);
 		userRepository.save(user);
+
+		log.info("User saved");
 
 		AssignRolesEntity role = new AssignRolesEntity();
 		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
@@ -194,47 +190,38 @@ public class UserServiceImpl implements IUserService {
 		role.setAssignedAt(LocalDate.now());
 
 		assignRolesRepository.save(role);
-		log.info("Role assigned to user: {}", userId);
+
+		log.info("Role assigned");
 
 		savePasswordHistory(userId, rawPassword, CredentialType.PASSWORD);
 		savePasswordHistory(userId, rawPin, CredentialType.PIN);
 
-		String subject = Constants.USER_CREATED_MAIL_SUBJECT;
-
-		String body = String.format(Constants.USER_CREATED_MAIL_BODY, request.getFirstName(), request.getEmail(),
-				rawPassword, rawPin);
+		log.info("Password history saved");
 
 		try {
-			log.info("Sending email to: {}", request.getEmail());
+			log.info("Sending mail");
+
+			String subject = Constants.USER_CREATED_MAIL_SUBJECT;
+
+			String body = String.format(Constants.USER_CREATED_MAIL_BODY, request.getFirstName(), request.getEmail(),
+					rawPassword, rawPin);
+
 			mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
-			log.info("Email sent successfully to: {}", request.getEmail());
+
+			log.info("Mail sent");
+
 		} catch (Exception e) {
-			log.error("Failed to send email: {}", e.getMessage());
+			log.error("Mail failed");
 		}
 
 		Map<String, Object> data = new HashMap<>();
 		data.put("userId", userId);
 		data.put("username", request.getFirstName());
 
-		log.info("UserServiceImpl:: User created successfully with ID: {}", userId);
-		log.info("UserServiceImpl:: Exit from createUser method");
+		log.info("Create user completed");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
-	}
 
-	private void savePasswordHistory(Integer userId, String credential, CredentialType type) {
-
-		log.info("Saving {} history for userId: {}", type, userId);
-
-		PasswordHistoryEntity history = new PasswordHistoryEntity();
-		history.setUserId(userId);
-		history.setCredential(passwordEncoder.encode(credential));
-		history.setCredentialType(type);
-		history.setCreatedAt(LocalDateTime.now());
-
-		passwordHistoryRepository.save(history);
-
-		log.info("{} history saved successfully for userId: {}", type, userId);
 	}
 
 	@Override
@@ -446,22 +433,27 @@ public class UserServiceImpl implements IUserService {
 	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {
 
 		try {
+			LOGGER.info("UserManagement::UserServiceImpl::Inside the login method");
+
 			validateLogin(request, channel);
 
 			UserEntity user = userRepository.findByEmailAndActiveTrue(request.getEmail())
 					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
 
+			log.info("User fetched");
+
 			if (Boolean.TRUE.equals(user.getAccountLocked())) {
+
+				log.info("Account is locked");
 
 				if (Boolean.TRUE.equals(user.getForcePasswordReset())) {
 					throw new IllegalArgumentException("Please reset your password");
 				}
 
 				if (user.getLockTime() != null && user.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
-
 					throw new IllegalArgumentException("Account is locked. Try after 2 minutes");
-
 				} else {
+					log.info("Unlocking account");
 					user.setAccountLocked(false);
 					user.setLockTime(null);
 					userRepository.save(user);
@@ -470,6 +462,8 @@ public class UserServiceImpl implements IUserService {
 
 			if (user.getPasswordUpdatedAt() != null
 					&& user.getPasswordUpdatedAt().plusMonths(3).isBefore(LocalDateTime.now())) {
+
+				log.info("Password expired");
 
 				user.setForcePasswordReset(true);
 				userRepository.save(user);
@@ -480,8 +474,10 @@ public class UserServiceImpl implements IUserService {
 			boolean isValid;
 
 			if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+				log.info("Validating password");
 				isValid = passwordEncoder.matches(request.getPassword(), user.getPassword());
 			} else {
+				log.info("Validating pin");
 				isValid = passwordEncoder.matches(request.getPin(), user.getPin());
 			}
 
@@ -490,6 +486,8 @@ public class UserServiceImpl implements IUserService {
 				int attempts = user.getFailedAttempts() == null ? 0 : user.getFailedAttempts();
 				attempts++;
 				user.setFailedAttempts(attempts);
+
+				log.info("Invalid credentials attempt: {}", attempts);
 
 				if (attempts == 3) {
 					user.setAccountLocked(true);
@@ -510,6 +508,8 @@ public class UserServiceImpl implements IUserService {
 				userRepository.save(user);
 				throw new IllegalArgumentException("Invalid credentials");
 			}
+
+			log.info("Login successful");
 
 			user.setFailedAttempts(0);
 			user.setAccountLocked(false);
@@ -534,6 +534,8 @@ public class UserServiceImpl implements IUserService {
 			List<String> modules = permissions.stream().map(p -> moduleMap.get(p.getModuleId()))
 					.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct().toList();
 
+			log.info("Generating token");
+
 			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules);
 
 			LoginResponse response = new LoginResponse();
@@ -542,11 +544,14 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successfull", response);
 
 		} catch (Exception e) {
+			log.error("Login failed: {}", e.getMessage());
 			return ApiResponse.failure(e.getMessage());
 		}
 	}
 
 	private void validateLogin(LoginRequest request, String channel) {
+
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the validateLogin method");
 
 		if (request == null) {
 			throw new IllegalArgumentException("Invalid request");
@@ -579,8 +584,11 @@ public class UserServiceImpl implements IUserService {
 		}
 	}
 
+	@Transactional
 	@Override
 	public ApiResponse<?> forgotPassword(String email) {
+
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
 
 		UserEntity user = userRepository.findByEmailAndActiveTrue(email)
 				.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
@@ -590,6 +598,9 @@ public class UserServiceImpl implements IUserService {
 
 		String encodedPassword = passwordEncoder.encode(rawPassword);
 		String encodedPin = passwordEncoder.encode(rawPin);
+
+		savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
+		savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
 
 		user.setPassword(encodedPassword);
 		user.setPin(encodedPin);
@@ -603,22 +614,115 @@ public class UserServiceImpl implements IUserService {
 		user.setForcePasswordReset(false);
 
 		userRepository.save(user);
-		sendForgotPasswordMail(user, rawPassword, rawPin);
+
+		try {
+			sendForgotPasswordMail(user, rawPassword, rawPin);
+		} catch (Exception e) {
+			log.error("Mail failed");
+			throw new RuntimeException("Failed to send email");
+		}
+
+		log.info("Forgot password completed");
 
 		return ApiResponse.success("New credentials sent to registered email");
 	}
 
 	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
-
-		String subject = "Your New Login Credentials";
-
-		String body = "<html><body>" + "<p>Dear " + user.getFirstName() + ",</p>"
-				+ "<p>Your password has been reset successfully.</p>" + "<p><b>Username:</b> " + user.getEmail()
-				+ "</p>" + "<p><b>Password:</b> " + password + "</p>" + "<p><b>PIN:</b> " + pin + "</p>" + "<br/>"
-				+ "<p>Please login and change your credentials immediately.</p>" + "<br/>"
-				+ "<p>Regards,<br/>Infospoke</p>" + "</body></html>";
-
+		 
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPasswordMail method");
+ 
+		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
+ 
+		String body = String.format(Constants.FORGOT_PASSWORD_BODY, user.getFirstName(), user.getEmail(), password,
+				pin);
+ 
 		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 	}
+ 
+	@Override
+	public ApiResponse<?> changePassword(ChangePasswordRequest request, String channel) {
 
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the changePassword method");
+
+		String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		UserEntity user = userRepository.findByEmailAndActiveTrue(email)
+				.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+
+		log.info("User fetched");
+
+		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+
+			log.info("Validating old password");
+
+			if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+				throw new IllegalArgumentException("Old password is incorrect");
+			}
+
+			log.info("Checking password history");
+
+			validatePasswordHistory(user.getUserId(), request.getNewPassword(), CredentialType.PASSWORD);
+
+			String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+
+			user.setPassword(encodedPassword);
+			user.setPasswordUpdatedAt(LocalDateTime.now());
+
+			savePasswordHistory(user.getUserId(), request.getNewPassword(), CredentialType.PASSWORD);
+
+		} else {
+
+			log.info("Validating old pin");
+
+			if (!passwordEncoder.matches(request.getOldPin(), user.getPin())) {
+				throw new IllegalArgumentException("Old PIN is incorrect");
+			}
+
+			log.info("Checking pin history");
+
+			validatePasswordHistory(user.getUserId(), request.getNewPin(), CredentialType.PIN);
+
+			String encodedPin = passwordEncoder.encode(request.getNewPin());
+
+			user.setPin(encodedPin);
+			user.setPinUpdatedAt(LocalDateTime.now());
+
+			savePasswordHistory(user.getUserId(), request.getNewPin(), CredentialType.PIN);
+		}
+
+		user.setForcePasswordReset(false);
+		userRepository.save(user);
+
+		log.info("Change password completed");
+
+		return ApiResponse.success("Credentials updated successfully");
+	}
+
+	private void validatePasswordHistory(Integer userId, String newValue, CredentialType type) {
+
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the validatePasswordHistory method");
+
+		List<PasswordHistoryEntity> historyList = passwordHistoryRepository
+				.findTop5ByUserIdAndCredentialTypeOrderByCreatedAtDesc(userId, type);
+
+		for (PasswordHistoryEntity history : historyList) {
+
+			if (passwordEncoder.matches(newValue, history.getCredential())) {
+				throw new IllegalArgumentException("New " + type.name().toLowerCase() + " must not match last 5");
+			}
+		}
+	}
+
+	private void savePasswordHistory(Integer userId, String rawValue, CredentialType type) {
+
+		LOGGER.info("UserManagement::UserServiceImpl::Inside savePasswordHistory");
+
+		PasswordHistoryEntity history = new PasswordHistoryEntity();
+		history.setUserId(userId);
+		history.setCredential(passwordEncoder.encode(rawValue));
+		history.setCredentialType(type);
+		history.setCreatedAt(LocalDateTime.now());
+		log.info("{} history saved successfully for userId: {}", type, userId);
+		passwordHistoryRepository.save(history);
+	}
 }
