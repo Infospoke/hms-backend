@@ -4,10 +4,10 @@ import java.security.Key;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -392,13 +392,13 @@ public class UserServiceImpl implements IUserService {
 		}
 	}
 
-	public String generateToken(String email, String userName, String roleName, List<String> modules,
+	public String generateToken(String email, String userName, String roleName, List<String> permissions,
 			Boolean firstTimeLogin) {
 
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("username", userName);
 		claims.put("role", roleName);
-		claims.put("modules", modules);
+		claims.put("permissions", permissions);
 		claims.put("firstTimeLogin", firstTimeLogin);
 
 		return createToken(claims, email);
@@ -431,8 +431,8 @@ public class UserServiceImpl implements IUserService {
 		return decodeToken(token).get("role", String.class);
 	}
 
-	public List<String> extractModules(String token) {
-		return decodeToken(token).get("modules", List.class);
+	public List<String> extractPermissions(String token) {
+	    return decodeToken(token).get("permissions", List.class);
 	}
 
 	@Override
@@ -537,12 +537,31 @@ public class UserServiceImpl implements IUserService {
 			Map<Integer, String> moduleMap = moduleRepository.findAll().stream()
 					.collect(Collectors.toMap(ModuleEntity::getModuleId, ModuleEntity::getModuleName));
 
-			List<String> modules = permissions.stream().map(p -> moduleMap.get(p.getModuleId()))
-					.filter(Objects::nonNull).map(name -> name.toUpperCase().replace(" ", "_")).distinct().toList();
+			List<String> permissionsList = new ArrayList<>();
+
+			for (PermissionEntity p : permissions) {
+
+			    String moduleName = moduleMap.get(p.getModuleId())
+			            .toUpperCase()
+			            .replace(" ", "_");
+
+			    if (Boolean.TRUE.equals(p.getCreate())) {
+			        permissionsList.add(moduleName + "_CREATE");
+			    }
+			    if (Boolean.TRUE.equals(p.getView())) {
+			        permissionsList.add(moduleName + "_VIEW");
+			    }
+			    if (Boolean.TRUE.equals(p.getEdit())) {
+			        permissionsList.add(moduleName + "_EDIT");
+			    }
+			    if (Boolean.TRUE.equals(p.getDelete())) {
+			        permissionsList.add(moduleName + "_DELETE");
+			    }
+			}
 
 			log.info("Generating token");
 
-			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), modules,
+			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), permissionsList,
 					user.getFirstTimeLogin());
 
 			LoginResponse response = new LoginResponse();
