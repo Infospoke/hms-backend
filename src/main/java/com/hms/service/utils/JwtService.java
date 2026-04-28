@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -43,5 +44,29 @@ public class JwtService {
     private Key getSignKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+    
+    public Claims decodeToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSignKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public String extractUsername(String token) {
+        return decodeToken(token).getSubject();
+    }
+    
+	public String extractUsernameFromClaims(String token) {
+		return decodeToken(token).get("username", String.class);
+	}
+
+    public String extractRole(String token) {
+        return decodeToken(token).get("role", String.class);
+    }
+
+    public List<String> extractPermissions(String token) {
+        return decodeToken(token).get("permissions", List.class);
     }
 }
