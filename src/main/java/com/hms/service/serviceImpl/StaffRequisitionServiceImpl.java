@@ -115,12 +115,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
 				srPositionBasicsEntity.setSrId(srId);
 				
-	            String authHeader = httpServletRequest.getHeader("Authorization");
-	            String username = "System";
-	            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	                String token = authHeader.substring(7);
-	                username = userService.extractUsernameFromClaims(token);
-	            }
+				String username = httpServletRequest.getHeader("X-User");
+
+				if (username == null || username.isEmpty()) {
+				    username = "System";
+				}
 	            srPositionBasicsEntity.setCreatedBy(username);
 	        
 			}

@@ -1,7 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.security.Key;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,19 +47,12 @@ import com.hms.service.response.LoginResponse;
 import com.hms.service.response.UserResponse;
 import com.hms.service.response.UserUpdationResponse;
 import com.hms.service.service.IUserService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.utils.PasswordGenerator;
 import com.hms.service.utils.SequenceGenerator;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -101,12 +92,15 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private MailServiceImpl mailService;
+	
+    @Autowired
+    private JwtService jwtService;
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
 
 	private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
-	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
+	
 
 	@Override
 	@Transactional
@@ -377,63 +371,6 @@ public class UserServiceImpl implements IUserService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
 	}
 
-	@Override
-	public boolean validateToken(String token) {
-		LOGGER.info("UserManagement::UserServiceImpl::Inside the validateToken method");
-		try {
-			Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);
-			LOGGER.info("UserManagement::UserServiceImpl::Exit from the validateToken method");
-			return true;
-
-		} catch (io.jsonwebtoken.security.SignatureException | ExpiredJwtException | UnsupportedJwtException
-				| MalformedJwtException | IllegalArgumentException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	public String generateToken(String email, String userName, String roleName, List<String> permissions,
-			Boolean firstTimeLogin) {
-
-		Map<String, Object> claims = new HashMap<>();
-		claims.put("username", userName);
-		claims.put("role", roleName);
-		claims.put("permissions", permissions);
-		claims.put("firstTimeLogin", firstTimeLogin);
-
-		return createToken(claims, email);
-	}
-
-	private String createToken(Map<String, Object> claims, String userName) {
-		return Jwts.builder().setClaims(claims).setSubject(userName).setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 180))
-				.signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
-	}
-
-	private Key getSignKey() {
-		byte[] keyBytes = Decoders.BASE64.decode(SECRET);
-		return Keys.hmacShaKeyFor(keyBytes);
-	}
-
-	public Claims decodeToken(String token) {
-		return Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody();
-	}
-
-	public String extractUsername(String token) {
-		return decodeToken(token).getSubject();
-	}
-
-	public String extractUsernameFromClaims(String token) {
-		return decodeToken(token).get("username", String.class);
-	}
-
-	public String extractRole(String token) {
-		return decodeToken(token).get("role", String.class);
-	}
-
-	public List<String> extractPermissions(String token) {
-	    return decodeToken(token).get("permissions", List.class);
-	}
 
 	@Override
 	public ApiResponse<LoginResponse> login(LoginRequest request, String channel) {
@@ -477,17 +414,17 @@ public class UserServiceImpl implements IUserService {
 				throw new IllegalArgumentException("Password expired. Please reset your password");
 			}
 
-			boolean isValid;
+			boolean isCredentialsValid;
 
 			if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
 				log.info("Validating password");
-				isValid = passwordEncoder.matches(request.getPassword(), user.getPassword());
+				isCredentialsValid = passwordEncoder.matches(request.getPassword(), user.getPassword());
 			} else {
 				log.info("Validating pin");
-				isValid = passwordEncoder.matches(request.getPin(), user.getPin());
+				isCredentialsValid = passwordEncoder.matches(request.getPin(), user.getPin());
 			}
 
-			if (!isValid) {
+			if (!isCredentialsValid) {
 
 				int attempts = user.getFailedAttempts() == null ? 0 : user.getFailedAttempts();
 				attempts++;
@@ -523,15 +460,15 @@ public class UserServiceImpl implements IUserService {
 			userRepository.save(user);
 
 			AssignRolesEntity assignRole = assignRolesRepository.findByUserId(user.getUserId())
-					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+					.orElseThrow(() -> new IllegalArgumentException("No role assigned to this user"));
 
 			RolesEntity role = rolesRepository.findByRoleId(assignRole.getRoleId())
-					.orElseThrow(() -> new IllegalArgumentException("User is deactivated"));
+					.orElseThrow(() -> new IllegalArgumentException("Assigned role not found"));
 
 			List<PermissionEntity> permissions = permissionRepository.findByRoleId(assignRole.getRoleId());
 
 			if (permissions == null || permissions.isEmpty()) {
-				throw new IllegalArgumentException("User is deactivated");
+				throw new IllegalArgumentException("No permissions configured for the assigned role");
 			}
 
 			Map<Integer, String> moduleMap = moduleRepository.findAll().stream()
@@ -561,7 +498,7 @@ public class UserServiceImpl implements IUserService {
 
 			log.info("Generating token");
 
-			String token = generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), permissionsList,
+			String token = jwtService.generateToken(user.getEmail(), user.getUsername(), role.getRoleName(), permissionsList,
 					user.getFirstTimeLogin());
 
 			LoginResponse response = new LoginResponse();
