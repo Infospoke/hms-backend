@@ -337,8 +337,10 @@ public class JobServiceImpl implements IJobService {
 
 	    long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.SHORTLISTED);
 
-	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusNotIgnoreCase(
-	            jobId, Constants.OFFER_SENT);
+//	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusNotIgnoreCase(
+//	            jobId, Constants.OFFER_SENT); Temporary Changes
+	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(
+	            jobId, Constants.JOINED);
 
 	    long hiredCount = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(
 	            jobId, Constants.JOINED);
