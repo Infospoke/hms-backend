@@ -51,6 +51,7 @@ import com.hms.service.service.IJobService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -90,6 +91,12 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private JobSkillWeightageRepository jobSkillWeightageRepository;
+	
+	@Autowired
+	private UserServiceImpl userService;
+	
+	@Autowired
+	private HttpServletRequest httpServletRequest; 
 
 //	@Autowired
 //	private InfospokeWebisteFeign infospokeWebsiteFeign;
@@ -122,7 +129,13 @@ public class JobServiceImpl implements IJobService {
 		jobEntity.setJobMode(request.getJobMode());
 		jobEntity.setJobType(request.getJobType());
 		jobEntity.setJobInfo(request.getJobInfo());
-		jobEntity.setCreatedBy(request.getCreatedBy());
+		String authHeader = httpServletRequest.getHeader("Authorization");
+        String userName = "";
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            userName = userService.extractUsernameFromClaims(token);
+        }
+        jobEntity.setCreatedBy(userName);
 		jobEntity.setIsOpen(true);
 		jobEntity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 
@@ -337,8 +350,10 @@ public class JobServiceImpl implements IJobService {
 
 	    long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.SHORTLISTED);
 
-	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusNotIgnoreCase(
-	            jobId, Constants.OFFER_SENT);
+//	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusNotIgnoreCase(
+//	            jobId, Constants.OFFER_SENT); Temporary Changes
+	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(
+	            jobId, Constants.JOINED);
 
 	    long hiredCount = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(
 	            jobId, Constants.JOINED);

@@ -145,8 +145,8 @@ public class UserServiceImpl implements IUserService {
 		user.setEmployeeId(request.getEmployeeId());
 		user.setMobileNumber(request.getMobileNumber());
 		user.setAlternateContact(request.getAlternateContact());
-
-		user.setUsername(request.getFirstName());
+        String userName=(request.getFirstName()+ " " +request.getLastName());
+		user.setUsername(userName);
 		user.setDateOfBirth(dob);
 		user.setFirstTimeLogin(true);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
@@ -212,7 +212,7 @@ public class UserServiceImpl implements IUserService {
 
 		Map<String, Object> data = new HashMap<>();
 		data.put("userId", userId);
-		data.put("username", request.getFirstName());
+		data.put("username", userName);
 
 		log.info("Create user completed");
 
