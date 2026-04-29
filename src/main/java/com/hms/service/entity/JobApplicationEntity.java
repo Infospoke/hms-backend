@@ -51,12 +51,12 @@ public class JobApplicationEntity {
 
 	@Column(name = "created_by")
 	private Integer createdBy;
+	
+	@Column(name="referral")
+	private Boolean referral;
 
 	@Column(name = "created_date")
 	private LocalDateTime createdDate;
-
-	@Column(name = "referral")
-	private Boolean referral;
 	
 	@Column(name = "source")
 	private String source;

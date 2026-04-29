@@ -18,8 +18,6 @@ public interface IUserService {
 
 	ApiResponse<LoginResponse> login(LoginRequest request, String channel);
 
-	boolean validateToken(String token);
-
 	ApiResponse<?> getUserCounts();
 
 	ApiResponse<?> getUsersList(FilterRequest request);

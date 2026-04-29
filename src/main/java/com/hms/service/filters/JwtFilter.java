@@ -56,23 +56,23 @@ public class JwtFilter extends OncePerRequestFilter {
 
 		String token = authHeader.substring(7);
 
-		if (!userService.validateToken(token)) {
-
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			response.setContentType("application/json");
-
-			ApiResponse<?> error = ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-					List.of("Invalid or expired token"));
-
-			objectMapper.writeValue(response.getWriter(), error);
-			return;
-		}
-
-		String email = userService.extractUsername(token);
-
-		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null, null);
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+//		if (!userService.validateToken(token)) {
+//
+//			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//			response.setContentType("application/json");
+//
+//			ApiResponse<?> error = ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+//					List.of("Invalid or expired token"));
+//
+//			objectMapper.writeValue(response.getWriter(), error);
+//			return;
+//		}
+//
+//		String email = userService.extractUsername(token);
+//
+//		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null, null);
+//
+//		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		filterChain.doFilter(request, response);
 	}
