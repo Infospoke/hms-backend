@@ -30,6 +30,7 @@ public class UserCreationRequest {
     private String lastName;
 
     @NotNull(message = Constants.EMPLOYEE_ID_REQUIRED)
+    @Size(min = 2, max = 50,message=Constants.EMPLOYEE_ID_SIZE)
     private Integer employeeId;
 
     @NotBlank(message = Constants.EMAIL_REQUIRED)

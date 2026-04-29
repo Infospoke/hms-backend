@@ -260,4 +260,5 @@ public class Constants {
 		    "<p>Warm regards,<br><b>HR Team</b><br>Nexus HMS</p>" +
 
 		    "</div></div>";
+	public static final String EMPLOYEE_ID_SIZE = "Employee id must be between 1 and 4 characters";
 }

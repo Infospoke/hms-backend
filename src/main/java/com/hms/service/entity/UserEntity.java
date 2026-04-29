@@ -40,7 +40,7 @@ public class UserEntity {
 	@Column(name = "last_name", nullable = false, length = 50)
 	private String lastName;
 
-	@Column(name = "employee_id", nullable = false, unique = true, updatable = false)
+	@Column(name = "employee_id", nullable = false, unique = true, updatable = false,length=4)
 	private Integer employeeId;
 
 	@Column(name = "email", nullable = false, unique = true)
