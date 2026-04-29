@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -106,7 +107,7 @@ public class UserServiceImpl implements IUserService {
 	@Transactional
 	public ApiResponse<?> createUser(UserCreationRequest request) {
 
-		log.info("Create user started");
+		log.info("UserServiceImpl:: Inside the createUser method");
 
 		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
@@ -116,17 +117,6 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
 		}
 
-		LocalDate dob;
-		try {
-			dob = LocalDate.parse(request.getDateOfBirth());
-		} catch (Exception e) {
-			return ApiResponse.failure(ResponseCode.FAILURE, Constants.INVALID_DOB_FORMAT);
-		}
-
-		if (dob.isAfter(LocalDate.now().minusYears(18))) {
-			return ApiResponse.failure(ResponseCode.FAILURE, Constants.USER_AGE_MUST_BE_ABOVE_18);
-		}
-
 		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
 		}
@@ -134,7 +124,7 @@ public class UserServiceImpl implements IUserService {
 		String rawPassword = PasswordGenerator.generatePassword(8);
 		String rawPin = PasswordGenerator.generatePin(4);
 
-		log.info("Credentials generated");
+		log.info("UserServiceImpl:: User login credentials generated");
 
 		UserEntity user = new UserEntity();
 
@@ -147,7 +137,6 @@ public class UserServiceImpl implements IUserService {
 		user.setAlternateContact(request.getAlternateContact());
 		String userName = (request.getFirstName() + " " + request.getLastName());
 		user.setUsername(userName);
-		user.setDateOfBirth(dob);
 		user.setFirstTimeLogin(true);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
 
@@ -176,7 +165,7 @@ public class UserServiceImpl implements IUserService {
 
 		userRepository.save(user);
 
-		log.info("User saved");
+		log.info("UserServiceImpl:: User saved successfully");
 
 		AssignRolesEntity role = new AssignRolesEntity();
 		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
@@ -187,15 +176,15 @@ public class UserServiceImpl implements IUserService {
 
 		assignRolesRepository.save(role);
 
-		log.info("Role assigned");
+		log.info("UserServiceImpl:: Role assigned to user successfully");
 
 		savePasswordHistory(userId, rawPassword, CredentialType.PASSWORD);
 		savePasswordHistory(userId, rawPin, CredentialType.PIN);
 
-		log.info("Password history saved");
+		log.info("UserServiceImpl::Password history saved");
 
 		try {
-			log.info("Sending mail");
+			log.info("UserServiceImpl::Sending mail to user");
 
 			String subject = Constants.USER_CREATED_MAIL_SUBJECT;
 
@@ -204,17 +193,17 @@ public class UserServiceImpl implements IUserService {
 
 			mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
 
-			log.info("Mail sent");
+			log.info("UserServiceImpl::Mail sent");
 
 		} catch (Exception e) {
-			log.error("Mail failed");
+			log.error("UserServiceImpl::Mail failed"+e.getMessage());
 		}
 
 		Map<String, Object> data = new HashMap<>();
 		data.put("userId", userId);
 		data.put("username", userName);
 
-		log.info("Create user completed");
+		log.info("UserServiceImpl:: Exit from the createUser method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.SUCCESS, data);
 
@@ -223,7 +212,7 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	public ApiResponse<?> getUserCounts() {
 
-		log.info("UserServiceImpl:: Inside getUserCounts");
+		log.info("UserServiceImpl:: Inside the getUserCounts method");
 
 		Long total = userRepository.getTotalUsers();
 		Long active = userRepository.getActiveUsers();
@@ -245,7 +234,7 @@ public class UserServiceImpl implements IUserService {
 		response.put("deactivated", deactivated);
 		response.put("roleCounts", roleCounts);
 
-		log.info("UserServiceImpl:: Exit getUserCounts");
+		log.info("UserServiceImpl:: Exit from the getUserCounts method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
@@ -253,7 +242,7 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	public ApiResponse<?> getUsersList(FilterRequest request) {
 
-		log.info("UserServiceImpl:: Inside getUsersList");
+		log.info("UserServiceImpl:: Inside the getUsersList method");
 
 		if (request.getPage() == null || request.getSize() == null) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
@@ -288,7 +277,7 @@ public class UserServiceImpl implements IUserService {
 		response.put("totalPages", pageResult.getTotalPages());
 		response.put("totalElements", pageResult.getTotalElements());
 
-		log.info("UserServiceImpl:: Exit getUsersList");
+		log.info("UserServiceImpl:: Exit from the getUsersList method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
@@ -297,7 +286,7 @@ public class UserServiceImpl implements IUserService {
 	@Transactional
 	public ApiResponse<?> updateUser(Integer id, UpdateUserRequest request) {
 
-		log.info("updateUser - Started for userId: {}", id);
+		log.info("UserServiceImpl:: Inside the updateUser method - Started for userId: {}", id);
 
 		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -314,17 +303,17 @@ public class UserServiceImpl implements IUserService {
 
 			assignRolesRepository.save(roleEntity);
 
-			log.info("Role updated successfully");
+			log.info("UserServiceImpl::Role updated successfully");
 		}
 
 		if (request.getBusinessUnitId() != null) {
 			user.setBusinessUnitId(request.getBusinessUnitId());
-			log.info("Business Unit updated");
+			log.info("UserServiceImpl::Business Unit updated");
 		}
 
 		if (request.getDepartmentId() != null) {
 			user.setDepartmentId(request.getDepartmentId());
-			log.info("Department updated");
+			log.info("UserServiceImpl::Department updated");
 		}
 
 		if (Boolean.TRUE.equals(request.getDeactivate())) {
@@ -337,7 +326,7 @@ public class UserServiceImpl implements IUserService {
 
 			userRepository.save(user);
 
-			log.info("User deactivated successfully");
+			log.info("UserServiceImpl::User deactivated successfully");
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "User deactivated successfully", null);
 		}
@@ -347,28 +336,62 @@ public class UserServiceImpl implements IUserService {
 
 		userRepository.save(user);
 
-		log.info("User updated successfully");
+		log.info("UserServiceImpl::User updated successfully");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
 
+//	@Override
+//	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
+//
+//		log.info("UserServiceImpl::Inside the getUserById method- Started for userId: {}", id);
+//
+//		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
+//
+//		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+//				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
+//
+//		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+//				.orElseThrow(() -> new RuntimeException("Role not found"));
+//
+//		UserUpdationResponse response = new UserUpdationResponse(user.getUsername(), user.getEmail(), user.getActive(),
+//				role.getRoleName(), roleEntity.getAssignedBy(), roleEntity.getAssignedAt());
+//		
+//		log.info("UserServiceImpl::Exit from the getUserById method- Started for userId: {}", id);
+//		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
+//	}
+	
 	@Override
 	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
 
-		log.info("getUserById - Started for userId: {}", id);
+	    log.info("UserServiceImpl::Inside getUserById - Started for userId: {}", id);
 
-		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
+	    UserEntity user = userRepository.findByUserId(id)
+	            .orElseThrow(() -> new RuntimeException("User not found"));
 
-		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
-				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
+	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
-				.orElseThrow(() -> new RuntimeException("Role not found"));
+	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+	            .orElseThrow(() -> new RuntimeException("Role not found"));
 
-		UserUpdationResponse response = new UserUpdationResponse(user.getUsername(), user.getEmail(), user.getActive(),
-				role.getRoleName(), roleEntity.getAssignedBy(), roleEntity.getAssignedAt());
+	    UserUpdationResponse response = new UserUpdationResponse();
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
+	   
+	    BeanUtils.copyProperties(user, response);
+
+	    response.setRoleId(roleEntity.getRoleId());
+	    response.setRoleName(role.getRoleName());
+	    response.setAssignedBy(roleEntity.getAssignedBy());
+	    response.setAssignedAt(roleEntity.getAssignedAt());
+
+	    log.info("UserServiceImpl::Exit getUserById - Completed for userId: {}", id);
+
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "User details fetched successfully",
+	            response
+	    );
 	}
 
 	@Override
