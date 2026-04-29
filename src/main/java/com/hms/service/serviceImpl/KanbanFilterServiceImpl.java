@@ -59,19 +59,21 @@ public class KanbanFilterServiceImpl implements IKanbanService {
         LocalDate today = LocalDate.now();
 
         jobs = jobs.stream().filter(job -> {
+        	
+        	if (applicants != null && !"ALL".equalsIgnoreCase(applicants)) {
 
-            if (applicants != null && !"ALL".equalsIgnoreCase(applicants)) {
+        	    Boolean isReferralFilter = null;
 
-                if ("REFERRALS".equalsIgnoreCase(applicants)
-                        && !Boolean.TRUE.equals(job.getReferral())) {
-                    return false;
-                }
+        	    if ("referrals".equalsIgnoreCase(applicants)) {
+        	        isReferralFilter = true;
+        	    } else if ("non referrals".equalsIgnoreCase(applicants)) {
+        	        isReferralFilter = false;
+        	    }
 
-                if ("NON_REFERRALS".equalsIgnoreCase(applicants)
-                        && Boolean.TRUE.equals(job.getReferral())) {
-                    return false;
-                }
-            }
+        	    if (isReferralFilter != null && !isReferralFilter.equals(job.getReferral())) {
+        	        return false;
+        	    }
+        	}
 
             if (dateFilter != null 
                     && !"ALL".equalsIgnoreCase(dateFilter)

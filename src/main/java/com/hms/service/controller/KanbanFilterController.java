@@ -16,7 +16,7 @@ import com.hms.service.service.IStaffingRequisitionService;
 //import com.hms.service.serviceImpl.KanbanFilterServiceImpl;
 import com.hms.service.wrappers.ApiResponse;
 
-@RequestMapping("/hms/kanban")
+@RequestMapping("/hms-kanban")
 @RestController()
 public class KanbanFilterController {
 	
