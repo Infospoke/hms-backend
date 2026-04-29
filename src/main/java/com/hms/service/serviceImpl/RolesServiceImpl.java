@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.PermissionRepository;
@@ -49,6 +51,9 @@ public class RolesServiceImpl implements IRoleService {
 
 	@Autowired
 	private SequenceGenerator sequenceGenerator;
+	
+	@Autowired 
+	private AssignRolesRepository assignRolesRepository;
 
 	@Override
 	public ApiResponse<?> addRolePermissions(@Valid RolesRequest request) {
@@ -221,5 +226,14 @@ public class RolesServiceImpl implements IRoleService {
 		log.info("RoleInfoServiceImpl::Exit from the the updateRolePermissions method");
 
 		return ApiResponse.success(Constants.ROLE_PERMISSION_UPDATED_SUCCESSFULLY);
+	}
+
+	@Override
+	public ApiResponse<?> usersByRoleId(Integer roleId) {
+		log.info("RoleInfoServiceImpl:: Inside the usersByRoleId");
+		List<AssignRolesEntity> assignRolesEntity = assignRolesRepository.findByRoleId(roleId);
+		System.out.println(assignRolesEntity);
+		
+		return (ApiResponse<?>) assignRolesEntity ;
 	}
 }
