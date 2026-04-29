@@ -26,7 +26,7 @@ public interface IUserService {
 
 	ApiResponse<UserUpdationResponse> getUserById(Integer id);
 
-	ApiResponse<?> forgotPassword(String email);
+	ApiResponse<?> forgotPassword(String email, String channel);
 
 	ApiResponse<?> changePassword(ChangePasswordRequest request, String channel);
 

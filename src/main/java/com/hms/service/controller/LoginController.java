@@ -36,8 +36,8 @@ public class LoginController {
 
 
 	@PostMapping("/forgot-password")
-	public ApiResponse<?> forgotPassword(@RequestParam("email") String email) {
-		return userService.forgotPassword(email);
+	public ApiResponse<?> forgotPassword(@RequestParam("email") String email,@RequestHeader("X-Channel") String channel) {
+		return userService.forgotPassword(email,channel);
 	}
 
 	@PostMapping("/change-password")
