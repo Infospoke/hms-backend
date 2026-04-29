@@ -242,7 +242,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			budgetEntity.setSigningBonus(budgetRequest.getSigningBonus());
 			budgetEntity.setEquity(budgetRequest.getEquity());
 			budgetEntity.setRelocationBudget(budgetRequest.getRelocationBudget());
-
+			budgetEntity.setMinimumSalary(budgetRequest.getMinSalary());
+			budgetEntity.setMaximumSalary(budgetRequest.getMaxSalary());
 			budgetEntity.setSigningBonusAmount(budgetRequest.getSigningBonusAmount());
 			budgetEntity.setEquityAmount(budgetRequest.getEquityAmount());
 			budgetEntity.setRelocationBudgetAmount(budgetRequest.getRelocationBudgetAmount());
