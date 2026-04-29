@@ -44,9 +44,6 @@ public class UserCreationRequest {
     @Size(min = 10, max = 15, message = Constants.ALT_MOBILE_INVALID)
     @Pattern(regexp = "^\\+?[0-9]*$", message = Constants.ALT_MOBILE_INVALID)
     private String alternateContact;
-    
-    @NotNull(message = Constants.DOB_REQUIRED)
-    private String dateOfBirth; 
 
     @NotNull(message = Constants.EMPLOYMENT_TYPE_REQUIRED)
     private Integer employmentTypeId;

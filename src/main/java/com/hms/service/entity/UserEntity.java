@@ -54,9 +54,6 @@ public class UserEntity {
 	@Column(name = "alternate_contact", unique = true, length = 15)
 	private String alternateContact;
 
-	@Column(name = "date_of_birth", nullable = false)
-	private LocalDate dateOfBirth;
-
 	@Column(name = "employment_type_id", nullable = false)
 	private Integer employmentTypeId;
 
