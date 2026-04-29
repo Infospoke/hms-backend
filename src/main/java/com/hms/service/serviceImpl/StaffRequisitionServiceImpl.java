@@ -884,6 +884,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				budgetAndCompensationResponse.setAnnualHiringCost(budgetAndCompensationEntity.getAnnualHiringCost());
 				budgetAndCompensationResponse.setSubmitted(budgetAndCompensationEntity.getSubmitted());
 				budgetAndCompensationResponse.setApproved(budgetAndCompensationEntity.getApproved());
+				budgetAndCompensationResponse.setMinSalary(budgetAndCompensationEntity.getMinimumSalary());		
+				budgetAndCompensationResponse.setMaxSalary(budgetAndCompensationEntity.getMaximumSalary());
 
 				response.setBudgetAndCompensationResponse(budgetAndCompensationResponse);
 			}
