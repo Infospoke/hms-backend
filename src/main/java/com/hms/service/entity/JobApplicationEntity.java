@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_job_applications")
@@ -53,5 +54,32 @@ public class JobApplicationEntity {
 
 	@Column(name = "created_date")
 	private LocalDateTime createdDate;
+
+	@Column(name = "referral")
+	private Boolean referral;
+	
+	@Column(name = "source")
+	private String source;
+	
+	@Column(name = "stage_entry_date")
+	private LocalDateTime stageEntryDate;
+
+	@Column(name = "sla_days")
+	private Integer slaDays;
+
+	@Transient
+	private Long daysInStage;
+
+	@Transient
+	private String slaColor;
+	
+	@Column(name = "current_stage")
+	private String currentStage;
+
+	@Column(name = "job_status")
+	private String jobStatus;
+
+
+	
 
 }
