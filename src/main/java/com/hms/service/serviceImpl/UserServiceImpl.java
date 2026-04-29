@@ -562,7 +562,7 @@ public class UserServiceImpl implements IUserService {
 
 	@Transactional
 	@Override
-	public ApiResponse<?> forgotPassword(String email) {
+	public ApiResponse<?> forgotPassword(String email ,String channel) {
 
 		LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
 
@@ -573,23 +573,26 @@ public class UserServiceImpl implements IUserService {
 		}
 
 		UserEntity user = optionalUser.get();
-
-		String rawPassword = PasswordGenerator.generatePassword(8);
-		String rawPin = PasswordGenerator.generatePin(4);
-
-		String encodedPassword = passwordEncoder.encode(rawPassword);
-		String encodedPin = passwordEncoder.encode(rawPin);
-
-		savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
-		savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
-
-		user.setPassword(encodedPassword);
-		user.setPin(encodedPin);
-
-		user.setPasswordUpdatedAt(LocalDateTime.now());
-		user.setPinUpdatedAt(LocalDateTime.now());
-
-		user.setFailedAttempts(0);
+		 String rawPassword = null;
+		 String rawPin = null;
+		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)){
+			rawPassword = PasswordGenerator.generatePassword(8);
+			String encodedPassword = passwordEncoder.encode(rawPassword);
+			savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
+			user.setPassword(encodedPassword);
+			user.setPasswordUpdatedAt(LocalDateTime.now());
+			user.setFirstTimeLogin(true);
+			
+		}
+		else {
+			rawPin = PasswordGenerator.generatePin(4);
+			String encodedPin = passwordEncoder.encode(rawPin);
+			savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
+			user.setPin(encodedPin);
+			user.setPinUpdatedAt(LocalDateTime.now());
+			user.setFirstTimeLogin(true);
+		}
+     	user.setFailedAttempts(0);
 		user.setAccountLocked(false);
 		user.setLockTime(null);
 		user.setForcePasswordReset(false);
@@ -597,8 +600,12 @@ public class UserServiceImpl implements IUserService {
 		userRepository.save(user);
 
 		try {
-			sendForgotPasswordMail(user, rawPassword, rawPin);
-		} catch (Exception e) {
+			  if (rawPassword != null) {
+			        sendForgotPasswordMail(user, rawPassword);
+			    } else  {
+			        sendForgotPinMail(user, rawPin);
+		} 
+		}catch (Exception e) {
 			log.error("Mail failed: {}", e.getMessage());
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to send email");
 		}
@@ -608,16 +615,25 @@ public class UserServiceImpl implements IUserService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "New credentials sent to registered email", null);
 	}
 
-	private void sendForgotPasswordMail(UserEntity user, String password, String pin) {
+	private void sendForgotPasswordMail(UserEntity user, String password) {
 
 		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPasswordMail method");
 
 		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
 
-		String body = String.format(Constants.FORGOT_PASSWORD_BODY, user.getFirstName(), user.getEmail(), password,
-				pin);
+		String body = String.format(Constants.FORGOT_PASSWORD_BODY, user.getFirstName(), user.getEmail(), password);
 
 		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
+	}
+	
+	private void sendForgotPinMail(UserEntity user,String pin) {
+		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPinMail method");
+		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
+		String body = String.format(Constants.FORGOT_PIN_BODY, user.getFirstName(), user.getEmail(), pin);
+
+		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
+
+		
 	}
 
 	@Override

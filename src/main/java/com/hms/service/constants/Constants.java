@@ -209,18 +209,63 @@ public class Constants {
 	public static final String MAIL_FAILURE = "Failed to send the email";
 	public static final String FORGOT_PASSWORD_SUBJECT = "Your New Login Credentials";
 
-    public static final String FORGOT_PASSWORD_BODY =
-            "<html><body>"
-            + "<p>Dear %s,</p>"
-            + "<p>Your password has been reset successfully.</p>"
-            + "<p><b>Username:</b> %s</p>"
-            + "<p><b>Password:</b> %s</p>"
-            + "<p><b>PIN:</b> %s</p>"
-            + "<br/>"
-            + "<p>Please login and change your credentials immediately.</p>"
-            + "<br/>"
-            + "<p>Regards,<br/>Infospoke</p>"
-            + "</body></html>";
+	public static final String FORGOT_PASSWORD_BODY =
+	        "<html><body>"
+	        + "<p>Dear %s,</p>"
+
+	        + "<p>This is to inform you that your password for the Nexus HMS Portal has been successfully reset.</p>"
+
+	        + "<p>Please use the temporary password below to log in:</p>"
+
+	        + "<p><b>Username:</b> %s<br/>"
+	        + "<b>Temporary Password:</b> %s</p>"
+
+	        + "<p>You are required to log in and change your password immediately. "
+	        + "This temporary password is valid for a limited time and will expire after first use or as per system policy.</p>"
+
+	        + "<p><b>Security Advisory:</b></p>"
+	        + "<ul>"
+	        + "<li>Do not share your password with anyone</li>"
+	        + "<li>Ensure your new password complies with the organization’s security standards</li>"
+	        + "<li>If you did not initiate this request, please report it immediately</li>"
+	        + "</ul>"
+
+	        + "<p>For any assistance, please contact the IT Support Team </p>"
+
+	        + "<br/>"
+	        + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+
+	        + "</body></html>";
+    
+	public static final String FORGOT_PIN_BODY =
+	        "<html><body>"
+	        + "<p>Dear %s,</p>"
+
+	        + "<p>This is to inform you that your Mobile PIN for accessing the Nexus HMS application has been successfully reset.</p>"
+
+	        + "<p>Please find your temporary Mobile PIN below:</p>"
+
+	        + "<p><b>Username:</b> %s<br/>"
+	        + "<b>Temporary Mobile PIN:</b> %s</p>"
+
+	        + "<p>You are required to log in to the mobile application and update your PIN immediately. "
+	        + "This temporary PIN is valid for a limited duration and will expire after first use or as per system policy.</p>"
+
+	        + "<p><b>Security Advisory:</b></p>"
+	        + "<ul>"
+	        + "<li>Do not share your Mobile PIN with anyone</li>"
+	        + "<li>Avoid using easily guessable PINs (e.g., 1234, birth dates)</li>"
+	        + "<li>If you did not initiate this request, please report it immediately to the IT Support Team</li>"
+	        + "</ul>"
+
+	        + "<p>For any assistance, please contact IT Support </p>"
+
+	        + "<br/>"
+	        + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+
+	        + "</body></html>";
+    		
+    		
 	public static final String USER_CREATED_MAIL_SUBJECT = "User Account Created - HMS";
     public static final String USER_CREATED_MAIL_BODY =
             "<h3>Welcome to NEXUS HMS</h3>" +
