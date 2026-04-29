@@ -80,9 +80,6 @@ public class JobsController {
 			@RequestParam("filter") FilterApplicantEnum filter) {
  
 		ApiResponse<?> response  = iJobService.getAllJobApplicants(jobId, filter);
- 
-	
- 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
  

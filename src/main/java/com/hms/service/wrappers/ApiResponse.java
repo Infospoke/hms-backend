@@ -86,9 +86,9 @@ public class ApiResponse<T> {
 		return new ApiResponse<>(ResponseCode.FAILURE, message);
 	}
 
-	public static ApiResponse<?> failure(ResponseCode code, String message) {
-		return new ApiResponse<>(code, message);
-	}	
+	public static <T> ApiResponse<T> failure(ResponseCode code, String message) {
+	    return new ApiResponse<>(code, message);
+	}
 	// for success use this
 	public static <T> ApiResponse<T> success(ResponseCode code,String message, T data) {
 		return new ApiResponse<>(ResponseCode.SUCCESS, message, data);

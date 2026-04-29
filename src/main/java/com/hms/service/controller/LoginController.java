@@ -34,10 +34,6 @@ public class LoginController {
 		return userService.login(request, channel);
 	}
 
-	@GetMapping("/validate")
-	public boolean validateToken(@RequestParam("token") String token) {
-		return userService.validateToken(token);
-	}
 
 	@PostMapping("/forgot-password")
 	public ApiResponse<?> forgotPassword(@RequestParam("email") String email) {

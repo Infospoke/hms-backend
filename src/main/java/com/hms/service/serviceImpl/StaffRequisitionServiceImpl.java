@@ -42,6 +42,7 @@ import com.hms.service.response.PositonBasicsResponse;
 import com.hms.service.response.RolesAndRequirementsResponse;
 import com.hms.service.response.SourcingStrategyResponse;
 import com.hms.service.service.IStaffingRequisitionService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.utils.SequenceGenerator;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -58,6 +59,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private MinioClient minioClient;
+	
+	@Autowired
+	private JwtService jwtService;
 
 	@Autowired
 	private PositionBasicsRepository positionBasicsRepository;
@@ -119,7 +123,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	            String username = "System";
 	            if (authHeader != null && authHeader.startsWith("Bearer ")) {
 	                String token = authHeader.substring(7);
-	                username = userService.extractUsernameFromClaims(token);
+	                username = jwtService.extractUsernameFromClaims(token);
 	            }
 	            srPositionBasicsEntity.setCreatedBy(username);
 	        

@@ -34,7 +34,7 @@ public class JwtFilter extends OncePerRequestFilter {
 		String path = request.getRequestURI();
 
 		if (path.startsWith("/hms/login/user-login") || path.startsWith("/hms/login/forgot-password")
-				|| path.startsWith("/hms/login/validate")) {
+				|| path.startsWith("/hms/login/validate")|| path.startsWith("/hms-kanban")) {
 
 			filterChain.doFilter(request, response);
 			return;
@@ -56,24 +56,25 @@ public class JwtFilter extends OncePerRequestFilter {
 
 		String token = authHeader.substring(7);
 
-		if (!userService.validateToken(token)) {
-
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			response.setContentType("application/json");
-
-			ApiResponse<?> error = ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-					List.of("Invalid or expired token"));
-
-			objectMapper.writeValue(response.getWriter(), error);
-			return;
-		}
-
-		String email = userService.extractUsername(token);
-
-		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null, null);
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		filterChain.doFilter(request, response);
-	}
+//		if (!userService.validateToken(token)) {
+//
+//			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//			response.setContentType("application/json");
+//
+//			ApiResponse<?> error = ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+//					List.of("Invalid or expired token"));
+//
+//			objectMapper.writeValue(response.getWriter(), error);
+//			return;
+//		}
+//
+//		String email = userService.extractUsername(token);
+//
+//		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null, null);
+//
+//		SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//		filterChain.doFilter(request, response);
+//	}
+}
 }

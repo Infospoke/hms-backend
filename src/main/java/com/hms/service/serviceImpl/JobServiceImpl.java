@@ -48,6 +48,7 @@ import com.hms.service.response.JobsDashboardResponse;
 import com.hms.service.response.JobsResponse;
 import com.hms.service.response.SkillsResponse;
 import com.hms.service.service.IJobService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
@@ -61,6 +62,9 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private JobsRepository jobsRepository;
+	
+	@Autowired
+	private JwtService jwtService;
 
 	@Autowired
 	private JobDetailsRepository jobDetailsRepository;
@@ -133,7 +137,7 @@ public class JobServiceImpl implements IJobService {
         String userName = "";
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            userName = userService.extractUsernameFromClaims(token);
+            userName = jwtService.extractUsernameFromClaims(token);
         }
         jobEntity.setCreatedBy(userName);
 		jobEntity.setIsOpen(true);
