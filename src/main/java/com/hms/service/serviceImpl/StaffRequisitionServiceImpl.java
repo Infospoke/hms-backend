@@ -865,19 +865,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					departmentsRepository.findById(deptId)
 							.ifPresent(dept -> positonBasicsResponse.setDepartmentName(dept.getDepartmentName()));
 				}
-				List<Integer> reportingManagerIds = srPositionBasicsEntity.getReportingManagerInfo();
-
-				if (reportingManagerIds != null && !reportingManagerIds.isEmpty()) {
-
-				    List<String> reportingManagerNames = reportingManagerIds.stream()
-				        .map(id -> userRepository.findById(id)
-				            .map(user -> user.getFirstName())
-				            .orElse(null))
-				        .filter(Objects::nonNull)
-				        .collect(Collectors.toList());
-
-				    positonBasicsResponse.setReportingManagerName(reportingManagerNames);
-				}
+				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
 				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
 

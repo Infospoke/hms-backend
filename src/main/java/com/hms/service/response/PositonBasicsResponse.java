@@ -16,13 +16,13 @@ public class PositonBasicsResponse {
     private String srId;
 
     private String jobTitle;
-//    private Integer businessUnitId;
+//  private Integer businessUnitId;
     
     private String businessUnitName;
-//    private Integer departmentId;
+//  private Integer departmentId;
     private String departmentName;
-   // private List<Integer> reportingManagerInfo;
-    private List<String>reportingManagerName;
+    private List<Integer> reportingManagerInfo;
+   // private List<String>reportingManagerName;
 
     private String location;
     private String seniorityLevelName;
