@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import com.hms.service.entity.BusinessJustificationEntity;
 import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
+import com.hms.service.entity.SeniorityLevelEntity;
 import com.hms.service.entity.SourcingStrategyEntity;
 import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.BusinessJustificationRepository;
@@ -30,6 +33,7 @@ import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
+import com.hms.service.repository.SeniorityLevelRepository;
 import com.hms.service.repository.SourceStrategyRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
@@ -99,6 +103,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private UserServiceImpl userService;
+	
+	@Autowired
+	private SeniorityLevelRepository seniorityLevelRepository;
 
 	@Override
 	public ApiResponse<?> newStaffingRequisition(StaffingRequisitionRequest request, MultipartFile file) {
@@ -858,9 +865,30 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					departmentsRepository.findById(deptId)
 							.ifPresent(dept -> positonBasicsResponse.setDepartmentName(dept.getDepartmentName()));
 				}
-				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
+				List<Integer> reportingManagerIds = srPositionBasicsEntity.getReportingManagerInfo();
+
+				if (reportingManagerIds != null && !reportingManagerIds.isEmpty()) {
+
+				    List<String> reportingManagerNames = reportingManagerIds.stream()
+				        .map(id -> userRepository.findById(id)
+				            .map(user -> user.getFirstName())
+				            .orElse(null))
+				        .filter(Objects::nonNull)
+				        .collect(Collectors.toList());
+
+				    positonBasicsResponse.setReportingManagerName(reportingManagerNames);
+				}
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
-				positonBasicsResponse.setSeniorityLevel(srPositionBasicsEntity.getSeniorityLevel());
+				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
+
+				if (seniorityLevelId != null) {
+				    seniorityLevelRepository.findById(seniorityLevelId)
+				        .ifPresent(sl -> {
+				            String seniorityLevelName = sl.getSeniorityLevel(); 
+				            positonBasicsResponse.setSeniorityLevelName(seniorityLevelName);
+				        });
+				}
+
 				positonBasicsResponse.setOpenings(srPositionBasicsEntity.getOpenings());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setWorkMode(srPositionBasicsEntity.getWorkMode());
@@ -992,6 +1020,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					List.of(e.getMessage()));
 		}
 	}
+	
 
 	@Override
 	public ApiResponse<?> getAll(SRFilterRequest request) {
