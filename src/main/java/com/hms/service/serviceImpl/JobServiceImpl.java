@@ -1,4 +1,6 @@
 package com.hms.service.serviceImpl;
+
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -62,7 +64,7 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private JobsRepository jobsRepository;
-	
+
 	@Autowired
 	private JwtService jwtService;
 
@@ -95,12 +97,12 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private JobSkillWeightageRepository jobSkillWeightageRepository;
-	
+
 	@Autowired
 	private UserServiceImpl userService;
-	
+
 	@Autowired
-	private HttpServletRequest httpServletRequest; 
+	private HttpServletRequest httpServletRequest;
 
 //	@Autowired
 //	private InfospokeWebisteFeign infospokeWebsiteFeign;
@@ -110,6 +112,7 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
+
 	@Transactional
 	@Override
 	public ApiResponse<?> addJob(JobRequest request) {
@@ -134,12 +137,12 @@ public class JobServiceImpl implements IJobService {
 		jobEntity.setJobType(request.getJobType());
 		jobEntity.setJobInfo(request.getJobInfo());
 		String authHeader = httpServletRequest.getHeader("Authorization");
-        String userName = "";
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            userName = jwtService.extractUsernameFromClaims(token);
-        }
-        jobEntity.setCreatedBy(userName);
+		String userName = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			userName = jwtService.extractUsernameFromClaims(token);
+		}
+		jobEntity.setCreatedBy(userName);
 		jobEntity.setIsOpen(true);
 		jobEntity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 
@@ -205,7 +208,6 @@ public class JobServiceImpl implements IJobService {
 		return ApiResponse.success(Constants.JOB_ADDED_SUCCESSFULLY);
 	}
 
-	
 	@Override
 	public ApiResponse<?> getAllJobs(Boolean isOpen) {
 
@@ -269,7 +271,6 @@ public class JobServiceImpl implements IJobService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Jobs fetched successfully", jobsResponse);
 	}
 
-	
 	@Override
 	@Transactional
 	public ApiResponse<?> deleteJob(Integer jobId) {
@@ -295,215 +296,205 @@ public class JobServiceImpl implements IJobService {
 	@Override
 	public ApiResponse<?> getJobDetailsById(Integer jobId) {
 
-	    log.info("JobServiceImpl::Inside getJobDetailsById");
+		log.info("JobServiceImpl::Inside getJobDetailsById");
 
-	    JobsResponse response = new JobsResponse();
+		JobsResponse response = new JobsResponse();
 
-	    Optional<JobsEntity> optionalJob = jobsRepository.findByJobId(jobId);
+		Optional<JobsEntity> optionalJob = jobsRepository.findByJobId(jobId);
 
-	    if (optionalJob.isEmpty()) {
-	        return ApiResponse.failure(Constants.NO_JOB_FOUND);
-	    }
+		if (optionalJob.isEmpty()) {
+			return ApiResponse.failure(Constants.NO_JOB_FOUND);
+		}
 
-	    JobsEntity jobsEntity = optionalJob.get();
-	    BeanUtils.copyProperties(jobsEntity, response);
+		JobsEntity jobsEntity = optionalJob.get();
+		BeanUtils.copyProperties(jobsEntity, response);
 
-	    JobDetailsEntity detailsEntity = jobDetailsRepository.findByJobId(jobsEntity.getJobId());
+		JobDetailsEntity detailsEntity = jobDetailsRepository.findByJobId(jobsEntity.getJobId());
 
-	    if (detailsEntity != null) {
+		if (detailsEntity != null) {
 
-	        response.setQualification(detailsEntity.getQualification());
-	        response.setJobRequirements(detailsEntity.getJobRequirements());
-	        response.setJobDescription(detailsEntity.getJobDescription());
+			response.setQualification(detailsEntity.getQualification());
+			response.setJobRequirements(detailsEntity.getJobRequirements());
+			response.setJobDescription(detailsEntity.getJobDescription());
 
-	        List<JobSkillWeightageEntity> skillEntities = jobSkillWeightageRepository
-	                .findByJobId(jobsEntity.getJobId());
+			List<JobSkillWeightageEntity> skillEntities = jobSkillWeightageRepository
+					.findByJobId(jobsEntity.getJobId());
 
-	        if (skillEntities != null && !skillEntities.isEmpty()) {
+			if (skillEntities != null && !skillEntities.isEmpty()) {
 
-	            List<Integer> skillIds = skillEntities.stream()
-	                    .map(JobSkillWeightageEntity::getSkillId)
-	                    .collect(Collectors.toList());
+				List<Integer> skillIds = skillEntities.stream().map(JobSkillWeightageEntity::getSkillId)
+						.collect(Collectors.toList());
 
-	            Map<Integer, String> skillMap = skillsRepository.findSkillNamesByIds(skillIds).stream()
-	                    .collect(Collectors.toMap(obj -> (Integer) obj[0], obj -> (String) obj[1]));
+				Map<Integer, String> skillMap = skillsRepository.findSkillNamesByIds(skillIds).stream()
+						.collect(Collectors.toMap(obj -> (Integer) obj[0], obj -> (String) obj[1]));
 
-	            List<JobSkillRequest> skillList = skillEntities.stream().map(skillEntity -> {
+				List<JobSkillRequest> skillList = skillEntities.stream().map(skillEntity -> {
 
-	                JobSkillRequest skill = new JobSkillRequest();
+					JobSkillRequest skill = new JobSkillRequest();
 
-	                skill.setSkillId(skillEntity.getSkillId());
-	                skill.setCategoryId(skillEntity.getCategoryId());
-	                skill.setExperienceLevel(skillEntity.getExperienceLevel());
-	                skill.setWeightage(skillEntity.getWeightage());
+					skill.setSkillId(skillEntity.getSkillId());
+					skill.setCategoryId(skillEntity.getCategoryId());
+					skill.setExperienceLevel(skillEntity.getExperienceLevel());
+					skill.setWeightage(skillEntity.getWeightage());
 
-	                skill.setSkillName(skillMap.get(skillEntity.getSkillId()));
+					skill.setSkillName(skillMap.get(skillEntity.getSkillId()));
 
-	                return skill;
-	            }).collect(Collectors.toList());
+					return skill;
+				}).collect(Collectors.toList());
 
-	            response.setSkills(skillList);
-	        }
-	    }
+				response.setSkills(skillList);
+			}
+		}
 
-	    int totalApplicants = jobApplicationRepository.countByJobId(jobId);
+		int totalApplicants = jobApplicationRepository.countByJobId(jobId);
 
-	    long interviewCompleted = interviewAnalysisRepository.countByJobId(jobId);
+		long interviewCompleted = interviewAnalysisRepository.countByJobId(jobId);
 
-	    long resumeCompleted = resumeAnalysisRepository.countByJobId(jobId);
+		long resumeCompleted = resumeAnalysisRepository.countByJobId(jobId);
 
-	    long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.SHORTLISTED);
+		long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.SHORTLISTED);
 
 //	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusNotIgnoreCase(
 //	            jobId, Constants.OFFER_SENT); Temporary Changes
-	    long offerReleased = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(
-	            jobId, Constants.JOINED);
+		long offerReleased = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.JOINED);
 
-	    long hiredCount = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(
-	            jobId, Constants.JOINED);
+		long hiredCount = candidateCreationRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.JOINED);
 
-	    response.setApplicantCount(totalApplicants);
-	    response.setResumeCount(resumeCompleted);
-	    response.setShortlisted(shortlistedCount);
-	    response.setInterviewCount(interviewCompleted);
-	    response.setOfferReleased(offerReleased);
-	    response.setHiredCount(hiredCount);
+		response.setApplicantCount(totalApplicants);
+		response.setResumeCount(resumeCompleted);
+		response.setShortlisted(shortlistedCount);
+		response.setInterviewCount(interviewCompleted);
+		response.setOfferReleased(offerReleased);
+		response.setHiredCount(hiredCount);
 
-	    log.info("JobServiceImpl::Exit getJobDetailsById");
+		log.info("JobServiceImpl::Exit getJobDetailsById");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS,"sucess", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "sucess", response);
 	}
 
-	
 	@Transactional
 	@Override
 	public ApiResponse<?> updateJobDetailsById(JobRequest request) {
 
-	    log.info("JobServiceImpl::Inside updateJobDetailsById method");
+		log.info("JobServiceImpl::Inside updateJobDetailsById method");
 
-	    Optional<JobsEntity> optionalJob = jobsRepository.findById(request.getJobId());
+		Optional<JobsEntity> optionalJob = jobsRepository.findById(request.getJobId());
 
-	    if (optionalJob.isEmpty()) {
-	        return ApiResponse.failure(Constants.NO_JOB_FOUND);
-	    }
+		if (optionalJob.isEmpty()) {
+			return ApiResponse.failure(Constants.NO_JOB_FOUND);
+		}
 
-	    JobsEntity jobEntity = optionalJob.get();
+		JobsEntity jobEntity = optionalJob.get();
 
-	    jobEntity.setExperience(request.getExperience());
-	    jobEntity.setJobCode(request.getJobCode());
-	    jobEntity.setJobCountry(request.getJobCountry());
-	    jobEntity.setJobTitle(request.getJobTitle());
-	    jobEntity.setJobLevel(request.getJobLevel());
-	    jobEntity.setJobLocation(request.getJobLocation());
-	    jobEntity.setJobMode(request.getJobMode());
-	    jobEntity.setJobType(request.getJobType());
-	    jobEntity.setJobInfo(request.getJobInfo());
-	    jobEntity.setCreatedBy(request.getUpdatedBy());
-	    jobEntity.setIsOpen(request.getIsOpen());
-	    jobEntity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+		jobEntity.setExperience(request.getExperience());
+		jobEntity.setJobCode(request.getJobCode());
+		jobEntity.setJobCountry(request.getJobCountry());
+		jobEntity.setJobTitle(request.getJobTitle());
+		jobEntity.setJobLevel(request.getJobLevel());
+		jobEntity.setJobLocation(request.getJobLocation());
+		jobEntity.setJobMode(request.getJobMode());
+		jobEntity.setJobType(request.getJobType());
+		jobEntity.setJobInfo(request.getJobInfo());
+		jobEntity.setCreatedBy(request.getUpdatedBy());
+		jobEntity.setIsOpen(request.getIsOpen());
+		jobEntity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 
-	    jobsRepository.save(jobEntity);
+		jobsRepository.save(jobEntity);
 
-	    JobDetailsEntity jobDetailsEntity = jobDetailsRepository.findByJobId(request.getJobId());
+		JobDetailsEntity jobDetailsEntity = jobDetailsRepository.findByJobId(request.getJobId());
 
-	    String skillNames = request.getSkills().stream()
-	            .map(skill -> skillsRepository.findById(skill.getSkillId())
-	                    .map(SkillsEntity::getSkillName).orElse(""))
-	            .collect(Collectors.joining(", "));
+		String skillNames = request.getSkills().stream()
+				.map(skill -> skillsRepository.findById(skill.getSkillId()).map(SkillsEntity::getSkillName).orElse(""))
+				.collect(Collectors.joining(", "));
 
-	    jobDetailsEntity.setJobDescription(request.getJobDescription());
-	    jobDetailsEntity.setJobRequirements(request.getJobRequirements());
-	    jobDetailsEntity.setQualification(request.getQualification());
-	    jobDetailsEntity.setSkills(skillNames);
-	    jobDetailsEntity.setUpdatedBy(request.getUpdatedBy());
-	    jobDetailsEntity.setUpdatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+		jobDetailsEntity.setJobDescription(request.getJobDescription());
+		jobDetailsEntity.setJobRequirements(request.getJobRequirements());
+		jobDetailsEntity.setQualification(request.getQualification());
+		jobDetailsEntity.setSkills(skillNames);
+		jobDetailsEntity.setUpdatedBy(request.getUpdatedBy());
+		jobDetailsEntity.setUpdatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 
-	    jobDetailsRepository.save(jobDetailsEntity);
+		jobDetailsRepository.save(jobDetailsEntity);
 
-	    for (JobSkillRequest skillRequest : request.getSkills()) {
+		for (JobSkillRequest skillRequest : request.getSkills()) {
 
-	        JobSkillWeightageEntity jobSkillWeightageEntity = jobSkillWeightageRepository
-	                .findByJobIdAndSkillId(jobEntity.getJobId(), skillRequest.getSkillId());
+			JobSkillWeightageEntity jobSkillWeightageEntity = jobSkillWeightageRepository
+					.findByJobIdAndSkillId(jobEntity.getJobId(), skillRequest.getSkillId());
 
-	        if (jobSkillWeightageEntity != null) {
-	            jobSkillWeightageEntity.setCategoryId(skillRequest.getCategoryId());
-	            jobSkillWeightageEntity.setExperienceLevel(skillRequest.getExperienceLevel());
-	            jobSkillWeightageEntity.setWeightage(skillRequest.getWeightage());
-	        } else {
-	            jobSkillWeightageEntity = new JobSkillWeightageEntity();
-	            jobSkillWeightageEntity.setJobId(jobEntity.getJobId());
-	            jobSkillWeightageEntity.setSkillId(skillRequest.getSkillId());
-	            jobSkillWeightageEntity.setCategoryId(skillRequest.getCategoryId());
-	            jobSkillWeightageEntity.setExperienceLevel(skillRequest.getExperienceLevel());
-	            jobSkillWeightageEntity.setWeightage(skillRequest.getWeightage());
-	        }
+			if (jobSkillWeightageEntity != null) {
+				jobSkillWeightageEntity.setCategoryId(skillRequest.getCategoryId());
+				jobSkillWeightageEntity.setExperienceLevel(skillRequest.getExperienceLevel());
+				jobSkillWeightageEntity.setWeightage(skillRequest.getWeightage());
+			} else {
+				jobSkillWeightageEntity = new JobSkillWeightageEntity();
+				jobSkillWeightageEntity.setJobId(jobEntity.getJobId());
+				jobSkillWeightageEntity.setSkillId(skillRequest.getSkillId());
+				jobSkillWeightageEntity.setCategoryId(skillRequest.getCategoryId());
+				jobSkillWeightageEntity.setExperienceLevel(skillRequest.getExperienceLevel());
+				jobSkillWeightageEntity.setWeightage(skillRequest.getWeightage());
+			}
 
-	        jobSkillWeightageRepository.save(jobSkillWeightageEntity);
+			jobSkillWeightageRepository.save(jobSkillWeightageEntity);
 
-	        List<QuestionEntity> questions = questionRepository.findExactQuestions(
-	                skillRequest.getSkillId(),
-	                skillRequest.getExperienceLevel(),
-	                skillRequest.getWeightage()
-	        );
+			List<QuestionEntity> questions = questionRepository.findExactQuestions(skillRequest.getSkillId(),
+					skillRequest.getExperienceLevel(), skillRequest.getWeightage());
 
-	        if (questions.isEmpty()) {
-	            throw new RuntimeException(
-	                    Constants.NO_QUESTION_FOUND_FOR_SKILL_ID + skillRequest.getSkillId()
-	                            + Constants.EXPERIENCE + skillRequest.getExperienceLevel()
-	                            + Constants.WEIGHTAGE + skillRequest.getWeightage()
-	            );
-	        }
+			if (questions.isEmpty()) {
+				throw new RuntimeException(Constants.NO_QUESTION_FOUND_FOR_SKILL_ID + skillRequest.getSkillId()
+						+ Constants.EXPERIENCE + skillRequest.getExperienceLevel() + Constants.WEIGHTAGE
+						+ skillRequest.getWeightage());
+			}
 
-	        QuestionEntity questionEntity = questions.get(new Random().nextInt(questions.size()));
+			QuestionEntity questionEntity = questions.get(new Random().nextInt(questions.size()));
 
-	        InterviewQuestionsEntity interviewQuestionsEntity = interviewQuestionsRepository
-	                .findByJobIdAndSkillId(jobEntity.getJobId(), skillRequest.getSkillId());
+			InterviewQuestionsEntity interviewQuestionsEntity = interviewQuestionsRepository
+					.findByJobIdAndSkillId(jobEntity.getJobId(), skillRequest.getSkillId());
 
-	        if (interviewQuestionsEntity != null) {
+			if (interviewQuestionsEntity != null) {
 
-	            interviewQuestionsEntity.setQuestionId(questionEntity.getQuestionId());
-	            interviewQuestionsEntity.setAssignedWeightage(questionEntity.getQuestionWeightage());
+				interviewQuestionsEntity.setQuestionId(questionEntity.getQuestionId());
+				interviewQuestionsEntity.setAssignedWeightage(questionEntity.getQuestionWeightage());
 
-	            interviewQuestionsRepository.save(interviewQuestionsEntity);
+				interviewQuestionsRepository.save(interviewQuestionsEntity);
 
-	        } else {
+			} else {
 
-	            InterviewQuestionsEntity interviewQuestions = new InterviewQuestionsEntity();
+				InterviewQuestionsEntity interviewQuestions = new InterviewQuestionsEntity();
 
-	            interviewQuestions.setJobId(jobEntity.getJobId());
-	            interviewQuestions.setQuestionId(questionEntity.getQuestionId());
-	            interviewQuestions.setAssignedWeightage(questionEntity.getQuestionWeightage());
+				interviewQuestions.setJobId(jobEntity.getJobId());
+				interviewQuestions.setQuestionId(questionEntity.getQuestionId());
+				interviewQuestions.setAssignedWeightage(questionEntity.getQuestionWeightage());
 
-	            interviewQuestionsRepository.save(interviewQuestions);
-	        }
-	    }
+				interviewQuestionsRepository.save(interviewQuestions);
+			}
+		}
 
-	    log.info("JobServiceImpl::Exit updateJobDetailsById method");
+		log.info("JobServiceImpl::Exit updateJobDetailsById method");
 
-	    return ApiResponse.success(Constants.JOB_UPDATED_SUCCESSFULLY);
+		return ApiResponse.success(Constants.JOB_UPDATED_SUCCESSFULLY);
 	}
-	
+
 	@Override
 	public ApiResponse<?> getAllJobApplicants() {
 
-	    log.info("JobsServiceImpl: Inside getAllJobApplicants method");
+		log.info("JobsServiceImpl: Inside getAllJobApplicants method");
 
-	    List<JobApplicationEntity> jobApplicationEntity =
-	            jobApplicationRepository.findAll(Sort.by(Sort.Direction.DESC, Constants.CREATED_DATE));
+		List<JobApplicationEntity> jobApplicationEntity = jobApplicationRepository
+				.findAll(Sort.by(Sort.Direction.DESC, Constants.CREATED_DATE));
 
-	    List<JobApplicantsResponse> jobApplicantsResponseList = new ArrayList<>();
+		List<JobApplicantsResponse> jobApplicantsResponseList = new ArrayList<>();
 
-	    for (JobApplicationEntity entity : jobApplicationEntity) {
-	        JobApplicantsResponse jobApplicantsResponse = new JobApplicantsResponse();
-	        BeanUtils.copyProperties(entity, jobApplicantsResponse);
-	        jobApplicantsResponseList.add(jobApplicantsResponse);
-	    }
+		for (JobApplicationEntity entity : jobApplicationEntity) {
+			JobApplicantsResponse jobApplicantsResponse = new JobApplicantsResponse();
+			BeanUtils.copyProperties(entity, jobApplicantsResponse);
+			jobApplicantsResponseList.add(jobApplicantsResponse);
+		}
 
-	    log.info("JobsServiceImpl: Exit from getAllJobApplicants method");
+		log.info("JobsServiceImpl: Exit from getAllJobApplicants method");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS, "success",jobApplicantsResponseList);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", jobApplicantsResponseList);
 	}
-	
+
 	@Override
 	public ApiResponse<JobApplicantsResponse> getApplicantDetailsById(Integer id) {
 
@@ -526,143 +517,141 @@ public class JobServiceImpl implements IJobService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant fetched", jobApplicantsResponse);
 	}
 
-	
 	@Override
 	public ApiResponse<?> getAllSkills() {
 
-	    log.info("SkillsServiceImpl::Inside the getAllSkills method");
+		log.info("SkillsServiceImpl::Inside the getAllSkills method");
 
-	    List<SkillsEntity> skillsEntities = skillsRepository.findAll(Sort.by(Sort.Direction.DESC, "skillId"));
+		List<SkillsEntity> skillsEntities = skillsRepository.findAll(Sort.by(Sort.Direction.DESC, "skillId"));
 
-	    List<SkillsResponse> skills = skillsEntities.stream()
-	            .map(skill -> new SkillsResponse(skill.getSkillId(), skill.getSkillName()))
-	            .toList();
+		List<SkillsResponse> skills = skillsEntities.stream()
+				.map(skill -> new SkillsResponse(skill.getSkillId(), skill.getSkillName())).toList();
 
-	    log.info("SkillsServiceImpl::Exit from get getAllSkills method");
+		log.info("SkillsServiceImpl::Exit from get getAllSkills method");
 
-	    return ApiResponse.success(ResponseCode.SUCCESS,"success", skills);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", skills);
 	}
-	
+
 	@Override
 	public ApiResponse<?> getAllJobsDashboardCounts() {
 
-	    JobsDashboardResponse response = new JobsDashboardResponse();
+		JobsDashboardResponse response = new JobsDashboardResponse();
 
-	    long openJobs = jobsRepository.countByIsOpenTrue();
+		long openJobs = jobsRepository.countByIsOpenTrue();
 
-	    long applicants = jobApplicationRepository.count();
+		long applicants = jobApplicationRepository.count();
 
-	    long interviews = interviewAnalysisRepository.count();
+		long interviews = interviewAnalysisRepository.count();
 
-	    long offersAccepted = offerRepository.count();
+		long offersAccepted = offerRepository.count();
 
-	    response.setOpenJobs(openJobs);
-	    response.setCandidates(applicants);
-	    response.setInterviews(interviews);
-	    response.setOffersAccepted(offersAccepted);
+		response.setOpenJobs(openJobs);
+		response.setCandidates(applicants);
+		response.setInterviews(interviews);
+		response.setOffersAccepted(offersAccepted);
 
-	    return ApiResponse.success(ResponseCode.SUCCESS,"success", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 	@Override
 	public ApiResponse<?> getAllJobApplicants(Integer jobId, FilterApplicantEnum filter) {
-
+ 
 	    log.info("JobsServiceImpl: Inside getAllJobApplicants ");
-
+ 
 	    List<JobApplicationEntity> jobApplications =
 	            jobApplicationRepository.findByJobIdOrderByCreatedDateDesc(jobId);
-
+ 
 	    if (jobApplications.isEmpty()) {
 	        return ApiResponse.success(ResponseCode.SUCCESS, Collections.emptyList());
 	    }
-
+ 
 	    List<Integer> applicationIds = jobApplications.stream()
 	            .map(JobApplicationEntity::getId)
 	            .collect(Collectors.toList());
-
+ 
 	    List<Object[]> screenedData = resumeAnalysisRepository.findScreenStatuses(applicationIds);
 	    Map<Integer, String> screenedStatusMap = new HashMap<>();
-
+ 
 	    for (Object[] obj : screenedData) {
 	        Integer appId = (Integer) obj[0];
 	        String status = (String) obj[1];
 	        screenedStatusMap.put(appId, status);
 	    }
-
+ 
 	    Set<Integer> screenedSet = screenedStatusMap.keySet();
-
+ 
 	    Set<Integer> interviewSet =
 	            new HashSet<>(interviewAnalysisRepository.findInterviewIds(applicationIds));
-
+ 
 	    log.info("Job Application IDs: {}", applicationIds);
 	    log.info("Screened IDs from DB: {}", screenedSet);
-
+ 
 	    List<Object[]> candidateData =
 	            candidateCreationRepository.findStatusByApplicationIds(applicationIds);
-
+ 
 	    Map<Integer, String> candidateStatusMap = new HashMap<>();
-
+ 
 	    for (Object[] obj : candidateData) {
 	        Integer appId = (Integer) obj[0];
 	        String dbStatus = (String) obj[1];
 	        candidateStatusMap.put(appId, dbStatus);
 	    }
-
+ 
 	    List<JobApplicantsResponse> result = new ArrayList<>();
-
+ 
 	    for (JobApplicationEntity entity : jobApplications) {
-
+ 
 	        Integer appId = entity.getId();
-
+ 
 	        if (!matchesFilter(filter, appId, screenedSet, interviewSet, candidateStatusMap)) {
 	            continue;
 	        }
-
+ 
 	        JobApplicantsResponse response = new JobApplicantsResponse();
 	        BeanUtils.copyProperties(entity, response);
-
+ 
 	        String screenedSubStatus = screenedStatusMap.get(appId);
-
+ 
 	        if (filter != null) {
-
+ 
 	            switch (filter) {
-
+ 
 	                case SCREENED:
 	                    response.setStatus(Constants.SCREENED);
 	                    response.setScreenedStatus(screenedSubStatus);
 	                    break;
-
+ 
 	                case INTERVIEW:
 	                    response.setStatus(Constants.INTERVIEW);
 	                    break;
-
+ 
 	                case OFFER:
 	                    response.setStatus(Constants.OFFER);
 	                    break;
-
+ 
 	                case HIRED:
 	                    response.setStatus(Constants.HIRED);
 	                    break;
-
+ 
 	                case APPLIED:
 	                    response.setStatus(getStatus(appId, screenedSet, interviewSet, candidateStatusMap));
 	                    response.setScreenedStatus(screenedSubStatus);
 	                    break;
-
+ 
 	                default:
 	                    response.setStatus(getStatus(appId, screenedSet, interviewSet, candidateStatusMap));
 	                    response.setScreenedStatus(screenedSubStatus);
 	            }
-
+ 
 	        } else {
 	            response.setStatus(getStatus(appId, screenedSet, interviewSet, candidateStatusMap));
 	            response.setScreenedStatus(screenedSubStatus);
 	        }
-
+ 
 	        result.add(response);
 	    }
-
+ 
 	    log.info("JobsServiceImpl: Exit getAllJobApplicants");
-
+ 
 	    return ApiResponse.success(ResponseCode.SUCCESS, result);
 	}
 	private String getStatus(Integer appId, Set<Integer> screenedSet, Set<Integer> interviewSet,

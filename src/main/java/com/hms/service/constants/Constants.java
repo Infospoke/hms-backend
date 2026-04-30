@@ -17,7 +17,7 @@ public class Constants {
     public static final String EMAIL_REQUIRED = "Email is required";
     public static final String EMAIL_INVALID = "Invalid email format";
     public static final String MOBILE_REQUIRED = "Mobile number is required";
-    public static final String MOBILE_INVALID = "Mobile number must contain only digits and optional +";
+    public static final String MOBILE_INVALID = "Mobile number must contain only digits";
     public static final String ALT_MOBILE_INVALID = "Alternate number must contain only digits";
     public static final String DOB_REQUIRED = "Date of Birth is required";
     public static final String EMPLOYMENT_TYPE_REQUIRED = "Employment Type is required";
@@ -306,4 +306,7 @@ public class Constants {
 
 		    "</div></div>";
 	public static final String EMPLOYEE_ID_SIZE = "Employee id must be between 1 and 4 characters";
+	public static final String INVALID_ROLE_ID = "Invalid role id";
+	public static final String INVALID_DEPARTMENT_FOR_BUSINESS_UNIT = "Invalid departmet for bussiness id";
+	public static final String ROLE_NOT_BELONG_TO_DEPARTMENT = "Role id doesnot belong to this department";
 }

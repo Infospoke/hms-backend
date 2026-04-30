@@ -29,5 +29,9 @@ public interface ResumeAnalysisRepository extends JpaRepository<ResumeAnalysisEn
 
 	@Query("SELECT r.applicationId, r.status FROM ResumeAnalysisEntity r WHERE r.applicationId IN :ids")
 	List<Object[]> findScreenStatuses(@Param("ids") List<Integer> applicationIds);
-
+	
+	@Query("SELECT r.applicationId, r.status, r.success, r.createdAt " +
+		       "FROM ResumeAnalysisEntity r " +
+		       "WHERE r.applicationId IN :ids AND r.isDeleted = false")
+		List<Object[]> findResumeDetails(@Param("ids") List<Integer> ids);
 }

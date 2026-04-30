@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.RolesEntity;
 
+
 @Repository
 public interface RolesRepository extends JpaRepository<RolesEntity, Integer> {
 
@@ -17,4 +18,8 @@ public interface RolesRepository extends JpaRepository<RolesEntity, Integer> {
 	RolesEntity findByRoleNameIgnoreCase(String roleName);
 
 	Optional<RolesEntity> findByRoleId(Integer roleId);
+
+	boolean existsByRoleIdAndDepartmentId(Integer roleId, Integer departmentId);
+
+	
 }

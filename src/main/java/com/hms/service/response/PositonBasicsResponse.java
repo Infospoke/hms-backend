@@ -16,15 +16,16 @@ public class PositonBasicsResponse {
     private String srId;
 
     private String jobTitle;
-//    private Integer businessUnitId;
+//  private Integer businessUnitId;
     
     private String businessUnitName;
-//    private Integer departmentId;
+//  private Integer departmentId;
     private String departmentName;
     private List<Integer> reportingManagerInfo;
+   // private List<String>reportingManagerName;
 
     private String location;
-    private String seniorityLevel;
+    private String seniorityLevelName;
     private Integer openings;
     private LocalDate targetStartDate;
 
@@ -32,7 +33,6 @@ public class PositonBasicsResponse {
     private String employmentType;
     private String priority;
 
-    private Boolean draft;
     private Boolean submitted;
     private Boolean approved;
 

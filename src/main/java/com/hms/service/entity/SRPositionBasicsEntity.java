@@ -48,7 +48,7 @@ public class SRPositionBasicsEntity {
 	private String location;
 	
 	@Column(name="seniority_level")
-	private String seniorityLevel;
+	private Integer seniorityLevel;
 	
 	@Column(name="openings")
 	private Integer openings;

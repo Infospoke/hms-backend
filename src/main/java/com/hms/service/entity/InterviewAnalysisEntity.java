@@ -1,5 +1,6 @@
 package com.hms.service.entity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -64,7 +65,8 @@ public class InterviewAnalysisEntity {
 	    @Column(name="job_id")
 	    private Integer jobId;
 
-
+	    @Column(name = "created_date")
+	    private LocalDateTime createdDate;
 
 
 }

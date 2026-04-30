@@ -144,19 +144,60 @@ public class UserServiceImpl implements IUserService {
 		user.setFirstTimeWebLogin(true);
 		user.setFirstTimeMobileLogin(true);	
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
-
-		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-			user.setBusinessUnitId(request.getBusinessUnitId());
-		} else {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
+		
+		
+		if (!businessUnitRepository.existsById(request.getBusinessUnitId())) {
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_BUSINESS_UNIT_ID)
+		    );
 		}
 
-		if (departmentsRepository.existsById(request.getDepartmentId())) {
-			user.setDepartmentId(request.getDepartmentId());
-		} else {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
+
+	
+		if (!departmentsRepository.existsById(request.getDepartmentId())) {
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_DEPARTMENT_ID)
+		    );
 		}
 
+
+		if (!rolesRepository.existsById(request.getRoleId())) {
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_ROLE_ID)
+		    );
+		}
+
+
+		
+		if (!departmentsRepository.existsByIdAndBusinessUnitId(
+		        request.getDepartmentId(),
+		        request.getBusinessUnitId())) {
+
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_DEPARTMENT_FOR_BUSINESS_UNIT)
+		    );
+		}
+
+
+		if (!rolesRepository.existsByRoleIdAndDepartmentId(
+		        request.getRoleId(),
+		        request.getDepartmentId())) {
+
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.ROLE_NOT_BELONG_TO_DEPARTMENT)
+		    );
+		}
+		
 		user.setPassword(passwordEncoder.encode(rawPassword));
 		user.setPin(passwordEncoder.encode(rawPin));
 
@@ -293,9 +334,9 @@ public class UserServiceImpl implements IUserService {
 
 		log.info("UserServiceImpl:: Inside the updateUser method - Started for userId: {}", id);
 
-		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
 		if (request.getRoleId() != null && !request.getRoleId().equals(roleEntity.getRoleId())) {
@@ -346,25 +387,7 @@ public class UserServiceImpl implements IUserService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
 
-//	@Override
-//	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
-//
-//		log.info("UserServiceImpl::Inside the getUserById method- Started for userId: {}", id);
-//
-//		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
-//
-//		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
-//				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
-//
-//		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
-//				.orElseThrow(() -> new RuntimeException("Role not found"));
-//
-//		UserUpdationResponse response = new UserUpdationResponse(user.getUsername(), user.getEmail(), user.getActive(),
-//				role.getRoleName(), roleEntity.getAssignedBy(), roleEntity.getAssignedAt());
-//		
-//		log.info("UserServiceImpl::Exit from the getUserById method- Started for userId: {}", id);
-//		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
-//	}
+
 	
 	@Override
 	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
@@ -374,10 +397,10 @@ public class UserServiceImpl implements IUserService {
 	    UserEntity user = userRepository.findById(id)
 	            .orElseThrow(() -> new RuntimeException("User not found"));
 
-	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-	    RolesEntity role = rolesRepository.findByRoleId(roleEntity.getRoleId())
+	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
 	            .orElseThrow(() -> new RuntimeException("Role not found"));
 
 	    UserUpdationResponse response = new UserUpdationResponse();
