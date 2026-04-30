@@ -21,10 +21,11 @@ public class PositonBasicsResponse {
     private String businessUnitName;
 //    private Integer departmentId;
     private String departmentName;
-    private List<Integer> reportingManagerInfo;
+   // private List<Integer> reportingManagerInfo;
+    private List<String>reportingManagerName;
 
     private String location;
-    private String seniorityLevel;
+    private String seniorityLevelName;
     private Integer openings;
     private LocalDate targetStartDate;
 
