@@ -29,7 +29,6 @@ public class PositonBasicsResponse {
     private String employmentType;
     private String priority;
 
-    private Boolean draft;
     private Boolean submitted;
     private Boolean approved;
 

@@ -39,5 +39,6 @@ public class JobApplicantsResponse {
 	private String jobTitle;
 	private long totalApplicants;
 	private Map<String, Long> report = new LinkedHashMap<>();
+	private String slaColor;
 
 }

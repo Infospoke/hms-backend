@@ -14,11 +14,19 @@ import com.hms.service.entity.InterviewAnalysisEntity;
 public interface InterviewAnalysisRepository extends JpaRepository<InterviewAnalysisEntity,Integer>{
 
 	
-	@Query("SELECT i.applicationId FROM InterviewAnalysisEntity i WHERE i.applicationId IN :ids")
+//	@Query("SELECT i.applicationId FROM InterviewAnalysisEntity i WHERE i.applicationId IN :ids")
+//	List<Integer> findInterviewIds(@Param("ids") List<Integer> ids);
+	
+	@Query(value = "SELECT DISTINCT application_id FROM tb_interview_analysis WHERE application_id IN (:ids)", nativeQuery = true)
 	List<Integer> findInterviewIds(@Param("ids") List<Integer> ids);
+	
+	@Query("SELECT i.applicationId, i.createdDate " +
+		       "FROM InterviewAnalysisEntity i " +
+		       "WHERE i.applicationId IN :ids AND i.isDeleted = false")
+		List<Object[]> findInterviewDates(@Param("ids") List<Integer> ids);
 
 	long countByJobId(Integer jobId);
 
-
+	
 
 }
