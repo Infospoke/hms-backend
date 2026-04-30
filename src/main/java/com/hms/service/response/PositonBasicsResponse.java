@@ -16,8 +16,11 @@ public class PositonBasicsResponse {
     private String srId;
 
     private String jobTitle;
-    private Integer businessUnitId;
-    private Integer departmentId;
+//    private Integer businessUnitId;
+    
+    private String businessUnitName;
+//    private Integer departmentId;
+    private String departmentName;
     private List<Integer> reportingManagerInfo;
 
     private String location;

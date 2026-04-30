@@ -12,15 +12,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.JrResponseDto;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
 import com.hms.service.repository.ModuleRepository;
+import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SeniorityLevelRepository;
 import com.hms.service.repository.TravelRequirementRepository;
 import com.hms.service.repository.UserTypeRepository;
+import com.hms.service.response.JrResponse;
 import com.hms.service.response.ModuleResponse;
 import com.hms.service.response.UserDropDownResponse;
 import com.hms.service.service.IConfigurationService;
@@ -56,6 +59,9 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	
 	@Autowired
 	private TravelRequirementRepository travelRequirementRepository;
+	
+	@Autowired
+	private PositionBasicsRepository positionBasicsRepository;
 	
 
 	
@@ -218,5 +224,24 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	            Constants.TRAVEL_REQUIREMENTS_FETCHED_SUCCESSFULLY,
 	            response
 	    );
+	}
+
+
+
+	@Override
+	public ApiResponse<?> getJr() {
+
+	    log.info("ConfigurationServiceImpl :: getJr");
+
+	    List<JrResponse> responseList = positionBasicsRepository.findApprovedJrDetails();
+       
+        List<JrResponseDto> responsesList = responseList.stream()
+        	    .map(p -> new JrResponseDto(p.getSrId(), p.getJobTitle()))
+        	    .collect(Collectors.toList());
+        if (responsesList.isEmpty()) {
+            return ApiResponse.success(ResponseCode.SUCCESS, "success", Collections.emptyList());
+        }
+
+	    return ApiResponse.success(ResponseCode.SUCCESS, "success",responsesList);
 	}
 }
