@@ -333,7 +333,7 @@ public class UserServiceImpl implements IUserService {
 
 		log.info("UserServiceImpl:: Inside the updateUser method - Started for userId: {}", id);
 
-		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
 		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
@@ -386,25 +386,7 @@ public class UserServiceImpl implements IUserService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
 
-//	@Override
-//	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
-//
-//		log.info("UserServiceImpl::Inside the getUserById method- Started for userId: {}", id);
-//
-//		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
-//
-//		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
-//				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
-//
-//		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
-//				.orElseThrow(() -> new RuntimeException("Role not found"));
-//
-//		UserUpdationResponse response = new UserUpdationResponse(user.getUsername(), user.getEmail(), user.getActive(),
-//				role.getRoleName(), roleEntity.getAssignedBy(), roleEntity.getAssignedAt());
-//		
-//		log.info("UserServiceImpl::Exit from the getUserById method- Started for userId: {}", id);
-//		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
-//	}
+
 	
 	@Override
 	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
