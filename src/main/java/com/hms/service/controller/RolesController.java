@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +38,12 @@ public class RolesController {
 		ApiResponse<?> response = iRoleService.getAllRolePermissions();
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@GetMapping("/usernames-by-roleid/{roleId}")
+	public ResponseEntity<ApiResponse<?>> usersByRoleId(@PathVariable("roleId") Integer roleId){
+		ApiResponse<?> response = iRoleService.usersByRoleId(roleId);
+		return new ResponseEntity<>(response,HttpStatus.OK);
 	}
 
 	@PutMapping("/update-role-permissions")

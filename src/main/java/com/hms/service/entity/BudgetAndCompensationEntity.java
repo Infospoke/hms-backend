@@ -54,8 +54,13 @@ public class BudgetAndCompensationEntity {
 	
 	@Column(name="status")
 	private String status;
-
 	
+	@Column(name="minimum_salary")
+	private Long minimumSalary;
+	
+	@Column(name="maximum_salary")
+	private Long maximumSalary;
+
 	@Column(name="submitted")
 	private Boolean submitted;
 	

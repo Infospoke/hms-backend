@@ -85,5 +85,13 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/get-jr")
+	public ResponseEntity<ApiResponse<?>>getJr(){
+		ApiResponse<?> response = iConfigurationService.getJr();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+		
+		
+	}
 
 }

@@ -21,7 +21,7 @@ public class PositonBascicsRequest {
 
 	private String location;
 
-	private String seniorityLevel;
+	private Integer seniorityLevel;
 
 	private Integer openings;
 

@@ -20,5 +20,7 @@ public interface DepartmentsRepository extends JpaRepository<DepartmentsEntity, 
 
 	@Query("SELECT d.deptCode FROM DepartmentsEntity d WHERE d.businessUnitId = :businessUnitId")
 	String findDeptCodeByBusinessUnitId(@Param("businessUnitId") Integer businessUnitId);
+
+	boolean existsByIdAndBusinessUnitId(Integer departmentId, Integer businessUnitId);
 	
 }
