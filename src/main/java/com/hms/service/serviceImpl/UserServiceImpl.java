@@ -366,7 +366,7 @@ public class UserServiceImpl implements IUserService {
 
 	    log.info("UserServiceImpl::Inside getUserById - Started for userId: {}", id);
 
-	    UserEntity user = userRepository.findByUserId(id)
+	    UserEntity user = userRepository.findById(id)
 	            .orElseThrow(() -> new RuntimeException("User not found"));
 
 	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
