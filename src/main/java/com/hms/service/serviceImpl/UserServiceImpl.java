@@ -143,19 +143,60 @@ public class UserServiceImpl implements IUserService {
 		user.setUsername(userName);
 		user.setFirstTimeLogin(true);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
-
-		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-			user.setBusinessUnitId(request.getBusinessUnitId());
-		} else {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
+		
+		
+		if (!businessUnitRepository.existsById(request.getBusinessUnitId())) {
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_BUSINESS_UNIT_ID)
+		    );
 		}
 
-		if (departmentsRepository.existsById(request.getDepartmentId())) {
-			user.setDepartmentId(request.getDepartmentId());
-		} else {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
+
+	
+		if (!departmentsRepository.existsById(request.getDepartmentId())) {
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_DEPARTMENT_ID)
+		    );
 		}
 
+
+		if (!rolesRepository.existsById(request.getRoleId())) {
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_ROLE_ID)
+		    );
+		}
+
+
+		
+		if (!departmentsRepository.existsByIdAndBusinessUnitId(
+		        request.getDepartmentId(),
+		        request.getBusinessUnitId())) {
+
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.INVALID_DEPARTMENT_FOR_BUSINESS_UNIT)
+		    );
+		}
+
+
+		if (!rolesRepository.existsByRoleIdAndDepartmentId(
+		        request.getRoleId(),
+		        request.getDepartmentId())) {
+
+		    return ApiResponse.failure(
+		            ResponseCode.FAILURE,
+		            "Failure",
+		            List.of(Constants.ROLE_NOT_BELONG_TO_DEPARTMENT)
+		    );
+		}
+		
 		user.setPassword(passwordEncoder.encode(rawPassword));
 		user.setPin(passwordEncoder.encode(rawPin));
 
@@ -292,7 +333,7 @@ public class UserServiceImpl implements IUserService {
 
 		log.info("UserServiceImpl:: Inside the updateUser method - Started for userId: {}", id);
 
-		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
 
 		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
