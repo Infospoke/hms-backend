@@ -1,5 +1,7 @@
 package com.hms.service.response;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,8 +14,8 @@ public class RolesAndRequirementsResponse {
     private Integer id;
     private String srId;
 
-    private String skillsMustHave;
-    private String niceToHaveSkills;
+    private List<String> skillsMustHave;
+    private List<String> niceToHaveSkills;
 
     private String educationRequirement;
     private String travelRequirement;
@@ -24,12 +26,12 @@ public class RolesAndRequirementsResponse {
     private Integer minInterviewRounds;
     private Integer maxInterviewRounds;
 
-    private String certificationsRequired;
-    private String languages;
+    private List<String> certificationsRequired;
+    private List<String> languages;
 
     private Boolean assessmentRequired;
 
-    private Boolean draft;
+    
     private Boolean submitted;
     private Boolean approved;
 }

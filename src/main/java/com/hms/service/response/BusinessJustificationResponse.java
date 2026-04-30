@@ -16,6 +16,7 @@ public class BusinessJustificationResponse {
     private String businessCase;
     private String impactIfNotFilled;
     private Integer replacesEmployee;
+    private String replacesEmployeeName;
     private String document;
 
     private Boolean draft;

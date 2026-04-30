@@ -1,9 +1,12 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,6 +20,7 @@ import com.hms.service.constants.Constants;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
+import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingStrategyEntity;
@@ -27,6 +31,7 @@ import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.SourceStrategyRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
 import com.hms.service.request.PositonBascicsRequest;
@@ -56,10 +61,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StaffRequisitionServiceImpl implements IStaffingRequisitionService {
 
-
 	@Autowired
 	private MinioClient minioClient;
-	
+
 	@Autowired
 	private JwtService jwtService;
 
@@ -80,15 +84,18 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
-	
+
 	@Autowired
-	 private BusinessUnitRepository businessUnitRepository;
-	 
+	private BusinessUnitRepository businessUnitRepository;
+
 	@Autowired
 	private SequenceGenerator sequenceGenerator;
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
 	
 	@Autowired
-	private HttpServletRequest httpServletRequest; 
+	private UserRepository userRepository;
 
 	@Autowired
 	private UserServiceImpl userService;
@@ -118,18 +125,18 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
 				srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
 				srPositionBasicsEntity.setSrId(srId);
-				
-	            String authHeader = httpServletRequest.getHeader("Authorization");
-	            String username = "System";
-	            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	                String token = authHeader.substring(7);
-	                username = jwtService.extractUsernameFromClaims(token);
-	            }
-	            srPositionBasicsEntity.setCreatedBy(username);
-	        
+
+				String authHeader = httpServletRequest.getHeader("Authorization");
+				String username = "System";
+				if (authHeader != null && authHeader.startsWith("Bearer ")) {
+					String token = authHeader.substring(7);
+					username = jwtService.extractUsernameFromClaims(token);
+				}
+				srPositionBasicsEntity.setCreatedBy(username);
+
 			}
 			srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
-			
+
 			if (businessUnitRepository.existsById(positonBasicsRequest.getBusinessUnitId())) {
 				srPositionBasicsEntity.setBusinessUnitId(positonBasicsRequest.getBusinessUnitId());
 			} else {
@@ -143,7 +150,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				log.info("Department Id is required");
 				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.DEPARTMENT_REQUIRED));
 			}
-			
+
 			srPositionBasicsEntity.setReportingManagerInfo(positonBasicsRequest.getReportingManagerInfo());
 			srPositionBasicsEntity.setLocation(positonBasicsRequest.getLocation());
 			srPositionBasicsEntity.setSeniorityLevel(positonBasicsRequest.getSeniorityLevel());
@@ -153,7 +160,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			srPositionBasicsEntity.setWorkMode(positonBasicsRequest.getWorkMode());
 			srPositionBasicsEntity.setPriority(positonBasicsRequest.getPriority());
 
-			
 			srPositionBasicsEntity = positionBasicsRepository.save(srPositionBasicsEntity);
 		}
 		// business screen logic
@@ -706,13 +712,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 		}
 
-
 		if (req.getEducationRequirement() != null) {
 			error = validateObject(req.getEducationRequirement(), "educationRequirement");
 			if (error != null)
 				return error;
 		}
-
 
 		if (req.getMinExperience() != null && req.getMaxExperience() != null) {
 
@@ -814,12 +818,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 
 			SRPositionBasicsEntity srPositionBasicsEntity = positionBasicsRepository.findBySrId(srId).orElse(null);
-			BusinessJustificationEntity businessJustificationEntity = businessJustificationRepository.findBySrId(srId).orElse(null);
-			BudgetAndCompensationEntity budgetAndCompensationEntity = budgetAndCompensationRepository.findBySrId(srId).orElse(null);
-			RolesAndRequirementsEntity rolesAndRequirementsEntity = rolesAndRequirementsRepository.findBySrId(srId).orElse(null);
+			BusinessJustificationEntity businessJustificationEntity = businessJustificationRepository.findBySrId(srId)
+					.orElse(null);
+			BudgetAndCompensationEntity budgetAndCompensationEntity = budgetAndCompensationRepository.findBySrId(srId)
+					.orElse(null);
+			RolesAndRequirementsEntity rolesAndRequirementsEntity = rolesAndRequirementsRepository.findBySrId(srId)
+					.orElse(null);
 			SourcingStrategyEntity sourcingStrategyEntity = sourceStrategyRepository.findBySrId(srId).orElse(null);
 
-			if (srPositionBasicsEntity == null && businessJustificationEntity == null && budgetAndCompensationEntity == null && rolesAndRequirementsEntity == null
+			if (srPositionBasicsEntity == null && businessJustificationEntity == null
+					&& budgetAndCompensationEntity == null && rolesAndRequirementsEntity == null
 					&& sourcingStrategyEntity == null) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND,
@@ -835,7 +843,22 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setSrId(srPositionBasicsEntity.getSrId());
 				positonBasicsResponse.setJobTitle(srPositionBasicsEntity.getJobTitle());
 				positonBasicsResponse.setBusinessUnitId(srPositionBasicsEntity.getBusinessUnitId());
+
+				Integer buId = srPositionBasicsEntity.getBusinessUnitId();
+
+				if (buId != null) {
+					businessUnitRepository.findById(buId).ifPresentOrElse(
+							bu -> positonBasicsResponse.setBusinessUnitName(bu.getBusinessName()),
+							() -> System.out.println("Business Unit NOT FOUND for id: " + buId));
+				}
 				positonBasicsResponse.setDepartmentId(srPositionBasicsEntity.getDepartmentId());
+
+				Integer deptId = srPositionBasicsEntity.getDepartmentId();
+
+				if (deptId != null) {
+					departmentsRepository.findById(deptId)
+							.ifPresent(dept -> positonBasicsResponse.setDepartmentName(dept.getDepartmentName()));
+				}
 				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
 				positonBasicsResponse.setSeniorityLevel(srPositionBasicsEntity.getSeniorityLevel());
@@ -861,6 +884,15 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				businessJustificationResponse.setBusinessCase(businessJustificationEntity.getBusinessCase());
 				businessJustificationResponse.setImpactIfNotFilled(businessJustificationEntity.getImpactIfNotFilled());
 				businessJustificationResponse.setReplacesEmployee(businessJustificationEntity.getReplacesEmployee());
+				Integer replaceId = businessJustificationEntity.getReplacesEmployee();
+				businessJustificationResponse.setReplacesEmployee(replaceId);
+				if (replaceId != null) {
+				    userRepository.findByUserId(replaceId) // OR findByUserId()
+				        .ifPresent(user -> {
+				            String fullName = user.getUsername();
+				            businessJustificationResponse.setReplacesEmployeeName(fullName);
+				        });
+				}
 				businessJustificationResponse.setDocument(businessJustificationEntity.getDocument());
 				businessJustificationResponse.setSubmitted(businessJustificationEntity.getSubmitted());
 				businessJustificationResponse.setApproved(businessJustificationEntity.getApproved());
@@ -873,13 +905,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				budgetAndCompensationResponse.setId(budgetAndCompensationEntity.getId());
 				budgetAndCompensationResponse.setSrId(budgetAndCompensationEntity.getSrId());
-				budgetAndCompensationResponse.setProposedTotalCompensation(budgetAndCompensationEntity.getProposedTotalCompensation());
+				budgetAndCompensationResponse
+						.setProposedTotalCompensation(budgetAndCompensationEntity.getProposedTotalCompensation());
 				budgetAndCompensationResponse.setSigningBonus(budgetAndCompensationEntity.getSigningBonus());
 				budgetAndCompensationResponse.setEquity(budgetAndCompensationEntity.getEquity());
 				budgetAndCompensationResponse.setRelocationBudget(budgetAndCompensationEntity.getRelocationBudget());
-				budgetAndCompensationResponse.setSigningBonusAmount(budgetAndCompensationEntity.getSigningBonusAmount());
+				budgetAndCompensationResponse
+						.setSigningBonusAmount(budgetAndCompensationEntity.getSigningBonusAmount());
 				budgetAndCompensationResponse.setEquityAmount(budgetAndCompensationEntity.getEquityAmount());
-				budgetAndCompensationResponse.setRelocationBudgetAmount(budgetAndCompensationEntity.getRelocationBudgetAmount());
+				budgetAndCompensationResponse
+						.setRelocationBudgetAmount(budgetAndCompensationEntity.getRelocationBudgetAmount());
 				budgetAndCompensationResponse.setAnnualHiringCost(budgetAndCompensationEntity.getAnnualHiringCost());
 				budgetAndCompensationResponse.setSubmitted(budgetAndCompensationEntity.getSubmitted());
 				budgetAndCompensationResponse.setApproved(budgetAndCompensationEntity.getApproved());
@@ -892,16 +927,28 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				rolesAndRequirementsResponse.setId(rolesAndRequirementsEntity.getId());
 				rolesAndRequirementsResponse.setSrId(rolesAndRequirementsEntity.getSrId());
-				rolesAndRequirementsResponse.setSkillsMustHave(rolesAndRequirementsEntity.getSkillsMustHave());
-				rolesAndRequirementsResponse.setNiceToHaveSkills(rolesAndRequirementsEntity.getNiceToHaveSkills());
-				rolesAndRequirementsResponse.setEducationRequirement(rolesAndRequirementsEntity.getEducationRequirement());
+				rolesAndRequirementsResponse.setSkillsMustHave(rolesAndRequirementsEntity.getSkillsMustHave() != null
+						? Arrays.asList(rolesAndRequirementsEntity.getSkillsMustHave().split(","))
+						: Collections.emptyList());
+
+				rolesAndRequirementsResponse
+						.setNiceToHaveSkills(rolesAndRequirementsEntity.getNiceToHaveSkills() != null
+								? Arrays.asList(rolesAndRequirementsEntity.getNiceToHaveSkills().split(","))
+								: Collections.emptyList());
+				rolesAndRequirementsResponse
+						.setEducationRequirement(rolesAndRequirementsEntity.getEducationRequirement());
 				rolesAndRequirementsResponse.setTravelRequirement(rolesAndRequirementsEntity.getTravelRequirement());
 				rolesAndRequirementsResponse.setMinExperience(rolesAndRequirementsEntity.getMinExperience());
 				rolesAndRequirementsResponse.setMaxExperience(rolesAndRequirementsEntity.getMaxExperience());
 				rolesAndRequirementsResponse.setMinInterviewRounds(rolesAndRequirementsEntity.getMinInterviewRounds());
 				rolesAndRequirementsResponse.setMaxInterviewRounds(rolesAndRequirementsEntity.getMaxInterviewRounds());
-				rolesAndRequirementsResponse.setCertificationsRequired(rolesAndRequirementsEntity.getCertificationsRequired());
-				rolesAndRequirementsResponse.setLanguages(rolesAndRequirementsEntity.getLanguages());
+				rolesAndRequirementsResponse
+						.setCertificationsRequired(rolesAndRequirementsEntity.getCertificationsRequired() != null
+								? Arrays.asList(rolesAndRequirementsEntity.getCertificationsRequired().split(","))
+								: Collections.emptyList());
+				rolesAndRequirementsResponse.setLanguages(rolesAndRequirementsEntity.getLanguages() != null
+						? Arrays.asList(rolesAndRequirementsEntity.getLanguages().split(","))
+						: Collections.emptyList());
 				rolesAndRequirementsResponse.setAssessmentRequired(rolesAndRequirementsEntity.getAssessmentRequired());
 				rolesAndRequirementsResponse.setSubmitted(rolesAndRequirementsEntity.getSubmitted());
 				rolesAndRequirementsResponse.setApproved(rolesAndRequirementsEntity.getApproved());
@@ -926,7 +973,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				sourcingStrategyResponse.setReferralEnabled(sourcingStrategyEntity.getReferralEnabled());
 				sourcingStrategyResponse.setReferralAmount(sourcingStrategyEntity.getReferralAmount());
 				sourcingStrategyResponse.setDiversityEnabled(sourcingStrategyEntity.getDiversityEnabled());
-				sourcingStrategyResponse.setDiversityTags(sourcingStrategyEntity.getDiversityTags());
+				sourcingStrategyResponse.setDiversityTags(sourcingStrategyEntity.getDiversityTags() != null
+						? Arrays.asList(sourcingStrategyEntity.getDiversityTags().split(","))
+						: Collections.emptyList());
 				sourcingStrategyResponse.setSubmitted(sourcingStrategyEntity.getSubmitted());
 				sourcingStrategyResponse.setApproved(sourcingStrategyEntity.getApproved());
 
@@ -966,13 +1015,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				String status;
 				if (Boolean.TRUE.equals(sr.getApproved())) {
-				    status = Constants.APPROVED;
+					status = Constants.APPROVED;
 				} else if (Boolean.TRUE.equals(sr.getSubmitted())) {
-				    status = Constants.SUBMITTED; 
+					status = Constants.SUBMITTED;
 				} else {
-				    status = Constants.DRAFT;
+					status = Constants.DRAFT;
 				}
-			map.put(Constants.STATUS, status);
+				map.put(Constants.STATUS, status);
 				return map;
 			}).toList();
 			log.info("SUCCESS - Total records: {}", pageData.getTotalElements());
@@ -989,21 +1038,20 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	private String generateSrId(Integer businessUnitId) {
 
-	    int year = java.time.LocalDateTime.now().getYear();
-	    String prefix = "NA";
+		int year = java.time.LocalDateTime.now().getYear();
+		String prefix = "NA";
 
-	    if (businessUnitId != null) {
-	        String deptCode = departmentsRepository
-	                .findDeptCodeByBusinessUnitId(businessUnitId);
+		if (businessUnitId != null) {
+			String deptCode = departmentsRepository.findDeptCodeByBusinessUnitId(businessUnitId);
 
-	        if (deptCode != null && !deptCode.trim().isEmpty()) {
-	            prefix = deptCode.trim().toUpperCase();
-	        }
-	    }
-	    int srSeq = sequenceGenerator.generateSrSequence();
-	    String formattedSeq = String.format("%04d", srSeq);
+			if (deptCode != null && !deptCode.trim().isEmpty()) {
+				prefix = deptCode.trim().toUpperCase();
+			}
+		}
+		int srSeq = sequenceGenerator.generateSrSequence();
+		String formattedSeq = String.format("%04d", srSeq);
 
-	    return "SR-" + year + "-" + prefix + "-" + formattedSeq;
+		return "SR-" + year + "-" + prefix + "-" + formattedSeq;
 	}
 
 }
