@@ -292,9 +292,9 @@ public class UserServiceImpl implements IUserService {
 
 		log.info("UserServiceImpl:: Inside the updateUser method - Started for userId: {}", id);
 
-		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
 		if (request.getRoleId() != null && !request.getRoleId().equals(roleEntity.getRoleId())) {
@@ -373,10 +373,10 @@ public class UserServiceImpl implements IUserService {
 	    UserEntity user = userRepository.findById(id)
 	            .orElseThrow(() -> new RuntimeException("User not found"));
 
-	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
+	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-	    RolesEntity role = rolesRepository.findByRoleId(roleEntity.getRoleId())
+	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
 	            .orElseThrow(() -> new RuntimeException("Role not found"));
 
 	    UserUpdationResponse response = new UserUpdationResponse();
