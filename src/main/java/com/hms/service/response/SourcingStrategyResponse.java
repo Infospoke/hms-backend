@@ -1,5 +1,7 @@
 package com.hms.service.response;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,7 +28,7 @@ public class SourcingStrategyResponse {
     private Double referralAmount;
 
     private Boolean diversityEnabled;
-    private String diversityTags;
+    private List<String> diversityTags;
 
     private Boolean draft;
     private Boolean submitted;

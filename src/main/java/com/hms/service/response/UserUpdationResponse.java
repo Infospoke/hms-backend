@@ -25,4 +25,5 @@ public class UserUpdationResponse {
 	private String roleName;
 	private String assignedBy;
 	private LocalDate assignedAt;
+	private Boolean active;
 }

@@ -117,10 +117,14 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
 		}
 
-		if (request.getAlternateContact() != null && request.getAlternateContact().equals(request.getMobileNumber())) {
-			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
-		}
+		if (request.getAlternateContact() != null 
+		        && !request.getAlternateContact().isEmpty()
+		        && request.getAlternateContact().equals(request.getMobileNumber())) {
 
+		    return ApiResponse.failure(ResponseCode.FAILURE, 
+		            Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
+		}
+		
 		String rawPassword = PasswordGenerator.generatePassword(8);
 		String rawPin = PasswordGenerator.generatePin(4);
 
@@ -367,13 +371,13 @@ public class UserServiceImpl implements IUserService {
 
 	    log.info("UserServiceImpl::Inside getUserById - Started for userId: {}", id);
 
-	    UserEntity user = userRepository.findByUserId(id)
+	    UserEntity user = userRepository.findById(id)
 	            .orElseThrow(() -> new RuntimeException("User not found"));
 
 	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(id)
 	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+	    RolesEntity role = rolesRepository.findByRoleId(roleEntity.getRoleId())
 	            .orElseThrow(() -> new RuntimeException("Role not found"));
 
 	    UserUpdationResponse response = new UserUpdationResponse();

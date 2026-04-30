@@ -3,6 +3,8 @@ package com.hms.service.request;
 import com.hms.service.constants.Constants;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -28,11 +30,12 @@ public class UserCreationRequest {
     @Size(min = 1, max = 50, message = Constants.LAST_NAME_SIZE)
     @Pattern(regexp = "^[A-Za-z]+$", message = Constants.LAST_NAME_INVALID)
     private String lastName;
-
-    @NotNull(message = Constants.EMPLOYEE_ID_REQUIRED)
-    @Size(min = 2, max = 50,message=Constants.EMPLOYEE_ID_SIZE)
+    
+    @NotNull(message = "Employee ID is required")
+    @Min(value = 1, message = "Employee ID must be greater than 0")
+    @Max(value = 9999, message = "Employee ID must be within valid range")
     private Integer employeeId;
-
+   
     @NotBlank(message = Constants.EMAIL_REQUIRED)
     @Email(message = Constants.EMAIL_INVALID)
     private String email;
