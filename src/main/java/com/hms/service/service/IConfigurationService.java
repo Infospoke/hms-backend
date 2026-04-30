@@ -22,4 +22,6 @@ public interface IConfigurationService {
 
 	ApiResponse<List<UserDropDownResponse>> getTravelRequirements();
 
+	ApiResponse<?> getJr();
+
 }

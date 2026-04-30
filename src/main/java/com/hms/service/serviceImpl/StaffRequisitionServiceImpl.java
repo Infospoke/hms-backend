@@ -843,16 +843,14 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setId(srPositionBasicsEntity.getId());
 				positonBasicsResponse.setSrId(srPositionBasicsEntity.getSrId());
 				positonBasicsResponse.setJobTitle(srPositionBasicsEntity.getJobTitle());
-				positonBasicsResponse.setBusinessUnitId(srPositionBasicsEntity.getBusinessUnitId());
+				
 
-				Integer buId = srPositionBasicsEntity.getBusinessUnitId();
+				Integer businessId = srPositionBasicsEntity.getBusinessUnitId();
 
-				if (buId != null) {
-					businessUnitRepository.findById(buId).ifPresentOrElse(
-							bu -> positonBasicsResponse.setBusinessUnitName(bu.getBusinessName()),
-							() -> System.out.println("Business Unit NOT FOUND for id: " + buId));
+				if (businessId != null) {
+				    businessUnitRepository.findById(businessId)
+				        .ifPresent(bu -> positonBasicsResponse.setBusinessUnitName(bu.getBusinessName()));
 				}
-				positonBasicsResponse.setDepartmentId(srPositionBasicsEntity.getDepartmentId());
 
 				Integer deptId = srPositionBasicsEntity.getDepartmentId();
 
@@ -871,6 +869,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setSubmitted(srPositionBasicsEntity.getSubmitted());
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
+				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());
 
 				response.setPositonBasicsResponse(positonBasicsResponse);
@@ -884,14 +883,12 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				businessJustificationResponse.setRequisitionType(businessJustificationEntity.getRequisitionType());
 				businessJustificationResponse.setBusinessCase(businessJustificationEntity.getBusinessCase());
 				businessJustificationResponse.setImpactIfNotFilled(businessJustificationEntity.getImpactIfNotFilled());
-				businessJustificationResponse.setReplacesEmployee(businessJustificationEntity.getReplacesEmployee());
 				Integer replaceId = businessJustificationEntity.getReplacesEmployee();
-				businessJustificationResponse.setReplacesEmployee(replaceId);
 				if (replaceId != null) {
-				    userRepository.findByUserId(replaceId) // OR findByUserId()
+				    userRepository.findById(replaceId)
 				        .ifPresent(user -> {
-				            String fullName = user.getUsername();
-				            businessJustificationResponse.setReplacesEmployeeName(fullName);
+				            String fullName = user.getFirstName();
+				            businessJustificationResponse.setReplacesEmployee(fullName);
 				        });
 				}
 				businessJustificationResponse.setDocument(businessJustificationEntity.getDocument());
