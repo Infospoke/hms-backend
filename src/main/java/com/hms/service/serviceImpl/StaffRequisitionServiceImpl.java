@@ -248,7 +248,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			budgetEntity.setSigningBonus(budgetRequest.getSigningBonus());
 			budgetEntity.setEquity(budgetRequest.getEquity());
 			budgetEntity.setRelocationBudget(budgetRequest.getRelocationBudget());
-
+			budgetEntity.setMinimumSalary(budgetRequest.getMinSalary());
+			budgetEntity.setMaximumSalary(budgetRequest.getMaxSalary());
 			budgetEntity.setSigningBonusAmount(budgetRequest.getSigningBonusAmount());
 			budgetEntity.setEquityAmount(budgetRequest.getEquityAmount());
 			budgetEntity.setRelocationBudgetAmount(budgetRequest.getRelocationBudgetAmount());
@@ -918,6 +919,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				budgetAndCompensationResponse.setAnnualHiringCost(budgetAndCompensationEntity.getAnnualHiringCost());
 				budgetAndCompensationResponse.setSubmitted(budgetAndCompensationEntity.getSubmitted());
 				budgetAndCompensationResponse.setApproved(budgetAndCompensationEntity.getApproved());
+				budgetAndCompensationResponse.setMinSalary(budgetAndCompensationEntity.getMinimumSalary());		
+				budgetAndCompensationResponse.setMaxSalary(budgetAndCompensationEntity.getMaximumSalary());
 
 				response.setBudgetAndCompensationResponse(budgetAndCompensationResponse);
 			}

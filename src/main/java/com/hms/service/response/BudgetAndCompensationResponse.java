@@ -24,5 +24,7 @@ public class BudgetAndCompensationResponse {
 
     private Boolean draft;
     private Boolean submitted;
+    private Long minSalary;
+    private Long maxSalary;
     private Boolean approved;
 }

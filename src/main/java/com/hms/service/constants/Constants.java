@@ -209,28 +209,101 @@ public class Constants {
 	public static final String MAIL_FAILURE = "Failed to send the email";
 	public static final String FORGOT_PASSWORD_SUBJECT = "Your New Login Credentials";
 
-    public static final String FORGOT_PASSWORD_BODY =
-            "<html><body>"
-            + "<p>Dear %s,</p>"
-            + "<p>Your password has been reset successfully.</p>"
-            + "<p><b>Username:</b> %s</p>"
-            + "<p><b>Password:</b> %s</p>"
-            + "<p><b>PIN:</b> %s</p>"
-            + "<br/>"
-            + "<p>Please login and change your credentials immediately.</p>"
-            + "<br/>"
-            + "<p>Regards,<br/>Infospoke</p>"
-            + "</body></html>";
+	public static final String FORGOT_PASSWORD_BODY =
+	        "<html><body>"
+	        + "<p>Dear %s,</p>"
+
+	        + "<p>This is to inform you that your password for the Nexus HMS Portal has been successfully reset.</p>"
+
+	        + "<p>Please use the temporary password below to log in:</p>"
+
+	        + "<p><b>Username:</b> %s<br/>"
+	        + "<b>Temporary Password:</b> %s</p>"
+
+	        + "<p>You are required to log in and change your password immediately. "
+	        + "This temporary password is valid for a limited time and will expire after first use or as per system policy.</p>"
+
+	        + "<p><b>Security Advisory:</b></p>"
+	        + "<ul>"
+	        + "<li>Do not share your password with anyone</li>"
+	        + "<li>Ensure your new password complies with the organization’s security standards</li>"
+	        + "<li>If you did not initiate this request, please report it immediately</li>"
+	        + "</ul>"
+
+	        + "<p>For any assistance, please contact the IT Support Team </p>"
+
+	        + "<br/>"
+	        + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+
+	        + "</body></html>";
+    
+	public static final String FORGOT_PIN_BODY =
+	        "<html><body>"
+	        + "<p>Dear %s,</p>"
+
+	        + "<p>This is to inform you that your Mobile PIN for accessing the Nexus HMS application has been successfully reset.</p>"
+
+	        + "<p>Please find your temporary Mobile PIN below:</p>"
+
+	        + "<p><b>Username:</b> %s<br/>"
+	        + "<b>Temporary Mobile PIN:</b> %s</p>"
+
+	        + "<p>You are required to log in to the mobile application and update your PIN immediately. "
+	        + "This temporary PIN is valid for a limited duration and will expire after first use or as per system policy.</p>"
+
+	        + "<p><b>Security Advisory:</b></p>"
+	        + "<ul>"
+	        + "<li>Do not share your Mobile PIN with anyone</li>"
+	        + "<li>Avoid using easily guessable PINs (e.g., 1234, birth dates)</li>"
+	        + "<li>If you did not initiate this request, please report it immediately to the IT Support Team</li>"
+	        + "</ul>"
+
+	        + "<p>For any assistance, please contact IT Support </p>"
+
+	        + "<br/>"
+	        + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+
+	        + "</body></html>";
+    		
+    		
 	public static final String USER_CREATED_MAIL_SUBJECT = "User Account Created - HMS";
-    public static final String USER_CREATED_MAIL_BODY =
-            "<h3>Welcome to NEXUS HMS</h3>" +
-            "<p><b>Username:</b> %s</p>" +
-            "<p><b>Email:</b> %s</p>" +
-            "<p><b>Password:</b> %s</p>" +
-            "<p><b>PIN:</b> %s</p>" +
-            "<br><p>Please change your password after login.</p>";
+	public static final String USER_CREATED_MAIL_BODY =
+		    "<div style='font-family:Segoe UI,Arial,sans-serif; background-color:#f5f7fa; padding:20px;'>" +
 
-	
+		    "<div style='max-width:600px; margin:auto; background:#ffffff; border-radius:10px; " +
+		    "box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:30px;'>" +
+
+		    "<p>Dear <b>%s</b>,</p>" +
+
+		    "<p>Greetings from the HR Team at <b>Nexus HMS</b>.</p>" +
+
+		    "<p>This is to inform you that your user account for the <b>Nexus HMS Portal</b> has been successfully created.</p>" +
+
+		    "<p>Please find your system-generated login credentials below:</p>" +
+
+		    "<div style='background:#f1f3f6; padding:20px; border-radius:8px; margin:20px 0;'>" +
+
+		    "<p style='margin:8px 0;'><b>Username:</b> %s</p>" +
+		    "<p style='margin:8px 0;'><b>Temporary Password:</b> %s</p>" +
+		    "<p style='margin:8px 0;'><b>Temporary PIN:</b> %s</p>" +
+
+		    "</div>" +
+
+		    "<p style='color:#C0392B;'><b>Note:</b> These credentials are valid only for 24 hours from the time of issuance.</p>" +
+
+		    "<p>You are required to log in using the above credentials and complete the initial setup process. " +
+		    "For security compliance, you must change your password and PIN upon first login.</p>" +
+
+		    "<p>Please ensure that your new credentials meet the organization’s security standards and are kept strictly confidential.</p>" +
+
+		    "<p>If you encounter any issues while accessing the portal, please contact the HR/IT Support Team at " +
+		    ".</p>" +
+
+		    "<p>We wish you a successful and rewarding journey with Nexus HMS.</p>" +
+
+		    "<br>" +
+		    "<p>Warm regards,<br><b>HR Team</b><br>Nexus HMS</p>" +
+
+		    "</div></div>";
+	public static final String EMPLOYEE_ID_SIZE = "Employee id must be between 1 and 4 characters";
 }
-
-
