@@ -44,4 +44,7 @@ public class InterviewSessionEntity {
 
     @Column(name = "exam_exit_password", length = 255)
     private String examExitPassword;
+    
+    @Column(name="status")
+	private String status;
 }
