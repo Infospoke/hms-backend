@@ -371,29 +371,29 @@ public class RolesServiceImpl implements IRoleService {
  
 	    log.info("RoleInfoServiceImpl::Inside getPermissionsByRoleId");
  
-	    List<PermissionEntity> permissions =
+	    List<PermissionEntity> permissionsEntity =
 	            permissionRepository.findByRoleId(roleId);
  
-	    if (permissions == null || permissions.isEmpty()) {
+	    if (permissionsEntity == null || permissionsEntity.isEmpty()) {
 	        return ApiResponse.success(ResponseCode.SUCCESS, "No permissions found", List.of());
 	    }
  
 
-	    List<Integer> moduleIds = permissions.stream()
+	    List<Integer> moduleIds = permissionsEntity.stream()
 	            .map(PermissionEntity::getModuleId)
 	            .toList();
  
-	    List<ModuleEntity> modules =
+	    List<ModuleEntity> modulesEntity =
 	            moduleRepository.findByModuleIdIn(moduleIds);
  
-	    Map<Integer, ModuleEntity> moduleMap = modules.stream()
-	            .collect(Collectors.toMap(ModuleEntity::getModuleId, m -> m));
+	    Map<Integer, ModuleEntity> moduleMap = modulesEntity.stream()
+	            .collect(Collectors.toMap(ModuleEntity::getModuleId, module -> module));
  
 	   
 	    Map<Integer, List<PermissionEntity>> grouped =
-	            permissions.stream()
-	                    .collect(Collectors.groupingBy(p ->
-	                            moduleMap.get(p.getModuleId()).getParentId()
+	            permissionsEntity.stream()
+	                    .collect(Collectors.groupingBy(permissions ->
+	                            moduleMap.get(permissions.getModuleId()).getParentId()
 	                    ));
  
 	    Set<Integer> parentIds = grouped.keySet();
@@ -401,7 +401,7 @@ public class RolesServiceImpl implements IRoleService {
 	    Map<Integer, ModuleEntity> parentMap =
 	            moduleRepository.findByModuleIdIn(new ArrayList<>(parentIds))
 	                    .stream()
-	                    .collect(Collectors.toMap(ModuleEntity::getId, m -> m));
+	                    .collect(Collectors.toMap(ModuleEntity::getId,modules -> modules));
  
 	    List<RolePermissionResponse> response = new ArrayList<>();
  
@@ -413,27 +413,27 @@ public class RolesServiceImpl implements IRoleService {
 	        if (parentModule == null) continue;
  
 	        List<ModulePermissionResponse> subModules = entry.getValue().stream()
-	                .map(p -> {
-	                    ModuleEntity sub = moduleMap.get(p.getModuleId());
+	                .map(permissionEntity -> {
+	                    ModuleEntity sub = moduleMap.get(permissionEntity.getModuleId());
  
 	                    return new ModulePermissionResponse(
 	                            sub.getModuleId(),
 	                            sub.getModuleName(),
-	                            p.getCreate(),
-	                            p.getView(),
-	                            p.getEdit(),
-	                            p.getDelete(),
-	                            p.getExport()
+	                            permissionEntity.getCreate(),
+	                            permissionEntity.getView(),
+	                            permissionEntity.getEdit(),
+	                            permissionEntity.getDelete(),
+	                            permissionEntity.getExport()
 	                    );
 	                })
 	                .toList();
  
-	        RolePermissionResponse dto = new RolePermissionResponse();
-	        dto.setModuleId(parentModule.getId());
-	        dto.setModuleName(parentModule.getModuleName());
-	        dto.setSubModules(subModules);
+	        RolePermissionResponse rolePermissionResponse = new RolePermissionResponse();
+	        rolePermissionResponse.setModuleId(parentModule.getId());
+	        rolePermissionResponse.setModuleName(parentModule.getModuleName());
+	        rolePermissionResponse.setSubModules(subModules);
  
-	        response.add(dto);
+	        response.add(rolePermissionResponse);
 	    }
  
 	    return ApiResponse.success(ResponseCode.SUCCESS,
