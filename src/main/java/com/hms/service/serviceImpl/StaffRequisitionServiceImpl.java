@@ -1034,7 +1034,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				if (Boolean.TRUE.equals(sr.getApproved())) {
 					status = Constants.APPROVED;
 				} else if (Boolean.TRUE.equals(sr.getSubmitted())) {
-					status = Constants.SUBMITTED;
+					status = Constants.PENDING;
 				} else {
 					status = Constants.DRAFT;
 				}
