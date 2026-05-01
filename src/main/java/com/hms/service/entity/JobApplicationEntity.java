@@ -78,7 +78,4 @@ public class JobApplicationEntity {
 	@Column(name = "job_status")
 	private String jobStatus;
 
-
-	
-
 }
