@@ -11,12 +11,14 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.AssignRolesEntity;
+import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
@@ -25,6 +27,7 @@ import com.hms.service.request.PermissionRequest;
 import com.hms.service.request.RolesRequest;
 import com.hms.service.request.UpdatePermissionRequest;
 import com.hms.service.response.ModulePermissionResponse;
+import com.hms.service.response.RolePermissionMatrixResponse;
 import com.hms.service.response.RolePermissionResponse;
 import com.hms.service.service.IRoleService;
 import com.hms.service.utils.SequenceGenerator;
@@ -55,6 +58,8 @@ public class RolesServiceImpl implements IRoleService {
 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
+
+	
 
 	@Autowired
 	private UserRepository userRepository;
@@ -107,6 +112,7 @@ public class RolesServiceImpl implements IRoleService {
 			permissionEntity.setView(module.getView());
 			permissionEntity.setEdit(module.getEdit());
 			permissionEntity.setDelete(module.getDelete());
+			permissionEntity.setExport(module.getExport());
 
 			permissionEntity.setCreatedBy(permReq.getCreatedBy());
 			permissionEntity.setCreatedDate(LocalDate.now());
@@ -201,6 +207,7 @@ public class RolesServiceImpl implements IRoleService {
 				permissionEntity.setView(module.getView());
 				permissionEntity.setEdit(module.getEdit());
 				permissionEntity.setDelete(module.getDelete());
+				permissionEntity.setExport(module.getExport());
 
 				permissionEntity.setUpdatedBy(permReq.getUpdatedBy());
 				permissionEntity.setUpdatedDate(LocalDate.now());
@@ -236,27 +243,59 @@ public class RolesServiceImpl implements IRoleService {
 	public ApiResponse<?> usersByRoleId(Integer roleId) {
 		log.info("RoleInfoServiceImpl:: Inside the usersByRoleId");
 		List<AssignRolesEntity> assignRolesEntity = assignRolesRepository.findByRoleId(roleId);
-		
-		 if (assignRolesEntity == null || assignRolesEntity.isEmpty()) {
-		        return ApiResponse.failure(
-		                ResponseCode.FAILURE,
-		                "No users are assigned for this role"
-		               
-		        );
-		    }
 
-		List<Integer> userIds = assignRolesEntity.stream()
-				               .map(AssignRolesEntity::getUserId).toList();
+		if (assignRolesEntity == null || assignRolesEntity.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "No users are assigned for this role"
+
+			);
+		}
+
+		List<Integer> userIds = assignRolesEntity.stream().map(AssignRolesEntity::getUserId).toList();
 		System.out.println(userIds);
 		List<UserEntity> users = userRepository.findByIdIn(userIds);
 
-		List<String> usernames = users.stream()
-				                 .map(UserEntity::getUsername).toList();
+		List<Map<String, String>> userDetails = users.stream().map(user -> {
+			Map<String, String> map = new HashMap<>();
+			map.put("username", user.getUsername());
+			map.put("email", user.getEmail());
+			return map;
+		}).toList();
 
-		System.out.println(usernames);
-		
+		System.out.println(userDetails);
+
 		log.info("RoleInfoServiceImpl::Exit from the usersByRoleId");
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Usernames fetched successfully", usernames);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Usernames fetched successfully", userDetails);
+	}
+
+	@Override
+	public ApiResponse<?> getRolePermissionMatrix() {
+
+		log.info("RoleInfoServiceImpl::Inside getRolePermissionMatrix");
+
+		List<RolesEntity> roles = roleInfoRepository.findAll();
+
+		if (roles == null || roles.isEmpty()) {
+			return ApiResponse.success(ResponseCode.SUCCESS, "No roles found", List.of());
+		}
+
+		List<RolePermissionMatrixResponse> response = roles.stream().map(role -> {
+
+			List<AssignRolesEntity> assignedUsers = assignRolesRepository.findByRoleId(role.getRoleId());
+
+			long userCount = 0;
+
+			if (assignedUsers != null && !assignedUsers.isEmpty()) {
+				userCount = assignedUsers.stream().map(AssignRolesEntity::getUserId).distinct().count();
+			}
+
+			return new RolePermissionMatrixResponse(role.getRoleId(), role.getRoleName(), role.getDescription(),
+					userCount);
+
+		}).toList();
+
+		log.info("RoleInfoServiceImpl::Exit from getRolePermissionMatrix");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Role data fetched successfully", response);
 	}
 }

@@ -40,6 +40,14 @@ public class RolesController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+	@GetMapping("/get-role-permission-matrix")
+	public ResponseEntity<ApiResponse<?>> getRolePermissionMatrix() {
+
+	    ApiResponse<?> response = iRoleService.getRolePermissionMatrix();
+
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 	@GetMapping("/usernames-by-roleid/{roleId}")
 	public ResponseEntity<ApiResponse<?>> usersByRoleId(@PathVariable("roleId") Integer roleId){
 		ApiResponse<?> response = iRoleService.usersByRoleId(roleId);

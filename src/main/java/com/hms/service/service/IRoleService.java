@@ -18,6 +18,8 @@ public interface IRoleService {
 
 	ApiResponse<?> usersByRoleId(Integer roleId);
 
+	ApiResponse<?> getRolePermissionMatrix();
+
 
 
 

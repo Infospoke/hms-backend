@@ -53,6 +53,9 @@ public class PermissionEntity {
    @Column(name="can_delete")
    private Boolean delete=false;
    
+   @Column(name="can_export")
+   private Boolean export=false;
+   
    @Column(name = "created_date")
 	private LocalDate createdDate;
 	

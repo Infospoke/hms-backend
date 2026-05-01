@@ -24,5 +24,7 @@ public class ModulePermissionRequest {
 	private Boolean edit;
 
 	private Boolean delete;
+	
+	private Boolean export;
 
 }
