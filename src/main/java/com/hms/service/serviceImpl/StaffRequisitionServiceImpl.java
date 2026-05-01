@@ -6,9 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,10 +20,10 @@ import com.hms.service.constants.Constants;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
-import com.hms.service.entity.BusinessUnitEntity;
+
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
-import com.hms.service.entity.SeniorityLevelEntity;
+
 import com.hms.service.entity.SourcingStrategyEntity;
 import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.BusinessJustificationRepository;
@@ -101,8 +99,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	@Autowired
 	private UserRepository userRepository;
 
-	@Autowired
-	private UserServiceImpl userService;
+//	@Autowired
+//	private UserServiceImpl userService;
 	
 	@Autowired
 	private SeniorityLevelRepository seniorityLevelRepository;

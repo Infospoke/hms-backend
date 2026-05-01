@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.FilterRequest;
 import com.hms.service.request.RolesRequest;
 import com.hms.service.request.UpdatePermissionRequest;
 import com.hms.service.service.IRoleService;
@@ -41,16 +42,16 @@ public class RolesController {
 	}
 	
 	@GetMapping("/get-role-permission-matrix")
-	public ResponseEntity<ApiResponse<?>> getRolePermissionMatrix() {
+	public ResponseEntity<ApiResponse<?>> getRolePermissionMatrix(@RequestBody FilterRequest request) {
 
-	    ApiResponse<?> response = iRoleService.getRolePermissionMatrix();
+	    ApiResponse<?> response = iRoleService.getRolePermissionMatrix(request);
 
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
 	@GetMapping("/usernames-by-roleid/{roleId}")
-	public ResponseEntity<ApiResponse<?>> usersByRoleId(@PathVariable("roleId") Integer roleId){
-		ApiResponse<?> response = iRoleService.usersByRoleId(roleId);
+	public ResponseEntity<ApiResponse<?>> usersByRoleId(@PathVariable("roleId") Integer roleId,@RequestBody FilterRequest request){
+		ApiResponse<?> response = iRoleService.usersByRoleId(roleId,request);
 		return new ResponseEntity<>(response,HttpStatus.OK);
 	}
 
