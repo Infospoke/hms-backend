@@ -715,7 +715,7 @@ public class UserServiceImpl implements IUserService {
 
 			user.setPin(encodedPin);
 			user.setPinUpdatedAt(LocalDateTime.now());
-			user.setFirstTimeWebLogin(false);
+			user.setFirstTimeMobileLogin(false);;
 
 			savePasswordHistory(user.getUserId(), request.getNewPin(), CredentialType.PIN);
 		}
