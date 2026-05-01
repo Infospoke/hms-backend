@@ -38,7 +38,7 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(
-						auth -> auth.requestMatchers("/hms/login/user-login", "/hms/login/forgot-password","/hms/kanban/**","/hms/jobs/**").permitAll()
+						auth -> auth.requestMatchers("/hms/login/user-login", "/hms/login/forgot-password").permitAll()
 								.anyRequest().authenticated())
 				.addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
