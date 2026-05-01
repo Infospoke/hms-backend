@@ -309,4 +309,5 @@ public class Constants {
 	public static final String INVALID_ROLE_ID = "Invalid role id";
 	public static final String INVALID_DEPARTMENT_FOR_BUSINESS_UNIT = "Invalid departmet for bussiness id";
 	public static final String ROLE_NOT_BELONG_TO_DEPARTMENT = "Role id doesnot belong to this department";
+	public static final String PENDING = "Pending";
 }
