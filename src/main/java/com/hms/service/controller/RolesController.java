@@ -54,6 +54,15 @@ public class RolesController {
 		ApiResponse<?> response = iRoleService.usersByRoleId(roleId,request);
 		return new ResponseEntity<>(response,HttpStatus.OK);
 	}
+	
+	@GetMapping("/get-permissions-by-role/{roleId}")
+	public ResponseEntity<ApiResponse<?>> getPermissionsByRoleId(@PathVariable("roleId") Integer roleId) {
+ 
+		ApiResponse<?> response = iRoleService.getPermissionsByRoleId(roleId);
+ 
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+ 
 
 	@PutMapping("/update-role-permissions")
 	public ResponseEntity<ApiResponse<?>> updateRolePermissions(@Valid @RequestBody UpdatePermissionRequest request) {

@@ -19,6 +19,10 @@ public interface IRoleService {
 
 	ApiResponse<?> usersByRoleId(Integer roleId, FilterRequest request);
 
+	ApiResponse<?> getPermissionsByRoleId(Integer roleId);
+
+
+
 
 
 

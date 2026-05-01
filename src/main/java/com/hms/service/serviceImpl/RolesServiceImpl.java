@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,12 +16,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
@@ -60,6 +64,9 @@ public class RolesServiceImpl implements IRoleService {
 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
+	
+	@Autowired
+	private ModuleRepository moduleRepository;
 
 	
 
@@ -153,7 +160,7 @@ public class RolesServiceImpl implements IRoleService {
 				role = new RolePermissionResponse();
 				role.setRoleId(roleId);
 				role.setRoleName(roleName);
-				role.setModules(new ArrayList<>());
+				role.setSubModules(new ArrayList<>());
 				roleMap.put(roleId, role);
 			}
 
@@ -165,8 +172,8 @@ public class RolesServiceImpl implements IRoleService {
 			module.setEdit(edit);
 			module.setDelete(delete);
 
-			role.getModules().add(module);
-			role.setTotalModules(role.getModules().size());
+			role.getSubModules().add(module);
+	
 		}
 
 		List<RolePermissionResponse> rolesList = new ArrayList<>(roleMap.values());
@@ -241,34 +248,6 @@ public class RolesServiceImpl implements IRoleService {
 		return ApiResponse.success(Constants.ROLE_PERMISSION_UPDATED_SUCCESSFULLY);
 	}
 
-//	@Override
-//	public ApiResponse<?> usersByRoleId(Integer roleId) {
-//		log.info("RoleInfoServiceImpl:: Inside the usersByRoleId");
-//		List<AssignRolesEntity> assignRolesEntity = assignRolesRepository.findByRoleId(roleId);
-//
-//		if (assignRolesEntity == null || assignRolesEntity.isEmpty()) {
-//			return ApiResponse.failure(ResponseCode.FAILURE, "No users are assigned for this role"
-//
-//			);
-//		}
-//
-//		List<Integer> userIds = assignRolesEntity.stream().map(AssignRolesEntity::getUserId).toList();
-//		System.out.println(userIds);
-//		List<UserEntity> users = userRepository.findByIdIn(userIds);
-//
-//		List<Map<String, String>> userDetails = users.stream().map(user -> {
-//			Map<String, String> map = new HashMap<>();
-//			map.put("username", user.getUsername());
-//			map.put("email", user.getEmail());
-//			return map;
-//		}).toList();
-//
-//		System.out.println(userDetails);
-//
-//		log.info("RoleInfoServiceImpl::Exit from the usersByRoleId");
-//
-//		return ApiResponse.success(ResponseCode.SUCCESS, "Usernames fetched successfully", userDetails);
-//	}
 
 	@Override
 	public ApiResponse<?> usersByRoleId(Integer roleId, FilterRequest request) {
@@ -385,6 +364,81 @@ public class RolesServiceImpl implements IRoleService {
 	                    "totalPages", rolePage.getTotalPages()
 	            )
 	    );
+	}
+
+	@Override
+	public ApiResponse<?> getPermissionsByRoleId(Integer roleId) {
+ 
+	    log.info("RoleInfoServiceImpl::Inside getPermissionsByRoleId");
+ 
+	    List<PermissionEntity> permissions =
+	            permissionRepository.findByRoleId(roleId);
+ 
+	    if (permissions == null || permissions.isEmpty()) {
+	        return ApiResponse.success(ResponseCode.SUCCESS, "No permissions found", List.of());
+	    }
+ 
+
+	    List<Integer> moduleIds = permissions.stream()
+	            .map(PermissionEntity::getModuleId)
+	            .toList();
+ 
+	    List<ModuleEntity> modules =
+	            moduleRepository.findByModuleIdIn(moduleIds);
+ 
+	    Map<Integer, ModuleEntity> moduleMap = modules.stream()
+	            .collect(Collectors.toMap(ModuleEntity::getModuleId, m -> m));
+ 
+	   
+	    Map<Integer, List<PermissionEntity>> grouped =
+	            permissions.stream()
+	                    .collect(Collectors.groupingBy(p ->
+	                            moduleMap.get(p.getModuleId()).getParentId()
+	                    ));
+ 
+	    Set<Integer> parentIds = grouped.keySet();
+ 
+	    Map<Integer, ModuleEntity> parentMap =
+	            moduleRepository.findByModuleIdIn(new ArrayList<>(parentIds))
+	                    .stream()
+	                    .collect(Collectors.toMap(ModuleEntity::getId, m -> m));
+ 
+	    List<RolePermissionResponse> response = new ArrayList<>();
+ 
+	    for (Map.Entry<Integer, List<PermissionEntity>> entry : grouped.entrySet()) {
+ 
+	        Integer parentId = entry.getKey();
+	        ModuleEntity parentModule = parentMap.get(parentId);
+ 
+	        if (parentModule == null) continue;
+ 
+	        List<ModulePermissionResponse> subModules = entry.getValue().stream()
+	                .map(p -> {
+	                    ModuleEntity sub = moduleMap.get(p.getModuleId());
+ 
+	                    return new ModulePermissionResponse(
+	                            sub.getModuleId(),
+	                            sub.getModuleName(),
+	                            p.getCreate(),
+	                            p.getView(),
+	                            p.getEdit(),
+	                            p.getDelete(),
+	                            p.getExport()
+	                    );
+	                })
+	                .toList();
+ 
+	        RolePermissionResponse dto = new RolePermissionResponse();
+	        dto.setModuleId(parentModule.getId());
+	        dto.setModuleName(parentModule.getModuleName());
+	        dto.setSubModules(subModules);
+ 
+	        response.add(dto);
+	    }
+ 
+	    return ApiResponse.success(ResponseCode.SUCCESS,
+	            "Permissions fetched successfully",
+	            response);
 	}
 
 }
