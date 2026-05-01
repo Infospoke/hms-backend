@@ -25,7 +25,7 @@ public class RolesEntity {
 	@Column(name = "id", nullable = false, updatable = false)
 	private Integer id;
 
-	@SequenceGenerator(name = "role_seq_gen", allocationSize = 1)
+	@SequenceGenerator(name = "role_seq_gen",sequenceName = "role_seq", allocationSize = 1)
 	@Column(name = "role_id",nullable=false, unique = true)
 	private Integer roleId;
 
