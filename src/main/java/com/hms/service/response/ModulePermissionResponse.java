@@ -16,4 +16,5 @@ public class ModulePermissionResponse {
 	private Boolean view;
 	private Boolean edit;
 	private Boolean delete;
+	private Boolean export;
 }

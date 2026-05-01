@@ -93,5 +93,12 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 	Optional<UserEntity> findByEmailAndActiveTrue(String email);
 
 	List<UserEntity> findByIdIn(List<Integer> userIds);
+	
+	@Query("""
+		    SELECT u FROM UserEntity u
+		    JOIN AssignRolesEntity ar ON u.id = ar.userId
+		    WHERE ar.roleId = :roleId
+		""")
+		Page<UserEntity> findUsersByRoleId(@Param("roleId") Integer roleId, Pageable pageable);
 
 }

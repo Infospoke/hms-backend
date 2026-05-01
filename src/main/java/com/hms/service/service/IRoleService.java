@@ -1,5 +1,6 @@
 package com.hms.service.service;
 
+import com.hms.service.request.FilterRequest;
 import com.hms.service.request.RolesRequest;
 import com.hms.service.request.UpdatePermissionRequest;
 import com.hms.service.wrappers.ApiResponse;
@@ -14,11 +15,13 @@ public interface IRoleService {
 
 	ApiResponse<?> updateRolePermissions(@Valid UpdatePermissionRequest request);
 
+	ApiResponse<?> getRolePermissionMatrix(FilterRequest request);
+
+	ApiResponse<?> usersByRoleId(Integer roleId, FilterRequest request);
+
+	ApiResponse<?> getPermissionsByRoleId(Integer roleId);
 
 
-	ApiResponse<?> usersByRoleId(Integer roleId);
-
-	ApiResponse<?> getRolePermissionMatrix();
 
 
 

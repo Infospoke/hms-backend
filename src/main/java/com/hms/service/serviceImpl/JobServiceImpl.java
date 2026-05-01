@@ -1,6 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -102,8 +101,8 @@ public class JobServiceImpl implements IJobService {
 	@Autowired
 	private JobSkillWeightageRepository jobSkillWeightageRepository;
 
-	@Autowired
-	private UserServiceImpl userService;
+//	@Autowired
+//	private UserServiceImpl userService;
 
 	@Autowired
 	private HttpServletRequest httpServletRequest;
