@@ -99,10 +99,13 @@ public class UserEntity {
 
 	 @Column(name = "candidate_id")
 	 private Integer candidateId;
+	 
 
 	private LocalDateTime pinUpdatedAt;
 	
-	private Boolean firstTimeLogin;
+	private Boolean firstTimeWebLogin;
+	
+	private Boolean firstTimeMobileLogin;
 
 
 }

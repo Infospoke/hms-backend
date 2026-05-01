@@ -141,59 +141,27 @@ public class UserServiceImpl implements IUserService {
 		user.setAlternateContact(request.getAlternateContact());
 		String userName = (request.getFirstName() + " " + request.getLastName());
 		user.setUsername(userName);
-		user.setFirstTimeLogin(true);
+		user.setFirstTimeWebLogin(true);
+		user.setFirstTimeMobileLogin(true);	
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
 		
+		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
+			user.setBusinessUnitId(request.getBusinessUnitId());
+		} else {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
+		}
 		
-		if (!businessUnitRepository.existsById(request.getBusinessUnitId())) {
-		    return ApiResponse.failure(
-		            ResponseCode.FAILURE,
-		            "Failure",
-		            List.of(Constants.INVALID_BUSINESS_UNIT_ID)
-		    );
+        if (departmentsRepository.existsById(request.getDepartmentId())) {
+			user.setDepartmentId(request.getDepartmentId());
+		} else {
+			return ApiResponse.failure(ResponseCode.FAILURE,"Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
 		}
-
-
-	
-		if (!departmentsRepository.existsById(request.getDepartmentId())) {
-		    return ApiResponse.failure(
-		            ResponseCode.FAILURE,
-		            "Failure",
-		            List.of(Constants.INVALID_DEPARTMENT_ID)
-		    );
-		}
-
-
+		
 		if (!rolesRepository.existsById(request.getRoleId())) {
 		    return ApiResponse.failure(
 		            ResponseCode.FAILURE,
 		            "Failure",
 		            List.of(Constants.INVALID_ROLE_ID)
-		    );
-		}
-
-
-		
-		if (!departmentsRepository.existsByIdAndBusinessUnitId(
-		        request.getDepartmentId(),
-		        request.getBusinessUnitId())) {
-
-		    return ApiResponse.failure(
-		            ResponseCode.FAILURE,
-		            "Failure",
-		            List.of(Constants.INVALID_DEPARTMENT_FOR_BUSINESS_UNIT)
-		    );
-		}
-
-
-		if (!rolesRepository.existsByRoleIdAndDepartmentId(
-		        request.getRoleId(),
-		        request.getDepartmentId())) {
-
-		    return ApiResponse.failure(
-		            ResponseCode.FAILURE,
-		            "Failure",
-		            List.of(Constants.ROLE_NOT_BELONG_TO_DEPARTMENT)
 		    );
 		}
 		
@@ -560,7 +528,7 @@ public class UserServiceImpl implements IUserService {
 			log.info("Generating token");
 
 			String token = jwtService.generateToken(user.getEmail(), user.getUsername(), role.getRoleName(),
-					permissionsList, user.getFirstTimeLogin());
+					permissionsList, user.getFirstTimeWebLogin(),user.getFirstTimeMobileLogin());
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -631,7 +599,7 @@ public class UserServiceImpl implements IUserService {
 			savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
 			user.setPassword(encodedPassword);
 			user.setPasswordUpdatedAt(LocalDateTime.now());
-			user.setFirstTimeLogin(true);
+			user.setFirstTimeWebLogin(true);
 			
 		}
 		else {
@@ -640,7 +608,7 @@ public class UserServiceImpl implements IUserService {
 			savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
 			user.setPin(encodedPin);
 			user.setPinUpdatedAt(LocalDateTime.now());
-			user.setFirstTimeLogin(true);
+			user.setFirstTimeMobileLogin(true);
 		}
      	user.setFailedAttempts(0);
 		user.setAccountLocked(false);
@@ -723,6 +691,7 @@ public class UserServiceImpl implements IUserService {
 
 			user.setPassword(encodedPassword);
 			user.setPasswordUpdatedAt(LocalDateTime.now());
+			user.setFirstTimeWebLogin(false);
 
 			savePasswordHistory(user.getUserId(), request.getNewPassword(), CredentialType.PASSWORD);
 
@@ -746,12 +715,12 @@ public class UserServiceImpl implements IUserService {
 
 			user.setPin(encodedPin);
 			user.setPinUpdatedAt(LocalDateTime.now());
+			user.setFirstTimeMobileLogin(false);;
 
 			savePasswordHistory(user.getUserId(), request.getNewPin(), CredentialType.PIN);
 		}
 
 		user.setForcePasswordReset(false);
-		user.setFirstTimeLogin(false);
 		userRepository.save(user);
 
 		log.info("Change password completed");
