@@ -41,7 +41,7 @@ public class RolesController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@GetMapping("/get-role-permission-matrix")
+	@PostMapping("/get-role-permission-matrix")
 	public ResponseEntity<ApiResponse<?>> getRolePermissionMatrix(@RequestBody FilterRequest request) {
 
 	    ApiResponse<?> response = iRoleService.getRolePermissionMatrix(request);
@@ -49,7 +49,7 @@ public class RolesController {
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@GetMapping("/usernames-by-roleid/{roleId}")
+	@PostMapping("/usernames-by-roleid/{roleId}")
 	public ResponseEntity<ApiResponse<?>> usersByRoleId(@PathVariable("roleId") Integer roleId,@RequestBody FilterRequest request){
 		ApiResponse<?> response = iRoleService.usersByRoleId(roleId,request);
 		return new ResponseEntity<>(response,HttpStatus.OK);
