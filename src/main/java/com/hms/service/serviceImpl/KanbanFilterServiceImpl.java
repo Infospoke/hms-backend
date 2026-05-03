@@ -16,7 +16,10 @@ import com.hms.service.service.IKanbanService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class KanbanFilterServiceImpl implements IKanbanService {
 
 	@Autowired
@@ -33,33 +36,33 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 	@Override
 	public ApiResponse<?> getFilteredData(FilterRequest request) {
-
+		
+		log.info("kanbanFilterServiceImpl: Inside getFilteredData method");
 		Map<String, Object> filters = request.getFilters();
 
-		String applicants = filters.get("applicants") != null
-		        ? filters.get("applicants").toString()
-		        : "ALL";
+		String applicants = filters.get("applicants") != null ? filters.get("applicants").toString() : "ALL";
 
-		List<String> sources = filters.get("sources") != null
-		        ? (List<String>) filters.get("sources")
-		        : new ArrayList<>();
+		String dateFilter = filters.get("dateFilter") != null ? filters.get("dateFilter").toString() : "last month";
 
-		List<String> sla = filters.get("sla") != null
-		        ? (List<String>) filters.get("sla")
-		        : new ArrayList<>();
+		List<String> sources = filters.get("sources") != null ? (List<String>) filters.get("sources")
+				: Collections.emptyList();
 
-		String dateFilter = filters.get("dateFilter") != null
-		        ? filters.get("dateFilter").toString()
-		        : "last month"; 
+		List<String> sla = filters.get("sla") != null ? (List<String>) filters.get("sla") : Collections.emptyList();
 
-		Integer jobId = filters.get("jobId") != null ? Integer.valueOf(filters.get("jobId").toString()) : null;
+		List<Integer> jobIds = filters.get("jobIds") != null ? ((List<?>) filters.get("jobIds")).stream()
+				.map(id -> Integer.valueOf(id.toString())).collect(Collectors.toList()) : new ArrayList<>();
 
 		LocalDateTime now = LocalDateTime.now();
 
-		List<JobApplicationEntity> jobs = (jobId != null) ? jobApplicationRepository.findByJobIdOrderByCreatedDateDesc(jobId)
-				: jobApplicationRepository.findAll();
+		List<JobApplicationEntity> jobs;
 
-		List<Integer> appIds = jobs.stream().map(JobApplicationEntity::getId).collect(Collectors.toList());
+		if (jobIds != null && !jobIds.isEmpty()) {
+			jobs = jobApplicationRepository.findByJobIdInOrderByCreatedDateDesc(jobIds);
+		} else {
+			jobs = jobApplicationRepository.findAll();
+		}
+
+		List<Integer> appIds = jobs.stream().map(JobApplicationEntity::getId).toList();
 
 		Map<Integer, String> resumeStatusMap = new HashMap<>();
 		Map<Integer, Boolean> resumeSuccessMap = new HashMap<>();
@@ -67,32 +70,49 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 		List<Object[]> resumeData = resumeAnalysisRepository.findResumeDetails(appIds);
 		for (Object[] r : resumeData) {
-			Integer appId = (Integer) r[0];
-			resumeStatusMap.put(appId, (String) r[1]);
-			resumeSuccessMap.put(appId, (Boolean) r[2]);
-			resumeDateMap.put(appId, (LocalDateTime) r[3]);
+
+			Integer appId = ((Number) r[0]).intValue();
+			String status = (String) r[1];
+			LocalDateTime createdAt = (LocalDateTime) r[3];
+			resumeStatusMap.put(appId, status);
+			resumeDateMap.put(appId, createdAt);
 		}
 
 		Set<Integer> interviewSet = new HashSet<>(interviewAnalysisRepository.findInterviewIds(appIds));
 
 		Map<Integer, LocalDateTime> interviewDateMap = new HashMap<>();
 		List<Object[]> interviewData = interviewAnalysisRepository.findInterviewDates(appIds);
+
 		for (Object[] i : interviewData) {
-			interviewDateMap.put((Integer) i[0], (LocalDateTime) i[1]);
+
+			Integer appId = (Integer) i[0];
+			LocalDateTime createdDate = (LocalDateTime) i[1];
+			interviewDateMap.put(appId, createdDate);
 		}
 
 		Map<Integer, String> candidateMap = new HashMap<>();
 		Map<Integer, LocalDateTime> candidateDateMap = new HashMap<>();
 
 		List<Object[]> candidateData = candidateCreationRepository.findCandidateDetails(appIds);
-			for (Object[] c : candidateData) {
-			candidateMap.put((Integer) c[0], (String) c[1]);
-			candidateDateMap.put((Integer) c[0], (LocalDateTime) c[2]);
+
+		for (Object[] c : candidateData) {
+			Integer appId = (Integer) c[0];
+			String status = (String) c[1];
+			LocalDateTime acceptedDate = (LocalDateTime) c[2];
+			candidateMap.put(appId, status);
+			candidateDateMap.put(appId, acceptedDate);
 		}
 
+		log.info("==== RESUME MAP ====");
+		resumeStatusMap.forEach((k, v) -> System.out.println(k + " -> " + v));
+
+		log.info("==== INTERVIEW SET ====");
+		System.out.println(interviewSet);
+
+		log.info("==== CANDIDATE MAP ====");
+		candidateMap.forEach((k, v) -> System.out.println(k + " -> " + v));
+
 		Map<String, Integer> counts = new HashMap<>();
-		counts.put("applied", 0);
-		counts.put("screened", 0);
 		counts.put("shortlisted", 0);
 		counts.put("interview", 0);
 		counts.put("offer", 0);
@@ -104,7 +124,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 			Integer id = job.getId();
 			String status = "APPLIED";
-			LocalDateTime baseDate = null;
+			LocalDateTime stageEntryDate = null;
 
 			if (candidateMap.containsKey(id)) {
 
@@ -114,54 +134,94 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 					status = "HIRED";
 				} else if ("ACCEPTED".equalsIgnoreCase(cStatus)) {
 					status = "OFFER";
-					baseDate = candidateDateMap.get(id);
+					stageEntryDate = candidateDateMap.get(id);
 				}
 
 			} else if (interviewSet.contains(id)) {
 				status = "INTERVIEW";
-				baseDate = interviewDateMap.get(id);
+				stageEntryDate = interviewDateMap.get(id);
 
 			} else if (resumeStatusMap.containsKey(id)) {
 
 				String rStatus = resumeStatusMap.get(id);
 
-				if ("SHORTLISTED".equalsIgnoreCase(rStatus)) {
+				if (rStatus != null && rStatus.equalsIgnoreCase("SHORTLISTED")) {
 					status = "SHORTLISTED";
 				} else {
 					status = "SCREENED";
 				}
-
-				baseDate = resumeDateMap.get(id);
+				stageEntryDate = resumeDateMap.get(id);
 			}
 
+			log.info("Checking ID: " + id);
+			log.info("In Resume Map: " + resumeStatusMap.containsKey(id));
+			log.info("In Interview Set: " + interviewSet.contains(id));
+			log.info("In Candidate Map: " + candidateMap.containsKey(id));
+
 			job.setCurrentStage(status);
-			job.setStageEntryDate(baseDate);
+			job.setStageEntryDate(stageEntryDate);
+			jobApplicationRepository.save(job);
 
-			if (baseDate != null && !"HIRED".equals(status) && !"APPLIED".equals(status)) {
+			if (stageEntryDate != null && !"HIRED".equalsIgnoreCase(status) && !"APPLIED".equalsIgnoreCase(status)
+					&& !"SCREENED".equalsIgnoreCase(status) && !"REJECTED".equalsIgnoreCase(status)) {
 
-				long hours = Duration.between(baseDate, now).toHours();
+				long hours = Duration.between(stageEntryDate, now).toHours();
 				Integer slaHours = getSlaHoursByStage(status);
 
 				if (slaHours != null) {
-					job.setDaysInStage(Long.valueOf(hours / 24));
 
-					if (hours < slaHours * 0.75) {
+					double days = hours / 24.0;
+					double slaDays = slaHours / 24.0;
+					double percentage = (days / slaDays) * 100;
+
+					job.setDaysInStage((long) days);
+
+					if (percentage < 50) {
 						job.setSlaColor("GREEN");
-					} else if (hours < slaHours) {
+					} else if (percentage <= 100) {
 						job.setSlaColor("ORANGE");
 					} else {
 						job.setSlaColor("RED");
 					}
 				}
+				System.out.println("Candidate: " + job.getFirstName() + " | Stage: " + status + " | Source: "
+						+ job.getSource() + " | SLA: " + job.getSlaColor());
 			} else {
 				job.setSlaColor(null);
 				job.setDaysInStage(null);
 			}
 
-			counts.put(status.toLowerCase(), counts.getOrDefault(status.toLowerCase(), 0) + 1);
+			if ("APPLIED".equalsIgnoreCase(status) || "SCREENED".equalsIgnoreCase(status)) {
+				continue;
+			}
+
+			// counts.put(status.toLowerCase(), counts.getOrDefault(status.toLowerCase(), 0)
+			// + 1);
 
 			if (!applyFilters(job, applicants, dateFilter, sources, sla, now)) {
+				System.out.println("Filtering OUT: " + job.getFirstName());
 				continue;
+			}
+			// counts.put(status.toLowerCase(), counts.getOrDefault(status.toLowerCase(), 0)
+			// + 1);
+
+            // if want count for each stage 
+			if ("SHORTLISTED".equalsIgnoreCase(status)) {
+				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
+
+			} else if ("INTERVIEW".equalsIgnoreCase(status)) {
+				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
+				counts.put("interview", counts.getOrDefault("interview", 0) + 1);
+
+			} else if ("OFFER".equalsIgnoreCase(status)) {
+				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
+				counts.put("interview", counts.getOrDefault("interview", 0) + 1);
+				counts.put("offer", counts.getOrDefault("offer", 0) + 1);
+
+			} else if ("HIRED".equalsIgnoreCase(status)) {
+				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
+				counts.put("interview", counts.getOrDefault("interview", 0) + 1);
+				counts.put("hired", counts.getOrDefault("hired", 0) + 1);
 			}
 
 			filtered.add(job);
@@ -175,13 +235,10 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 	}
 
 	private Integer getSlaHoursByStage(String stage) {
-
 		if (stage == null)
 			return null;
 
 		switch (stage.toUpperCase()) {
-		case "SCREENED":
-			return 48;
 		case "SHORTLISTED":
 			return 48;
 		case "INTERVIEW":
@@ -196,14 +253,15 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 	private boolean applyFilters(JobApplicationEntity job, String applicants, String dateFilter, List<String> sources,
 			List<String> sla, LocalDateTime now) {
 
-		if (sla != null && !sla.isEmpty()) {
-			if (job.getSlaColor() == null || !sla.contains(job.getSlaColor().toUpperCase())) {
+		if (!sla.isEmpty()) {
+			if (job.getSlaColor() == null || sla.stream().map(String::toUpperCase)
+					.noneMatch(s -> s.equals(job.getSlaColor().toUpperCase()))) {
 				return false;
 			}
 		}
-
-		if (sources != null && !sources.isEmpty()) {
-			if (job.getSource() == null || !sources.contains(job.getSource().toLowerCase())) {
+		if (!sources.isEmpty()) {
+			if (job.getSource() == null
+					|| !sources.stream().map(String::toLowerCase).toList().contains(job.getSource().toLowerCase())) {
 				return false;
 			}
 		}
@@ -218,7 +276,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 		if (dateFilter != null && job.getCreatedDate() != null) {
 
-			LocalDateTime created = job.getCreatedDate();
+			LocalDateTime created = job.getCreatedDate() ;
 
 			switch (dateFilter.toLowerCase()) {
 
@@ -226,34 +284,31 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 				if (!created.toLocalDate().equals(now.toLocalDate()))
 					return false;
 				break;
-
 			case "this week":
-				if (created.isBefore(now.with(DayOfWeek.MONDAY)))
+				LocalDateTime startOfWeek = now.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0);
+				if (created.isBefore(startOfWeek)) {
 					return false;
+				}
 				break;
-
 			case "last week":
-				LocalDateTime startLastWeek = now.minusWeeks(1).with(DayOfWeek.MONDAY);
-				LocalDateTime endLastWeek = now.with(DayOfWeek.MONDAY);
+				LocalDateTime startLastWeek = now.minusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0)
+						.withSecond(0);
+
+				LocalDateTime endLastWeek = startLastWeek.plusDays(6).withHour(23).withMinute(59).withSecond(59);
 				if (created.isBefore(startLastWeek) || created.isAfter(endLastWeek))
 					return false;
 				break;
-				
+
 			case "last month":
-
-			    LocalDateTime start = now.minusMonths(1)
-			            .withDayOfMonth(1)
-			            .withHour(0).withMinute(0).withSecond(0);
-
-			    LocalDateTime end = start.plusMonths(1);
-
-			    if (created.isBefore(start) || created.isAfter(end)) {
-			        return false;
-			    }
-			    break;
+				LocalDateTime start = now.minusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+				LocalDateTime end = start.plusMonths(1);
+				if (created.isBefore(start) || created.isAfter(end)) {
+					return false;
+				}
+				break;
 			}
 		}
-
+		log.info("kanbanFilterServiceImpl: Exit from getFilteredData method");
 		return true;
 	}
 }
