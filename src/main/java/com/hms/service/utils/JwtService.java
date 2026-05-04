@@ -19,10 +19,11 @@ public class JwtService {
 
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
-    public String generateToken(String email, String userName, String roleName,
+    public String generateToken(Integer userId, String email, String userName, String roleName,
                                 List<String> permissions, Boolean firstTimeWebLogin ,Boolean firstTimeMobileLogin) {
 
         Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId); 
         claims.put("username", userName);
         claims.put("role", roleName);
         claims.put("permissions", permissions);
@@ -69,5 +70,9 @@ public class JwtService {
 
     public List<String> extractPermissions(String token) {
         return decodeToken(token).get("permissions", List.class);
+    }
+    
+    public Long extractUserId(String token) {
+        return decodeToken(token).get("userId", Long.class);
     }
 }
