@@ -103,65 +103,78 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 			candidateDateMap.put(appId, acceptedDate);
 		}
 
-		log.info("==== RESUME MAP ====");
-		resumeStatusMap.forEach((k, v) -> System.out.println(k + " -> " + v));
-
-		log.info("==== INTERVIEW SET ====");
-		System.out.println(interviewSet);
-
-		log.info("==== CANDIDATE MAP ====");
-		candidateMap.forEach((k, v) -> System.out.println(k + " -> " + v));
 
 		Map<String, Integer> counts = new HashMap<>();
 		counts.put("shortlisted", 0);
 		counts.put("interview", 0);
 		counts.put("offer", 0);
 		counts.put("hired", 0);
+		counts.put("rejected", 0);
 
 		List<JobApplicationEntity> filtered = new ArrayList<>();
 
 		for (JobApplicationEntity job : jobs) {
 
 			Integer id = job.getId();
-			String status = "APPLIED";
+			String status = null;
 			LocalDateTime stageEntryDate = null;
 
-			if (candidateMap.containsKey(id)) {
+			if (Boolean.TRUE.equals(job.getRejected())) {
 
-				String cStatus = candidateMap.get(id);
+			    status = "REJECTED";
+			    stageEntryDate = job.getStageEntryDate();
 
-				if ("JOINED".equalsIgnoreCase(cStatus)) {
-					status = "HIRED";
-				} else if ("ACCEPTED".equalsIgnoreCase(cStatus)) {
-					status = "OFFER";
-					stageEntryDate = candidateDateMap.get(id);
-				}
-
-			} else if (interviewSet.contains(id)) {
-				status = "INTERVIEW";
-				stageEntryDate = interviewDateMap.get(id);
-
-			} else if (resumeStatusMap.containsKey(id)) {
-
-				String rStatus = resumeStatusMap.get(id);
-
-				if (rStatus != null && rStatus.equalsIgnoreCase("SHORTLISTED")) {
-					status = "SHORTLISTED";
-				} else {
-					status = "SCREENED";
-				}
-				stageEntryDate = resumeDateMap.get(id);
 			}
 
-			log.info("Checking ID: " + id);
-			log.info("In Resume Map: " + resumeStatusMap.containsKey(id));
-			log.info("In Interview Set: " + interviewSet.contains(id));
-			log.info("In Candidate Map: " + candidateMap.containsKey(id));
+			else if (candidateMap.containsKey(id)) {
 
+			    String cStatus = candidateMap.get(id);
+
+			    if ("JOINED".equalsIgnoreCase(cStatus)) {
+			        status = "HIRED";
+			        stageEntryDate = candidateDateMap.get(id);
+
+			    } else if ("ACCEPTED".equalsIgnoreCase(cStatus)) {
+			        status = "OFFER";
+			        stageEntryDate = candidateDateMap.get(id);
+			    }
+			}
+
+			if (status == null && interviewSet.contains(id)) {
+
+			    status = "INTERVIEW";
+			    stageEntryDate = interviewDateMap.get(id);
+			}
+
+			if (status == null && resumeStatusMap.containsKey(id)) {
+
+			    String rStatus = resumeStatusMap.get(id);
+
+			    if ("SHORTLISTED".equalsIgnoreCase(rStatus)) {
+			        status = "SHORTLISTED";
+			    } else {
+			        status = "SCREENED";
+			    }
+
+			    stageEntryDate = resumeDateMap.get(id);
+			}
+
+			if (status == null) {
+
+			    status = job.getCurrentStage();
+
+			    if (status == null) {
+			        status = "APPLIED";
+			    }
+
+			    stageEntryDate = job.getStageEntryDate();
+			}
+			if (stageEntryDate == null) {
+			    stageEntryDate = job.getStageEntryDate();
+			}
 			job.setCurrentStage(status);
 			job.setStageEntryDate(stageEntryDate);
-			jobApplicationRepository.save(job);
-
+			
 			if (stageEntryDate != null && !"HIRED".equalsIgnoreCase(status) && !"APPLIED".equalsIgnoreCase(status)
 					&& !"SCREENED".equalsIgnoreCase(status) && !"REJECTED".equalsIgnoreCase(status)) {
 
@@ -174,7 +187,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 					double slaDays = slaHours / 24.0;
 					double percentage = (days / slaDays) * 100;
 
-					job.setDaysInStage((long) days);
+					job.setDaysInStage(Math.round(days));
 
 					if (percentage < 50) {
 						job.setSlaColor("GREEN");
@@ -195,35 +208,31 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 				continue;
 			}
 
-			// counts.put(status.toLowerCase(), counts.getOrDefault(status.toLowerCase(), 0)
-			// + 1);
-
 			if (!applyFilters(job, applicants, dateFilter, sources, sla, now)) {
 				System.out.println("Filtering OUT: " + job.getFirstName());
 				continue;
 			}
-			// counts.put(status.toLowerCase(), counts.getOrDefault(status.toLowerCase(), 0)
-			// + 1);
-
-            // if want count for each stage 
+			
+			if (Boolean.TRUE.equals(job.getRejected())) {
+			    status = "REJECTED";
+			} else {
+			    status = job.getCurrentStage();
+			}
 			if ("SHORTLISTED".equalsIgnoreCase(status)) {
-				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
+			    counts.put("shortlisted", counts.get("shortlisted") + 1);
 
 			} else if ("INTERVIEW".equalsIgnoreCase(status)) {
-				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
-				counts.put("interview", counts.getOrDefault("interview", 0) + 1);
+			    counts.put("interview", counts.get("interview") + 1);
 
 			} else if ("OFFER".equalsIgnoreCase(status)) {
-				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
-				counts.put("interview", counts.getOrDefault("interview", 0) + 1);
-				counts.put("offer", counts.getOrDefault("offer", 0) + 1);
+			    counts.put("offer", counts.get("offer") + 1);
 
 			} else if ("HIRED".equalsIgnoreCase(status)) {
-				counts.put("shortlisted", counts.getOrDefault("shortlisted", 0) + 1);
-				counts.put("interview", counts.getOrDefault("interview", 0) + 1);
-				counts.put("hired", counts.getOrDefault("hired", 0) + 1);
-			}
+			    counts.put("hired", counts.get("hired") + 1);
 
+			} else if ("REJECTED".equalsIgnoreCase(status)) {
+			    counts.put("rejected", counts.get("rejected") + 1);
+			}
 			filtered.add(job);
 		}
 
@@ -301,7 +310,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 			case "last month":
 				LocalDateTime start = now.minusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
-				LocalDateTime end = start.plusMonths(1);
+				LocalDateTime end = start.plusMonths(1).minusSeconds(1);
 				if (created.isBefore(start) || created.isAfter(end)) {
 					return false;
 				}
@@ -310,5 +319,15 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		}
 		log.info("kanbanFilterServiceImpl: Exit from getFilteredData method");
 		return true;
+	}
+	public void rejectCandidate(Integer applicationId) {
+
+	    JobApplicationEntity job = jobApplicationRepository.findById(applicationId)
+	        .orElseThrow(() -> new RuntimeException("Not found"));
+
+	    job.setCurrentStage("REJECTED");
+	    job.setStageEntryDate(LocalDateTime.now());
+
+	    jobApplicationRepository.save(job);
 	}
 }
