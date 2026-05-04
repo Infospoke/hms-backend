@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
@@ -248,13 +249,11 @@ public class RolesServiceImpl implements IRoleService {
 		return ApiResponse.success(Constants.ROLE_PERMISSION_UPDATED_SUCCESSFULLY);
 	}
 
-
 	@Override
 	public ApiResponse<?> usersByRoleId(Integer roleId, FilterRequest request) {
 
 	    log.info("RoleInfoServiceImpl:: Inside the usersByRoleId");
 
-	  
 	    Sort sort = Sort.by(
 	            request.getDirection() != null && request.getDirection().equalsIgnoreCase("DESC")
 	                    ? Sort.Direction.DESC
@@ -268,11 +267,23 @@ public class RolesServiceImpl implements IRoleService {
 	            sort
 	    );
 
+	    List<AssignRolesEntity> assignRolesEntity = assignRolesRepository.findByRoleId(roleId);
+
 	  
-	    Page<UserEntity> userPage = userRepository.findUsersByRoleId(roleId, pageable);
+	    List<Integer> userIds = assignRolesEntity.stream()
+	            .map(AssignRolesEntity::getUserId)
+	            .toList();
+
+	    System.out.println(userIds);
+
+	    if (userIds.isEmpty()) {
+	        return ApiResponse.failure(ResponseCode.FAILURE, "No users are assigned for this role");
+	    }
+
+	    Page<UserEntity> userPage = userRepository.findByUserIdIn(userIds, pageable);
 
 	    if (userPage.isEmpty()) {
-	        return ApiResponse.failure(ResponseCode.FAILURE, "No users are assigned for this role");
+	        return ApiResponse.failure(ResponseCode.FAILURE, "No users found");
 	    }
 
 	    List<Map<String, String>> userDetails = userPage.getContent().stream().map(user -> {
@@ -282,7 +293,7 @@ public class RolesServiceImpl implements IRoleService {
 	        return map;
 	    }).toList();
 
-	    log.info("RoleInfoServiceImpl::Exit from the usersByRoleId");
+	    log.info("RoleInfoServiceImpl:: Exit from the usersByRoleId");
 
 	    return ApiResponse.success(
 	            ResponseCode.SUCCESS,
