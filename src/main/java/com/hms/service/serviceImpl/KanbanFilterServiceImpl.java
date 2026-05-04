@@ -43,6 +43,21 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		String applicants = filters.get("applicants") != null ? filters.get("applicants").toString() : "ALL";
 
 		String dateFilter = filters.get("dateFilter") != null ? filters.get("dateFilter").toString() : "last month";
+		
+		LocalDateTime startDate = null;
+		LocalDateTime endDate = null;
+
+		if ("custom".equalsIgnoreCase(dateFilter)) {
+		    Object startObj = filters.get("startDate");
+		    Object endObj = filters.get("endDate");
+
+		    if (startObj != null && endObj != null) {
+		        startDate = java.time.LocalDate.parse(startObj.toString()).atStartOfDay();
+
+		        endDate = java.time.LocalDate.parse(endObj.toString())
+		                .atTime(23, 59, 59);
+		    }
+		}
 
 		List<String> sources = filters.get("sources") != null ? (List<String>) filters.get("sources")
 				: Collections.emptyList();
@@ -114,20 +129,15 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		List<JobApplicationEntity> filtered = new ArrayList<>();
 
 		for (JobApplicationEntity job : jobs) {
-
+			
 			Integer id = job.getId();
-			String status = null;
-			LocalDateTime stageEntryDate = null;
-
+			String status = job.getCurrentStage();
+			LocalDateTime stageEntryDate = job.getStageEntryDate();
 			if (Boolean.TRUE.equals(job.getRejected())) {
 
 			    status = "REJECTED";
-			    stageEntryDate = job.getStageEntryDate();
 
-			}
-
-			else if (candidateMap.containsKey(id)) {
-
+			} else if (candidateMap.containsKey(id)) {
 			    String cStatus = candidateMap.get(id);
 
 			    if ("JOINED".equalsIgnoreCase(cStatus)) {
@@ -138,42 +148,23 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 			        status = "OFFER";
 			        stageEntryDate = candidateDateMap.get(id);
 			    }
-			}
 
-			if (status == null && interviewSet.contains(id)) {
-
+			} else if (interviewSet.contains(id)) {
 			    status = "INTERVIEW";
 			    stageEntryDate = interviewDateMap.get(id);
-			}
 
-			if (status == null && resumeStatusMap.containsKey(id)) {
-
+			} else if (resumeStatusMap.containsKey(id)) {
 			    String rStatus = resumeStatusMap.get(id);
 
 			    if ("SHORTLISTED".equalsIgnoreCase(rStatus)) {
 			        status = "SHORTLISTED";
-			    } else {
-			        status = "SCREENED";
+			        stageEntryDate = resumeDateMap.get(id);
 			    }
-
-			    stageEntryDate = resumeDateMap.get(id);
 			}
 
-			if (status == null) {
-
-			    status = job.getCurrentStage();
-
-			    if (status == null) {
-			        status = "APPLIED";
-			    }
-
-			    stageEntryDate = job.getStageEntryDate();
-			}
-			if (stageEntryDate == null) {
-			    stageEntryDate = job.getStageEntryDate();
-			}
 			job.setCurrentStage(status);
 			job.setStageEntryDate(stageEntryDate);
+			
 			
 			if (stageEntryDate != null && !"HIRED".equalsIgnoreCase(status) && !"APPLIED".equalsIgnoreCase(status)
 					&& !"SCREENED".equalsIgnoreCase(status) && !"REJECTED".equalsIgnoreCase(status)) {
@@ -208,7 +199,8 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 				continue;
 			}
 
-			if (!applyFilters(job, applicants, dateFilter, sources, sla, now)) {
+//			if (!applyFilters(job, applicants, dateFilter, sources, sla, now))
+			if (!applyFilters(job, applicants, dateFilter, sources, sla, now, startDate, endDate)){
 				System.out.println("Filtering OUT: " + job.getFirstName());
 				continue;
 			}
@@ -260,7 +252,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 	}
 
 	private boolean applyFilters(JobApplicationEntity job, String applicants, String dateFilter, List<String> sources,
-			List<String> sla, LocalDateTime now) {
+			List<String> sla, LocalDateTime now, LocalDateTime startDate, LocalDateTime endDate) {
 
 		if (!sla.isEmpty()) {
 			if (job.getSlaColor() == null || sla.stream().map(String::toUpperCase)
@@ -315,6 +307,14 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 					return false;
 				}
 				break;
+				
+			case "custom":
+			    if (startDate != null && endDate != null) {
+			        if (created.isBefore(startDate) || created.isAfter(endDate)) {
+			            return false;
+			        }
+			    }
+			    break;
 			}
 		}
 		log.info("kanbanFilterServiceImpl: Exit from getFilteredData method");
