@@ -29,7 +29,7 @@ public class UserController {
 	@Autowired
 	private IUserService iUserService;
 
-	@PreAuthorize("hasAuthority('USER_MANAGEMENT_VIEW')")
+	@PreAuthorize("hasAuthority('SYSTEM&ADMINS_USERS_CREATE')")
 	@PostMapping("/create")
 	public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody UserCreationRequest request) {
 		ApiResponse<?> response = iUserService.createUser(request);
