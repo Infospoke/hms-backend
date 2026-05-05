@@ -74,11 +74,11 @@ public class ApprovalChainEntity {
 
 	private String approval;
 
-	@Column(name="approved_comments",length=500)
+	@Column(name="approved_comments",length=300)
 
 	private String approvedComments;
 
-	@Column(name="rejected_comments",length=500)
+	@Column(name="rejected_comments",length=300)
 
 	private String rejectedComments;
 
