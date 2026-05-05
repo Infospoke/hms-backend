@@ -589,14 +589,14 @@ public class KanbanFilterServiceImpl implements IKanbanService {
                                  List<String> sources, List<String> sla, LocalDateTime now,
                                  LocalDateTime startDate, LocalDateTime endDate) {
 
-    	if (!sla.contains("ALL")) {
+    	if (sla != null && !sla.isEmpty() && !sla.contains("ALL")) {
     	    if (job.getSlaColor() == null ||
     	        sla.stream().noneMatch(s -> s.equalsIgnoreCase(job.getSlaColor()))) {
     	        return false;
     	    }
     	}
 
-        if (!sources.contains("ALL")) {
+    	if (sources != null && !sources.isEmpty() && !sources.contains("ALL")) {
         	if (job.getSource() == null || 
         		    sources.stream().noneMatch(s -> s.equalsIgnoreCase(job.getSource()))) {
         		    return false;
