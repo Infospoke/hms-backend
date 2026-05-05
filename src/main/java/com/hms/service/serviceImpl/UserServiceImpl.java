@@ -122,14 +122,12 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMAIL_ALREADY_EXISTS);
 		}
 
-		if (request.getAlternateContact() != null 
-		        && !request.getAlternateContact().isEmpty()
-		        && request.getAlternateContact().equals(request.getMobileNumber())) {
+		if (request.getAlternateContact() != null && !request.getAlternateContact().isEmpty()
+				&& request.getAlternateContact().equals(request.getMobileNumber())) {
 
-		    return ApiResponse.failure(ResponseCode.FAILURE, 
-		            Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT);
 		}
-		
+
 		String rawPassword = PasswordGenerator.generatePassword(8);
 		String rawPin = PasswordGenerator.generatePin(4);
 
@@ -147,29 +145,25 @@ public class UserServiceImpl implements IUserService {
 		String userName = (request.getFirstName() + " " + request.getLastName());
 		user.setUsername(userName);
 		user.setFirstTimeWebLogin(true);
-		user.setFirstTimeMobileLogin(true);	
+		user.setFirstTimeMobileLogin(true);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
-		
+
 		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
 			user.setBusinessUnitId(request.getBusinessUnitId());
 		} else {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
 		}
-		
-        if (departmentsRepository.existsById(request.getDepartmentId())) {
+
+		if (departmentsRepository.existsById(request.getDepartmentId())) {
 			user.setDepartmentId(request.getDepartmentId());
 		} else {
-			return ApiResponse.failure(ResponseCode.FAILURE,"Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
 		}
-		
+
 		if (!rolesRepository.existsById(request.getRoleId())) {
-		    return ApiResponse.failure(
-		            ResponseCode.FAILURE,
-		            "Failure",
-		            List.of(Constants.INVALID_ROLE_ID)
-		    );
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_ROLE_ID));
 		}
-		
+
 		user.setPassword(passwordEncoder.encode(rawPassword));
 		user.setPin(passwordEncoder.encode(rawPin));
 
@@ -227,7 +221,7 @@ public class UserServiceImpl implements IUserService {
 			log.info("UserServiceImpl::Mail sent");
 
 		} catch (Exception e) {
-			log.error("UserServiceImpl::Mail failed"+e.getMessage());
+			log.error("UserServiceImpl::Mail failed" + e.getMessage());
 		}
 
 		Map<String, Object> data = new HashMap<>();
@@ -391,39 +385,31 @@ public class UserServiceImpl implements IUserService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "User updated successfully", null);
 	}
 
-
-	
 	@Override
 	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
 
-	    log.info("UserServiceImpl::Inside getUserById - Started for userId: {}", id);
+		log.info("UserServiceImpl::Inside getUserById - Started for userId: {}", id);
 
-	    UserEntity user = userRepository.findById(id)
-	            .orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-	    AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
-	            .orElseThrow(() -> new RuntimeException("Role mapping not found"));
+		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
+				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-	    RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
-	            .orElseThrow(() -> new RuntimeException("Role not found"));
+		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+				.orElseThrow(() -> new RuntimeException("Role not found"));
 
-	    UserUpdationResponse response = new UserUpdationResponse();
+		UserUpdationResponse response = new UserUpdationResponse();
 
-	   
-	    BeanUtils.copyProperties(user, response);
+		BeanUtils.copyProperties(user, response);
 
-	    response.setRoleId(roleEntity.getRoleId());
-	    response.setRoleName(role.getRoleName());
-	    response.setAssignedBy(roleEntity.getAssignedBy());
-	    response.setAssignedAt(roleEntity.getAssignedAt());
+		response.setRoleId(roleEntity.getRoleId());
+		response.setRoleName(role.getRoleName());
+		response.setAssignedBy(roleEntity.getAssignedBy());
+		response.setAssignedAt(roleEntity.getAssignedAt());
 
-	    log.info("UserServiceImpl::Exit getUserById - Completed for userId: {}", id);
+		log.info("UserServiceImpl::Exit getUserById - Completed for userId: {}", id);
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "User details fetched successfully",
-	            response
-	    );
+		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
 	}
 
 	@Override
@@ -538,34 +524,52 @@ public class UserServiceImpl implements IUserService {
 			if (permissions == null || permissions.isEmpty()) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "No permissions configured for the assigned role");
 			}
-
-			Map<Integer, String> moduleMap = moduleRepository.findAll().stream()
-					.collect(Collectors.toMap(ModuleEntity::getModuleId, ModuleEntity::getModuleName));
+			Map<Integer, ModuleEntity> moduleMap = moduleRepository.findAll().stream()
+					.collect(Collectors.toMap(ModuleEntity::getModuleId, m -> m));
 
 			List<String> permissionsList = new ArrayList<>();
 
 			for (PermissionEntity p : permissions) {
 
-				String moduleName = moduleMap.get(p.getModuleId()).toUpperCase().replace(" ", "_");
+				ModuleEntity module = moduleMap.get(p.getModuleId());
+
+				if (module == null)
+					continue;
+
+				String moduleName = module.getModuleName().toUpperCase().replace(" ", "");
+
+				String parentName = "";
+
+				if (module.getParentId() != null && module.getParentId() != 0) {
+					ModuleEntity parentModule = moduleMap.get(module.getParentId());
+					if (parentModule != null) {
+						parentName = parentModule.getModuleName().toUpperCase().replace(" ", "");
+					}
+				}
+
+				String prefix = parentName.isEmpty() ? moduleName : parentName + "_" + moduleName;
 
 				if (Boolean.TRUE.equals(p.getCreate())) {
-					permissionsList.add(moduleName + "_CREATE");
+					permissionsList.add(prefix + "_CREATE");
 				}
 				if (Boolean.TRUE.equals(p.getView())) {
-					permissionsList.add(moduleName + "_VIEW");
+					permissionsList.add(prefix + "_VIEW");
 				}
 				if (Boolean.TRUE.equals(p.getEdit())) {
-					permissionsList.add(moduleName + "_EDIT");
+					permissionsList.add(prefix + "_EDIT");
 				}
 				if (Boolean.TRUE.equals(p.getDelete())) {
-					permissionsList.add(moduleName + "_DELETE");
+					permissionsList.add(prefix + "_DELETE");
+				}
+				if (Boolean.TRUE.equals(p.getExport())) {
+					permissionsList.add(prefix + "_EXPORT");
 				}
 			}
 
 			log.info("Generating token");
 
-			String token = jwtService.generateToken(user.getEmail(), user.getUsername(), role.getRoleName(),
-					permissionsList, user.getFirstTimeWebLogin(),user.getFirstTimeMobileLogin());
+			String token = jwtService.generateToken(user.getUserId(),user.getEmail(), user.getUsername(), role.getRoleName(),
+					permissionsList, user.getFirstTimeWebLogin(), user.getFirstTimeMobileLogin());
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -617,7 +621,7 @@ public class UserServiceImpl implements IUserService {
 
 	@Transactional
 	@Override
-	public ApiResponse<?> forgotPassword(String email ,String channel) {
+	public ApiResponse<?> forgotPassword(String email, String channel) {
 
 		LOGGER.info("UserManagement::UserServiceImpl::Inside the forgotPassword method");
 
@@ -628,18 +632,17 @@ public class UserServiceImpl implements IUserService {
 		}
 
 		UserEntity user = optionalUser.get();
-		 String rawPassword = null;
-		 String rawPin = null;
-		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)){
+		String rawPassword = null;
+		String rawPin = null;
+		if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
 			rawPassword = PasswordGenerator.generatePassword(8);
 			String encodedPassword = passwordEncoder.encode(rawPassword);
 			savePasswordHistory(user.getUserId(), rawPassword, CredentialType.PASSWORD);
 			user.setPassword(encodedPassword);
 			user.setPasswordUpdatedAt(LocalDateTime.now());
 			user.setFirstTimeWebLogin(true);
-			
-		}
-		else {
+
+		} else {
 			rawPin = PasswordGenerator.generatePin(4);
 			String encodedPin = passwordEncoder.encode(rawPin);
 			savePasswordHistory(user.getUserId(), rawPin, CredentialType.PIN);
@@ -647,7 +650,7 @@ public class UserServiceImpl implements IUserService {
 			user.setPinUpdatedAt(LocalDateTime.now());
 			user.setFirstTimeMobileLogin(true);
 		}
-     	user.setFailedAttempts(0);
+		user.setFailedAttempts(0);
 		user.setAccountLocked(false);
 		user.setLockTime(null);
 		user.setForcePasswordReset(false);
@@ -655,12 +658,12 @@ public class UserServiceImpl implements IUserService {
 		userRepository.save(user);
 
 		try {
-			  if (rawPassword != null) {
-			        sendForgotPasswordMail(user, rawPassword);
-			    } else  {
-			        sendForgotPinMail(user, rawPin);
-		} 
-		}catch (Exception e) {
+			if (rawPassword != null) {
+				sendForgotPasswordMail(user, rawPassword);
+			} else {
+				sendForgotPinMail(user, rawPin);
+			}
+		} catch (Exception e) {
 			log.error("Mail failed: {}", e.getMessage());
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to send email");
 		}
@@ -680,15 +683,14 @@ public class UserServiceImpl implements IUserService {
 
 		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 	}
-	
-	private void sendForgotPinMail(UserEntity user,String pin) {
+
+	private void sendForgotPinMail(UserEntity user, String pin) {
 		LOGGER.info("UserManagement::UserServiceImpl::Inside the sendForgotPinMail method");
 		String subject = Constants.FORGOT_PASSWORD_SUBJECT;
 		String body = String.format(Constants.FORGOT_PIN_BODY, user.getFirstName(), user.getEmail(), pin);
 
 		mailService.sendMail(fromEmail, user.getEmail(), null, subject, body, null);
 
-		
 	}
 
 	@Override
@@ -752,7 +754,8 @@ public class UserServiceImpl implements IUserService {
 
 			user.setPin(encodedPin);
 			user.setPinUpdatedAt(LocalDateTime.now());
-			user.setFirstTimeMobileLogin(false);;
+			user.setFirstTimeMobileLogin(false);
+			;
 
 			savePasswordHistory(user.getUserId(), request.getNewPin(), CredentialType.PIN);
 		}

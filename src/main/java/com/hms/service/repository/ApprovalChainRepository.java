@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.hms.service.entity.ApprovalChainEntity;
 
 @Repository
+
 public interface ApprovalChainRepository
 		extends JpaRepository<ApprovalChainEntity, Integer>, JpaSpecificationExecutor<ApprovalChainEntity> {
 	
@@ -58,5 +59,8 @@ public interface ApprovalChainRepository
 	Page<ApprovalChainEntity> findByStatusContainingIgnoreCase(String status, Pageable pageable);
 
 	Page<ApprovalChainEntity> findByChainNameContainingIgnoreCase(String chainName, Pageable pageable);
+
+	ApprovalChainEntity findByChainNameIgnoreCase(String chainName);
+
 
 }

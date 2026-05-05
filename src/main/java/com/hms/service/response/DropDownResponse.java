@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDropDownResponse {
+public class DropDownResponse {
 	
     private Integer id;
     

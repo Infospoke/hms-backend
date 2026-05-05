@@ -17,15 +17,16 @@ import com.hms.service.entity.ModuleEntity;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
+import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SeniorityLevelRepository;
 import com.hms.service.repository.TravelRequirementRepository;
 import com.hms.service.repository.UserTypeRepository;
+import com.hms.service.response.DropDownResponse;
 import com.hms.service.response.JrResponse;
 import com.hms.service.response.ModuleResponse;
-import com.hms.service.response.UserDropDownResponse;
 import com.hms.service.service.IConfigurationService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -63,14 +64,17 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	@Autowired
 	private PositionBasicsRepository positionBasicsRepository;
 	
+	@Autowired
+	private FunctionalityRepository functionalityRepository;
+	
 
 	
 	@Override
-	public ApiResponse<List<UserDropDownResponse>> getAllBusinessUnits() {
+	public ApiResponse<List<DropDownResponse>> getAllBusinessUnits() {
 		 log.info("ConfigurationServiceImpl::Inside the getAllBusinessUnits method"); 
 
-		List<UserDropDownResponse> response = businessUnitRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
-				.map(bu -> new UserDropDownResponse(bu.getId(), bu.getBusinessName())).toList();
+		List<DropDownResponse> response = businessUnitRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(bu -> new DropDownResponse(bu.getId(), bu.getBusinessName())).toList();
 		
 		 log.info("ConfigurationServiceImpl::Exit from the getAllBusinessUnits method"); 
 		 
@@ -80,11 +84,11 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	
 
 	@Override
-	public ApiResponse<List<UserDropDownResponse>> getDepartmentsByBusinessUnit(Integer businessUnitId) {
+	public ApiResponse<List<DropDownResponse>> getDepartmentsByBusinessUnit(Integer businessUnitId) {
 		 log.info("ConfigurationServiceImpl::Inside the getDepartmentsByBusinessUnit method"); 
 		 
-		List<UserDropDownResponse> response = departmentsRepository.findByBusinessUnitId(businessUnitId, Sort.by("id")).stream()
-				.map(dep -> new UserDropDownResponse(dep.getId(), dep.getDepartmentName())).toList();
+		List<DropDownResponse> response = departmentsRepository.findByBusinessUnitId(businessUnitId, Sort.by("id")).stream()
+				.map(dep -> new DropDownResponse(dep.getId(), dep.getDepartmentName())).toList();
 		
 		 log.info("ConfigurationServiceImpl::Exit from the getAllBusinessUnits method"); 
 		 
@@ -92,11 +96,11 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	}
 
 	@Override
-	public ApiResponse<List<UserDropDownResponse>> getRolesByDepartment(Integer departmentId) {
+	public ApiResponse<List<DropDownResponse>> getRolesByDepartment(Integer departmentId) {
 		 log.info("ConfigurationServiceImpl::Inside the getRolesByDepartment method"); 
 		 
-		List<UserDropDownResponse> response = rolesRepository.findByDepartmentId(departmentId,Sort.by("id")).stream()
-				.map(role -> new UserDropDownResponse(role.getId(), role.getRoleName())).toList();
+		List<DropDownResponse> response = rolesRepository.findByDepartmentId(departmentId,Sort.by("id")).stream()
+				.map(role -> new DropDownResponse(role.getId(), role.getRoleName())).toList();
 		
 		log.info("ConfigurationServiceImpl::Exit from the getRolesByDepartment method"); 
 		
@@ -105,11 +109,11 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	}
 
 	@Override
-	public ApiResponse<List<UserDropDownResponse>> getEmploymentTypes() {
+	public ApiResponse<List<DropDownResponse>> getEmploymentTypes() {
 		log.info("ConfigurationServiceImpl::Inside the getEmploymentTypes method"); 
 		
-		List<UserDropDownResponse> response = employementTypeRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
-				.map(emp -> new UserDropDownResponse(emp.getId(), emp.getEmployementType())).toList();
+		List<DropDownResponse> response = employementTypeRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(emp -> new DropDownResponse(emp.getId(), emp.getEmployementType())).toList();
 		
 		log.info("ConfigurationServiceImpl::Exit from the getEmploymentTypes method"); 
 		
@@ -118,11 +122,11 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 
 	@Override
-	public ApiResponse<List<UserDropDownResponse>> getUserTypes() {
+	public ApiResponse<List<DropDownResponse>> getUserTypes() {
 		log.info("ConfigurationServiceImpl::Inside the getUserTypes method"); 
-	    List<UserDropDownResponse> response = userTypeRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
+	    List<DropDownResponse> response = userTypeRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
 	            .stream()
-	            .map(user -> new UserDropDownResponse(
+	            .map(user -> new DropDownResponse(
 	                    user.getId(),
 	                    user.getUserType()
 	            ))
@@ -192,11 +196,11 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 
 	@Override
-	public ApiResponse<List<UserDropDownResponse>> getSeniorityLevels() {
+	public ApiResponse<List<DropDownResponse>> getSeniorityLevels() {
 	    log.info("ConfigurationServiceImpl::Inside the getSeniorityLevels method");
-	    List<UserDropDownResponse> response = seniorityLevelRepository.findAll(Sort.by("id"))
+	    List<DropDownResponse> response = seniorityLevelRepository.findAll(Sort.by("id"))
 	            .stream()
-	            .map(level -> new UserDropDownResponse(
+	            .map(level -> new DropDownResponse(
 	                    level.getId(),
 	                    level.getSeniorityLevel() 
 	            )).toList();
@@ -210,11 +214,11 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	}
 
 	@Override
-	public ApiResponse<List<UserDropDownResponse>> getTravelRequirements() {
+	public ApiResponse<List<DropDownResponse>> getTravelRequirements() {
 	    log.info("ConfigurationServiceImpl::Inside getTravelRequirements method");
-	    List<UserDropDownResponse> response = travelRequirementRepository.findAll(Sort.by("id"))
+	    List<DropDownResponse> response = travelRequirementRepository.findAll(Sort.by("id"))
 	            .stream()
-	            .map(travel -> new UserDropDownResponse(
+	            .map(travel -> new DropDownResponse(
 	                    travel.getId(),
 	                    travel.getTravelRequirement()
 	            )).toList();
@@ -243,5 +247,18 @@ public class ConfigurationServiceImpl implements IConfigurationService {
         }
 
 	    return ApiResponse.success(ResponseCode.SUCCESS, "success",responsesList);
+	}
+	
+	@Override
+	public ApiResponse<?> getAllFunctionalities() {
+
+		log.info("ConfigurationServiceImpl::Inside getAllFunctionalities method");
+
+		List<DropDownResponse> response = functionalityRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(func -> new DropDownResponse(func.getId(), func.getFunctionalityName())).toList();
+
+		log.info("ConfigurationServiceImpl::Exit from getAllFunctionalities method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Functionalities fetched successfully", response);
 	}
 }

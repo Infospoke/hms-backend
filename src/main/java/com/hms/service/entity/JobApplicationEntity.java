@@ -65,17 +65,26 @@ public class JobApplicationEntity {
 
 	@Column(name = "sla_days")
 	private Integer slaDays;
-
-	@Transient
-	private Long daysInStage;
-
-	@Transient
-	private String slaColor;
 	
 	@Column(name = "current_stage")
 	private String currentStage;
 
 	@Column(name = "job_status")
 	private String jobStatus;
+	
+	@Column(name = "rejected")
+	private Boolean rejected;
+	
+	@Transient
+	private Long daysInStage;
+
+	@Transient
+	private Double slaPercentage;
+
+	@Transient
+	private String slaColor;
+
+	@Transient
+	private String slaDisplay;
 
 }

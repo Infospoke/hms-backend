@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ApprovalChainResponse {
 
-	private Long id;
+	private Integer id;
     private String chainName;
     private String description;
     private String status;
