@@ -629,8 +629,8 @@ public class JobServiceImpl implements IJobService {
 					break;
 
 				case INTERVIEW:
-					response.setStatus(Constants.INTERVIEW);
-					break;
+				    response.setStatus(interviewStatus.get(appId));
+				    break;
 
 				case OFFER:
 					response.setStatus(Constants.OFFER);
