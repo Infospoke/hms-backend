@@ -13,8 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
@@ -130,14 +132,17 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
 				srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
 				srPositionBasicsEntity.setSrId(srId);
-
+				
 				String authHeader = httpServletRequest.getHeader("Authorization");
-				String username = "System";
+				Long userId = null;
+
 				if (authHeader != null && authHeader.startsWith("Bearer ")) {
-					String token = authHeader.substring(7);
-					username = jwtService.extractUsernameFromClaims(token);
+				    String token = authHeader.substring(7);
+				    userId = jwtService.extractUserId(token);
+				} else {
+				    throw new RuntimeException("Invalid or missing Authorization header");
 				}
-				srPositionBasicsEntity.setCreatedBy(username);
+				srPositionBasicsEntity.setCreatedBy(userId);	
 
 			}
 			srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
@@ -1014,10 +1019,28 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		try {
 			int page = request.getPage();
 			int size = request.getSize();
+			
 			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.SR_ID));
-			Page<SRPositionBasicsEntity> pageData = positionBasicsRepository.findAll(pageable);
+			
+			String authHeader = httpServletRequest.getHeader("Authorization");
+			 Long userId = null;
+
+		        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+		            String token = authHeader.substring(7);
+
+		            userId = jwtService.extractUserId(token);
+		        } else {
+		            return ApiResponse.failure(
+		                    ResponseCode.FAILURE,
+		                    "Unauthorized",
+		                    List.of("Missing or invalid token")
+		            );
+		        }
+			
+		        Page<SRPositionBasicsEntity> pageData = positionBasicsRepository.findByCreatedBy(userId, pageable);
+			
 			if (pageData.isEmpty()) {
-				log.warn("No SR records found");
+				log.warn("No SR records found for userId: {}", userId);
 				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND,
 						List.of(Constants.NO_RECORDS_FOUND_IN_THE_DATABASE));
 			}
@@ -1039,7 +1062,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				map.put(Constants.STATUS, status);
 				return map;
 			}).toList();
-			log.info("SUCCESS - Total records: {}", pageData.getTotalElements());
+			log.info("SUCCESS - userId: {} | Records: {}", userId, pageData.getTotalElements());
 			return ApiResponse.success(ResponseCode.SUCCESS, Constants.SR_DATA_FETCHED_SUCCESSFULLY,
 					Map.of(Constants.CONTENT, list, Constants.CURRENT_PAGE, pageData.getNumber(), Constants.TOTAL_PAGES,
 							pageData.getTotalPages(), Constants.TOTAL_ELEMENTS, pageData.getTotalElements()));
@@ -1050,7 +1073,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					List.of(e.getMessage()));
 		}
 	}
-
+	
 	private String generateSrId(Integer businessUnitId) {
 
 		int year = java.time.LocalDateTime.now().getYear();

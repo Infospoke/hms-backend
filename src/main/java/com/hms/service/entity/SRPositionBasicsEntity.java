@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 @Entity
 @Table(name="tb_sr_position_basics")
 @Data
@@ -79,7 +80,7 @@ public class SRPositionBasicsEntity {
 	private LocalDate createdOn;
 	
 	@Column(name="created_by")
-	private String createdBy;
+	private long createdBy;
 
 
 }
