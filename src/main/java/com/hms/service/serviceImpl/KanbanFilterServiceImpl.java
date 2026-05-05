@@ -532,7 +532,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
                     job.setSlaDays((int) days);
 
-                    job.setSlaPercentage(percentage);
+                    job.setSlaPercentage(Math.round(percentage * 10.0) / 10.0);
 
                     if (percentage < 50) {
                         job.setSlaColor("GREEN");

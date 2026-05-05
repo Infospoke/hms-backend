@@ -80,5 +80,8 @@ public class JobApplicationEntity {
 	
 	@Column(name = "rejected")
 	private Boolean rejected;
+	
+	@Column(name = "sla_percentage")
+	private Double slaPercentage;
 
 }
