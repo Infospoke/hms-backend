@@ -32,11 +32,6 @@ public interface CandidateCreationRepository extends JpaRepository<CandidateInfo
 	@Query("SELECT c.applicationId, c.status FROM CandidateInfoEntity c WHERE c.applicationId IN :ids")
 	List<Object[]> findStatusByApplicationIds(@Param("ids") List<Integer> applicationIds);
 	
-//	@Query("SELECT c.applicationId, c.status, c.createdDate " +
-//		       "FROM CandidateInfoEntity c " +
-//		       "WHERE c.applicationId IN :ids")
-//		List<Object[]> findCandidateDetails(@Param("ids") List<Integer> ids);
-	
 	@Query("""
 			SELECT 
 			    c.applicationId,
