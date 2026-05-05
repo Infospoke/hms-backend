@@ -588,7 +588,7 @@ public class JobServiceImpl implements IJobService {
 		for (Object[] obj : interviewData) {
 			Integer appId = (Integer) obj[0];
 			String status = (String) obj[1];
-			interviewStatus.put(appId, status.toUpperCase());
+			interviewStatus.put(appId, status.toUpperCase().replace("_", " "));
 		}
 
 		log.info("Job Application IDs: {}", applicationIds);

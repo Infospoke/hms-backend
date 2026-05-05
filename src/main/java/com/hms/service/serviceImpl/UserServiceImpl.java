@@ -55,6 +55,7 @@ import com.hms.service.utils.SequenceGenerator;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -97,6 +98,10 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private JwtService jwtService;
+	
+    @Autowired
+	private HttpServletRequest httpServletRequest;
+ 
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
@@ -170,7 +175,14 @@ public class UserServiceImpl implements IUserService {
 
 		user.setActive(true);
 		user.setDeactivated(false);
-		user.setUpdatedBy("ADMIN");
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String updatedBy = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			updatedBy = jwtService.extractUsernameFromClaims(token);
+		}
+ 
+		user.setUpdatedBy(updatedBy);
 		user.setUpdatedAt(LocalDate.now());
 
 		Integer userId = sequenceGenerator.generateUserId();
@@ -184,7 +196,13 @@ public class UserServiceImpl implements IUserService {
 		role.setAssignRoleId(sequenceGenerator.generateAssignRoleId());
 		role.setUserId(userId);
 		role.setRoleId(request.getRoleId());
-		role.setAssignedBy("ADMIN");
+		String assignedBy = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			assignedBy = jwtService.extractUsernameFromClaims(token);
+		}
+ 
+		role.setAssignedBy(assignedBy);
 		role.setAssignedAt(LocalDate.now());
 
 		assignRolesRepository.save(role);
@@ -311,7 +329,14 @@ public class UserServiceImpl implements IUserService {
 			log.info("Role change detected for userId: {}", id);
 
 			roleEntity.setRoleId(request.getRoleId());
-			roleEntity.setAssignedBy("ADMIN");
+			String authHeader = httpServletRequest.getHeader("Authorization");
+			String assignedBy = "";
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				String token = authHeader.substring(7);
+				assignedBy = jwtService.extractUsernameFromClaims(token);
+			}
+	 
+			roleEntity.setAssignedBy(assignedBy);
 			roleEntity.setAssignedAt(LocalDate.now());
 
 			assignRolesRepository.save(roleEntity);
@@ -333,8 +358,14 @@ public class UserServiceImpl implements IUserService {
 
 			user.setActive(false);
 			user.setDeactivated(true);
+			String authHeader = httpServletRequest.getHeader("Authorization");
+			String updatedBy = "";
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				String token = authHeader.substring(7);
+				updatedBy = jwtService.extractUsernameFromClaims(token);
+			}
 
-			user.setUpdatedBy("ADMIN");
+			user.setUpdatedBy(updatedBy);
 			user.setUpdatedAt(LocalDate.now());
 
 			userRepository.save(user);
@@ -343,8 +374,14 @@ public class UserServiceImpl implements IUserService {
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "User deactivated successfully", null);
 		}
-
-		user.setUpdatedBy("ADMIN");
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String updatedBy = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			updatedBy = jwtService.extractUsernameFromClaims(token);
+		}
+		
+		user.setUpdatedBy(updatedBy);
 		user.setUpdatedAt(LocalDate.now());
 
 		userRepository.save(user);
