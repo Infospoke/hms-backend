@@ -20,6 +20,6 @@ public interface PositionBasicsRepository extends JpaRepository<SRPositionBasics
 	@Query("SELECT p.srId AS srId, p.jobTitle AS jobTitle " +
 		       "FROM SRPositionBasicsEntity p WHERE p.approved = true")
 		List<JrResponse> findApprovedJrDetails();
-
-	Page<SRPositionBasicsEntity> findByCreatedBy(Long userId, Pageable pageable);
+	
+	Page<SRPositionBasicsEntity> findByUserId(Long userId, Pageable pageable);
 }
