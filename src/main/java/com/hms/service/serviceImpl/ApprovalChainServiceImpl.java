@@ -89,85 +89,128 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 			if (request.getFilters().containsKey("dateFilter")) {
 
-			    String dateFilter = request.getFilters().get("dateFilter").toString();
-			    LocalDate today = LocalDate.now();
+//			    String dateFilter = request.getFilters().get("dateFilter").toString();
+//			    LocalDate today = LocalDate.now();
+//
+//			    switch (dateFilter.toUpperCase()) {
+//
+//			        case "TODAY":
+//			            fromDate = today;
+//			            toDate = today;
+//			            break;
+//
+//			        case "LAST_WEEK":
+//			            fromDate = today.minusWeeks(1);
+//			            toDate = today;
+//			            break;
+//
+//			        case "LAST_MONTH":
+//			            fromDate = today.minusMonths(1);
+//			            toDate = today;
+//			            break;
+//
+//			        case "CUSTOM":
+//			            if (request.getFilters().containsKey("fromDate") &&
+//			                request.getFilters().containsKey("toDate")) {
+//
+//			                fromDate = LocalDate.parse(request.getFilters().get("fromDate").toString());
+//			                toDate = LocalDate.parse(request.getFilters().get("toDate").toString());
+//			            }
+//			            break;
+//			    }
+//			}
+			//	String dateFilter = request.getFilters().get("dateFilter").toString().toUpperCase();
+				String dateFilter = request.getFilters().get("dateFilter")
+				        .toString()
+				        .replace("_", "")
+				        .toUpperCase();
 
-			    switch (dateFilter.toUpperCase()) {
+				
+				LocalDate today = LocalDate.now();
 
-			        case "TODAY":
-			            fromDate = today;
-			            toDate = today;
-			            break;
+				switch (dateFilter) {
 
-			        case "LAST_WEEK":
-			            fromDate = today.minusWeeks(1);
-			            toDate = today;
-			            break;
+				    case "TODAY":
+				        fromDate = today;
+				        toDate = today.plusDays(1);
+				        break;
 
-			        case "LAST_MONTH":
-			            fromDate = today.minusMonths(1);
-			            toDate = today;
-			            break;
+				    case "LAST_WEEK":
 
-			        case "CUSTOM":
-			            if (request.getFilters().containsKey("fromDate") &&
-			                request.getFilters().containsKey("toDate")) {
+				        LocalDate startOfCurrentWeek = today.with(java.time.DayOfWeek.MONDAY);
+				        LocalDate startOfLastWeek = startOfCurrentWeek.minusWeeks(1);
 
-			                fromDate = LocalDate.parse(request.getFilters().get("fromDate").toString());
-			                toDate = LocalDate.parse(request.getFilters().get("toDate").toString());
-			            }
-			            break;
-			    }
-			}
+				        fromDate = startOfLastWeek;
+				        toDate = startOfCurrentWeek; 
+				        break;
+				        
+				    case "LASTMONTH":
+
+				        LocalDate firstDayOfLastMonth = today.minusMonths(1).withDayOfMonth(1);
+				        LocalDate firstDayOfThisMonth = today.withDayOfMonth(1);
+
+				        fromDate = firstDayOfLastMonth;
+				        toDate = firstDayOfThisMonth;
+				        break;
+
+				    case "CUSTOM":
+
+				        if (request.getFilters().containsKey("fromDate") &&
+				            request.getFilters().containsKey("toDate")) {
+
+				            fromDate = LocalDate.parse(request.getFilters().get("fromDate").toString());
+				            toDate = LocalDate.parse(request.getFilters().get("toDate").toString()).plusDays(1); // exclusive
+				        }
+				        break;
+				}
 		}
-
+	}
 		log.info("Fetching approval chains with status: {}, chainName: {},approval: {}", status, chainName,approval);
-
 		Page<ApprovalChainEntity> pageResult;
 
 		if (fromDate != null && toDate != null) {
 
 		    if (status != null && chainName != null && approval != null) {
 		        pageResult = approvalChainRepository
-		                .findByStatusIgnoreCaseAndChainNameContainingIgnoreCaseAndApprovalContainingIgnoreCaseAndCreatedAtBetween(
+		                .findByStatusIgnoreCaseAndChainNameContainingIgnoreCaseAndApprovalContainingIgnoreCaseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
 		                        status, chainName, approval, fromDate, toDate, pageable);
 
 		    } else if (status != null && approval != null) {
 		        pageResult = approvalChainRepository
-		                .findByStatusIgnoreCaseAndApprovalContainingIgnoreCaseAndCreatedAtBetween(
+		                .findByStatusIgnoreCaseAndApprovalContainingIgnoreCaseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
 		                        status, approval, fromDate, toDate, pageable);
 
 		    } else if (chainName != null && approval != null) {
 		        pageResult = approvalChainRepository
-		                .findByChainNameContainingIgnoreCaseAndApprovalContainingIgnoreCaseAndCreatedAtBetween(
+		                .findByChainNameContainingIgnoreCaseAndApprovalContainingIgnoreCaseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
 		                        chainName, approval, fromDate, toDate, pageable);
 
 		    } else if (approval != null) {
 		        pageResult = approvalChainRepository
-		                .findByApprovalContainingIgnoreCaseAndCreatedAtBetween(
+		                .findByApprovalContainingIgnoreCaseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
 		                        approval, fromDate, toDate, pageable);
 
 		    } else if (status != null && chainName != null) {
 		        pageResult = approvalChainRepository
-		                .findByStatusIgnoreCaseAndChainNameContainingIgnoreCaseAndCreatedAtBetween(
+		                .findByStatusIgnoreCaseAndChainNameContainingIgnoreCaseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
 		                        status, chainName, fromDate, toDate, pageable);
 
 		    } else if (status != null) {
 		        pageResult = approvalChainRepository
-		                .findByStatusContainingIgnoreCaseAndCreatedAtBetween(
+		                .findByStatusContainingIgnoreCaseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
 		                        status, fromDate, toDate, pageable);
 
 		    } else if (chainName != null) {
 		        pageResult = approvalChainRepository
-		                .findByChainNameContainingIgnoreCaseAndCreatedAtBetween(
+		                .findByChainNameContainingIgnoreCaseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
 		                        chainName, fromDate, toDate, pageable);
 
 		    } else {
 		        pageResult = approvalChainRepository
-		                .findByCreatedAtBetween(fromDate, toDate, pageable);
+		                .findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(fromDate, toDate, pageable);
 		    }
 
-		} else {
+		}else {
 
 
 		    if (status != null && chainName != null && approval != null) {
