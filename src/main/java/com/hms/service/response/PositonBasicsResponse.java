@@ -37,5 +37,6 @@ public class PositonBasicsResponse {
     private Boolean approved;
 
     private LocalDate createdOn;
-    private long createdBy;
+    private String createdBy;
+    private Long userId;
 }

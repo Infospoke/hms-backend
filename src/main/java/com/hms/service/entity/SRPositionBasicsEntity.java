@@ -80,7 +80,10 @@ public class SRPositionBasicsEntity {
 	private LocalDate createdOn;
 	
 	@Column(name="created_by")
-	private long createdBy;
+	private String createdBy;
+	
+	@Column(name = "user_id")
+	private Long userId;
 
 
 }

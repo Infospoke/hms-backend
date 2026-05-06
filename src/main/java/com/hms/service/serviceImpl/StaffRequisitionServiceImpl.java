@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -97,13 +96,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private HttpServletRequest httpServletRequest;
-	
+
 	@Autowired
 	private UserRepository userRepository;
 
 //	@Autowired
 //	private UserServiceImpl userService;
-	
+
 	@Autowired
 	private SeniorityLevelRepository seniorityLevelRepository;
 
@@ -130,10 +129,26 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity.setSubmitted(false);
 				srPositionBasicsEntity.setApproved(false);
 				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
-				srId = generateSrId(srPositionBasicsEntity.getBusinessUnitId());
+				srId = generateSrId(positonBasicsRequest.getDepartmentId());
 				srPositionBasicsEntity.setSrId(srId);
 				
+				
 				String authHeader = httpServletRequest.getHeader("Authorization");
+				String username = null;
+
+				if (authHeader != null && authHeader.startsWith("Bearer ")) {
+					String token = authHeader.substring(7);
+					username = jwtService.extractUsernameFromClaims(token);
+
+					if (username == null || username.isBlank()) {
+						throw new RuntimeException("No username found in token");
+					}
+				} else {
+					throw new RuntimeException("Invalid or missing Authorization header");
+				}
+
+				srPositionBasicsEntity.setCreatedBy(username);				
+
 				Long userId = null;
 
 				if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -142,7 +157,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				} else {
 				    throw new RuntimeException("Invalid or missing Authorization header");
 				}
-				srPositionBasicsEntity.setCreatedBy(userId);	
+
+				srPositionBasicsEntity.setUserId(userId);
 
 			}
 			srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
@@ -153,7 +169,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				log.info("BusinessUnit Id is required");
 				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.BUSINESS_UNIT_REQUIRED));
 			}
-
 			if (departmentsRepository.existsById(positonBasicsRequest.getDepartmentId())) {
 				srPositionBasicsEntity.setDepartmentId(positonBasicsRequest.getDepartmentId());
 			} else {
@@ -853,13 +868,12 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setId(srPositionBasicsEntity.getId());
 				positonBasicsResponse.setSrId(srPositionBasicsEntity.getSrId());
 				positonBasicsResponse.setJobTitle(srPositionBasicsEntity.getJobTitle());
-				
 
 				Integer businessId = srPositionBasicsEntity.getBusinessUnitId();
 
 				if (businessId != null) {
-				    businessUnitRepository.findById(businessId)
-				        .ifPresent(bu -> positonBasicsResponse.setBusinessUnitName(bu.getBusinessName()));
+					businessUnitRepository.findById(businessId)
+							.ifPresent(bu -> positonBasicsResponse.setBusinessUnitName(bu.getBusinessName()));
 				}
 
 				Integer deptId = srPositionBasicsEntity.getDepartmentId();
@@ -873,11 +887,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
 
 				if (seniorityLevelId != null) {
-				    seniorityLevelRepository.findById(seniorityLevelId)
-				        .ifPresent(sl -> {
-				            String seniorityLevelName = sl.getSeniorityLevel(); 
-				            positonBasicsResponse.setSeniorityLevelName(seniorityLevelName);
-				        });
+					seniorityLevelRepository.findById(seniorityLevelId).ifPresent(sl -> {
+						String seniorityLevelName = sl.getSeniorityLevel();
+						positonBasicsResponse.setSeniorityLevelName(seniorityLevelName);
+					});
 				}
 
 				positonBasicsResponse.setOpenings(srPositionBasicsEntity.getOpenings());
@@ -904,11 +917,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				businessJustificationResponse.setImpactIfNotFilled(businessJustificationEntity.getImpactIfNotFilled());
 				Integer replaceId = businessJustificationEntity.getReplacesEmployee();
 				if (replaceId != null) {
-				    userRepository.findById(replaceId)
-				        .ifPresent(user -> {
-				            String fullName = user.getFirstName();
-				            businessJustificationResponse.setReplacesEmployee(fullName);
-				        });
+					userRepository.findById(replaceId).ifPresent(user -> {
+						String fullName = user.getFirstName();
+						businessJustificationResponse.setReplacesEmployee(fullName);
+					});
 				}
 				businessJustificationResponse.setDocument(businessJustificationEntity.getDocument());
 				businessJustificationResponse.setSubmitted(businessJustificationEntity.getSubmitted());
@@ -935,7 +947,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				budgetAndCompensationResponse.setAnnualHiringCost(budgetAndCompensationEntity.getAnnualHiringCost());
 				budgetAndCompensationResponse.setSubmitted(budgetAndCompensationEntity.getSubmitted());
 				budgetAndCompensationResponse.setApproved(budgetAndCompensationEntity.getApproved());
-				budgetAndCompensationResponse.setMinSalary(budgetAndCompensationEntity.getMinimumSalary());		
+				budgetAndCompensationResponse.setMinSalary(budgetAndCompensationEntity.getMinimumSalary());
 				budgetAndCompensationResponse.setMaxSalary(budgetAndCompensationEntity.getMaximumSalary());
 
 				response.setBudgetAndCompensationResponse(budgetAndCompensationResponse);
@@ -1011,7 +1023,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					List.of(e.getMessage()));
 		}
 	}
-	
 
 	@Override
 	public ApiResponse<?> getAll(SRFilterRequest request) {
@@ -1019,26 +1030,22 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		try {
 			int page = request.getPage();
 			int size = request.getSize();
-			
+
 			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.SR_ID));
-			
+
 			String authHeader = httpServletRequest.getHeader("Authorization");
-			 Long userId = null;
+			Long userId = null;
 
-		        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-		            String token = authHeader.substring(7);
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				String token = authHeader.substring(7);
 
-		            userId = jwtService.extractUserId(token);
-		        } else {
-		            return ApiResponse.failure(
-		                    ResponseCode.FAILURE,
-		                    "Unauthorized",
-		                    List.of("Missing or invalid token")
-		            );
-		        }
-			
-		        Page<SRPositionBasicsEntity> pageData = positionBasicsRepository.findByCreatedBy(userId, pageable);
-			
+				userId = jwtService.extractUserId(token);
+			} else {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+			}
+
+			Page<SRPositionBasicsEntity> pageData = positionBasicsRepository.findByUserId(userId, pageable);
+
 			if (pageData.isEmpty()) {
 				log.warn("No SR records found for userId: {}", userId);
 				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND,
@@ -1073,14 +1080,15 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					List.of(e.getMessage()));
 		}
 	}
-	
+
 	private String generateSrId(Integer businessUnitId) {
 
 		int year = java.time.LocalDateTime.now().getYear();
 		String prefix = "NA";
 
 		if (businessUnitId != null) {
-			String deptCode = departmentsRepository.findDeptCodeByBusinessUnitId(businessUnitId);
+			String deptCode = departmentsRepository.findById(businessUnitId).get().getDeptCode();
+			log.info("The Department code is : " + deptCode);
 
 			if (deptCode != null && !deptCode.trim().isEmpty()) {
 				prefix = deptCode.trim().toUpperCase();
