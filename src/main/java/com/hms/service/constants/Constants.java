@@ -82,9 +82,9 @@ public class Constants {
 	public static final String SR_ID = "srId";
 	public static final String JOB_TITLE = "jobTitle";
 	public static final String CREATED_DATE = "createdDate";
-	public static final String APPROVED = "APPROVED";
-	public static final String SUBMITTED = "SUBMITTED";
-	public static final String DRAFT = "DRAFT";
+	public static final String APPROVED = "Approved";
+	public static final String SUBMITTED = "Submitted";
+	public static final String DRAFT = "Draft";
 	public static final String STATUS = "status";
 	public static final String CONTENT = "content";
 	public static final String CURRENT_PAGE = "currentPage";

@@ -38,4 +38,5 @@ public class PositonBasicsResponse {
 
     private LocalDate createdOn;
     private String createdBy;
+    private Long userId;
 }

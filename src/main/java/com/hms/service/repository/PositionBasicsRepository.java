@@ -16,10 +16,10 @@ import com.hms.service.response.JrResponse;
 public interface PositionBasicsRepository extends JpaRepository<SRPositionBasicsEntity,Integer> {
 
 	Optional<SRPositionBasicsEntity> findBySrId(String srId);
-	
-	Page<SRPositionBasicsEntity> findAll(Pageable pageable);
 
 	@Query("SELECT p.srId AS srId, p.jobTitle AS jobTitle " +
 		       "FROM SRPositionBasicsEntity p WHERE p.approved = true")
 		List<JrResponse> findApprovedJrDetails();
+	
+	Page<SRPositionBasicsEntity> findByUserId(Long userId, Pageable pageable);
 }
