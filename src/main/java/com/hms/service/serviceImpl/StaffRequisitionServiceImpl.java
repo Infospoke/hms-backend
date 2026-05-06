@@ -902,14 +902,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				businessJustificationResponse.setRequisitionType(businessJustificationEntity.getRequisitionType());
 				businessJustificationResponse.setBusinessCase(businessJustificationEntity.getBusinessCase());
 				businessJustificationResponse.setImpactIfNotFilled(businessJustificationEntity.getImpactIfNotFilled());
-				Integer replaceId = businessJustificationEntity.getReplacesEmployee();
-				if (replaceId != null) {
-				    userRepository.findById(replaceId)
-				        .ifPresent(user -> {
-				            String fullName = user.getFirstName();
-				            businessJustificationResponse.setReplacesEmployee(fullName);
-				        });
-				}
+				businessJustificationResponse.setReplacesEmployee(businessJustificationEntity.getReplacesEmployee());
 				businessJustificationResponse.setDocument(businessJustificationEntity.getDocument());
 				businessJustificationResponse.setSubmitted(businessJustificationEntity.getSubmitted());
 				businessJustificationResponse.setApproved(businessJustificationEntity.getApproved());
