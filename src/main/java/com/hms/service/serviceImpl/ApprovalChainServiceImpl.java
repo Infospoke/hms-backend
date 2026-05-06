@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.entity.ApprovalChainEntity;
+import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.request.ApprovalChainRequest;
@@ -328,6 +329,12 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		approvalChainRepository.save(approvalChainEntity);
 
+		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository.findById(request.getFunctionality());
+		FunctionalityEntity functionality = functionalityEntity.get();
+		functionality.setIsChaincreated(true);
+		functionalityRepository.save(functionality);
+		
+
 		log.info("ApprovalChainServiceImpl::Exit from the createApprovalChain method");
 		return ApiResponse.success("Approval Chain Created Successfully");
 	}
@@ -338,7 +345,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		log.info("ApprovalChainServiceImpl::Inside the updateApprovalChain method");
 		Optional<ApprovalChainEntity> approvalEntity = approvalChainRepository.findById(request.getId());
 		if (approvalEntity.isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE,  "Approval Chain not found");
+			return ApiResponse.failure(ResponseCode.FAILURE,"Approval Chain not found");
 		}
 
 		ApprovalChainEntity approvalChainEntity = approvalEntity.get();
