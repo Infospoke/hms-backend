@@ -40,5 +40,7 @@ public class JobApplicantsResponse {
 	private long totalApplicants;
 	private Map<String, Long> report = new LinkedHashMap<>();
 	private String slaColor;
+	private String currentStage;
+	
 
 }

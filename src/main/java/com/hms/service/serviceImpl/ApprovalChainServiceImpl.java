@@ -89,38 +89,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			}
 
 			if (request.getFilters().containsKey("dateFilter")) {
-
-//			    String dateFilter = request.getFilters().get("dateFilter").toString();
-//			    LocalDate today = LocalDate.now();
-//
-//			    switch (dateFilter.toUpperCase()) {
-//
-//			        case "TODAY":
-//			            fromDate = today;
-//			            toDate = today;
-//			            break;
-//
-//			        case "LAST_WEEK":
-//			            fromDate = today.minusWeeks(1);
-//			            toDate = today;
-//			            break;
-//
-//			        case "LAST_MONTH":
-//			            fromDate = today.minusMonths(1);
-//			            toDate = today;
-//			            break;
-//
-//			        case "CUSTOM":
-//			            if (request.getFilters().containsKey("fromDate") &&
-//			                request.getFilters().containsKey("toDate")) {
-//
-//			                fromDate = LocalDate.parse(request.getFilters().get("fromDate").toString());
-//			                toDate = LocalDate.parse(request.getFilters().get("toDate").toString());
-//			            }
-//			            break;
-//			    }
-//			}
-			//	String dateFilter = request.getFilters().get("dateFilter").toString().toUpperCase();
 				String dateFilter = request.getFilters().get("dateFilter")
 				        .toString()
 				        .replace("_", "")
@@ -251,7 +219,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		List<ApprovalChainResponse> responseList = pageResult.getContent().stream()
 				.map(entity -> new ApprovalChainResponse(entity.getId(), entity.getChainName(), entity.getDescription(),
 						entity.getStatus(), entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0, entity.getUpdatedBy(),entity.getUpdatedAt(),
-						entity.getCreatedAt(), entity.getCreatedBy(), entity.getApproval(),entity.getLevelConfig(), entity.getFunctionality()))
+						entity.getCreatedAt(), entity.getCreatedBy(), entity.getApproval(),entity.getLevelConfig(), entity.getFunctionality(),entity.getFunctionalityName()))
 				.toList();
 		Map<String, Object> response = new HashMap<>();
 		response.put("approvalChains", responseList);
@@ -325,6 +293,18 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 	    );
 
 	    response.setLevelConfig(entity.getLevelConfig());
+	    if (entity.getFunctionality() != null) {
+
+	        Optional<FunctionalityEntity> functionalityOptional =
+	                functionalityRepository.findById(entity.getFunctionality());
+
+	        if (functionalityOptional.isPresent()) {
+
+	            response.setFunctionalityName(
+	                    functionalityOptional.get().getFunctionalityName()
+	            );
+	        }
+	    }
 
 	    log.info("ApprovalChainServiceImpl:: Exit getApprovalChainById");
 
@@ -403,14 +383,49 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			roleName = jwtService.extractRole(token);
 		}
 		log.info("the role name is :" + roleName);
-		if (roleName == null || !roleName.equalsIgnoreCase("Adminstrator")) {
+		if (roleName == null || !roleName.equalsIgnoreCase("Administrator")) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can update Approval Chain");
 		}
 
-		approvalChainEntity.setApproval(request.getApproval());
-		approvalChainEntity.setStatus(request.getStatus());
-		approvalChainEntity.setApprovedComments(request.getApprovedComments());
-		approvalChainEntity.setRejectedComments(request.getRejectedComments());
+		if (request.getStatus() != null) {
+
+		    String status = request.getStatus().trim().toUpperCase();
+
+		    if ("ACTIVE".equals(status)) {
+
+		        approvalChainEntity.setStatus(status);
+		        approvalChainEntity.setActivateComments(request.getActivateComments());
+
+		        approvalChainEntity.setDeactivateComments(null);
+
+		    } else if ("DEACTIVE".equals(status)) {
+
+		        approvalChainEntity.setStatus(status);
+		        approvalChainEntity.setDeactivateComments(request.getDeactivateComments());
+
+		        approvalChainEntity.setActivateComments(null);
+		    }
+		}
+
+		if (request.getApproval() != null) {
+
+		    String approval = request.getApproval().trim().toUpperCase();
+
+		    if ("APPROVED".equals(approval)) {
+
+		        approvalChainEntity.setApproval(approval);
+		        approvalChainEntity.setApprovedComments(request.getApprovedComments());
+
+		        approvalChainEntity.setRejectedComments(null);
+
+		    } else if ("REJECTED".equals(approval)) {
+
+		        approvalChainEntity.setApproval(approval);
+		        approvalChainEntity.setRejectedComments(request.getRejectedComments());
+
+		        approvalChainEntity.setApprovedComments(null);
+		    }
+		}
 
 		approvalChainEntity.setUpdatedBy(userName);
 		approvalChainEntity.setUpdatedAt(LocalDate.now());

@@ -30,6 +30,8 @@ import lombok.NoArgsConstructor;
 
 public class ApprovalChainEntity {
  
+	public static final Integer getFunctionality = null;
+
 	@Id
 
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -81,6 +83,19 @@ public class ApprovalChainEntity {
 	@Column(name="rejected_comments",length=300)
 
 	private String rejectedComments;
+	
+	@Column(name="deactivate_comments",length=300)
+
+	private String deactivateComments;
+	
+	@Column(name="activate_comments",length=300)
+
+	private String activateComments;
+	
+	@Column(name="functionality_name")
+
+	private String functionalityName;
+
 
     @JdbcTypeCode(SqlTypes.JSON)
 

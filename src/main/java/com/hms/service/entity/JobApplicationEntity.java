@@ -74,17 +74,5 @@ public class JobApplicationEntity {
 	
 	@Column(name = "rejected")
 	private Boolean rejected;
-	
-	@Transient
-	private Long daysInStage;
-
-	@Transient
-	private Double slaPercentage;
-
-	@Transient
-	private String slaColor;
-
-	@Transient
-	private String slaDisplay;
 
 }

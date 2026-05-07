@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ApprovalChainResponse {
 
+	
+
 	private Integer id;
     private String chainName;
     private String description;
@@ -31,4 +33,6 @@ public class ApprovalChainResponse {
     private List<LevelConfig> levelConfig;
     
     private Integer functionality;
+    
+    private String functionalityName;
 }
