@@ -81,6 +81,10 @@ public class ApprovalChainEntity {
 	@Column(name="rejected_comments",length=300)
 
 	private String rejectedComments;
+	
+	@Column(name="deactivate_comments",length=300)
+
+	private String deativateComments;
 
     @JdbcTypeCode(SqlTypes.JSON)
 
