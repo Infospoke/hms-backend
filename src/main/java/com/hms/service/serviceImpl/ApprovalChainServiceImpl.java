@@ -379,6 +379,16 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		approvalChainEntity.setStatus(request.getStatus());
 		approvalChainEntity.setApprovedComments(request.getApprovedComments());
 		approvalChainEntity.setRejectedComments(request.getRejectedComments());
+		if (request.getStatus() != null &&
+				request.getStatus().equalsIgnoreCase("DEACTIVE")) {
+
+			approvalChainEntity.setDeativateComments(
+					request.getDeactivateComments());
+
+		} else {
+			approvalChainEntity.setDeativateComments(null);
+		}
+
 
 		approvalChainEntity.setUpdatedBy(userName);
 		approvalChainEntity.setUpdatedAt(LocalDate.now());
