@@ -310,4 +310,26 @@ public class Constants {
 	public static final String INVALID_DEPARTMENT_FOR_BUSINESS_UNIT = "Invalid departmet for bussiness id";
 	public static final String ROLE_NOT_BELONG_TO_DEPARTMENT = "Role id doesnot belong to this department";
 	public static final String PENDING = "Pending";
+	
+	private static final String SR_SUBMITTED_MAIL_BODY = "<html><body>"
+			+ "<p>Dear %s,</p>"
+			+ "<p>Your Service Request (SR) with ID <b>%s</b> has been successfully submitted.</p>"
+			+ "<p>We will review your request and get back to you shortly.</p>"
+			+ "<br/>"
+			+ "<p>Best regards,<br/>HMS Team</p>"
+			+ "</body></html>";
+	
+	private static final String SR_SUBMITTED_MAIL_SUBJECT = "SR Submitted Successfully";
+	
+	private static final String SR_TO_BE_APPROVED_MAIL_BODY = "<html><body>"
+			+ "<p>Dear %s,</p>"
+			+ "<p>The Service Request (SR) with ID <b>%s</b> is pending your approval.</p>"
+			+ "<p>Please review the request and take the necessary action at your earliest convenience.</p>"
+			+ "<br/>"
+			+ "<p>Best regards,<br/>HMS Team</p>"
+			+ "</body></html>";
+	
+	private static final String SR_TO_BE_APPROVED_NOTIFY = "%s is awaiting your approval.";
+	private static final String SR_APPROVED_NOTIFY = "%s has been approved by %s.";
+	private static final String SR_REJECTED_NOTIFY = "%s has been rejected by %s.";
 }
