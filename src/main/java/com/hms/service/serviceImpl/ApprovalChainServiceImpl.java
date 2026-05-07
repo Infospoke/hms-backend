@@ -383,7 +383,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			roleName = jwtService.extractRole(token);
 		}
 		log.info("the role name is :" + roleName);
-		if (roleName == null || !roleName.equalsIgnoreCase("Adminstrator")) {
+		if (roleName == null || !roleName.equalsIgnoreCase("Administrator")) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can update Approval Chain");
 		}
 
