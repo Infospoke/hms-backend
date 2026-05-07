@@ -219,7 +219,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		List<ApprovalChainResponse> responseList = pageResult.getContent().stream()
 				.map(entity -> new ApprovalChainResponse(entity.getId(), entity.getChainName(), entity.getDescription(),
 						entity.getStatus(), entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0, entity.getUpdatedBy(),entity.getUpdatedAt(),
-						entity.getCreatedAt(), entity.getCreatedBy(), entity.getApproval(),entity.getLevelConfig(), entity.getFunctionality()))
+						entity.getCreatedAt(), entity.getCreatedBy(), entity.getApproval(),entity.getLevelConfig(), entity.getFunctionality(),entity.getFunctionalityName()))
 				.toList();
 		Map<String, Object> response = new HashMap<>();
 		response.put("approvalChains", responseList);
@@ -293,6 +293,18 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 	    );
 
 	    response.setLevelConfig(entity.getLevelConfig());
+	    if (entity.getFunctionality() != null) {
+
+	        Optional<FunctionalityEntity> functionalityOptional =
+	                functionalityRepository.findById(entity.getFunctionality());
+
+	        if (functionalityOptional.isPresent()) {
+
+	            response.setFunctionalityName(
+	                    functionalityOptional.get().getFunctionalityName()
+	            );
+	        }
+	    }
 
 	    log.info("ApprovalChainServiceImpl:: Exit getApprovalChainById");
 
@@ -382,11 +394,20 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		if (request.getStatus() != null &&
 				request.getStatus().equalsIgnoreCase("DEACTIVE")) {
 
-			approvalChainEntity.setDeativateComments(
+			approvalChainEntity.setDeactivateComments(
 					request.getDeactivateComments());
 
 		} else {
-			approvalChainEntity.setDeativateComments(null);
+			approvalChainEntity.setDeactivateComments(null);
+		}
+		if (request.getStatus() != null &&
+				request.getStatus().equalsIgnoreCase("ACTIVE")) {
+
+			approvalChainEntity.setActivateComments(
+					request.getActivateComments());
+
+		} else {
+			approvalChainEntity.setActivateComments(null);
 		}
 
 
