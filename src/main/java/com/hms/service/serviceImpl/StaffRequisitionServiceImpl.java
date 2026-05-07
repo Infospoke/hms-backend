@@ -906,13 +906,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setWorkMode(srPositionBasicsEntity.getWorkMode());
 				positonBasicsResponse.setEmploymentType(srPositionBasicsEntity.getEmploymentType());
 				positonBasicsResponse.setPriority(srPositionBasicsEntity.getPriority());
-				positonBasicsResponse.setSubmitted(srPositionBasicsEntity.getSubmitted());
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());		
 				positonBasicsResponse.setUserId(srPositionBasicsEntity.getUserId());
-				positonBasicsResponse.setInProgress(srPositionBasicsEntity.getInProgress());
 				positonBasicsResponse.setApprover1(srPositionBasicsEntity.getApprover1());
 				positonBasicsResponse.setApprover2(srPositionBasicsEntity.getApprover2());
 				positonBasicsResponse.setApprover3(srPositionBasicsEntity.getApprover3());
@@ -922,8 +920,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setDateOfApproval1(srPositionBasicsEntity.getDateOfApproval1());
 				positonBasicsResponse.setDateOfApproval2(srPositionBasicsEntity.getDateOfApproval2());
 				positonBasicsResponse.setDateOfApproval3(srPositionBasicsEntity.getDateOfApproval3());
-				positonBasicsResponse.setRejected(srPositionBasicsEntity.getRejected());
-				positonBasicsResponse.setRejectedBy(srPositionBasicsEntity.getRejectedBy());
 				positonBasicsResponse.setCommentsByApprover1(srPositionBasicsEntity.getCommentsByApprover1());
 				positonBasicsResponse.setCommentsByApprover2(srPositionBasicsEntity.getCommentsByApprover2());
 				positonBasicsResponse.setCommentsByApprover3(srPositionBasicsEntity.getCommentsByApprover3());
