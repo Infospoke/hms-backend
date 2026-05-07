@@ -89,38 +89,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			}
 
 			if (request.getFilters().containsKey("dateFilter")) {
-
-//			    String dateFilter = request.getFilters().get("dateFilter").toString();
-//			    LocalDate today = LocalDate.now();
-//
-//			    switch (dateFilter.toUpperCase()) {
-//
-//			        case "TODAY":
-//			            fromDate = today;
-//			            toDate = today;
-//			            break;
-//
-//			        case "LAST_WEEK":
-//			            fromDate = today.minusWeeks(1);
-//			            toDate = today;
-//			            break;
-//
-//			        case "LAST_MONTH":
-//			            fromDate = today.minusMonths(1);
-//			            toDate = today;
-//			            break;
-//
-//			        case "CUSTOM":
-//			            if (request.getFilters().containsKey("fromDate") &&
-//			                request.getFilters().containsKey("toDate")) {
-//
-//			                fromDate = LocalDate.parse(request.getFilters().get("fromDate").toString());
-//			                toDate = LocalDate.parse(request.getFilters().get("toDate").toString());
-//			            }
-//			            break;
-//			    }
-//			}
-			//	String dateFilter = request.getFilters().get("dateFilter").toString().toUpperCase();
 				String dateFilter = request.getFilters().get("dateFilter")
 				        .toString()
 				        .replace("_", "")

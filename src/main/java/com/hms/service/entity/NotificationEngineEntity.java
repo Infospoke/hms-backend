@@ -20,9 +20,9 @@ public class NotificationEngineEntity {
 	
 	    @Id
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
-	    @Column(name = "notification_id", updatable = false)
-	    private Integer notificationId;
-
+	    @Column(name = "id", updatable = false)
+	    private Integer id;
+	   
 	    @Column(name = "notification_title")
 	    private String notificationTitle;
 	    
@@ -32,11 +32,17 @@ public class NotificationEngineEntity {
 	    @Column(name = "SR_Id")
 	    private String SRId;
 	    
+	    @Column(name="role_id")
+	    private Integer roleId;
+	    
 	    @Column(name = "dept_name")
 	    private String deptName;
 	    
 	    @Column(name = "role_name")
 	    private String roleName;
+	    
+	    @Column(name="dept_id")
+	    private Integer deptId;
 	    
 	    @Column(name = "notification_sent_at")
 	    private LocalDateTime notificationSentAt;
