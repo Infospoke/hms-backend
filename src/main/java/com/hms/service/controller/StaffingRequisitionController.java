@@ -29,18 +29,24 @@ public class StaffingRequisitionController {
 	public ResponseEntity<ApiResponse<?>>newStaffingRequisition(@RequestPart(value="request") StaffingRequisitionRequest request,@RequestPart(value = "file", required = false) MultipartFile file){
 		ApiResponse<?> response=iStaffingRequisitionService.newStaffingRequisition(request,file);
 		return new ResponseEntity<>(response,HttpStatus.OK);
-		
 	}
-
-	 @GetMapping("/by-sr-id")
-	    public ResponseEntity<ApiResponse<?>> getBySrId(@RequestParam (value="request") String srId) {
-	        return ResponseEntity.ok(iStaffingRequisitionService.getBySrId(srId));
-	    }
+	
+	@GetMapping("/by-sr-id")
+	public ResponseEntity<ApiResponse<?>> getBySrId(@RequestParam(value = "request") String srId) {
+	    ApiResponse<?> response = iStaffingRequisitionService.getBySrId(srId);
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping("/sr-list")
+	public ResponseEntity<ApiResponse<?>> getAll(@RequestBody SRFilterRequest request) {
+	    ApiResponse<?> response = iStaffingRequisitionService.getAll(request);
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 	 
-	 @PostMapping("/sr-list")
-	 public ApiResponse<?> getAll(@RequestBody SRFilterRequest request) {
-	     return iStaffingRequisitionService.getAll(request);
-	 }
-	 
+	@GetMapping("/sr-counts")
+	public ResponseEntity<ApiResponse<?>> getSrCounts() {
+	    ApiResponse<?> response = iStaffingRequisitionService.getSrCounts();
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 	
 }
