@@ -21,8 +21,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
+import com.hms.service.service.INotificationService;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
 import com.hms.service.entity.DepartmentsEntity;
@@ -104,6 +108,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private INotificationService notificationService;
 
 //	@Autowired
 //	private UserServiceImpl userService;
@@ -434,7 +441,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
 					sourceStrategyRepository.save(entity);
-				});
+				}); 
+
+				// Trigger notification after successful SR submission
+
 
 			} catch (Exception e) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Failed to submit SR", List.of(e.getMessage()));
