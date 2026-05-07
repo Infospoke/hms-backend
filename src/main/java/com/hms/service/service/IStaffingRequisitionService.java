@@ -15,6 +15,10 @@ public interface IStaffingRequisitionService {
 
 	ApiResponse<?> getAll(SRFilterRequest request);
 
+
 	ApiResponse<?> srApproval(UpdateSrRequest request);
+
+	ApiResponse<?> getSrCounts();
+
 
 }

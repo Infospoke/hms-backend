@@ -616,6 +616,7 @@ public class JobServiceImpl implements IJobService {
 
 			JobApplicantsResponse response = new JobApplicantsResponse();
 			BeanUtils.copyProperties(entity, response);
+			response.setCurrentStage(entity.getCurrentStage());
 
 			String screenedSubStatus = screenedStatusMap.get(appId);
 
@@ -639,7 +640,7 @@ public class JobServiceImpl implements IJobService {
 				case HIRED:
 					response.setStatus(Constants.HIRED);
 					break;
-
+				
 				case APPLIED:
 					response.setStatus(getStatus(appId, screenedSet, interviewStatus, candidateStatusMap));
 					response.setScreenedStatus(screenedSubStatus);

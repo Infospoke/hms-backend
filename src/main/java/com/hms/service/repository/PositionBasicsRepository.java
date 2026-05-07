@@ -22,4 +22,6 @@ public interface PositionBasicsRepository extends JpaRepository<SRPositionBasics
 		List<JrResponse> findApprovedJrDetails();
 	
 	Page<SRPositionBasicsEntity> findByUserId(Long userId, Pageable pageable);
+
+	List<SRPositionBasicsEntity> findAll();
 }

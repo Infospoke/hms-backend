@@ -7,11 +7,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
 import java.util.stream.Collectors;
+
+import java.util.Set;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,14 +28,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
+
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.ApprovalsChildEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
 import com.hms.service.entity.FunctionalityEntity;
+
+import com.hms.service.service.INotificationService;
+import com.hms.service.entity.BudgetAndCompensationEntity;
+import com.hms.service.entity.BusinessJustificationEntity;
+import com.hms.service.entity.DepartmentsEntity;
+
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -67,6 +82,7 @@ import com.hms.service.response.BusinessJustificationResponse;
 import com.hms.service.response.BusinessValidationResponse;
 import com.hms.service.response.PositonBasicsResponse;
 import com.hms.service.response.RolesAndRequirementsResponse;
+import com.hms.service.response.SRCountResponse;
 import com.hms.service.response.SourcingStrategyResponse;
 import com.hms.service.service.IStaffingRequisitionService;
 import com.hms.service.utils.JwtService;
@@ -130,6 +146,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private RolesRepository rolesRepository;
+
+	private INotificationService notificationService;
+
 
 //	@Autowired
 //	private UserServiceImpl userService;
@@ -469,9 +488,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
 					sourceStrategyRepository.save(entity);
+
 					processApprovalChain(finalSrId);
 
 				});
+
+				
+
+				// Trigger notification after successful SR submission
+
+
 
 			} catch (Exception e) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Failed to submit SR", List.of(e.getMessage()));
@@ -1017,10 +1043,15 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				Integer deptId = srPositionBasicsEntity.getDepartmentId();
 
+				positonBasicsResponse.setDepartmentId(deptId);
+
 				if (deptId != null) {
-					departmentsRepository.findById(deptId)
-							.ifPresent(dept -> positonBasicsResponse.setDepartmentName(dept.getDepartmentName()));
-				}
+
+				    Optional<DepartmentsEntity> optionalDepartment = departmentsRepository.findById(deptId);
+				    if (optionalDepartment.isPresent()) {
+				        DepartmentsEntity department = optionalDepartment.get();
+				        positonBasicsResponse.setDepartmentName(department.getDepartmentName());}}
+				
 				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
 				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
@@ -1037,14 +1068,30 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setWorkMode(srPositionBasicsEntity.getWorkMode());
 				positonBasicsResponse.setEmploymentType(srPositionBasicsEntity.getEmploymentType());
 				positonBasicsResponse.setPriority(srPositionBasicsEntity.getPriority());
-				positonBasicsResponse.setSubmitted(srPositionBasicsEntity.getSubmitted());
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
-				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());
+				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());		
+				positonBasicsResponse.setUserId(srPositionBasicsEntity.getUserId());
+				positonBasicsResponse.setApprover1(srPositionBasicsEntity.getApprover1());
+				positonBasicsResponse.setApprover2(srPositionBasicsEntity.getApprover2());
+				positonBasicsResponse.setApprover3(srPositionBasicsEntity.getApprover3());
+				positonBasicsResponse.setApprover1By(srPositionBasicsEntity.getApprover1By());
+				positonBasicsResponse.setApprover2By(srPositionBasicsEntity.getApprover2By());
+				positonBasicsResponse.setApprover3By(srPositionBasicsEntity.getApprover3By());
+				positonBasicsResponse.setDateOfApproval1(srPositionBasicsEntity.getDateOfApproval1());
+				positonBasicsResponse.setDateOfApproval2(srPositionBasicsEntity.getDateOfApproval2());
+				positonBasicsResponse.setDateOfApproval3(srPositionBasicsEntity.getDateOfApproval3());
+				positonBasicsResponse.setCommentsByApprover1(srPositionBasicsEntity.getCommentsByApprover1());
+				positonBasicsResponse.setCommentsByApprover2(srPositionBasicsEntity.getCommentsByApprover2());
+				positonBasicsResponse.setCommentsByApprover3(srPositionBasicsEntity.getCommentsByApprover3());
+				positonBasicsResponse.setApprover1Role(srPositionBasicsEntity.getApprover1Role());
+				positonBasicsResponse.setApprover2Role(srPositionBasicsEntity.getApprover2Role());
+				positonBasicsResponse.setApprover3Role(srPositionBasicsEntity.getApprover3Role());			
 
-				response.setPositonBasicsResponse(positonBasicsResponse);
-			}
+				response.setPositonBasicsResponse(positonBasicsResponse);		
+			}			
+			
 			if (businessJustificationEntity != null) {
 
 				BusinessJustificationResponse businessJustificationResponse = new BusinessJustificationResponse();
@@ -1159,7 +1206,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Override
 	public ApiResponse<?> getAll(SRFilterRequest request) {
-		log.info("StaffRequisitionsServiceImpl : Inside from getAll method");
+		log.info("StaffRequisitionsServiceImpl : Inside getAll method");
 		try {
 			int page = request.getPage();
 			int size = request.getSize();
@@ -1234,6 +1281,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	}
 
 	@Override
+
 	public ApiResponse<?> srApproval(UpdateSrRequest request) {
 
 		Optional<ApprovalsChildEntity> optional = approvalsChildRepository.findByProcessId(request.getSrId());
@@ -1462,4 +1510,61 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		}
 
 	}
+
+	public ApiResponse<?> getSrCounts() {
+
+		log.info("Inside getSrCounts method");
+
+		try {
+
+			List<SRPositionBasicsEntity> srList = positionBasicsRepository.findAll();
+
+			Set<String> uniqueSrIds = new HashSet<>();
+			
+			long totalSrs = 0;
+			long approved = 0;
+			long rejected = 0;
+			long inProgress = 0;
+
+			for (SRPositionBasicsEntity sr : srList) {
+				if (!uniqueSrIds.contains(sr.getSrId())) {
+
+					uniqueSrIds.add(sr.getSrId());
+					totalSrs++;
+					
+					if (Boolean.TRUE.equals(sr.getApproved())) {
+
+						approved++;
+					}
+					else if (Boolean.TRUE.equals(sr.getRejected())) {
+						rejected++;
+
+					}
+					else {
+						inProgress++;
+					}
+				}
+			}
+			SRCountResponse response = new SRCountResponse();
+
+			response.setTotalSrs(totalSrs);
+			response.setApproved(approved);
+			response.setRejected(rejected);
+			response.setInProgress(inProgress);
+
+			return ApiResponse.success(
+					ResponseCode.SUCCESS,
+					"SR counts fetched successfully",
+					response);
+
+		} catch (Exception e) {
+			log.error("Error fetching SR counts", e);
+			return ApiResponse.failure(
+					ResponseCode.FAILURE,
+					"Failed to fetch SR counts",
+					List.of(e.getMessage()));
+		}
+	}
+
+
 }

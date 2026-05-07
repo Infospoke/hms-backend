@@ -66,7 +66,6 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="priority")
 	private String priority;
-
 	
 	@Column(name="submitted")
 	private Boolean submitted;
@@ -97,6 +96,7 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="approver3")
 	private Boolean approver3=false; 
+
 	
 	@Column(name="approver1_by")
 	private String approver1By;
@@ -142,8 +142,5 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="approver3_role")
 	private String approver3Role;
-	
-
-
 
 }

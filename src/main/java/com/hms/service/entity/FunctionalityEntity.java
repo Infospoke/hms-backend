@@ -24,5 +24,8 @@ public class FunctionalityEntity {
 
 	@Column(name = "functionality_name")
 	private String functionalityName;
+	
+	@Column(name="is_chain_created")
+	private Boolean isChaincreated=false;
 
 }
