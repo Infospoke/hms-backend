@@ -30,6 +30,14 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/departments")
+	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getDepartments() {
+
+		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getAllDepartments();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 	@GetMapping("/departments/{businessUnitId}")
 	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getDepartments(

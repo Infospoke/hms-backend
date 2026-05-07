@@ -81,6 +81,18 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.BUSINESS_UNITS_FETCHED_SUCCESSFULLY, response);
 	}
 	
+	@Override
+	public ApiResponse<List<DropDownResponse>> getAllDepartments() {
+		 log.info("ConfigurationServiceImpl::Inside the getAllDepartments method"); 
+
+		List<DropDownResponse> response = departmentsRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(bu -> new DropDownResponse(bu.getId(), bu.getDepartmentName())).toList();
+		
+		 log.info("ConfigurationServiceImpl::Exit from the getAllBusinessUnits method"); 
+		 
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.DEPARTMENTS_FETCHED_SUCCESSFULLY, response);
+	}
+	
 	
 
 	@Override
@@ -254,9 +266,8 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 		log.info("ConfigurationServiceImpl::Inside getAllFunctionalities method");
 
-		List<DropDownResponse> response = functionalityRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+		List<DropDownResponse> response = functionalityRepository.findByIsChaincreatedFalse().stream()
 				.map(func -> new DropDownResponse(func.getId(), func.getFunctionalityName())).toList();
-
 		log.info("ConfigurationServiceImpl::Exit from getAllFunctionalities method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Functionalities fetched successfully", response);

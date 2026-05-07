@@ -137,8 +137,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
 				srId = generateSrId(positonBasicsRequest.getDepartmentId());
 				srPositionBasicsEntity.setSrId(srId);
-				
-				
+
 				String authHeader = httpServletRequest.getHeader("Authorization");
 				String username = null;
 
@@ -153,13 +152,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					throw new RuntimeException("Invalid or missing Authorization header");
 				}
 
-				srPositionBasicsEntity.setCreatedBy(username);				
+				srPositionBasicsEntity.setCreatedBy(username);
 
 				if (authHeader != null && authHeader.startsWith("Bearer ")) {
-				    String token = authHeader.substring(7);
-				    userId = jwtService.extractUserId(token);
+					String token = authHeader.substring(7);
+					userId = jwtService.extractUserId(token);
 				} else {
-				    throw new RuntimeException("Invalid or missing Authorization header");
+					throw new RuntimeException("Invalid or missing Authorization header");
 				}
 
 				srPositionBasicsEntity.setUserId(userId);
@@ -944,13 +943,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				businessJustificationResponse.setRequisitionType(businessJustificationEntity.getRequisitionType());
 				businessJustificationResponse.setBusinessCase(businessJustificationEntity.getBusinessCase());
 				businessJustificationResponse.setImpactIfNotFilled(businessJustificationEntity.getImpactIfNotFilled());
-				Integer replaceId = businessJustificationEntity.getReplacesEmployee();
-				if (replaceId != null) {
-					userRepository.findById(replaceId).ifPresent(user -> {
-						String fullName = user.getFirstName();
-						businessJustificationResponse.setReplacesEmployee(fullName);
-					});
-				}
+				businessJustificationResponse.setReplacesEmployee(businessJustificationEntity.getReplacesEmployee());
 				businessJustificationResponse.setDocument(businessJustificationEntity.getDocument());
 				businessJustificationResponse.setSubmitted(businessJustificationEntity.getSubmitted());
 				businessJustificationResponse.setApproved(businessJustificationEntity.getApproved());
