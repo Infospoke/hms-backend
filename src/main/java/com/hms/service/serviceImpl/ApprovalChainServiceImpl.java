@@ -387,29 +387,45 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can update Approval Chain");
 		}
 
-		approvalChainEntity.setApproval(request.getApproval());
-		approvalChainEntity.setStatus(request.getStatus());
-		approvalChainEntity.setApprovedComments(request.getApprovedComments());
-		approvalChainEntity.setRejectedComments(request.getRejectedComments());
-		if (request.getStatus() != null &&
-				request.getStatus().equalsIgnoreCase("DEACTIVE")) {
+		if (request.getStatus() != null) {
 
-			approvalChainEntity.setDeactivateComments(
-					request.getDeactivateComments());
+		    String status = request.getStatus().trim().toUpperCase();
 
-		} else {
-			approvalChainEntity.setDeactivateComments(null);
-		}
-		if (request.getStatus() != null &&
-				request.getStatus().equalsIgnoreCase("ACTIVE")) {
+		    if ("ACTIVE".equals(status)) {
 
-			approvalChainEntity.setActivateComments(
-					request.getActivateComments());
+		        approvalChainEntity.setStatus(status);
+		        approvalChainEntity.setActivateComments(request.getActivateComments());
 
-		} else {
-			approvalChainEntity.setActivateComments(null);
+		        approvalChainEntity.setDeactivateComments(null);
+
+		    } else if ("DEACTIVE".equals(status)) {
+
+		        approvalChainEntity.setStatus(status);
+		        approvalChainEntity.setDeactivateComments(request.getDeactivateComments());
+
+		        approvalChainEntity.setActivateComments(null);
+		    }
 		}
 
+		if (request.getApproval() != null) {
+
+		    String approval = request.getApproval().trim().toUpperCase();
+
+		    if ("APPROVED".equals(approval)) {
+
+		        approvalChainEntity.setApproval(approval);
+		        approvalChainEntity.setApprovedComments(request.getApprovedComments());
+
+		        approvalChainEntity.setRejectedComments(null);
+
+		    } else if ("REJECTED".equals(approval)) {
+
+		        approvalChainEntity.setApproval(approval);
+		        approvalChainEntity.setRejectedComments(request.getRejectedComments());
+
+		        approvalChainEntity.setApprovedComments(null);
+		    }
+		}
 
 		approvalChainEntity.setUpdatedBy(userName);
 		approvalChainEntity.setUpdatedAt(LocalDate.now());

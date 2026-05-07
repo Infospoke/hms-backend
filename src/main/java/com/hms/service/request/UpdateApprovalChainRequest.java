@@ -19,7 +19,7 @@ public class UpdateApprovalChainRequest {
 	@Size(min = 3, max = 300, message = "Deactivate comments must be between 3 and 300 characters")
 	private String deactivateComments;
 	@Size(min = 3, max = 300, message = "Activate comments must be between 3 and 300 characters")
-	private String ActivateComments;
+	private String activateComments;
 
 	
 
