@@ -1,6 +1,7 @@
 package com.hms.service.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.CollectionTable;
@@ -84,6 +85,65 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name = "user_id")
 	private Long userId;
+	
+	@Column(name="in_progress")
+	private Boolean inProgress;
+	
+	@Column(name="approver1")
+	private Boolean approver1=false;
+	
+	@Column(name="approver2")
+	private Boolean approver2=false;
+	
+	@Column(name="approver3")
+	private Boolean approver3=false; 
+	
+	@Column(name="approver1_by")
+	private String approver1By;
+	
+	@Column(name="approver2_by")
+	private String approver2By;
+	
+	@Column(name="approver3_by")
+	private String approver3By;
+	
+	@Column(name="date_of_approval1")
+	private LocalDateTime dateOfApproval1;
+	
+	@Column(name="date_of_approval2")
+	private LocalDateTime dateOfApproval2;
+	
+	@Column(name="date_of_approval3")
+	private LocalDateTime dateOfApproval3;
+	
+	@Column(name="rejected")
+	private Boolean rejected;
+	
+	@Column(name="rejected_by")
+	private String rejectedBy;
+	
+	@Column(name="functionality_id")
+	private Integer functionalityId;
+	
+	@Column(name="comments_by_approver1")
+	private String commentsByApprover1;
+	
+	@Column(name="comments_by_approver2")
+	private String commentsByApprover2;
+	
+	@Column(name="comments_by_approver3")
+	private String commentsByApprover3;
+	
+	@Column(name="approver1_role")
+	private String approver1Role;
+	
+	@Column(name="approver2_role")
+	private String approver2Role;
+	
+	@Column(name="approver3_role")
+	private String approver3Role;
+	
+
 
 
 }

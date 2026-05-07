@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.ApprovalChainEntity;
+import com.hms.service.entity.ApprovalsChildEntity;
 
 @Repository
 
@@ -62,5 +63,8 @@ public interface ApprovalChainRepository
 
 	ApprovalChainEntity findByChainNameIgnoreCase(String chainName);
 
+	ApprovalChainEntity findByFunctionality(Integer functionalityId);
+
+	
 
 }

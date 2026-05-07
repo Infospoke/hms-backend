@@ -1,11 +1,17 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,30 +25,43 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
+import com.hms.service.entity.ApprovalChainEntity;
+import com.hms.service.entity.ApprovalsChildEntity;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
-
+import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
+import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 
 import com.hms.service.entity.SourcingStrategyEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.enums.FunctionalityTypes;
+import com.hms.service.repository.ApprovalChainRepository;
+import com.hms.service.repository.ApprovalsChildRepository;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.BusinessJustificationRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
+import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SeniorityLevelRepository;
 import com.hms.service.repository.SourceStrategyRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
+import com.hms.service.request.LevelConfig;
 import com.hms.service.request.PositonBascicsRequest;
 import com.hms.service.request.ReviewRequest;
 import com.hms.service.request.RolesAndRequirementsRequest;
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.SourcingStrategyRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
+import com.hms.service.request.UpdateSrRequest;
 import com.hms.service.response.BudgetAndCompensationResponse;
 import com.hms.service.response.BusinessJustificationResponse;
 import com.hms.service.response.BusinessValidationResponse;
@@ -100,16 +119,33 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	@Autowired
 	private UserRepository userRepository;
 
+	@Autowired
+	private ApprovalChainRepository approvalChainRepository;
+
+	@Autowired
+	private ApprovalsChildRepository approvalsChildRepository;
+
+	@Autowired
+	private FunctionalityRepository functionalityRepository;
+
+	@Autowired
+	private RolesRepository rolesRepository;
+
 //	@Autowired
 //	private UserServiceImpl userService;
 
 	@Autowired
 	private SeniorityLevelRepository seniorityLevelRepository;
 
+	@Autowired
+	private AssignRolesRepository assignRolesRepository;
+
 	@Override
 	public ApiResponse<?> newStaffingRequisition(StaffingRequisitionRequest request, MultipartFile file) {
 
 		String srId = null;
+		Long userId = null;
+
 		ApiResponse<?> finalResponse = null;
 		if (request.getPositonBascicsRequest() != null) {
 
@@ -148,8 +184,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				srPositionBasicsEntity.setCreatedBy(username);
 
-				Long userId = null;
-
 				if (authHeader != null && authHeader.startsWith("Bearer ")) {
 					String token = authHeader.substring(7);
 					userId = jwtService.extractUserId(token);
@@ -183,6 +217,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			srPositionBasicsEntity.setEmploymentType(positonBasicsRequest.getEmploymentType());
 			srPositionBasicsEntity.setWorkMode(positonBasicsRequest.getWorkMode());
 			srPositionBasicsEntity.setPriority(positonBasicsRequest.getPriority());
+			final Long finalUserId = srPositionBasicsEntity.getUserId();
 
 			srPositionBasicsEntity = positionBasicsRepository.save(srPositionBasicsEntity);
 		}
@@ -399,11 +434,15 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						List.of("srId cannot be null or empty"));
 			}
 			try {
+				final String finalSrId = srId;
+
 				positionBasicsRepository.findBySrId(srId).ifPresent(entity -> {
 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
 					positionBasicsRepository.save(entity);
+					
+
 				});
 
 				businessJustificationRepository.findBySrId(srId).ifPresent(entity -> {
@@ -430,6 +469,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
 					sourceStrategyRepository.save(entity);
+					processApprovalChain(finalSrId);
+
 				});
 
 			} catch (Exception e) {
@@ -461,6 +502,105 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		}
 
 		return null;
+	}
+	// Method for verifying the chain creation Entity
+
+	private void processApprovalChain(String srId) {
+
+		FunctionalityEntity functionality = functionalityRepository
+				.findByFunctionalityName(FunctionalityTypes.SR_Approvals.name())
+				.orElseThrow(() -> new RuntimeException("Functionality not found"));
+
+		Integer functionalityId = functionality.getId();
+		log.info("functionality is " + functionalityId);
+
+		ApprovalChainEntity approvalChainEntity = approvalChainRepository.findByFunctionality(functionalityId);
+
+		// Important null check (avoid your previous error)
+		if (approvalChainEntity == null) {
+			log.error("Approval chain not found for functionalityId: " + functionalityId);
+			return;
+		}
+
+		if (approvalChainEntity.getStatus().equalsIgnoreCase("active")) {
+
+			List<LevelConfig> levels = approvalChainEntity.getLevelConfig();
+
+			if (levels == null || levels.isEmpty()) {
+				log.error("No approval levels found in chain");
+				return;
+			}
+
+			List<Integer> roleIds = levels.stream().map(LevelConfig::getRoleId).toList();
+
+			Optional<ApprovalsChildEntity> optionalChild = approvalsChildRepository.findByProcessId(srId);
+
+			ApprovalsChildEntity childEntity;
+
+			if (optionalChild.isPresent()) {
+				childEntity = optionalChild.get();
+			} else {
+				childEntity = new ApprovalsChildEntity();
+				childEntity.setProcessId(srId);
+				childEntity.setApprover1(true);
+
+			}
+
+			// sort levels
+			levels.sort(Comparator.comparing(LevelConfig::getLevel));
+
+			for (LevelConfig lvl : levels) {
+
+				Integer roleId = lvl.getRoleId();// get roleId directly
+				Integer department = lvl.getDepartmentId();
+
+				if (lvl.getLevel() == 1) {
+					childEntity.setRole1(roleId);
+
+				} else if (lvl.getLevel() == 2) {
+					childEntity.setRole2(roleId);
+
+				} else if (lvl.getLevel() == 3) {
+					childEntity.setRole3(roleId);
+				}
+			}
+			Optional<SRPositionBasicsEntity> srOptional = positionBasicsRepository.findBySrId(srId);
+
+			if (srOptional.isPresent()) {
+
+				SRPositionBasicsEntity srEntity = srOptional.get();
+
+				childEntity.setSubmittedBy(srEntity.getUserId());
+				approvalsChildRepository.save(childEntity);
+
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				for (Integer roleId : roleIds) {
+
+					if (roleId != null) {
+
+						List<Integer> userIds = assignRolesRepository.findByRoleId(roleId).stream()
+								.map(AssignRolesEntity::getUserId).toList();
+
+						if (userIds.isEmpty()) {
+							roleEmailMap.put(roleId, Collections.emptyList());
+							continue;
+						}
+
+						List<String> emails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+								.filter(Objects::nonNull).toList();
+
+						roleEmailMap.put(roleId, emails);
+
+					}
+
+				}
+				log.info("roleMap is" + roleEmailMap);
+
+			} else {
+				log.warn("Approval chain is not active, cannot proceed with SR approval");
+			}
+		}
 	}
 
 	private ApiResponse<?> validateObject(Object value, String fieldName) {
@@ -1093,4 +1233,233 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		return "SR-" + year + "-" + prefix + "-" + formattedSeq;
 	}
 
+	@Override
+	public ApiResponse<?> srApproval(UpdateSrRequest request) {
+
+		Optional<ApprovalsChildEntity> optional = approvalsChildRepository.findByProcessId(request.getSrId());
+
+		if (optional.isEmpty()) {
+			log.error("No approval record found");
+			// return ApiResponse.error("No approval record found");
+		}
+
+		ApprovalsChildEntity entity = optional.get();
+
+		// Find current level
+		int currentLevel;
+
+		if (Boolean.TRUE.equals(entity.getApprover1()) && !Boolean.TRUE.equals(entity.getApprover2())) {
+
+			currentLevel = 1;
+
+		} else if (Boolean.TRUE.equals(entity.getApprover2()) && !Boolean.TRUE.equals(entity.getApprover3())) {
+
+			currentLevel = 2;
+
+		} else if (Boolean.TRUE.equals(entity.getApprover3())) {
+
+			currentLevel = 3;
+
+		} else {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid approval flow",
+					List.of("No active approval level found"));
+		}
+
+		// Extract token details
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			// return ApiResponse.error("Invalid Authorization header");
+		}
+
+		String token = authHeader.substring(7);
+
+		String roleName = jwtService.extractRole(token);
+		String username = jwtService.extractUsernameFromClaims(token);
+		Long userId = jwtService.extractUserId(token);
+
+		// Get expected role for current level
+		Integer expectedRole = null;
+
+		if (currentLevel == 1) {
+			expectedRole = entity.getRole1();
+
+		} else if (currentLevel == 2) {
+			expectedRole = entity.getRole2();
+
+		} else if (currentLevel == 3) {
+			expectedRole = entity.getRole3();
+		}
+
+		// Role validation
+
+		String expectedRoleName = rolesRepository.findByRoleId(expectedRole).get().getRoleName();
+
+		
+
+	
+		log.info("Token Role : " + roleName);
+		log.info("Expected Role : " + expectedRoleName );
+
+		// compare token role with DB role
+		if (!roleName.equalsIgnoreCase(expectedRoleName)) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized",
+					List.of("You are not authorized to approve this level"));
+		} else {
+
+			// Prevent self approval
+			Long submittedBy = entity.getSubmittedBy();
+
+			if (submittedBy != null) {
+
+				Optional<UserEntity> submittedUserOpt = userRepository.findByUserId(submittedBy);
+
+				if (submittedUserOpt.isPresent()) {
+
+					UserEntity submittedUser = submittedUserOpt.get();
+
+					String submittedUsername = submittedUser.getUsername();
+
+					log.info("Token Username : " + username);
+					log.info("Submitted Username : " + submittedUsername);
+
+					// maker checker validation
+					if (username.equalsIgnoreCase(submittedUsername)) {
+
+						return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
+								List.of("You created this SR, so you cannot approve it"));
+					}
+				}
+			}
+			// Fetch SR Position Entity
+			Optional<SRPositionBasicsEntity> posOpt = positionBasicsRepository.findBySrId(request.getSrId());
+
+			if (posOpt.isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "SR not found", List.of("Invalid SR Id"));
+			}
+
+			SRPositionBasicsEntity pos = posOpt.get();
+
+			// LEVEL CHECKING
+			int approvalLevel = 0;
+
+			if (!Boolean.TRUE.equals(pos.getApprover1())) {
+
+				approvalLevel = 1;
+
+			} else if (!Boolean.TRUE.equals(pos.getApprover2())) {
+
+				approvalLevel = 2;
+
+			} else if (!Boolean.TRUE.equals(pos.getApprover3())) {
+
+				approvalLevel = 3;
+
+			} else {
+
+				return ApiResponse.success("All approvals already completed");
+			}
+
+			// APPROVED
+			if (Boolean.TRUE.equals(request.getApproved())) {
+
+				// LEVEL 1
+				if (approvalLevel == 1) {
+
+					// PositionBasic table
+					pos.setApprover1(true);
+					pos.setApprover1By(username);
+					pos.setApprover1Role(roleName);
+					pos.setDateOfApproval1(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					pos.setCommentsByApprover1(request.getComments());
+
+					// Child table → enable next level
+					entity.setApprover2(true);
+
+				}
+
+				// LEVEL 2
+				else if (approvalLevel == 2) {
+
+					// PositionBasic table
+					pos.setApprover2(true);
+					pos.setApprover2By(username);
+					pos.setApprover2Role(roleName);
+					pos.setDateOfApproval2(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					pos.setCommentsByApprover2(request.getComments());
+
+					// Child table → enable next level
+					entity.setApprover3(true);
+
+				}
+
+				// LEVEL 3
+				else if (approvalLevel == 3) {
+
+					// SRPositionBasic table
+					pos.setApprover3(true);
+					pos.setApprover3By(username);
+					pos.setApprover3Role(roleName);
+					pos.setDateOfApproval3(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					pos.setCommentsByApprover3(request.getComments());
+
+					// final approval completed
+					pos.setApproved(true);
+					pos.setInProgress(false);
+				}
+
+				// common updates
+				pos.setRejected(false);
+
+				// if not final level keep in progress
+				if (approvalLevel != 3) {
+					pos.setInProgress(true);
+				}
+
+				// save both tables
+				positionBasicsRepository.save(pos);
+				approvalsChildRepository.save(entity);
+
+				return ApiResponse.success("Approved successfully at level " + approvalLevel);
+
+			} else {
+
+				// REJECTED
+
+				pos.setRejected(true);
+				pos.setInProgress(false);
+
+				// optional rejection details
+				if (approvalLevel == 1) {
+
+					pos.setApprover1By(username);
+					pos.setApprover1Role(roleName);
+					pos.setDateOfApproval1(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					pos.setCommentsByApprover1(request.getComments());
+
+				} else if (approvalLevel == 2) {
+
+					pos.setApprover2By(username);
+					pos.setApprover2Role(roleName);
+					pos.setDateOfApproval2(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					pos.setCommentsByApprover2(request.getComments());
+
+				} else if (approvalLevel == 3) {
+
+					pos.setApprover3By(username);
+					pos.setApprover3Role(roleName);
+					pos.setDateOfApproval3(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					pos.setCommentsByApprover3(request.getComments());
+				}
+
+				positionBasicsRepository.save(pos);
+
+				return ApiResponse.success("Rejected successfully at level " + approvalLevel);
+			}
+		}
+
+	}
 }

@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
-
+import com.hms.service.request.UpdateSrRequest;
 import com.hms.service.service.IStaffingRequisitionService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -40,6 +40,14 @@ public class StaffingRequisitionController {
 	 @PostMapping("/sr-list")
 	 public ApiResponse<?> getAll(@RequestBody SRFilterRequest request) {
 	     return iStaffingRequisitionService.getAll(request);
+	 }
+	 
+	 @PostMapping("/sr-approval")
+	 public ResponseEntity<ApiResponse<?>>srApproval(@RequestBody UpdateSrRequest request){
+		 ApiResponse<?> response=iStaffingRequisitionService.srApproval(request);
+		 return new ResponseEntity<>(response,HttpStatus.OK);
+		 
+		 
 	 }
 	 
 	

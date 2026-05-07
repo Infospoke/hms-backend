@@ -4,6 +4,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
+import com.hms.service.request.UpdateSrRequest;
 import com.hms.service.wrappers.ApiResponse;
 
 public interface IStaffingRequisitionService {
@@ -13,5 +14,7 @@ public interface IStaffingRequisitionService {
 	ApiResponse<?> getBySrId(String srId);
 
 	ApiResponse<?> getAll(SRFilterRequest request);
+
+	ApiResponse<?> srApproval(UpdateSrRequest request);
 
 }
