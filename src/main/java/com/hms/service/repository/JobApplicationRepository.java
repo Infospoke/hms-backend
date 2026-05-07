@@ -13,7 +13,7 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	int countByJobId(Integer jobId);
 
-	List<JobApplicationEntity> findByJobIdInOrderByCreatedDateDesc(List<Integer> jobIds);
+	List<JobApplicationEntity> findByJobIdInOrderByStageEntryDateDesc(List<Integer> jobIds);
 
 	List<JobApplicationEntity> findByJobIdOrderByCreatedDateDesc(Integer jobId);
 
