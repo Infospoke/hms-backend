@@ -41,7 +41,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		} else if (filters.get("dateFilter") != null) {
 			dateFilter = filters.get("dateFilter").toString();
 		}
-
+		
 		LocalDateTime startDate = null;
 		LocalDateTime endDate = null;
 
