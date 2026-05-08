@@ -62,9 +62,6 @@ public class JobApplicationEntity {
 	
 	@Column(name = "stage_entry_date")
 	private LocalDateTime stageEntryDate;
-
-	@Column(name = "sla_days")
-	private Integer slaDays;
 	
 	@Column(name = "current_stage")
 	private String currentStage;
