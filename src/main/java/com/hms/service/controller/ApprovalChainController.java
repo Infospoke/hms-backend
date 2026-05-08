@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.ApprovalChainRequest;
 import com.hms.service.request.FilterRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateApprovalChainRequest;
 import com.hms.service.service.IApprovalChainService;
 import com.hms.service.wrappers.ApiResponse;
@@ -29,7 +30,7 @@ public class ApprovalChainController {
     private IApprovalChainService iApprovalChainService;
 	
 	@PostMapping("/list")
-	public ApiResponse<?> getApprovalChains(@RequestBody FilterRequest request) {
+	public ApiResponse<?> getApprovalChains(@RequestBody SpecificationFilterRequest request) {
 	    return iApprovalChainService.getApprovalChainsList(request);
 	}
 
