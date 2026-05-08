@@ -1,14 +1,10 @@
 package com.hms.service.serviceImpl;
 
-import com.hms.service.dto.NotificationEvent;
-import com.hms.service.entity.NotificationEngineEntity;
-import com.hms.service.repository.NotificationEngineRepository;
-import com.hms.service.request.SpecificationFilterRequest;
-import com.hms.service.service.INotificationService;
-import com.hms.service.wrappers.ApiResponse;
-import com.hms.service.wrappers.ResponseCode;
-import com.hms.service.service.IMailService;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -20,10 +16,17 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.hms.service.dto.NotificationEvent;
+import com.hms.service.entity.NotificationEngineEntity;
+import com.hms.service.repository.NotificationEngineRepository;
+import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateNotificationRequest;
+import com.hms.service.service.IMailService;
+import com.hms.service.service.INotificationService;
+import com.hms.service.wrappers.ApiResponse;
+import com.hms.service.wrappers.ResponseCode;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -236,4 +239,32 @@ public class NotificationServiceImpl implements INotificationService {
 
         return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
     }
+
+	@Override
+	public ApiResponse<?> updateNotifications(UpdateNotificationRequest request) {
+
+		log.info("NotificationServiceImpl::Inside updateNotifications (Batch)");
+
+		if (request.getIds() == null || request.getIds().isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Notification IDs are required");
+		}
+
+		List<NotificationEngineEntity> notificationEngineEntity = notificationEngineRepository
+				.findAllById(request.getIds());
+
+		if (notificationEngineEntity.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "No notifications found");
+		}
+
+		for (NotificationEngineEntity entity : notificationEngineEntity) {
+			entity.setIsRead(request.getIsRead());
+		}
+
+		notificationEngineRepository.saveAll(notificationEngineEntity);
+
+		return ApiResponse.success("Notifications updated successfully");
+	}
+
+    
+    
 }

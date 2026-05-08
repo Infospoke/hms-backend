@@ -121,7 +121,7 @@ public class SpecificationFilterRequest {
 		};
 	}
 
-	public Specification<ApprovalChainEntity> toApprovalChainSpecification() {
+	public Specification<ApprovalChainEntity> buildBaseSpec() {
 
 		return (root, query, cb) -> {
 
@@ -219,4 +219,71 @@ public class SpecificationFilterRequest {
 			return spec.toPredicate(root, query, cb);
 		};
 	}
+	
+	public Specification<ApprovalChainEntity> toApprovalChainSpecification() {
+		 
+	    return (root, query, cb) -> {
+	 
+	        // Start from base (chainName + date)
+
+	        Specification<ApprovalChainEntity> spec = buildBaseSpec();
+	 
+	        if (filters != null) {
+	 
+	            // ✅ status filter (for list tab filtering: ACTIVE/DEACTIVE)
+
+	            if (filters.containsKey("status")) {
+
+	                String status = filters.get("status").toString().trim();
+
+	                if (!status.isBlank()) {
+
+	                    spec = spec.and(
+
+	                        (r, q, c) -> c.like(
+
+	                            c.lower(r.get("status")),
+
+	                            "%" + status.toLowerCase() + "%"
+
+	                        )
+
+	                    );
+
+	                }
+
+	            }
+	 
+	            // ✅ approval filter (for list tab filtering: APPROVED/PENDING/REJECTED)
+
+	            if (filters.containsKey("approval")) {
+
+	                String approval = filters.get("approval").toString().trim();
+
+	                if (!approval.isBlank()) {
+
+	                    spec = spec.and(
+
+	                        (r, q, c) -> c.like(
+
+	                            c.lower(r.get("approval")),
+
+	                            "%" + approval.toLowerCase() + "%"
+
+	                        )
+
+	                    );
+
+	                }
+
+	            }
+
+	        }
+	 
+	        return spec.toPredicate(root, query, cb);
+
+	    };
+
+	}
+	 
 }
