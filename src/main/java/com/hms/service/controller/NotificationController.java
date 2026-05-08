@@ -1,6 +1,7 @@
 package com.hms.service.controller;
 
 import com.hms.service.dto.NotificationEvent;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.INotificationService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -42,4 +43,19 @@ public class NotificationController {
 //        return ApiResponse.success(ResponseCode.SUCCESS,
 //                "Notification triggered successfully for SR: " + event.getSrId(), null);
 //    }
+    
+    
+    @Autowired
+    private INotificationService iNotificationService;
+
+    @PostMapping("/list")
+    public ApiResponse<?> getNotifications(@RequestBody SpecificationFilterRequest request) {
+        return iNotificationService.getNotifications(request);
+    }
+
+    @GetMapping("/counts")
+    public ApiResponse<?> getCounts() {
+        return iNotificationService.getNotificationCounts();
+    }
 }
+
