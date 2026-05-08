@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,15 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDateTime;
-
 import com.hms.service.constants.Constants;
-import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
 import com.hms.service.service.INotificationService;
 import com.hms.service.entity.BudgetAndCompensationEntity;

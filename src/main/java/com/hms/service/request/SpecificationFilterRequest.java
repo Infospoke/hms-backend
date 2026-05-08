@@ -2,7 +2,6 @@ package com.hms.service.request;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -15,7 +14,6 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 
 @Data
@@ -151,7 +149,7 @@ public class SpecificationFilterRequest {
 					}
 				}
 
-				// chainName filter
+				
 				if (filters.containsKey("chainName")) {
 
 					String chainName = filters.get("chainName").toString().trim();
@@ -224,13 +222,12 @@ public class SpecificationFilterRequest {
 		 
 	    return (root, query, cb) -> {
 	 
-	        // Start from base (chainName + date)
-
+	        
 	        Specification<ApprovalChainEntity> spec = buildBaseSpec();
 	 
 	        if (filters != null) {
 	 
-	            // ✅ status filter (for list tab filtering: ACTIVE/DEACTIVE)
+	           
 
 	            if (filters.containsKey("status")) {
 
@@ -254,8 +251,7 @@ public class SpecificationFilterRequest {
 
 	            }
 	 
-	            // ✅ approval filter (for list tab filtering: APPROVED/PENDING/REJECTED)
-
+	           
 	            if (filters.containsKey("approval")) {
 
 	                String approval = filters.get("approval").toString().trim();
