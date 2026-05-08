@@ -1,24 +1,19 @@
 package com.hms.service.controller;
 
-import com.hms.service.dto.NotificationEvent;
+
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.INotificationService;
 import com.hms.service.wrappers.ApiResponse;
-import com.hms.service.wrappers.ResponseCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/hms/notifications")
 @Slf4j
 public class NotificationController {
 
-    @Autowired
-    private INotificationService notificationService;
-
+ 
     /**
      * Test endpoint — directly fires callNotification() without going through SR submission.
      * Use this from Postman to verify Kafka → DB save → Email → WebSocket push.

@@ -88,12 +88,13 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 	            request.getSize(),
 	            sort
 	    );
-
+       
 	    Page<ApprovalChainEntity> pageResult =
 	            approvalChainRepository.findAll(
 	                    request.toApprovalChainSpecification(),
 	                    pageable
 	            );
+	    log.info("approval chqain:"+request.toApprovalChainSpecification());
 
 	    List<ApprovalChainResponse> responseList =
 	            pageResult.getContent()
