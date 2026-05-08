@@ -1,12 +1,22 @@
 package com.hms.service.controller;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateNotificationRequest;
 import com.hms.service.service.INotificationService;
 import com.hms.service.wrappers.ApiResponse;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/hms/notifications")
@@ -52,5 +62,12 @@ public class NotificationController {
     public ApiResponse<?> getCounts() {
         return iNotificationService.getNotificationCounts();
     }
+    
+	@PutMapping("/update")
+	public ResponseEntity<ApiResponse<?>> updateNotifications(@RequestBody UpdateNotificationRequest request) {
+
+		ApiResponse<?> response = iNotificationService.updateNotifications(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 }
 
