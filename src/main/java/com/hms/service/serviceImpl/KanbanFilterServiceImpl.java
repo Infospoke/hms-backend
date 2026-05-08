@@ -37,7 +37,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		String dateFilter = null;
 
 		if (isDefault) {
-			dateFilter = "last month";
+			dateFilter = "this month";
 		} else if (filters.get("dateFilter") != null) {
 			dateFilter = filters.get("dateFilter").toString();
 		}
@@ -216,20 +216,20 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 					return false;
 			}
 
-			case "last week" -> {
+			case "this week" -> {
 				LocalDate today = now.toLocalDate();
-				LocalDate start = today.minusWeeks(1).with(DayOfWeek.MONDAY);
-				LocalDate end = start.plusDays(6);
+				LocalDate start = today.minusWeeks(0).with(DayOfWeek.MONDAY);
+				LocalDate end = today;
 
 				if (date.toLocalDate().isBefore(start) || date.toLocalDate().isAfter(end)) {
 					return false;
 				}
 			}
 
-			case "last month" -> {
+			case "this month" -> {
 				LocalDate today = now.toLocalDate();
-				LocalDate start = today.minusMonths(1).withDayOfMonth(1);
-				LocalDate end = start.plusMonths(1).minusDays(1);
+				LocalDate start = today.minusMonths(0).withDayOfMonth(1);
+				LocalDate end = today;
 
 				if (date.toLocalDate().isBefore(start) || date.toLocalDate().isAfter(end)) {
 					return false;
