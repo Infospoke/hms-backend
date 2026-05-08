@@ -85,9 +85,15 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 			String status = job.getCurrentStage();
 			LocalDateTime stageEntryDate = job.getStageEntryDate();
 
-			if (Boolean.TRUE.equals(job.getRejected())) {
-				status = "REJECTED";
+//			if (Boolean.TRUE.equals(job.getRejected())) {
+//				status = "REJECTED";
+//			}
+			
+			if (Boolean.TRUE.equals(job.getRejected())
+			        || "NOT SHORTLISTED".equalsIgnoreCase(status)) {
+			    status = "REJECTED";
 			}
+			
 			if ("APPLIED".equalsIgnoreCase(status) || "SCREENED".equalsIgnoreCase(status)) {
 				continue;
 			}
@@ -139,10 +145,6 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 				continue;
 			}
 
-			if (Boolean.TRUE.equals(job.getRejected())) {
-				status = "REJECTED";
-			}
-
 			if (status == null) {
 				continue;
 			}
@@ -152,7 +154,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 			case "INTERVIEW" -> counts.put("interview", counts.get("interview") + 1);
 			case "OFFER" -> counts.put("offer", counts.get("offer") + 1);
 			case "HIRED" -> counts.put("hired", counts.get("hired") + 1);
-			case "REJECTED" -> counts.put("rejected", counts.get("rejected") + 1);
+			case "REJECTED", "NOT SHORTLISTED" ->counts.put("rejected",counts.get("rejected") + 1);
 			}
 			filtered.add(kanbanFilterResponse);
 		}
