@@ -21,8 +21,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
+import com.hms.service.service.INotificationService;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
 import com.hms.service.entity.DepartmentsEntity;
@@ -104,6 +108,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private INotificationService notificationService;
 
 //	@Autowired
 //	private UserServiceImpl userService;
@@ -434,7 +441,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
 					sourceStrategyRepository.save(entity);
-				});
+				}); 
+
+				// Trigger notification after successful SR submission
+
 
 			} catch (Exception e) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Failed to submit SR", List.of(e.getMessage()));
@@ -906,13 +916,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setWorkMode(srPositionBasicsEntity.getWorkMode());
 				positonBasicsResponse.setEmploymentType(srPositionBasicsEntity.getEmploymentType());
 				positonBasicsResponse.setPriority(srPositionBasicsEntity.getPriority());
-				positonBasicsResponse.setSubmitted(srPositionBasicsEntity.getSubmitted());
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());		
 				positonBasicsResponse.setUserId(srPositionBasicsEntity.getUserId());
-				positonBasicsResponse.setInProgress(srPositionBasicsEntity.getInProgress());
 				positonBasicsResponse.setApprover1(srPositionBasicsEntity.getApprover1());
 				positonBasicsResponse.setApprover2(srPositionBasicsEntity.getApprover2());
 				positonBasicsResponse.setApprover3(srPositionBasicsEntity.getApprover3());
@@ -922,8 +930,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setDateOfApproval1(srPositionBasicsEntity.getDateOfApproval1());
 				positonBasicsResponse.setDateOfApproval2(srPositionBasicsEntity.getDateOfApproval2());
 				positonBasicsResponse.setDateOfApproval3(srPositionBasicsEntity.getDateOfApproval3());
-				positonBasicsResponse.setRejected(srPositionBasicsEntity.getRejected());
-				positonBasicsResponse.setRejectedBy(srPositionBasicsEntity.getRejectedBy());
 				positonBasicsResponse.setCommentsByApprover1(srPositionBasicsEntity.getCommentsByApprover1());
 				positonBasicsResponse.setCommentsByApprover2(srPositionBasicsEntity.getCommentsByApprover2());
 				positonBasicsResponse.setCommentsByApprover3(srPositionBasicsEntity.getCommentsByApprover3());
