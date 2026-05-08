@@ -84,10 +84,6 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 			String status = job.getCurrentStage();
 			LocalDateTime stageEntryDate = job.getStageEntryDate();
-
-//			if (Boolean.TRUE.equals(job.getRejected())) {
-//				status = "REJECTED";
-//			}
 			
 			if (Boolean.TRUE.equals(job.getRejected())
 			        || "NOT SHORTLISTED".equalsIgnoreCase(status)) {
