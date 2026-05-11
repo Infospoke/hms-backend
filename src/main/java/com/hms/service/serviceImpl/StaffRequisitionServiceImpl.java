@@ -1928,7 +1928,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srApprovalResponse.setCurrentStage("Completed");
 			}
 
-			Integer deptId=childEntity.getDepartment();
+			Integer deptId=sRPositionBasicsEntity.getDepartmentId();
 			String departName=departmentsRepository.findById(deptId).get().getDepartmentName();
 		
 			srApprovalResponse.setSrId(srId);
@@ -1957,7 +1957,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		counts.put("pending", pendingCount);
 
 		response.put("counts", counts);
-      log.info("ApprovalServiceImpl::Exit from theassignedSrsForApprovals");
+      log.info("ApprovalServiceImpl::Exit from the assignedSrsForApprovals");
 		return ApiResponse.success(
 		        ResponseCode.SUCCESS,
 		        "SR List fetched successfully",
