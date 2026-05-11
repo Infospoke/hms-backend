@@ -1059,7 +1059,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			int page = request.getPage();
 			int size = request.getSize();
 
-			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.SR_ID));
+			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdOn"));
 
 			String authHeader = httpServletRequest.getHeader("Authorization");
 			Long userId = null;

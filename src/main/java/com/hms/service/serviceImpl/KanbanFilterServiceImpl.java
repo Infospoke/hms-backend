@@ -41,7 +41,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		} else if (filters.get("dateFilter") != null) {
 			dateFilter = filters.get("dateFilter").toString();
 		}
-		
+
 		LocalDateTime startDate = null;
 		LocalDateTime endDate = null;
 
@@ -73,7 +73,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		counts.put("offer", 0);
 		counts.put("hired", 0);
 		counts.put("rejected", 0);
-		
+
 		List<KanbanFilterResponse> filtered = new ArrayList<>();
 
 		for (JobApplicationEntity job : jobs) {
@@ -84,12 +84,11 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 			String status = job.getCurrentStage();
 			LocalDateTime stageEntryDate = job.getStageEntryDate();
-			
-			if (Boolean.TRUE.equals(job.getRejected())
-			        || "NOT SHORTLISTED".equalsIgnoreCase(status)) {
-			    status = "REJECTED";
+
+			if (Boolean.TRUE.equals(job.getRejected()) || "NOT SHORTLISTED".equalsIgnoreCase(status)) {
+				status = "REJECTED";
 			}
-			
+
 			if ("APPLIED".equalsIgnoreCase(status) || "SCREENED".equalsIgnoreCase(status)) {
 				continue;
 			}
@@ -136,21 +135,21 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 			kanbanFilterResponse.setCreatedDate(job.getCreatedDate());
 			kanbanFilterResponse.setStageEntryDate(stageEntryDate);
 			kanbanFilterResponse.setRejected(job.getRejected());
-			
-			if (!applyFilters(kanbanFilterResponse, applicants, dateFilter, sources, sla, now, startDate, endDate)) {
+
+			if (!applyFilters(kanbanFilterResponse, applicants, dateFilter, sources, sla,startDate, endDate)) {
 				continue;
 			}
 
 			if (status == null) {
 				continue;
 			}
-			
+
 			switch (status.toUpperCase()) {
 			case "SHORTLISTED" -> counts.put("shortlisted", counts.get("shortlisted") + 1);
 			case "INTERVIEW" -> counts.put("interview", counts.get("interview") + 1);
 			case "OFFER" -> counts.put("offer", counts.get("offer") + 1);
 			case "HIRED" -> counts.put("hired", counts.get("hired") + 1);
-			case "REJECTED", "NOT SHORTLISTED" ->counts.put("rejected",counts.get("rejected") + 1);
+			case "REJECTED", "NOT SHORTLISTED" -> counts.put("rejected", counts.get("rejected") + 1);
 			}
 			filtered.add(kanbanFilterResponse);
 		}
@@ -161,7 +160,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
-	
+
 	private Integer getSlaHoursByStage(String stage) {
 		if (stage == null)
 			return null;
@@ -174,38 +173,40 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		};
 	}
 
-	private boolean applyFilters(KanbanFilterResponse kanbanFilterResponse, String applicants, String dateFilter, List<String> sources,
-			List<String> sla, LocalDateTime now, LocalDateTime startDate, LocalDateTime endDate) {
+	private boolean applyFilters(KanbanFilterResponse kanbanFilterResponse, String applicants, String dateFilter,
+			List<String> sources, List<String> sla, LocalDateTime startDate, LocalDateTime endDate) {
 
-		if (sla != null && !sla.isEmpty()&& sla.stream().noneMatch(s -> "all".equalsIgnoreCase(s))) {
-			if (kanbanFilterResponse.getSlaColor() == null || sla.stream().noneMatch(s -> s.equalsIgnoreCase(kanbanFilterResponse.getSlaColor()))) {
+		LocalDateTime now = LocalDateTime.now();
+		
+		if (sla != null && !sla.isEmpty() && sla.stream().noneMatch(s -> "all".equalsIgnoreCase(s))) {
+			if (kanbanFilterResponse.getSlaColor() == null
+					|| sla.stream().noneMatch(s -> s.equalsIgnoreCase(kanbanFilterResponse.getSlaColor()))) {
 				return false;
 			}
 		}
 
-		if (sources != null && !sources.isEmpty()&& sources.stream().noneMatch(s -> "all".equalsIgnoreCase(s))){
-			if (kanbanFilterResponse.getSource() == null || sources.stream().noneMatch(s -> s.equalsIgnoreCase(kanbanFilterResponse.getSource()))) {
+		if (sources != null && !sources.isEmpty() && sources.stream().noneMatch(s -> "all".equalsIgnoreCase(s))) {
+			if (kanbanFilterResponse.getSource() == null
+					|| sources.stream().noneMatch(s -> s.equalsIgnoreCase(kanbanFilterResponse.getSource()))) {
 				return false;
 
 			}
 		}
 
-		if ("referral".equalsIgnoreCase(applicants)
-		        || "referrals".equalsIgnoreCase(applicants)){
-			
+		if ("referral".equalsIgnoreCase(applicants) || "referrals".equalsIgnoreCase(applicants)) {
+
 			if (!Boolean.TRUE.equals(kanbanFilterResponse.getReferral()))
 				return false;
-			
-		}else if ("non-referral".equalsIgnoreCase(applicants)
-		        || "non-referrals".equalsIgnoreCase(applicants)) {
-			
+
+		} else if ("non-referral".equalsIgnoreCase(applicants) || "non-referrals".equalsIgnoreCase(applicants)) {
+
 			if (Boolean.TRUE.equals(kanbanFilterResponse.getReferral()))
 				return false;
 		}
 
 		if (dateFilter != null && kanbanFilterResponse.getStageEntryDate() != null) {
 
-		    LocalDateTime date = kanbanFilterResponse.getStageEntryDate();
+			LocalDateTime date = kanbanFilterResponse.getStageEntryDate();
 
 			switch (dateFilter.toLowerCase()) {
 
