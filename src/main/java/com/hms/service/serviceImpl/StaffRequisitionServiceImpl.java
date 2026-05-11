@@ -185,9 +185,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				String username = getUsernameFromToken();
 
 				 userId = getUserIdFromToken();
+				 String roleName = getRoleNameFromToken();
 
 				srPositionBasicsEntity.setCreatedBy(username);
 				srPositionBasicsEntity.setUserId(userId);
+				srPositionBasicsEntity.setRoleName(roleName);
 
 			}
 			srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
@@ -513,8 +515,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 						System.out.println("Role Id : " + roleId);
 						System.out.println("Emails : " + emails);
+
 						event.setCheckerEmailBody(
 								String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, emails, srEntity.getSrId()));
+
 						log.info("email body is" + event);
 
 						notificationService.callNotification(event);
@@ -660,12 +664,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			// initially first approver enabled
 			childEntity.setApprover1(true);
+			
 		}
 
 		// set roles
 		for (LevelConfig lvl : levels) {
 
 			Integer roleId = lvl.getRoleId();
+			Integer department=lvl.getDepartmentId();
+			childEntity.setDepartment(department);
+			
 
 			if (lvl.getLevel() == 1) {
 
@@ -1333,7 +1341,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			int page = request.getPage();
 			int size = request.getSize();
 
-			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, Constants.SR_ID));
+			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdOn"));
 
 			String authHeader = httpServletRequest.getHeader("Authorization");
 			Long userId = null;
@@ -1386,20 +1394,20 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	private String generateSrId(Integer businessUnitId) {
 
 		int year = java.time.LocalDateTime.now().getYear();
-		String prefix = "NA";
+		String departmentCode = null;
 
 		if (businessUnitId != null) {
 			String deptCode = departmentsRepository.findById(businessUnitId).get().getDeptCode();
 			log.info("The Department code is : " + deptCode);
 
 			if (deptCode != null && !deptCode.trim().isEmpty()) {
-				prefix = deptCode.trim().toUpperCase();
+				departmentCode = deptCode.trim().toUpperCase();
 			}
 		}
 		int srSeq = sequenceGenerator.generateSrSequence();
 		String formattedSeq = String.format("%04d", srSeq);
 
-		return "SR-" + year + "-" + prefix + "-" + formattedSeq;
+		return "SR-" + year + "-" + departmentCode + "-" + formattedSeq;
 	}
 
 	@Override
@@ -1636,7 +1644,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 								String.format(
 										Constants.SR_TO_BE_APPROVED_MAIL_BODY,
-										emails,
 										pos.getSrId()));
 
 						notificationService.callNotification(event);
@@ -1732,6 +1739,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch SR counts", List.of(e.getMessage()));
 		}
 	}
+
 
 		
 	@Override
@@ -1929,7 +1937,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srApprovalResponse.setCurrentStage("Completed");
 			}
 
-			Integer deptId=childEntity.getDepartment();
+			Integer deptId=sRPositionBasicsEntity.getDepartmentId();
 			String departName=departmentsRepository.findById(deptId).get().getDepartmentName();
 		
 			srApprovalResponse.setSrId(srId);
@@ -1958,7 +1966,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		counts.put("pending", pendingCount);
 
 		response.put("counts", counts);
-      log.info("ApprovalServiceImpl::Exit from theassignedSrsForApprovals");
+      log.info("ApprovalServiceImpl::Exit from the assignedSrsForApprovals");
 		return ApiResponse.success(
 		        ResponseCode.SUCCESS,
 		        "SR List fetched successfully",

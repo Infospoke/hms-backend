@@ -84,6 +84,9 @@ public class SRPositionBasicsEntity {
 	@Column(name = "user_id")
 	private Long userId;
 	
+	@Column(name="role_name")
+	private String roleName;
+	
 	@Column(name="in_progress")
 	private Boolean inProgress;
 	
@@ -96,7 +99,6 @@ public class SRPositionBasicsEntity {
 	@Column(name="approver3")
 	private Boolean approver3=false; 
 
-	
 	@Column(name="approver1_by")
 	private String approver1By;
 	
@@ -141,5 +143,6 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="approver3_role")
 	private String approver3Role;
+
 
 }

@@ -16,8 +16,12 @@ import lombok.NoArgsConstructor;
 public class StaffingRequisitionResponseDto {
 
     private PositonBasicsResponse positonBasicsResponse;
+    
     private BusinessJustificationResponse businessJustificationResponse;
+    
     private BudgetAndCompensationResponse budgetAndCompensationResponse;
+    
     private RolesAndRequirementsResponse rolesAndRequirementsResponse;
+    
     private SourcingStrategyResponse sourcingStrategyResponse;
 }
