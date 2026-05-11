@@ -515,7 +515,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						System.out.println("Role Id : " + roleId);
 						System.out.println("Emails : " + emails);
 						event.setEmailBody(
-								String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, emails, srEntity.getSrId()));
+								String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY,srEntity.getSrId()));
 						log.info("email body is" + event);
 
 						notificationService.callNotification(event);
@@ -661,12 +661,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			// initially first approver enabled
 			childEntity.setApprover1(true);
+			
 		}
 
 		// set roles
 		for (LevelConfig lvl : levels) {
 
 			Integer roleId = lvl.getRoleId();
+			Integer department=lvl.getDepartmentId();
+			childEntity.setDepartment(department);
+			
 
 			if (lvl.getLevel() == 1) {
 
@@ -1637,7 +1641,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 								String.format(
 										Constants.SR_TO_BE_APPROVED_MAIL_BODY,
-										emails,
 										pos.getSrId()));
 
 						notificationService.callNotification(event);
@@ -1931,7 +1934,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srApprovalResponse.setCurrentStage("Completed");
 			}
 
-			Integer deptId=childEntity.getDepartment();
+			Integer deptId=sRPositionBasicsEntity.getDepartmentId();
 			String departName=departmentsRepository.findById(deptId).get().getDepartmentName();
 		
 			srApprovalResponse.setSrId(srId);
@@ -1960,7 +1963,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		counts.put("pending", pendingCount);
 
 		response.put("counts", counts);
-      log.info("ApprovalServiceImpl::Exit from theassignedSrsForApprovals");
+      log.info("ApprovalServiceImpl::Exit from the assignedSrsForApprovals");
 		return ApiResponse.success(
 		        ResponseCode.SUCCESS,
 		        "SR List fetched successfully",
