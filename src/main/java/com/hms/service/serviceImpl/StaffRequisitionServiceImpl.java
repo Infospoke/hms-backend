@@ -185,9 +185,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				String username = getUsernameFromToken();
 
 				 userId = getUserIdFromToken();
+				 String roleName = getRoleNameFromToken();
 
 				srPositionBasicsEntity.setCreatedBy(username);
 				srPositionBasicsEntity.setUserId(userId);
+				srPositionBasicsEntity.setRoleName(roleName);
 
 			}
 			srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
@@ -1385,20 +1387,20 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	private String generateSrId(Integer businessUnitId) {
 
 		int year = java.time.LocalDateTime.now().getYear();
-		String prefix = "NA";
+		String departmentCode = null;
 
 		if (businessUnitId != null) {
 			String deptCode = departmentsRepository.findById(businessUnitId).get().getDeptCode();
 			log.info("The Department code is : " + deptCode);
 
 			if (deptCode != null && !deptCode.trim().isEmpty()) {
-				prefix = deptCode.trim().toUpperCase();
+				departmentCode = deptCode.trim().toUpperCase();
 			}
 		}
 		int srSeq = sequenceGenerator.generateSrSequence();
 		String formattedSeq = String.format("%04d", srSeq);
 
-		return "SR-" + year + "-" + prefix + "-" + formattedSeq;
+		return "SR-" + year + "-" + departmentCode + "-" + formattedSeq;
 	}
 
 	@Override
