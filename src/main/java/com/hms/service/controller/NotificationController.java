@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateNotificationRequest;
 import com.hms.service.service.INotificationService;
 import com.hms.service.wrappers.ApiResponse;
+import com.hms.service.wrappers.ResponseCode;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,9 +24,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/hms/notifications")
 @Slf4j
 public class NotificationController {
+	
+    
+    
+    @Autowired
+    private INotificationService iNotificationService;
 
- 
-    /**
+	/**
      * Test endpoint — directly fires callNotification() without going through SR submission.
      * Use this from Postman to verify Kafka → DB save → Email → WebSocket push.
      *
@@ -33,25 +39,22 @@ public class NotificationController {
     
     //for testing notification call without going through SR submission. This can be used from Postman to verify Kafka → DB save → Email → WebSocket push.
     
-//    @PostMapping("/test")
-//    public ApiResponse<?> testNotification(@RequestBody NotificationEvent event) {
-//        log.info("NotificationController :: /test endpoint hit for SR: {}", event.getSrId());
-//
-// //        if (event.getTriggeredAt() == null) {
-// //           event.setTriggeredAt(LocalDateTime.now());
-// //      }
-//
-//        // roleEmailMap is already inside the event body sent from Postman
-//        //notificationService.callNotification(event.getRoleEmailMap(), event);
-//        notificationService.callNotification(event);
-//
-//        return ApiResponse.success(ResponseCode.SUCCESS,
-//                "Notification triggered successfully for SR: " + event.getSrId(), null);
-//    }
-    
-    
-    @Autowired
-    private INotificationService iNotificationService;
+    @PostMapping("/test")
+    public ApiResponse<?> testNotification(@RequestBody NotificationEvent event) {
+        log.info("NotificationController :: /test endpoint hit for SR: {}", event.getSrId());
+
+ //        if (event.getTriggeredAt() == null) {
+ //           event.setTriggeredAt(LocalDateTime.now());
+ //      }
+
+        // roleEmailMap is already inside the event body sent from Postman
+        //notificationService.callNotification(event.getRoleEmailMap(), event);
+        iNotificationService.callNotification(event);
+
+        return ApiResponse.success(ResponseCode.SUCCESS,
+                "Notification triggered successfully for SR: " + event.getSrId(), null);
+    }
+
 
     @PostMapping("/list")
     public ApiResponse<?> getNotifications(@RequestBody SpecificationFilterRequest request) {

@@ -144,23 +144,7 @@ public class NotificationServiceImpl implements INotificationService {
             log.error("NotificationServiceImpl :: Failed to push WebSocket notification for SR: {} - {}", event.getSrId(), e.getMessage());
         }
     }
-
-    
-    //give buildEmailBody as constant string with placeholders and replace placeholders with actual values from event object  
-    
-//    private String buildEmailBody(NotificationEvent event) {
-//        return "<html><body>"
-//                + "<h3>" + event.getCheckerNotificationTitle() + "</h3>"
-//                + "<p>" + event.getMessage() + "</p>"
-//                + "<br/>"
-//                + "<b>SR ID:</b> " + event.getSrId() + "<br/>"
-//                + "<b>Job Title:</b> " + event.getJobTitle() + "<br/>"
-//                + "<b>Department:</b> " + event.getDeptName() + "<br/>"
-//                + "<b>Submitted At:</b> " + event.getTriggeredAt() + "<br/>"
-//                + "</body></html>";
-//    }
-    
-  
+     
     @Override
     public ApiResponse<?> getNotifications(SpecificationFilterRequest request) {
 
@@ -265,8 +249,7 @@ public class NotificationServiceImpl implements INotificationService {
 		notificationEngineRepository.saveAll(notificationEngineEntity);
 
 		return ApiResponse.success("Notifications updated successfully");
-	}
-
-    
+	}    
     
 }
+
