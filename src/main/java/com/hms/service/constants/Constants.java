@@ -312,7 +312,7 @@ public class Constants {
 	public static final String PENDING = "Pending";
 	
 	private static final String SR_SUBMITTED_MAIL_BODY = "<html><body>"
-			+ "<p>Dear %s,</p>"
+			+ "<p>Greetings</p>"
 			+ "<p>Your Staffing Requisition (SR) with ID <b>%s</b> has been successfully submitted.</p>"
 			+ "<p>We will review your request and get back to you shortly.</p>"
 			+ "<br/>"
@@ -322,7 +322,7 @@ public class Constants {
 	public static final String SR_SUBMITTED_MAIL_SUBJECT = "SR Submitted Successfully";
 	
 	public static final String SR_TO_BE_APPROVED_MAIL_BODY = "<html><body>"
-			+ "<p>Dear %s,</p>"
+			+ "<p>Greetings</p>"
 			+ "<p>The Staffing Requisition (SR) with ID <b>%s</b> is pending your approval.</p>"
 			+ "<p>Please review the request and take the necessary action at your earliest convenience.</p>"
 			+ "<br/>"
