@@ -1,6 +1,7 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,18 +85,32 @@ public class NotificationServiceImpl implements INotificationService {
 
     private void saveNotification(NotificationEvent event) {
     	log.info("Inside saveNotification() for SR: {}", event.getSrId());
+    	List<NotificationEngineEntity> notificationsList = new ArrayList<>();
+    	
         try {
-            NotificationEngineEntity entity = new NotificationEngineEntity();
-            entity.setNotificationTitle(event.getCheckerNotificationTitle());
-            entity.setMessage(event.getMessage());
-            entity.setSRId(event.getSrId());
-            entity.setDeptName(event.getDeptName());
-            entity.setRoleName(event.getJobTitle());
-            entity.setNotificationSentAt(LocalDateTime.now());
-            entity.setIsRead(false);
-
-            notificationEngineRepository.save(entity);
-            log.info("NotificationServiceImpl :: Notification saved to DB for SR: {}", event.getSrId());
+            NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
+            checkerEntity.setNotificationTitle(event.getCheckerNotificationTitle());
+            checkerEntity.setMessage(event.getMessage());
+            checkerEntity.setSRId(event.getSrId());
+            checkerEntity.setDeptName(event.getDeptName());
+            checkerEntity.setRoleName(event.getCheckerRoleName());
+            checkerEntity.setNotificationSentAt(LocalDateTime.now());
+            checkerEntity.setIsRead(false);
+            
+            NotificationEngineEntity makerEntity = new NotificationEngineEntity();
+            makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
+            makerEntity.setMessage(event.getMakerEmailBody());
+            makerEntity.setSRId(event.getSrId());
+            makerEntity.setDeptName(event.getDeptName());
+            makerEntity.setRoleName(event.getMakerRoleName());
+            makerEntity.setNotificationSentAt(LocalDateTime.now());
+            makerEntity.setIsRead(false);
+            
+            notificationsList.add(checkerEntity);
+            notificationsList.add(makerEntity);
+            
+            notificationEngineRepository.saveAll(notificationsList);
+            log.info("NotificationServiceImpl :: Notifications saved to DB for SR: {}", event.getSrId());
         } catch (Exception e) {
             log.error("NotificationServiceImpl :: Failed to save notification for SR: {} - {}", event.getSrId(), e.getMessage());
         }
@@ -110,21 +125,26 @@ public class NotificationServiceImpl implements INotificationService {
             log.warn("NotificationServiceImpl :: roleEmailMap is empty for SR: {}. Skipping emails.", event.getSrId());
             return;
         }
-
-        String subject = event.getCheckerNotificationTitle();
-        String body=event.getEmailBody(); // Email body is sent from the producer which allows for more flexibility in email formatting.
+        String checkerSubject = event.getCheckerNotificationTitle();
+        String checkerBody=event.getCheckerEmailBody(); // Email body is sent from the producer which allows for more flexibility in email formatting.
+        String makerSubject = event.getMakerNotificationTitle();
+        String makerBody=event.getMakerEmailBody();
+        
         for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
             Integer roleId     = entry.getKey();
-            List<String> emails = entry.getValue();
+            List<String> checkerEmails = entry.getValue();
 
-            if (emails == null || emails.isEmpty()) {
+            if (checkerEmails == null || checkerEmails.isEmpty()) {
                 log.warn("NotificationServiceImpl :: No emails for roleId: {} in SR: {}", roleId, event.getSrId());
                 continue;
             }
-
-            for (String email : emails) {
+           
+            //Sending email to maker
+            mailService.sendMail(mailFrom, event.getMakerEmailAddress(), null, makerSubject, makerBody, null);
+            for (String email : checkerEmails) {
                 try {
-                    mailService.sendMail(mailFrom, email, null, subject, body, null);
+                	//Sending email to checker
+                    mailService.sendMail(mailFrom, email, null, checkerSubject, checkerBody, null);
                     log.info("NotificationServiceImpl :: Email sent to [{}] (roleId: {}) for SR: {}", email, roleId, event.getSrId());
                 } catch (Exception e) {
                     log.error("NotificationServiceImpl :: Failed to send email to [{}] (roleId: {}) for SR: {} - {}",
