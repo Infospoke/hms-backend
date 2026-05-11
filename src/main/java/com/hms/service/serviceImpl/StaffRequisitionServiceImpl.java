@@ -1,55 +1,60 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDateTime;
 
 import com.hms.service.constants.Constants;
-import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
-import com.hms.service.service.INotificationService;
+import com.hms.service.entity.ApprovalChainEntity;
+import com.hms.service.entity.ApprovalsChildEntity;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
 import com.hms.service.entity.DepartmentsEntity;
+import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
+import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
-
 import com.hms.service.entity.SourcingStrategyEntity;
+import com.hms.service.enums.FunctionalityTypes;
+import com.hms.service.repository.ApprovalChainRepository;
+import com.hms.service.repository.ApprovalsChildRepository;
 import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.BusinessJustificationRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
+import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SeniorityLevelRepository;
 import com.hms.service.repository.SourceStrategyRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
+import com.hms.service.request.LevelConfig;
 import com.hms.service.request.PositonBascicsRequest;
 import com.hms.service.request.ReviewRequest;
 import com.hms.service.request.RolesAndRequirementsRequest;
 import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.SourcingStrategyRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.response.BudgetAndCompensationResponse;
 import com.hms.service.response.BusinessJustificationResponse;
@@ -58,6 +63,8 @@ import com.hms.service.response.PositonBasicsResponse;
 import com.hms.service.response.RolesAndRequirementsResponse;
 import com.hms.service.response.SRCountResponse;
 import com.hms.service.response.SourcingStrategyResponse;
+import com.hms.service.response.SrApprovalResponse;
+import com.hms.service.service.INotificationService;
 import com.hms.service.service.IStaffingRequisitionService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.utils.SequenceGenerator;
@@ -112,8 +119,21 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	@Autowired
 	private INotificationService notificationService;
 
+	@Autowired
+	private RolesRepository rolesRepository;
+	
+	@Autowired
+	private ApprovalsChildRepository approvalsChildRepository;
+
 //	@Autowired
 //	private UserServiceImpl userService;
+
+	@Autowired
+	private FunctionalityRepository functionalityRepository;
+
+	@Autowired
+	private ApprovalChainRepository approvalChainRepository;
+	
 
 	@Autowired
 	private SeniorityLevelRepository seniorityLevelRepository;
@@ -441,10 +461,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
 					sourceStrategyRepository.save(entity);
-				}); 
+				});
 
 				// Trigger notification after successful SR submission
-
 
 			} catch (Exception e) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Failed to submit SR", List.of(e.getMessage()));
@@ -895,11 +914,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				if (deptId != null) {
 
-				    Optional<DepartmentsEntity> optionalDepartment = departmentsRepository.findById(deptId);
-				    if (optionalDepartment.isPresent()) {
-				        DepartmentsEntity department = optionalDepartment.get();
-				        positonBasicsResponse.setDepartmentName(department.getDepartmentName());}}
-				
+					Optional<DepartmentsEntity> optionalDepartment = departmentsRepository.findById(deptId);
+					if (optionalDepartment.isPresent()) {
+						DepartmentsEntity department = optionalDepartment.get();
+						positonBasicsResponse.setDepartmentName(department.getDepartmentName());
+					}
+				}
+
 				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
 				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
@@ -919,7 +940,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
-				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());		
+				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());
 				positonBasicsResponse.setUserId(srPositionBasicsEntity.getUserId());
 				positonBasicsResponse.setApprover1(srPositionBasicsEntity.getApprover1());
 				positonBasicsResponse.setApprover2(srPositionBasicsEntity.getApprover2());
@@ -935,11 +956,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setCommentsByApprover3(srPositionBasicsEntity.getCommentsByApprover3());
 				positonBasicsResponse.setApprover1Role(srPositionBasicsEntity.getApprover1Role());
 				positonBasicsResponse.setApprover2Role(srPositionBasicsEntity.getApprover2Role());
-				positonBasicsResponse.setApprover3Role(srPositionBasicsEntity.getApprover3Role());			
+				positonBasicsResponse.setApprover3Role(srPositionBasicsEntity.getApprover3Role());
 
-				response.setPositonBasicsResponse(positonBasicsResponse);		
-			}			
-			
+				response.setPositonBasicsResponse(positonBasicsResponse);
+			}
+
 			if (businessJustificationEntity != null) {
 
 				BusinessJustificationResponse businessJustificationResponse = new BusinessJustificationResponse();
@@ -1183,5 +1204,172 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					List.of(e.getMessage()));
 		}
 	}
+		
+	@Override
+	public ApiResponse<?> assignedSrsForApprovals(SpecificationFilterRequest request) {
 
+		log.info("ApprovalServiceImpl::Inside assignedSrsForApprovals");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String roleName = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+			roleName = jwtService.extractRole(token);
+		}
+
+		RolesEntity roleEntity = rolesRepository.findByRoleNameIgnoreCase(roleName);
+
+		if (roleEntity == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Role not found");
+		}
+
+		Integer roleId = roleEntity.getRoleId();
+
+		log.info("Logged in roleId : {}", roleId);
+
+		FunctionalityEntity functionality = functionalityRepository
+				.findByFunctionalityName(FunctionalityTypes.SR_Approvals.name())
+				.orElseThrow(() -> new RuntimeException("Functionality not found"));
+
+		Integer functionalityId = functionality.getId();
+
+		log.info("Functionality Id : {}", functionalityId);
+
+		ApprovalChainEntity approvalChainEntity = approvalChainRepository.findByFunctionality(functionalityId);
+
+		if (approvalChainEntity == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Approval chain not found");
+		}
+
+		if (!approvalChainEntity.getStatus().equalsIgnoreCase("active")) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Approval chain is inactive");
+		}
+
+		List<LevelConfig> levels = approvalChainEntity.getLevelConfig();
+
+		if (levels == null || levels.isEmpty()) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "No approval levels found");
+		}
+
+		List<Integer> levelRoleIds = levels.stream().map(LevelConfig::getRoleId).toList();
+
+		log.info("Approval level roleIds : {}", levelRoleIds);
+
+		if (!levelRoleIds.contains(roleId)) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE,
+					"Your not authorised person and your role is not assigned for the chain approval");
+		}
+
+		
+		List<ApprovalsChildEntity> childEntities = approvalsChildRepository.findAllByRole(roleId);
+
+		if (childEntities == null || childEntities.isEmpty()) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "No SR found for this role");
+		}
+
+	
+		List<String> srIds = childEntities.stream().map(ApprovalsChildEntity::getProcessId).toList();
+
+		
+		Sort sort = request.getDirection() != null && request.getDirection().equalsIgnoreCase("ASC")
+				? Sort.by(request.getSortBy()).ascending()
+				: Sort.by(request.getSortBy()).descending();
+
+	
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Page<SRPositionBasicsEntity> srPage = positionBasicsRepository.findAll(request.toSrApprovalSpecification(srIds),
+				pageable);
+
+		List<SRPositionBasicsEntity> srEntities = srPage.getContent();
+
+		Map<String, ApprovalsChildEntity> childMap = childEntities.stream()
+				.collect(Collectors.toMap(ApprovalsChildEntity::getProcessId, child -> child));
+
+		List<SrApprovalResponse> responseList = new ArrayList<>();
+
+		for (SRPositionBasicsEntity sRPositionBasicsEntity : srEntities) {
+
+			String srId = sRPositionBasicsEntity.getSrId();
+
+			log.info("SR ID : {}", srId);
+
+			ApprovalsChildEntity childEntity = childMap.get(srId);
+
+			if (childEntity == null) {
+				continue;
+			}
+
+			SrApprovalResponse srApprovalResponse = new SrApprovalResponse();
+
+		
+			if (Boolean.TRUE.equals(sRPositionBasicsEntity.getApproved())) {
+
+				srApprovalResponse.setOverAllStatus("Completed");
+
+			} else if (Boolean.TRUE.equals(sRPositionBasicsEntity.getRejected())) {
+
+				srApprovalResponse.setOverAllStatus("Rejected");
+
+			} else if (Boolean.TRUE.equals(sRPositionBasicsEntity.getInProgress())) {
+
+				srApprovalResponse.setOverAllStatus("In Progress");
+
+			} else {
+
+				srApprovalResponse.setOverAllStatus("Pending");
+			}
+
+			int currentStageRoleId = 0;
+
+			if (!Boolean.TRUE.equals(sRPositionBasicsEntity.getApprover1())) {
+
+				currentStageRoleId = approvalChainEntity.getLevelConfig().get(0).getRoleId();
+
+			} else if (Boolean.TRUE.equals(sRPositionBasicsEntity.getApprover1())
+					&& !Boolean.TRUE.equals(sRPositionBasicsEntity.getApprover2())) {
+
+				currentStageRoleId = approvalChainEntity.getLevelConfig().get(1).getRoleId();
+
+			} else if (Boolean.TRUE.equals(sRPositionBasicsEntity.getApprover1())
+					&& Boolean.TRUE.equals(sRPositionBasicsEntity.getApprover2())
+					&& !Boolean.TRUE.equals(sRPositionBasicsEntity.getApprover3())) {
+
+				currentStageRoleId = approvalChainEntity.getLevelConfig().get(2).getRoleId();
+			}
+
+			if (currentStageRoleId != 0) {
+
+				srApprovalResponse.setCurrentStage(rolesRepository.findByRoleId(currentStageRoleId)
+						.map(RolesEntity::getRoleName).orElse("Unknown"));
+
+			} else {
+
+				srApprovalResponse.setCurrentStage("Completed");
+			}
+
+		
+			srApprovalResponse.setSrId(srId);
+
+			srApprovalResponse.setJobTitle(sRPositionBasicsEntity.getJobTitle());
+
+			srApprovalResponse.setCreatedOn(sRPositionBasicsEntity.getCreatedOn());
+
+			srApprovalResponse.setDepartment(childEntity.getDepartment());
+
+			responseList.add(srApprovalResponse);
+		}
+
+
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "SR List fetched successfully", responseList);
+	}
 }

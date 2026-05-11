@@ -16,5 +16,8 @@ public interface ApprovalChainRepository
 	Long countByStatusIgnoreCase(String status);
 
 	ApprovalChainEntity findByChainNameIgnoreCase(String chainName);
+	
+
+	ApprovalChainEntity findByFunctionality(Integer functionalityId);
 
 }

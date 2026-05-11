@@ -779,7 +779,7 @@ public class UserServiceImpl implements IUserService {
 
 			if (passwordEncoder.matches(newValue, history.getCredential())) {
 				return ApiResponse.failure(ResponseCode.FAILURE,
-						"New " + type.name().toLowerCase() + " must not match last 5");
+						"New " + type.name().toLowerCase() + "must be different from your last 5" +type.name().toLowerCase());
 			}
 		}
 
