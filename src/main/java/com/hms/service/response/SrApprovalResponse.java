@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class SrApprovalResponse {
 	private String srId;
 	private String jobTitle;
-	private Integer Department;
+	private String Department;
 	private String overAllStatus;
 	private LocalDate createdOn;
 	private String CurrentStage;

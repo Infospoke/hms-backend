@@ -1,10 +1,8 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDate;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,9 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
-import java.util.stream.Collectors;
-
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,22 +28,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
-
-
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.ApprovalsChildEntity;
 import com.hms.service.entity.AssignRolesEntity;
-import com.hms.service.entity.BudgetAndCompensationEntity;
-import com.hms.service.entity.BusinessJustificationEntity;
-import com.hms.service.entity.FunctionalityEntity;
-
-import com.hms.service.service.INotificationService;
-import com.hms.service.entity.BudgetAndCompensationEntity;
-import com.hms.service.entity.BusinessJustificationEntity;
-import com.hms.service.entity.DepartmentsEntity;
-
-import com.hms.service.entity.ApprovalChainEntity;
-import com.hms.service.entity.ApprovalsChildEntity;
 import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.BusinessJustificationEntity;
 import com.hms.service.entity.DepartmentsEntity;
@@ -57,17 +39,11 @@ import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingStrategyEntity;
-
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.FunctionalityTypes;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.ApprovalsChildRepository;
 import com.hms.service.repository.AssignRolesRepository;
-
-import com.hms.service.enums.FunctionalityTypes;
-import com.hms.service.repository.ApprovalChainRepository;
-import com.hms.service.repository.ApprovalsChildRepository;
-
 import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.BusinessJustificationRepository;
 import com.hms.service.repository.BusinessUnitRepository;
@@ -1952,6 +1928,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srApprovalResponse.setCurrentStage("Completed");
 			}
 
+			Integer deptId=childEntity.getDepartment();
+			String departName=departmentsRepository.findById(deptId).get().getDepartmentName();
 		
 			srApprovalResponse.setSrId(srId);
 
@@ -1959,7 +1937,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			srApprovalResponse.setCreatedOn(sRPositionBasicsEntity.getCreatedOn());
 
-			srApprovalResponse.setDepartment(childEntity.getDepartment());
+			srApprovalResponse.setDepartment(departName);
 
 			responseList.add(srApprovalResponse);
 		}
