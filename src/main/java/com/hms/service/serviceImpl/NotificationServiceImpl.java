@@ -251,6 +251,8 @@ public class NotificationServiceImpl implements INotificationService {
 
 		List<NotificationEngineEntity> notificationEngineEntity = notificationEngineRepository
 				.findAllById(request.getIds());
+		
+		log.info("the notification ids are:"+request.getIds());
 
 		if (notificationEngineEntity.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "No notifications found");
