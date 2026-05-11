@@ -17,8 +17,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.StaffingRequisitionResponseDto;
 import com.hms.service.entity.ApprovalChainEntity;
@@ -1289,6 +1291,49 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				pageable);
 
 		List<SRPositionBasicsEntity> srEntities = srPage.getContent();
+		
+		Specification<SRPositionBasicsEntity> baseSpecification =
+		        request.toSrApprovalSpecification(srIds);
+
+		long allCount =
+		        positionBasicsRepository.count(baseSpecification);
+
+		Specification<SRPositionBasicsEntity> inProgressSpec =
+		        baseSpecification.and(
+		                (r, q, c) ->
+		                        c.equal(r.get("inProgress"), true)
+		        );
+
+		long inProgressCount =
+		        positionBasicsRepository.count(inProgressSpec);
+
+		Specification<SRPositionBasicsEntity> approvedSpec =
+		        baseSpecification.and(
+		                (r, q, c) ->
+		                        c.equal(r.get("approved"), true)
+		        );
+
+		long approvedCount =
+		        positionBasicsRepository.count(approvedSpec);
+
+	
+		Specification<SRPositionBasicsEntity> rejectedSpec =
+		        baseSpecification.and(
+		                (r, q, c) ->
+		                        c.equal(r.get("rejected"), true)
+		        );
+
+		long rejectedCount =
+		        positionBasicsRepository.count(rejectedSpec);
+
+		Specification<SRPositionBasicsEntity> pendingSpec =
+		        baseSpecification.and(
+		                (r, q, c) ->
+		                        c.equal(r.get("inProgress"), false)
+		        );
+
+		long pendingCount =
+		        positionBasicsRepository.count(pendingSpec);
 
 		Map<String, ApprovalsChildEntity> childMap = childEntities.stream()
 				.collect(Collectors.toMap(ApprovalsChildEntity::getProcessId, child -> child));
@@ -1369,6 +1414,24 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "SR List fetched successfully", responseList);
+		Map<String, Object> response = new HashMap<>();
+
+		response.put("content", responseList);
+
+		Map<String, Object> counts = new HashMap<>();
+
+		counts.put("all", allCount);
+		counts.put("inProgress", inProgressCount);
+		counts.put("approved", approvedCount);
+		counts.put("rejected", rejectedCount);
+		counts.put("pending", pendingCount);
+
+		response.put("counts", counts);
+      log.info("ApprovalServiceImpl::Exit from theassignedSrsForApprovals");
+		return ApiResponse.success(
+		        ResponseCode.SUCCESS,
+		        "SR List fetched successfully",
+		        response
+		);
 	}
 }
