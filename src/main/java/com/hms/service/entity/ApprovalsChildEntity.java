@@ -31,7 +31,7 @@ public class ApprovalsChildEntity {
 	private String processName;
 
 	@Column(name="submitted_by")
-	private Integer submittedBy;
+	private Long submittedBy;
 	
 	@Column(name="approver1")
 	private Boolean approver1=false;
@@ -50,9 +50,10 @@ public class ApprovalsChildEntity {
 	
 	@Column(name="role3")
 	private Integer role3;
-	
+
 	@Column(name="department")
 	private Integer department;
+
 	
 	
 	@Column(name="date_of_approval")

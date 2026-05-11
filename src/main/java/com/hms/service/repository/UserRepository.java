@@ -96,4 +96,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 	
 	Page<UserEntity> findByUserIdIn(List<Integer> userIds, Pageable pageable);
 
+	List<UserEntity> findByUserIdIn(List<Integer> userIds);
+
+	Optional<UserEntity> findByUserId(Long submittedBy);
+
 }

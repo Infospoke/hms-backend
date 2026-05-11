@@ -1,6 +1,10 @@
 package com.hms.service.repository;
 
+
+import java.util.Optional;
+
 import java.util.List;
+
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,5 +23,9 @@ public interface ApprovalsChildRepository extends JpaRepository<ApprovalsChildEn
 			   OR a.role3 = :roleId
 			""")
 			List<ApprovalsChildEntity> findAllByRole(@Param("roleId") Integer roleId);
+
+	Optional<ApprovalsChildEntity> findByProcessId(String finalSrId);
+
+	
 
 }
