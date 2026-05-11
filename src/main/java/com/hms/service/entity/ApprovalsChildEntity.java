@@ -50,7 +50,10 @@ public class ApprovalsChildEntity {
 	
 	@Column(name="role3")
 	private Integer role3;
-	
+
+	@Column(name="department")
+	private Integer department;
+
 	
 	
 	@Column(name="date_of_approval")

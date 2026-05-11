@@ -3,6 +3,7 @@ package com.hms.service.service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.SRFilterRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.request.UpdateSrRequest;
 import com.hms.service.wrappers.ApiResponse;
@@ -19,6 +20,9 @@ public interface IStaffingRequisitionService {
 	ApiResponse<?> srApproval(UpdateSrRequest request);
 
 	ApiResponse<?> getSrCounts();
+
+
+	ApiResponse<?> assignedSrsForApprovals(SpecificationFilterRequest request);
 
 
 }

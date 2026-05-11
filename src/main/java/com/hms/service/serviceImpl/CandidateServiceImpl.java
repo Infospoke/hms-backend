@@ -30,7 +30,6 @@ import com.hms.service.constants.Constants;
 import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.BGVEntity;
 import com.hms.service.entity.CandidateInfoEntity;
-import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.JobsEntity;
 import com.hms.service.entity.OfferEntity;
 import com.hms.service.repository.ActivityFeedRepository;

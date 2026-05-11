@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.SRFilterRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.request.UpdateSrRequest;
 import com.hms.service.service.IStaffingRequisitionService;
@@ -59,5 +60,11 @@ public class StaffingRequisitionController {
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	
+	@PostMapping("/assigned-srs-for-approvals")
+	 public ResponseEntity<ApiResponse<?>> assignedSrsForApprovals(@RequestBody SpecificationFilterRequest request){
+	 ApiResponse<?> response = iStaffingRequisitionService.assignedSrsForApprovals(request);
+	 return new ResponseEntity<>(response,HttpStatus.OK);
+}
 	
 }

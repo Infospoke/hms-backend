@@ -1,10 +1,20 @@
 package com.hms.service.service;
 
+
+
 import com.hms.service.dto.NotificationEvent;
-import java.util.List;
-import java.util.Map;
+import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateNotificationRequest;
+import com.hms.service.wrappers.ApiResponse;
 
 public interface INotificationService {
-    
+
+    ApiResponse<?> getNotificationCounts();
+
+	ApiResponse<?> getNotifications(SpecificationFilterRequest request);
+	
     void callNotification(NotificationEvent event);
+
+	ApiResponse<?> updateNotifications(UpdateNotificationRequest request);
+
 }
