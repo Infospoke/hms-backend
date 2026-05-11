@@ -16,7 +16,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 @Entity
 @Table(name="tb_sr_position_basics")
 @Data
@@ -95,7 +94,8 @@ public class SRPositionBasicsEntity {
 	private Boolean approver2=false;
 	
 	@Column(name="approver3")
-	private Boolean approver3=false;
+	private Boolean approver3=false; 
+
 	
 	@Column(name="approver1_by")
 	private String approver1By;
@@ -141,4 +141,5 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="approver3_role")
 	private String approver3Role;
+
 }

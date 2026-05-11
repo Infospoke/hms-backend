@@ -5,7 +5,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -616,6 +615,7 @@ public class JobServiceImpl implements IJobService {
 
 			JobApplicantsResponse response = new JobApplicantsResponse();
 			BeanUtils.copyProperties(entity, response);
+			response.setCurrentStage(entity.getCurrentStage());
 
 			String screenedSubStatus = screenedStatusMap.get(appId);
 
@@ -639,10 +639,7 @@ public class JobServiceImpl implements IJobService {
 				case HIRED:
 					response.setStatus(Constants.HIRED);
 					break;
-				case LATEST_STAGE:
-				    response.setCurrentStage(entity.getCurrentStage());
-				    break;
-
+				
 				case APPLIED:
 					response.setStatus(getStatus(appId, screenedSet, interviewStatus, candidateStatusMap));
 					response.setScreenedStatus(screenedSubStatus);
@@ -700,9 +697,6 @@ public class JobServiceImpl implements IJobService {
 
 		case APPLIED:
 			return true;
-			
-		case LATEST_STAGE:
-		    return true;
 
 		case SCREENED:
 			return screenedSet.contains(appId);

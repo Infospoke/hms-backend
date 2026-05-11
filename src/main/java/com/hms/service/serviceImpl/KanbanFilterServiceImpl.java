@@ -37,11 +37,11 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 		String dateFilter = null;
 
 		if (isDefault) {
-			dateFilter = "last month";
+			dateFilter = "this month";
 		} else if (filters.get("dateFilter") != null) {
 			dateFilter = filters.get("dateFilter").toString();
 		}
-
+		
 		LocalDateTime startDate = null;
 		LocalDateTime endDate = null;
 
@@ -84,10 +84,12 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 			String status = job.getCurrentStage();
 			LocalDateTime stageEntryDate = job.getStageEntryDate();
-
-			if (Boolean.TRUE.equals(job.getRejected())) {
-				status = "REJECTED";
+			
+			if (Boolean.TRUE.equals(job.getRejected())
+			        || "NOT SHORTLISTED".equalsIgnoreCase(status)) {
+			    status = "REJECTED";
 			}
+			
 			if ("APPLIED".equalsIgnoreCase(status) || "SCREENED".equalsIgnoreCase(status)) {
 				continue;
 			}
@@ -139,10 +141,6 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 				continue;
 			}
 
-			if (Boolean.TRUE.equals(job.getRejected())) {
-				status = "REJECTED";
-			}
-
 			if (status == null) {
 				continue;
 			}
@@ -152,7 +150,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 			case "INTERVIEW" -> counts.put("interview", counts.get("interview") + 1);
 			case "OFFER" -> counts.put("offer", counts.get("offer") + 1);
 			case "HIRED" -> counts.put("hired", counts.get("hired") + 1);
-			case "REJECTED" -> counts.put("rejected", counts.get("rejected") + 1);
+			case "REJECTED", "NOT SHORTLISTED" ->counts.put("rejected",counts.get("rejected") + 1);
 			}
 			filtered.add(kanbanFilterResponse);
 		}
@@ -216,20 +214,20 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 					return false;
 			}
 
-			case "last week" -> {
+			case "this week" -> {
 				LocalDate today = now.toLocalDate();
-				LocalDate start = today.minusWeeks(1).with(DayOfWeek.MONDAY);
-				LocalDate end = start.plusDays(6);
+				LocalDate start = today.minusWeeks(0).with(DayOfWeek.MONDAY);
+				LocalDate end = today;
 
 				if (date.toLocalDate().isBefore(start) || date.toLocalDate().isAfter(end)) {
 					return false;
 				}
 			}
 
-			case "last month" -> {
+			case "this month" -> {
 				LocalDate today = now.toLocalDate();
-				LocalDate start = today.minusMonths(1).withDayOfMonth(1);
-				LocalDate end = start.plusMonths(1).minusDays(1);
+				LocalDate start = today.minusMonths(0).withDayOfMonth(1);
+				LocalDate end = today;
 
 				if (date.toLocalDate().isBefore(start) || date.toLocalDate().isAfter(end)) {
 					return false;

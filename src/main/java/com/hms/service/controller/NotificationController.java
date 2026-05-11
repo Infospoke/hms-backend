@@ -1,24 +1,36 @@
 package com.hms.service.controller;
 
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.hms.service.dto.NotificationEvent;
+import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateNotificationRequest;
 import com.hms.service.service.INotificationService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/hms/notifications")
 @Slf4j
 public class NotificationController {
-
+	
+    
+    
     @Autowired
-    private INotificationService notificationService;
+    private INotificationService iNotificationService;
 
-    /**
+	/**
      * Test endpoint — directly fires callNotification() without going through SR submission.
      * Use this from Postman to verify Kafka → DB save → Email → WebSocket push.
      *
@@ -27,19 +39,38 @@ public class NotificationController {
     
     //for testing notification call without going through SR submission. This can be used from Postman to verify Kafka → DB save → Email → WebSocket push.
     
-//    @PostMapping("/test")
-//    public ApiResponse<?> testNotification(@RequestBody NotificationEvent event) {
-//        log.info("NotificationController :: /test endpoint hit for SR: {}", event.getSrId());
-//
-// //        if (event.getTriggeredAt() == null) {
-// //           event.setTriggeredAt(LocalDateTime.now());
-// //      }
-//
-//        // roleEmailMap is already inside the event body sent from Postman
-//        //notificationService.callNotification(event.getRoleEmailMap(), event);
-//        notificationService.callNotification(event);
-//
-//        return ApiResponse.success(ResponseCode.SUCCESS,
-//                "Notification triggered successfully for SR: " + event.getSrId(), null);
-//    }
+    @PostMapping("/test")
+    public ApiResponse<?> testNotification(@RequestBody NotificationEvent event) {
+        log.info("NotificationController :: /test endpoint hit for SR: {}", event.getSrId());
+
+ //        if (event.getTriggeredAt() == null) {
+ //           event.setTriggeredAt(LocalDateTime.now());
+ //      }
+
+        // roleEmailMap is already inside the event body sent from Postman
+        //notificationService.callNotification(event.getRoleEmailMap(), event);
+        iNotificationService.callNotification(event);
+
+        return ApiResponse.success(ResponseCode.SUCCESS,
+                "Notification triggered successfully for SR: " + event.getSrId(), null);
+    }
+
+
+    @PostMapping("/list")
+    public ApiResponse<?> getNotifications(@RequestBody SpecificationFilterRequest request) {
+        return iNotificationService.getNotifications(request);
+    }
+
+    @GetMapping("/counts")
+    public ApiResponse<?> getCounts() {
+        return iNotificationService.getNotificationCounts();
+    }
+    
+	@PutMapping("/update")
+	public ResponseEntity<ApiResponse<?>> updateNotifications(@RequestBody UpdateNotificationRequest request) {
+
+		ApiResponse<?> response = iNotificationService.updateNotifications(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 }
+

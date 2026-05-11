@@ -19,8 +19,6 @@ public class PositonBasicsResponse {
 
     private String jobTitle;
     
-//  private Integer businessUnitId;
-    
     private String businessUnitName;
     
     private Integer departmentId;
@@ -28,8 +26,6 @@ public class PositonBasicsResponse {
     private String departmentName;
     
     private List<Integer> reportingManagerInfo;
-    
-    private List<String>reportingManagerName;
 
     private String location;
     
@@ -44,8 +40,6 @@ public class PositonBasicsResponse {
     private String employmentType;
     
     private String priority;
-
-    private Boolean submitted;
     
     private Boolean approved;
 
@@ -54,8 +48,6 @@ public class PositonBasicsResponse {
     private String createdBy;
     
     private Long userId;
-    
-    private Boolean inProgress;
 
     private Boolean approver1;
 
@@ -74,12 +66,6 @@ public class PositonBasicsResponse {
     private LocalDateTime dateOfApproval2;
 
     private LocalDateTime dateOfApproval3;
-
-    private Boolean rejected;
-
-    private String rejectedBy;
-
-    private String currentStage;
     
     private String commentsByApprover1;
 
@@ -92,4 +78,18 @@ public class PositonBasicsResponse {
     private String approver2Role;
 
     private String approver3Role;
+    
+    //private List<String>reportingManagerName;
+    
+    // private Boolean rejected;
+
+    // private String rejectedBy;
+
+    // private String currentStage;
+    
+    //  private Boolean inProgress;
+    
+    // private Boolean submitted;
+    
+    //  private Integer businessUnitId;
 }
