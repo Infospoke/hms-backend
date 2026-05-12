@@ -25,13 +25,16 @@ import lombok.NoArgsConstructor;
 public class NotificationEvent implements Serializable {
 
     private String srId;
-    private String jobTitle;
+    //private String jobTitle;
+    private String makerRoleName;
+    private String checkerRoleName;
     private String deptName;
-    //private String makerNotificationTitle;
+    private String makerNotificationTitle;
     private String checkerNotificationTitle;
     private String message;
     private Map<Integer, List<String>> roleEmailMap;  // roleId -> [email1, email2, ...]
-    private String makerEmail;
-    private String emailBody;
+    private String makerEmailAddress;
+    private String checkerEmailBody;
+    private String makerEmailBody;
     //private LocalDateTime triggeredAt;
 }

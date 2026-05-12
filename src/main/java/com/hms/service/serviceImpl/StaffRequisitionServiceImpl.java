@@ -481,7 +481,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					event.setSrId(srEntity.getSrId());
 
-					event.setJobTitle(srEntity.getJobTitle());
+					//event.setJobTitle(srEntity.getJobTitle());
+					
 
 					// Department Name
 					String deptName = "";
@@ -511,8 +512,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 						System.out.println("Role Id : " + roleId);
 						System.out.println("Emails : " + emails);
-						event.setEmailBody(
-								String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY,srEntity.getSrId()));
+
+						event.setCheckerEmailBody(
+								String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, emails, srEntity.getSrId()));
+
 						log.info("email body is" + event);
 
 						notificationService.callNotification(event);
@@ -1613,7 +1616,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					NotificationEvent event = new NotificationEvent();
 
 					event.setSrId(pos.getSrId());
-					event.setJobTitle(pos.getJobTitle());
+					//event.setJobTitle(pos.getJobTitle());
 
 					String deptName = "";
 
@@ -1647,7 +1650,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						log.info("Role Id : {}", roleId);
 						log.info("Emails : {}", emails);
 
-						event.setEmailBody(
+						event.setCheckerEmailBody(
 
 								String.format(
 										Constants.SR_TO_BE_APPROVED_MAIL_BODY,
