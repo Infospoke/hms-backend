@@ -141,6 +141,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	@Autowired
 	private INotificationService notificationService;
 
+
 //	@Autowired
 //	private UserServiceImpl userService;
 
@@ -1160,7 +1161,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						positonBasicsResponse.setDepartmentName(department.getDepartmentName());
 					}
 				}
-
+				
 				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
 				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
@@ -1171,7 +1172,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						positonBasicsResponse.setSeniorityLevelName(seniorityLevelName);
 					});
 				}
-
+				
 				positonBasicsResponse.setOpenings(srPositionBasicsEntity.getOpenings());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setWorkMode(srPositionBasicsEntity.getWorkMode());
@@ -1194,10 +1195,29 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setCommentsByApprover1(srPositionBasicsEntity.getCommentsByApprover1());
 				positonBasicsResponse.setCommentsByApprover2(srPositionBasicsEntity.getCommentsByApprover2());
 				positonBasicsResponse.setCommentsByApprover3(srPositionBasicsEntity.getCommentsByApprover3());
-				positonBasicsResponse.setApprover1Role(srPositionBasicsEntity.getApprover1Role());
-				positonBasicsResponse.setApprover2Role(srPositionBasicsEntity.getApprover2Role());
-				positonBasicsResponse.setApprover3Role(srPositionBasicsEntity.getApprover3Role());
+				
+				Optional<ApprovalsChildEntity> optionalChildEntity = approvalsChildRepository.findByProcessId(srPositionBasicsEntity.getSrId());
 
+				if (optionalChildEntity.isPresent()) {
+
+				    ApprovalsChildEntity childEntity = optionalChildEntity.get();
+
+				    List<Integer> roleIds = List.of(
+				            childEntity.getRole1(),
+				            childEntity.getRole2(),
+				            childEntity.getRole3());
+
+				    List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
+
+				    Map<Integer, String> roleMap =
+				            roles.stream().collect(Collectors.toMap(
+				                    r -> (Integer) r[0],
+				                    r -> (String) r[1]));
+
+				    positonBasicsResponse.setApprover1Role(roleMap.get(childEntity.getRole1()));
+				    positonBasicsResponse.setApprover2Role(roleMap.get(childEntity.getRole2()));
+				    positonBasicsResponse.setApprover3Role(roleMap.get(childEntity.getRole3()));
+				}
 				response.setPositonBasicsResponse(positonBasicsResponse);
 			}
 
@@ -1223,16 +1243,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				budgetAndCompensationResponse.setId(budgetAndCompensationEntity.getId());
 				budgetAndCompensationResponse.setSrId(budgetAndCompensationEntity.getSrId());
-				budgetAndCompensationResponse
-						.setProposedTotalCompensation(budgetAndCompensationEntity.getProposedTotalCompensation());
+				budgetAndCompensationResponse.setProposedTotalCompensation(budgetAndCompensationEntity.getProposedTotalCompensation());
 				budgetAndCompensationResponse.setSigningBonus(budgetAndCompensationEntity.getSigningBonus());
 				budgetAndCompensationResponse.setEquity(budgetAndCompensationEntity.getEquity());
 				budgetAndCompensationResponse.setRelocationBudget(budgetAndCompensationEntity.getRelocationBudget());
-				budgetAndCompensationResponse
-						.setSigningBonusAmount(budgetAndCompensationEntity.getSigningBonusAmount());
+				budgetAndCompensationResponse.setSigningBonusAmount(budgetAndCompensationEntity.getSigningBonusAmount());
 				budgetAndCompensationResponse.setEquityAmount(budgetAndCompensationEntity.getEquityAmount());
-				budgetAndCompensationResponse
-						.setRelocationBudgetAmount(budgetAndCompensationEntity.getRelocationBudgetAmount());
+				budgetAndCompensationResponse.setRelocationBudgetAmount(budgetAndCompensationEntity.getRelocationBudgetAmount());
 				budgetAndCompensationResponse.setAnnualHiringCost(budgetAndCompensationEntity.getAnnualHiringCost());
 				budgetAndCompensationResponse.setSubmitted(budgetAndCompensationEntity.getSubmitted());
 				budgetAndCompensationResponse.setApproved(budgetAndCompensationEntity.getApproved());
@@ -1251,19 +1268,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						? Arrays.asList(rolesAndRequirementsEntity.getSkillsMustHave().split(","))
 						: Collections.emptyList());
 
-				rolesAndRequirementsResponse
-						.setNiceToHaveSkills(rolesAndRequirementsEntity.getNiceToHaveSkills() != null
+				rolesAndRequirementsResponse.setNiceToHaveSkills(rolesAndRequirementsEntity.getNiceToHaveSkills() != null
 								? Arrays.asList(rolesAndRequirementsEntity.getNiceToHaveSkills().split(","))
 								: Collections.emptyList());
-				rolesAndRequirementsResponse
-						.setEducationRequirement(rolesAndRequirementsEntity.getEducationRequirement());
+				rolesAndRequirementsResponse.setEducationRequirement(rolesAndRequirementsEntity.getEducationRequirement());
 				rolesAndRequirementsResponse.setTravelRequirement(rolesAndRequirementsEntity.getTravelRequirement());
 				rolesAndRequirementsResponse.setMinExperience(rolesAndRequirementsEntity.getMinExperience());
 				rolesAndRequirementsResponse.setMaxExperience(rolesAndRequirementsEntity.getMaxExperience());
 				rolesAndRequirementsResponse.setMinInterviewRounds(rolesAndRequirementsEntity.getMinInterviewRounds());
 				rolesAndRequirementsResponse.setMaxInterviewRounds(rolesAndRequirementsEntity.getMaxInterviewRounds());
-				rolesAndRequirementsResponse
-						.setCertificationsRequired(rolesAndRequirementsEntity.getCertificationsRequired() != null
+				rolesAndRequirementsResponse.setCertificationsRequired(rolesAndRequirementsEntity.getCertificationsRequired() != null
 								? Arrays.asList(rolesAndRequirementsEntity.getCertificationsRequired().split(","))
 								: Collections.emptyList());
 				rolesAndRequirementsResponse.setLanguages(rolesAndRequirementsEntity.getLanguages() != null
@@ -1533,6 +1547,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					pos.setApprover1Role(roleName);
 					pos.setDateOfApproval1(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 					pos.setCommentsByApprover1(request.getComments());
+					pos.setInProgress(true);
 
 					// Child table → enable next level
 					entity.setApprover2(true);
@@ -1548,6 +1563,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					pos.setApprover2Role(roleName);
 					pos.setDateOfApproval2(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 					pos.setCommentsByApprover2(request.getComments());
+					pos.setInProgress(true);
 
 					// Child table → enable next level
 					entity.setApprover3(true);
