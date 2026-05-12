@@ -1564,6 +1564,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					pos.setApprover1Role(roleName);
 					pos.setDateOfApproval1(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 					pos.setCommentsByApprover1(request.getComments());
+					pos.setInProgress(true);
 
 					// Child table → enable next level
 					entity.setApprover2(true);
@@ -1579,6 +1580,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					pos.setApprover2Role(roleName);
 					pos.setDateOfApproval2(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 					pos.setCommentsByApprover2(request.getComments());
+					pos.setInProgress(true);
 
 					// Child table → enable next level
 					entity.setApprover3(true);
