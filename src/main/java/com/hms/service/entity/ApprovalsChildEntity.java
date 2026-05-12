@@ -22,7 +22,6 @@ public class ApprovalsChildEntity {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="id",updatable=false,nullable=false)
 	private Integer id;
-
 	
 	@Column(name="process_id")
 	private String processId;
