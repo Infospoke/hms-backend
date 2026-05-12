@@ -457,13 +457,6 @@ public class SpecificationFilterRequest {
 	                        );
 	                        break;
 
-	                    case "in progress":
-
-	                        spec = spec.and(
-	                                (r, q, c) ->
-	                                        c.equal(r.get("inProgress"), true)
-	                        );
-	                        break;
 
 	                    case "pending":
 
