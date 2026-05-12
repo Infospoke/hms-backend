@@ -88,7 +88,7 @@ public class SRPositionBasicsEntity {
 	private String roleName;
 	
 	@Column(name="in_progress")
-	private Boolean inProgress;
+	private Boolean inProgress=false;
 	
 	@Column(name="approver1")
 	private Boolean approver1=false;
@@ -118,7 +118,7 @@ public class SRPositionBasicsEntity {
 	private LocalDateTime dateOfApproval3;
 	
 	@Column(name="rejected")
-	private Boolean rejected;
+	private Boolean rejected=false;
 	
 	@Column(name="rejected_by")
 	private String rejectedBy;
