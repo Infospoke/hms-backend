@@ -422,12 +422,15 @@ public class UserServiceImpl implements IUserService {
 			if (validationResponse != null)
 				return validationResponse;
 
-			Optional<UserEntity> optionalUser = userRepository.findByEmailAndActiveTrue(request.getEmail());
-			if (optionalUser.isEmpty()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "User is deactivated");
+			UserEntity user = userRepository.findByEmail(request.getEmail());
+			
+			if (user == null)  {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid credentials");
 			}
-
-			UserEntity user = optionalUser.get();
+	
+			if (Boolean.FALSE.equals(user.getActive())) {
+			    return ApiResponse.failure(ResponseCode.FAILURE, "User is deactivated");
+			}
 
 			log.info("User fetched");
 
