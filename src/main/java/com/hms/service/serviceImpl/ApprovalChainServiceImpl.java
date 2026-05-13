@@ -305,11 +305,14 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
 
+		approvalChainRepository.save(approvalChainEntity);
+
 		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository
 				.findById(request.getFunctionality());
 		FunctionalityEntity functionality = functionalityEntity.get();
 		functionality.setIsChaincreated(true);
 		functionalityRepository.save(functionality);
+		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
 
 		
 		
@@ -352,8 +355,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		notificationService.callNotification(event);
 		log.info("the event is "+event);
 
-		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
-		approvalChainRepository.save(approvalChainEntity);
+
 
 
 		log.info("ApprovalChainServiceImpl::Exit from the createApprovalChain method");
