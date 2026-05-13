@@ -368,6 +368,29 @@ public class UserServiceImpl implements IUserService {
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "User deactivated successfully", null);
 		}
+		
+		else if (Boolean.TRUE.equals(request.getActivate())) {
+
+			user.setActive(true);
+			user.setDeactivated(false);
+
+			String authHeader = httpServletRequest.getHeader("Authorization");
+			String updatedBy = "";
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				String token = authHeader.substring(7);
+				updatedBy = jwtService.extractUsernameFromClaims(token);
+			}
+			user.setUpdatedBy(updatedBy);
+			user.setUpdatedAt(LocalDate.now());
+			userRepository.save(user);
+
+			log.info("UserServiceImpl::User activated successfully");
+
+			return ApiResponse.success(ResponseCode.SUCCESS,"User activated successfully",null
+			);
+		}
+		
+		
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String updatedBy = "";
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {

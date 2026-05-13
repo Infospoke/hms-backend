@@ -44,22 +44,17 @@ public class StaffingRequisitionController {
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	 
-
 	 @PostMapping("/sr-approval")
 	 public ResponseEntity<ApiResponse<?>>srApproval(@RequestBody UpdateSrRequest request){
 		 ApiResponse<?> response=iStaffingRequisitionService.srApproval(request);
-		 return new ResponseEntity<>(response,HttpStatus.OK);
-		 
-		 
+		 return new ResponseEntity<>(response,HttpStatus.OK);	 
 	 }
 	 
-
 	@GetMapping("/sr-counts")
 	public ResponseEntity<ApiResponse<?>> getSrCounts() {
 	    ApiResponse<?> response = iStaffingRequisitionService.getSrCounts();
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
 	
 	@PostMapping("/assigned-srs-for-approvals")
 	 public ResponseEntity<ApiResponse<?>> assignedSrsForApprovals(@RequestBody SpecificationFilterRequest request){
