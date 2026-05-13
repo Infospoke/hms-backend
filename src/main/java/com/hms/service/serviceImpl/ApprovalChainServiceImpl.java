@@ -57,7 +57,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 	@Autowired
 	private HttpServletRequest httpServletRequest;
-	
+
 	@Autowired
 	private UserRepository userRepository;
 	
@@ -70,13 +70,12 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 	@Autowired
 	private RolesRepository rolesRepository;
 	
-	
+
 	@Override
 	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
 
 		log.info("ApprovalChainServiceImpl:: Inside getApprovalChainsList");
 
-		
 		if (request.getPage() == null || request.getSize() == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
@@ -126,7 +125,16 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 						entity.getFunctionality(),
 
-						entity.getFunctionalityName()))
+						entity.getFunctionalityName(),
+
+						entity.getActivateComments(),
+
+						entity.getDeactivateComments(),
+
+						entity.getApprovedComments(),
+
+						entity.getRejectedComments()))
+
 				.toList();
 
 		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
@@ -196,6 +204,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		Long active = approvalChainRepository.countByStatusIgnoreCase("ACTIVE");
 		Long deactive = approvalChainRepository.countByStatusIgnoreCase("DEACTIVE");
+		Long totalFunctionalities = functionalityRepository.count();
+
+		Long chainCreatedCount = functionalityRepository.countByIsChaincreatedTrue();
 
 		Map<String, Object> response = new HashMap<>();
 
@@ -206,6 +217,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		response.put("active", active);
 		response.put("deactive", deactive);
+		response.put("totalFunctionalities", totalFunctionalities);
+		response.put("chainCreated", chainCreatedCount);
 
 		log.info("ApprovalChainServiceImpl:: Exit getApprovalChainCounts");
 
@@ -292,13 +305,12 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
 
-		approvalChainRepository.save(approvalChainEntity);
-
 		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository
 				.findById(request.getFunctionality());
 		FunctionalityEntity functionality = functionalityEntity.get();
 		functionality.setIsChaincreated(true);
 		functionalityRepository.save(functionality);
+
 		
 		
 		
@@ -339,6 +351,10 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		
 		notificationService.callNotification(event);
 		log.info("the event is "+event);
+
+		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
+		approvalChainRepository.save(approvalChainEntity);
+
 
 		log.info("ApprovalChainServiceImpl::Exit from the createApprovalChain method");
 		return ApiResponse.success("Approval Chain Created Successfully");

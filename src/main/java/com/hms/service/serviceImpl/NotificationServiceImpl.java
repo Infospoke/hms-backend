@@ -3,6 +3,7 @@ package com.hms.service.serviceImpl;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -203,19 +205,50 @@ public class NotificationServiceImpl implements INotificationService {
                 request.getSize(),
                 sort
         );
+     // LIST FILTERS
+        Specification<NotificationEngineEntity> baseSpec =
+                request.toNotificationSpecification();
 
         Page<NotificationEngineEntity> pageResult =
                 notificationEngineRepository.findAll(
-                        request.toNotificationSpecification(),
+                        baseSpec,
                         pageable
                 );
 
-        Map<String, Object> response = new HashMap<>();
+        // COUNT FILTERS
+        Specification<NotificationEngineEntity> countSpec =
+                request.buildNotificationCountSpec();
+
+        long totalCount =
+                notificationEngineRepository.count(countSpec);
+
+        long readCount =
+                notificationEngineRepository.count(
+                        countSpec.and(isReadEquals(true))
+                );
+
+        long unreadCount =
+                notificationEngineRepository.count(
+                        countSpec.and(isReadEquals(false))
+                );
+
+        Map<String, Object> counts = new LinkedHashMap<>();
+
+        counts.put("total", totalCount);
+        counts.put("read", readCount);
+        counts.put("unread", unreadCount);
+
+        Map<String, Object> response = new LinkedHashMap<>();
 
         response.put("notifications", pageResult.getContent());
+
         response.put("currentPage", pageResult.getNumber());
+
         response.put("totalPages", pageResult.getTotalPages());
+
         response.put("totalElements", pageResult.getTotalElements());
+
+        response.put("counts", counts);
 
         log.info("NotificationServiceImpl:: Exit getNotifications");
 
@@ -225,6 +258,14 @@ public class NotificationServiceImpl implements INotificationService {
                 response
         );
     }
+
+    private Specification<NotificationEngineEntity> isReadEquals(
+            Boolean value) {
+
+        return (r, q, c) ->
+                c.equal(r.get("isRead"), value);
+    }
+
     @Override
     public ApiResponse<?> getNotificationCounts() {
 
