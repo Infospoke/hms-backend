@@ -482,7 +482,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					NotificationEvent event = new NotificationEvent();
 					userId = srEntity.getUserId();
 
-					event.setSrId(srEntity.getSrId());
+					event.setProcessId(srEntity.getSrId());
 
 					// event.setJobTitle(srEntity.getJobTitle());
 
@@ -512,6 +512,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					event.setCheckerNotificationTitle(Constants.SR_SUBMITTED_MAIL_SUBJECT);
 
 					event.setMessage("New Staffing Requisition submitted for approval");
+					
+					event.setType("SR");
 
 					event.setRoleEmailMap(roleEmailMap);
 					log.info("role map is" + roleEmailMap);
@@ -1421,7 +1423,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	
 		String makerEmail = userRepository.findByUserId(userId).get().getEmail();
 
-		event.setSrId(srId);
+		event.setType("SR");
+		
+		event.setProcessId(srId);
 
 		event.setMakerEmailAddress(makerEmail);
 
@@ -1624,7 +1628,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			
 				if (roleEmailMap != null && !roleEmailMap.isEmpty()) {
 
-				        event.setSrId(srId);
+				        event.setProcessId(srId);
+				        
+				        event.setType("SR");
 
 				        event.setCheckerRoleName(roleName);
 

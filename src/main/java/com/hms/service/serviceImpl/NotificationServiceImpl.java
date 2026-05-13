@@ -54,21 +54,22 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Override
     public void callNotification(NotificationEvent event) {
-        log.info("Inside callNotification() for SR: {}", event.getSrId());
+    	
+        log.info("Inside callNotification() for"+ event.getType()+": {}", event.getProcessId());
         publishToKafka(event);
     }
 
     //Publish to Kafka 
     private void publishToKafka(NotificationEvent event) {
-        log.info("Inside publishToKafka() for SR: {}", event.getSrId());
-        kafkaTemplate.send(notificationTopic, event.getSrId(), event);
-        log.info("NotificationServiceImpl :: Event published to Kafka for SR: {}", event.getSrId());
+        log.info("Inside publishToKafka() for"+ event.getType()+": {}", event.getProcessId());
+        kafkaTemplate.send(notificationTopic, event.getProcessId(), event);
+        log.info("NotificationServiceImpl :: Event published to Kafka for "+ event.getType()+": {}", event.getProcessId());
     }
 
     // Kafka Consumer — save to DB + send emails to all roles + push WebSocket
 	@KafkaListener(topics = "${hms.kafka.notification-topic}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "kafkaListenerContainerFactory")
     public void consumeNotification(NotificationEvent event) {
-        log.info("NotificationServiceImpl :: consumeNotification() - received event for SR: {}", event.getSrId());
+        log.info("NotificationServiceImpl :: consumeNotification() - received event for "+ event.getType()+": {}", event.getProcessId());
 
         //Save notification to DB (one record per SR)
         saveNotification(event);
@@ -79,19 +80,19 @@ public class NotificationServiceImpl implements INotificationService {
         //Push real-time WebSocket notification to all subscribers
         pushWebSocketNotification(event);
 
-        log.info("NotificationServiceImpl :: Notification fully processed for SR: {}", event.getSrId());
+        log.info("NotificationServiceImpl :: Notification fully processed for "+ event.getType()+": {}", event.getProcessId());
     }
 
 
     private void saveNotification(NotificationEvent event) {
-    	log.info("Inside saveNotification() for SR: {}", event.getSrId());
+    	log.info("Inside saveNotification() for "+ event.getType()+": {}", event.getProcessId());
     	List<NotificationEngineEntity> notificationsList = new ArrayList<>();
     	
         try {
             NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
             checkerEntity.setNotificationTitle(event.getCheckerNotificationTitle());
             checkerEntity.setMessage(event.getMessage());
-            checkerEntity.setSRId(event.getSrId());
+            checkerEntity.setProcessId(event.getProcessId());
             checkerEntity.setDeptName(event.getDeptName());
             checkerEntity.setRoleName(event.getCheckerRoleName());
             checkerEntity.setNotificationSentAt(LocalDateTime.now());
@@ -100,7 +101,7 @@ public class NotificationServiceImpl implements INotificationService {
             NotificationEngineEntity makerEntity = new NotificationEngineEntity();
             makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
             makerEntity.setMessage(event.getMakerEmailBody());
-            makerEntity.setSRId(event.getSrId());
+            makerEntity.setProcessId(event.getProcessId());
             makerEntity.setDeptName(event.getDeptName());
             makerEntity.setRoleName(event.getMakerRoleName());
             makerEntity.setNotificationSentAt(LocalDateTime.now());
@@ -110,19 +111,19 @@ public class NotificationServiceImpl implements INotificationService {
             notificationsList.add(makerEntity);
             
             notificationEngineRepository.saveAll(notificationsList);
-            log.info("NotificationServiceImpl :: Notifications saved to DB for SR: {}", event.getSrId());
+            log.info("NotificationServiceImpl :: Notifications saved to DB for "+ event.getType()+": {}", event.getProcessId());
         } catch (Exception e) {
-            log.error("NotificationServiceImpl :: Failed to save notification for SR: {} - {}", event.getSrId(), e.getMessage());
+            log.error("NotificationServiceImpl :: Failed to save notification for "+ event.getType()+": {} - {}", event.getProcessId(), e.getMessage());
         }
     }
 
 
     private void sendEmailsToAllRoles(NotificationEvent event) {
-    	log.info("Inside sendEmailsToAllRoles() for SR: {}", event.getSrId());
+    	log.info("Inside sendEmailsToAllRoles() for "+ event.getType()+": {}", event.getProcessId());
         Map<Integer, List<String>> roleEmailMap = event.getRoleEmailMap();
 
         if (roleEmailMap == null || roleEmailMap.isEmpty()) {
-            log.warn("NotificationServiceImpl :: roleEmailMap is empty for SR: {}. Skipping emails.", event.getSrId());
+            log.warn("NotificationServiceImpl :: roleEmailMap is empty for "+ event.getType()+": {}. Skipping emails.", event.getProcessId());
             return;
         }
         String checkerSubject = event.getCheckerNotificationTitle();
@@ -135,7 +136,7 @@ public class NotificationServiceImpl implements INotificationService {
             List<String> checkerEmails = entry.getValue();
 
             if (checkerEmails == null || checkerEmails.isEmpty()) {
-                log.warn("NotificationServiceImpl :: No emails for roleId: {} in SR: {}", roleId, event.getSrId());
+                log.warn("NotificationServiceImpl :: No emails for roleId: {} in "+ event.getType()+": {}", roleId, event.getProcessId());
                 continue;
             }
            
@@ -145,23 +146,23 @@ public class NotificationServiceImpl implements INotificationService {
                 try {
                 	//Sending email to checker
                     mailService.sendMail(mailFrom, email, null, checkerSubject, checkerBody, null);
-                    log.info("NotificationServiceImpl :: Email sent to [{}] (roleId: {}) for SR: {}", email, roleId, event.getSrId());
+                    log.info("NotificationServiceImpl :: Email sent to [{}] (roleId: {}) for "+ event.getType()+": {}", email, roleId, event.getProcessId());
                 } catch (Exception e) {
-                    log.error("NotificationServiceImpl :: Failed to send email to [{}] (roleId: {}) for SR: {} - {}",
-                            email, roleId, event.getSrId(), e.getMessage());
+                    log.error("NotificationServiceImpl :: Failed to send email to [{}] (roleId: {}) for "+ event.getType()+": {} - {}",
+                            email, roleId, event.getProcessId(), e.getMessage());
                 }
             }
         }
     }
 
     private void pushWebSocketNotification(NotificationEvent event) {
-    	log.info("Inside pushWebSocketNotification() for SR: {}", event.getSrId());
+    	log.info("Inside pushWebSocketNotification() for "+ event.getType()+": {}", event.getProcessId());
         try {
             // Frontend subscribes to: /topic/notifications
             messagingTemplate.convertAndSend("/topic/notifications", event);
-            log.info("NotificationServiceImpl :: WebSocket notification pushed for SR: {}", event.getSrId());
+            log.info("NotificationServiceImpl :: WebSocket notification pushed for "+ event.getType()+": {}", event.getProcessId());
         } catch (Exception e) {
-            log.error("NotificationServiceImpl :: Failed to push WebSocket notification for SR: {} - {}", event.getSrId(), e.getMessage());
+            log.error("NotificationServiceImpl :: Failed to push WebSocket notification for "+ event.getType()+": {} - {}", event.getProcessId(), e.getMessage());
         }
     }
      
@@ -173,8 +174,7 @@ public class NotificationServiceImpl implements INotificationService {
         if (request.getPage() == null || request.getSize() == null) {
 
             return ApiResponse.failure(
-                    ResponseCode.FAILURE,
-                    "failure",
+                    ResponseCode.FAILURE,                    "failure",
                     List.of("page and size must be provided")
             );
         }

@@ -41,7 +41,7 @@ public class NotificationController {
     
     @PostMapping("/test")
     public ApiResponse<?> testNotification(@RequestBody NotificationEvent event) {
-        log.info("NotificationController :: /test endpoint hit for SR: {}", event.getSrId());
+        log.info("NotificationController :: /test endpoint hit for SR: {}", event.getProcessId());
 
  //        if (event.getTriggeredAt() == null) {
  //           event.setTriggeredAt(LocalDateTime.now());
@@ -52,7 +52,7 @@ public class NotificationController {
         iNotificationService.callNotification(event);
 
         return ApiResponse.success(ResponseCode.SUCCESS,
-                "Notification triggered successfully for SR: " + event.getSrId(), null);
+                "Notification triggered successfully for SR: " + event.getProcessId(), null);
     }
 
 

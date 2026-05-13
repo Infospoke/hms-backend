@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true) 
 public class NotificationEvent implements Serializable {
 
-    private String srId;
+    private String processId;
     //private String jobTitle;
     private String makerRoleName;
     private String checkerRoleName;
@@ -36,5 +36,6 @@ public class NotificationEvent implements Serializable {
     private String makerEmailAddress;
     private String checkerEmailBody;
     private String makerEmailBody;
+    private String type;
     //private LocalDateTime triggeredAt;
 }

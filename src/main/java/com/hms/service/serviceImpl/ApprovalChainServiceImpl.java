@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
@@ -16,15 +17,23 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.constants.Constants;
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.FunctionalityEntity;
+import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.FunctionalityRepository;
+import com.hms.service.repository.RolesRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApprovalChainRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateApprovalChainRequest;
 import com.hms.service.response.ApprovalChainResponse;
 import com.hms.service.service.IApprovalChainService;
+import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -48,6 +57,18 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 	@Autowired
 	private HttpServletRequest httpServletRequest;
+	
+	@Autowired
+	private UserRepository userRepository;
+	
+	@Autowired
+	private INotificationService notificationService;
+	
+	@Autowired 
+	private AssignRolesRepository assignRolesRepository;
+	
+	@Autowired
+	private RolesRepository rolesRepository;
 	
 	
 	@Override
@@ -254,10 +275,13 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String userName = "";
 		String roleName = "";
+		Long userId=null;
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			String token = authHeader.substring(7);
 			userName = jwtService.extractUsernameFromClaims(token);
 			roleName = jwtService.extractRole(token);
+			userId=jwtService.extractUserId(token);
+			
 
 		}
 		log.info("The username is :" + userName);
@@ -275,6 +299,46 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		FunctionalityEntity functionality = functionalityEntity.get();
 		functionality.setIsChaincreated(true);
 		functionalityRepository.save(functionality);
+		
+		
+		
+		//emails sending
+		
+		String email = userRepository.findByUserId(userId).get().getEmail();
+		log.info("the emai is"+email );
+		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+		
+		Integer roleId=rolesRepository.findByRoleNameIgnoreCase("Administrator").getRoleId();
+		log.info("the role id is"+roleId);
+		List<Integer> userIds = assignRolesRepository.findByRoleId(roleId).stream()
+				.map(AssignRolesEntity::getUserId).toList();
+
+		List<String> emails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+				.filter(Objects::nonNull).toList();
+
+		roleEmailMap.put(roleId, emails);
+
+		log.info("Role Email Map : {}", roleEmailMap);
+		
+		NotificationEvent event = new NotificationEvent();
+		event.setProcessId(approvalChainEntity.getId().toString());
+		
+		log.info("mail sending started");
+		event.setMakerEmailAddress(email);
+		event.setMakerRoleName(roleName);
+		event.setMakerNotificationTitle(Constants.CHAIN_CREATED_MAIL_SUBJECT);
+		event.setDeptName(approvalChainEntity.getFunctionalityName());
+		event.setMessage("chain created");
+		event.setType("Chain Created");
+		event.setMakerEmailBody(String.format(Constants.CHAIN_CREATED_SUCESSFULLY_MAIL_BODY, approvalChainEntity.getId(),approvalChainEntity.getFunctionalityName()));
+		
+		event.setCheckerNotificationTitle(Constants.CHAIN_APPROVED_MAIL_SUBJECT);
+		event.setCheckerEmailBody(String.format(Constants.CHAIN_TO_BE_APPROVED,approvalChainEntity.getId(),approvalChainEntity.getFunctionalityName()));
+		event.setCheckerRoleName("Adminstrator");
+		event.setRoleEmailMap(roleEmailMap);
+		
+		notificationService.callNotification(event);
+		log.info("the event is "+event);
 
 		log.info("ApprovalChainServiceImpl::Exit from the createApprovalChain method");
 		return ApiResponse.success("Approval Chain Created Successfully");
