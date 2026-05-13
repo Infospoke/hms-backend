@@ -267,14 +267,14 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		approvalChainEntity.setApproval("In_Progress");
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
-
-		approvalChainRepository.save(approvalChainEntity);
-
+	
 		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository
 				.findById(request.getFunctionality());
 		FunctionalityEntity functionality = functionalityEntity.get();
 		functionality.setIsChaincreated(true);
 		functionalityRepository.save(functionality);
+		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
+		approvalChainRepository.save(approvalChainEntity);
 
 		log.info("ApprovalChainServiceImpl::Exit from the createApprovalChain method");
 		return ApiResponse.success("Approval Chain Created Successfully");
