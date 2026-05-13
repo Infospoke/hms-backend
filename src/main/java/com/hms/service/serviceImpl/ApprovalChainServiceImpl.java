@@ -48,14 +48,12 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 	@Autowired
 	private HttpServletRequest httpServletRequest;
-	
-	
+
 	@Override
 	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
 
 		log.info("ApprovalChainServiceImpl:: Inside getApprovalChainsList");
 
-		
 		if (request.getPage() == null || request.getSize() == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
@@ -104,15 +102,15 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 						entity.getLevelConfig(),
 
 						entity.getFunctionality(),
-						
+
 						entity.getFunctionalityName(),
-						
+
 						entity.getActivateComments(),
-						
+
 						entity.getDeactivateComments(),
-						
+
 						entity.getApprovedComments(),
-						
+
 						entity.getRejectedComments()))
 
 				.toList();
@@ -184,6 +182,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		Long active = approvalChainRepository.countByStatusIgnoreCase("ACTIVE");
 		Long deactive = approvalChainRepository.countByStatusIgnoreCase("DEACTIVE");
+		Long totalFunctionalities = functionalityRepository.count();
+
+		Long chainCreatedCount = functionalityRepository.countByIsChaincreatedTrue();
 
 		Map<String, Object> response = new HashMap<>();
 
@@ -194,6 +195,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		response.put("active", active);
 		response.put("deactive", deactive);
+		response.put("totalFunctionalities", totalFunctionalities);
+		response.put("chainCreated", chainCreatedCount);
 
 		log.info("ApprovalChainServiceImpl:: Exit getApprovalChainCounts");
 
@@ -276,7 +279,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		approvalChainEntity.setApproval("In_Progress");
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
-	
+
 		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository
 				.findById(request.getFunctionality());
 		FunctionalityEntity functionality = functionalityEntity.get();

@@ -16,549 +16,386 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SpecificationFilterRequest {
 
-	private Integer page = 0;
+    private Integer page = 0;
 
-	private Integer size = 10;
+    private Integer size = 10;
 
-	private String sortBy = "id";
+    private String sortBy = "id";
 
-	private String direction = "DESC";
+    private String direction = "DESC";
 
-	private Map<String, Object> filters;
+    private Map<String, Object> filters;
 
-	public Specification<ApprovalChainEntity> buildBaseSpec() {
+   
+    private String getFilter(String key) {
 
-		return (root, query, cb) -> {
-			Specification<ApprovalChainEntity> spec = Specification.allOf();
+        if (filters == null || !filters.containsKey(key)) {
+            return null;
+        }
 
-			if (filters != null) {
+        String value = filters.get(key).toString().trim();
 
-				if (filters.containsKey("approval")) {
+        return value.isBlank() ? null : value;
+    }
 
-					String approval = filters.get("approval").toString().trim();
+    private LocalDate[] getDateRange() {
 
-					if (!approval.isBlank()) {
+        if (filters == null || !filters.containsKey("dateFilter")) {
+            return null;
+        }
 
-						spec = spec.and((r, q, c) -> c.equal(c.lower(r.get("approval")), approval.toLowerCase()));
-					}
-				}
+        String range = getFilter("dateFilter");
 
-				if (filters.containsKey("status")) {
+        if (range == null) {
+            return null;
+        }
 
-					String status = filters.get("status").toString().trim();
+        range = range.replace("_", "").toUpperCase();
 
-					if (!status.isBlank()) {
+        LocalDate today = LocalDate.now();
 
-						spec = spec.and((r, q, c) -> c.equal(c.lower(r.get("status")), status.toLowerCase()));
-					}
-				}
+        LocalDate fromDate = null;
+        LocalDate toDate = null;
 
-				if (filters.containsKey("chainName")) {
+        switch (range) {
 
-					String chainName = filters.get("chainName").toString().trim();
+        case "TODAY":
 
-					if (!chainName.isBlank()) {
+            fromDate = today;
+            toDate = today.plusDays(1);
+            break;
 
-						spec = spec.and(
-								(r, q, c) -> c.like(c.lower(r.get("chainName")), "%" + chainName.toLowerCase() + "%"));
-					}
-				}
+        case "THISWEEK":
 
-				if (filters.containsKey("search")) {
+            fromDate = today.with(DayOfWeek.SUNDAY);
+            toDate = today.plusDays(1);
+            break;
 
-					String search = filters.get("search").toString().trim();
+        case "THISMONTH":
 
-					if (!search.isBlank()) {
+            fromDate = today.withDayOfMonth(1);
+            toDate = today.plusDays(1);
+            break;
 
-						spec = spec.and((r, q, c) -> c.or(
+        case "CUSTOM":
 
-								c.like(c.lower(r.get("chainName")), "%" + search.toLowerCase() + "%"),
+            String from = getFilter("fromDate");
+            String to = getFilter("toDate");
 
-								c.like(c.lower(r.get("description")), "%" + search.toLowerCase() + "%"),
+            if (from != null && to != null) {
 
-								c.like(c.lower(r.get("approval")), "%" + search.toLowerCase() + "%"),
+                fromDate = LocalDate.parse(from);
 
-								c.like(c.lower(r.get("status")), "%" + search.toLowerCase() + "%")));
-					}
-				}
+                toDate = LocalDate.parse(to).plusDays(1);
+            }
 
-				spec = applyDateFilter(spec);
-			}
+            break;
+        }
 
-			return spec.toPredicate(root, query, cb);
-		};
-	}
+        if (fromDate == null || toDate == null) {
+            return null;
+        }
 
-	public Specification<ApprovalChainEntity> buildCountSpec() {
+        return new LocalDate[] { fromDate, toDate };
+    }
 
-		return (root, query, cb) -> {
+    private <T> Specification<T> likeSpec(
+            String field,
+            String value
+    ) {
 
-			Specification<ApprovalChainEntity> spec = Specification.allOf();
+        return (root, query, cb) ->
+                cb.like(
+                        cb.lower(root.get(field)),
+                        "%" + value.toLowerCase() + "%"
+                );
+    }
 
-			if (filters != null) {
+    private <T> Specification<T> equalSpec(
+            String field,
+            String value
+    ) {
 
-				if (filters.containsKey("chainName")) {
+        return (root, query, cb) ->
+                cb.equal(
+                        cb.lower(root.get(field)),
+                        value.toLowerCase()
+                );
+    }
 
-					String chainName = filters.get("chainName").toString().trim();
+    private <T> Specification<T> dateSpec(
+            String field
+    ) {
 
-					if (!chainName.isBlank()) {
+        LocalDate[] dates = getDateRange();
 
-						spec = spec.and(
-								(r, q, c) -> c.like(c.lower(r.get("chainName")), "%" + chainName.toLowerCase() + "%"));
-					}
-				}
+        if (dates == null) {
+            return null;
+        }
 
-				if (filters.containsKey("search")) {
+        return (root, query, cb) -> {
 
-					String search = filters.get("search").toString().trim();
+            Predicate fromPredicate =
+                    cb.greaterThanOrEqualTo(
+                            root.get(field),
+                            dates[0]
+                    );
 
-					if (!search.isBlank()) {
+            Predicate toPredicate =
+                    cb.lessThan(
+                            root.get(field),
+                            dates[1]
+                    );
 
-						spec = spec.and((r, q, c) -> c.or(
+            return cb.and(fromPredicate, toPredicate);
+        };
+    }
 
-								c.like(c.lower(r.get("chainName")), "%" + search.toLowerCase() + "%"),
+   
 
-								c.like(c.lower(r.get("description")), "%" + search.toLowerCase() + "%")));
-					}
-				}
+    public Specification<ApprovalChainEntity> buildBaseSpec() {
 
-				spec = applyDateFilter(spec);
-			}
+        Specification<ApprovalChainEntity> spec =
+                Specification.allOf();
 
-			return spec.toPredicate(root, query, cb);
-		};
-	}
+        String approval = getFilter("approval");
 
-	private Specification<ApprovalChainEntity> applyDateFilter(Specification<ApprovalChainEntity> spec) {
+        if (approval != null) {
+            spec = spec.and(equalSpec("approval", approval));
+        }
 
-		return spec.and((root, query, cb) -> {
+        String status = getFilter("status");
 
-			LocalDate fromDate = null;
-			LocalDate toDate = null;
+        if (status != null) {
+            spec = spec.and(equalSpec("status", status));
+        }
 
-			if (filters != null && filters.containsKey("dateFilter")) {
+        String chainName = getFilter("chainName");
 
-				String range = filters.get("dateFilter").toString().replace("_", "").toUpperCase();
+        if (chainName != null) {
+            spec = spec.and(likeSpec("chainName", chainName));
+        }
 
-				LocalDate today = LocalDate.now();
+        String search = getFilter("search");
 
-				switch (range) {
+        if (search != null) {
 
-				case "TODAY":
+            spec = spec.and((r, q, c) -> c.or(
 
-					fromDate = today;
-					toDate = today.plusDays(1);
-					break;
+                    c.like(
+                            c.lower(r.get("chainName")),
+                            "%" + search.toLowerCase() + "%"
+                    ),
 
-				case "THISWEEK":
+                    c.like(
+                            c.lower(r.get("description")),
+                            "%" + search.toLowerCase() + "%"
+                    ),
 
-					fromDate = today.minusWeeks(1).with(DayOfWeek.SUNDAY);
+                    c.like(
+                            c.lower(r.get("approval")),
+                            "%" + search.toLowerCase() + "%"
+                    ),
 
-					toDate = today.plusDays(1);
-					break;
+                    c.like(
+                            c.lower(r.get("status")),
+                            "%" + search.toLowerCase() + "%"
+                    )
+            ));
+        }
 
-				case "THISMONTH":
+        Specification<ApprovalChainEntity> dateSpec =
+                dateSpec("createdAt");
 
-					fromDate = today.withDayOfMonth(1);
+        if (dateSpec != null) {
+            spec = spec.and(dateSpec);
+        }
 
-					toDate = today.plusDays(1);
-					break;
+        return spec;
+    }
 
-				case "CUSTOM":
+    
 
-					if (filters.containsKey("fromDate") && filters.containsKey("toDate")) {
+    public Specification<ApprovalChainEntity> buildCountSpec() {
 
-						fromDate = LocalDate.parse(filters.get("fromDate").toString());
+        Specification<ApprovalChainEntity> spec =
+                Specification.allOf();
 
-						toDate = LocalDate.parse(filters.get("toDate").toString()).plusDays(1);
-					}
+        String chainName = getFilter("chainName");
 
-					break;
-				}
-			}
+        if (chainName != null) {
+            spec = spec.and(likeSpec("chainName", chainName));
+        }
 
-			if (fromDate == null || toDate == null) {
+        String search = getFilter("search");
 
-				return cb.conjunction();
-			}
+        if (search != null) {
 
-			LocalDate finalFromDate = fromDate;
-			LocalDate finalToDate = toDate;
+            spec = spec.and((r, q, c) -> c.or(
 
-			Predicate greaterThan = cb.greaterThanOrEqualTo(root.get("createdAt"), finalFromDate);
+                    c.like(
+                            c.lower(r.get("chainName")),
+                            "%" + search.toLowerCase() + "%"
+                    ),
 
-			Predicate lessThan = cb.lessThan(root.get("createdAt"), finalToDate);
+                    c.like(
+                            c.lower(r.get("description")),
+                            "%" + search.toLowerCase() + "%"
+                    )
+            ));
+        }
 
-			return cb.and(greaterThan, lessThan);
-		});
-	}
+        Specification<ApprovalChainEntity> dateSpec =
+                dateSpec("createdAt");
 
-	public Specification<NotificationEngineEntity> toNotificationSpecification() {
+        if (dateSpec != null) {
+            spec = spec.and(dateSpec);
+        }
 
-		return (root, query, cb) -> {
+        return spec;
+    }
 
-			Specification<NotificationEngineEntity> spec = Specification.allOf();
+    public Specification<NotificationEngineEntity>
+    toNotificationSpecification() {
 
-			if (filters != null) {
+        Specification<NotificationEngineEntity> spec =
+                Specification.allOf();
 
-				if (filters.containsKey("isRead")) {
+        if (filters != null && filters.containsKey("isRead")) {
 
-					Boolean isRead = Boolean.parseBoolean(filters.get("isRead").toString());
+            Boolean isRead =
+                    Boolean.parseBoolean(
+                            filters.get("isRead").toString()
+                    );
 
-					spec = spec.and((r, q, c) -> c.equal(r.get("isRead"), isRead));
-				}
+            spec = spec.and(
+                    (r, q, c) ->
+                            c.equal(r.get("isRead"), isRead)
+            );
+        }
 
-				if (filters.containsKey("search")) {
+        String search = getFilter("search");
 
-					String search = filters.get("search").toString().trim();
+        if (search != null) {
+            spec = spec.and(
+                    likeSpec("notificationTitle", search)
+            );
+        }
 
-					if (!search.isBlank()) {
+        Specification<NotificationEngineEntity> dateSpec =
+                dateSpec("notificationSentAt");
 
-						spec = spec.and((r, q, c) -> c.like(c.lower(r.get("notificationTitle")),
-								"%" + search.toLowerCase() + "%"));
-					}
-				}
+        if (dateSpec != null) {
+            spec = spec.and(dateSpec);
+        }
 
-				LocalDate fromDate = null;
-				LocalDate toDate = null;
+        return spec;
+    }
 
-				if (filters.containsKey("dateFilter")) {
-					String range = filters.get("dateFilter").toString().replace("_", "").toUpperCase();
-					LocalDate today = LocalDate.now();
+   
+    public Specification<NotificationEngineEntity>
+    buildNotificationCountSpec() {
 
-					switch (range) {
+        Specification<NotificationEngineEntity> spec =
+                Specification.allOf();
 
-					case "TODAY":
+        String search = getFilter("search");
 
-						fromDate = today;
-						toDate = today.plusDays(1);
-						break;
+        if (search != null) {
 
-					case "THISWEEK":
+            spec = spec.and(
+                    likeSpec("notificationTitle", search)
+            );
+        }
 
-						fromDate = LocalDate.now().minusWeeks(1).with(DayOfWeek.SUNDAY);
-						toDate = today.plusDays(1);
-						break;
+        Specification<NotificationEngineEntity> dateSpec =
+                dateSpec("notificationSentAt");
 
-					case "THISMONTH":
+        if (dateSpec != null) {
+            spec = spec.and(dateSpec);
+        }
 
-						fromDate = LocalDate.now().minusMonths(0).withDayOfMonth(1);
-						toDate = today.plusDays(1);
-						break;
+        return spec;
+    }
 
-					case "CUSTOM":
+   
 
-						if (filters.containsKey("fromDate") && filters.containsKey("toDate")) {
+    public Specification<SRPositionBasicsEntity>
+    toSrApprovalSpecification(
+            List<String> srIds
+    ) {
 
-							fromDate = LocalDate.parse(filters.get("fromDate").toString());
+        Specification<SRPositionBasicsEntity> spec =
+                Specification.allOf();
 
-							toDate = LocalDate.parse(filters.get("toDate").toString()).plusDays(1);
-						}
+        spec = spec.and(
+                (r, q, c) -> r.get("srId").in(srIds)
+        );
 
-						break;
-					}
-				}
+        String search = getFilter("search");
 
-				if (fromDate != null && toDate != null) {
+        if (search != null) {
 
-					LocalDate finalFromDate = fromDate;
-					LocalDate finalToDate = toDate;
+            spec = spec.and((r, q, c) -> c.or(
 
-					spec = spec.and((r, q, c) -> {
+                    c.like(
+                            c.lower(r.get("srId")),
+                            "%" + search.toLowerCase() + "%"
+                    ),
 
-						Predicate greaterThan = c.greaterThanOrEqualTo(r.get("notificationSentAt"), finalFromDate);
+                    c.like(
+                            c.lower(r.get("jobTitle")),
+                            "%" + search.toLowerCase() + "%"
+                    )
+            ));
+        }
 
-						Predicate lessThan = c.lessThan(r.get("notificationSentAt"), finalToDate);
+        String status = getFilter("status");
 
-						return c.and(greaterThan, lessThan);
-					});
-				}
-			}
+        if (status != null) {
 
-			return spec.toPredicate(root, query, cb);
-		};
-	}
+            switch (status.toLowerCase()) {
 
-	public Specification<ApprovalChainEntity> toApprovalChainSpecification() {
+            case "completed":
 
-		return (root, query, cb) -> {
+                spec = spec.and(
+                        (r, q, c) ->
+                                c.equal(r.get("approved"), true)
+                );
+                break;
 
-			Specification<ApprovalChainEntity> spec = Specification.allOf();
+            case "rejected":
 
-			if (filters != null) {
+                spec = spec.and(
+                        (r, q, c) ->
+                                c.equal(r.get("rejected"), true)
+                );
+                break;
 
-				if (filters.containsKey("status")) {
+            case "pending":
 
-					String status = filters.get("status").toString().trim();
+                spec = spec.and(
+                        (r, q, c) ->
+                                c.equal(r.get("inProgress"), false)
+                );
+                break;
+            }
+        }
 
-					if (!status.isBlank()) {
+        Specification<SRPositionBasicsEntity> dateSpec =
+                dateSpec("createdOn");
 
-						spec = spec
-								.and((r, q, c) -> c.like(c.lower(r.get("status")), "%" + status.toLowerCase() + "%"));
-					}
-				}
+        if (dateSpec != null) {
+            spec = spec.and(dateSpec);
+        }
 
-				if (filters.containsKey("approval")) {
-
-					String approval = filters.get("approval").toString().trim();
-
-					if (!approval.isBlank()) {
-
-						spec = spec.and(
-								(r, q, c) -> c.like(c.lower(r.get("approval")), "%" + approval.toLowerCase() + "%"));
-					}
-				}
-
-				if (filters.containsKey("chainName")) {
-
-					String chainName = filters.get("chainName").toString().trim();
-
-					if (!chainName.isBlank()) {
-
-						spec = spec.and(
-								(r, q, c) -> c.like(c.lower(r.get("chainName")), "%" + chainName.toLowerCase() + "%"));
-					}
-				}
-
-				LocalDate fromDate = null;
-				LocalDate toDate = null;
-
-				if (filters.containsKey("dateFilter")) {
-
-					String dateFilter = filters.get("dateFilter").toString().replace("_", "").toUpperCase();
-
-					LocalDate today = LocalDate.now();
-
-					switch (dateFilter) {
-
-					case "TODAY":
-
-						fromDate = today;
-						toDate = today.plusDays(1);
-						break;
-
-					case "THISWEEK":
-				
-	
-						fromDate = LocalDate.now().minusWeeks(1).with(DayOfWeek.SUNDAY);
-						toDate = today.plusDays(1);
-						break;
-
-					case "THISMONTH":
-
-						fromDate = LocalDate.now().minusMonths(0).withDayOfMonth(1);
-						toDate = today.plusDays(1);
-						break;
-
-					case "CUSTOM":
-
-						if (filters.containsKey("fromDate") && filters.containsKey("toDate")) {
-
-							fromDate = LocalDate.parse(filters.get("fromDate").toString());
-
-							toDate = LocalDate.parse(filters.get("toDate").toString()).plusDays(1);
-						}
-
-						break;
-					}
-				}
-
-				if (fromDate != null && toDate != null) {
-
-					LocalDate finalFromDate = fromDate;
-					LocalDate finalToDate = toDate;
-
-					spec = spec.and((r, q, c) -> c.and(c.greaterThanOrEqualTo(r.get("createdAt"), finalFromDate),
-							c.lessThan(r.get("createdAt"), finalToDate)));
-				}
-			}
-
-			return spec.toPredicate(root, query, cb);
-		};
-	}
-	public Specification<SRPositionBasicsEntity> toSrApprovalSpecification(
-	        List<String> srIds
-	) {
-
-	    return (root, query, cb) -> {
-
-	        Specification<SRPositionBasicsEntity> spec =
-	                Specification.allOf();
-
-	        spec = spec.and(
-	                (r, q, c) -> r.get("srId").in(srIds)
-	        );
-
-	        if (filters != null) {
-
-	            if (filters.containsKey("search")) {
-
-	                String search =
-	                        filters.get("search")
-	                                .toString()
-	                                .trim();
-
-	                if (!search.isBlank()) {
-
-	                    spec = spec.and((r, q, c) -> {
-
-	                        Predicate srIdPredicate =
-	                                c.like(
-	                                        c.lower(r.get("srId")),
-	                                        "%" + search.toLowerCase() + "%"
-	                                );
-
-	                        Predicate jobTitlePredicate =
-	                                c.like(
-	                                        c.lower(r.get("jobTitle")),
-	                                        "%" + search.toLowerCase() + "%"
-	                                );
-
-	                        return c.or(
-	                                srIdPredicate,
-	                                jobTitlePredicate
-	                        );
-	                    });
-	                }
-	            }
-
-	            if (filters.containsKey("status")) {
-
-	                String status =
-	                        filters.get("status")
-	                                .toString()
-	                                .trim()
-	                                .toLowerCase();
-
-	                switch (status) {
-
-	                    case "completed":
-
-	                        spec = spec.and(
-	                                (r, q, c) ->
-	                                        c.equal(r.get("approved"), true)
-	                        );
-	                        break;
-
-	                    case "rejected":
-
-	                        spec = spec.and(
-	                                (r, q, c) ->
-	                                        c.equal(r.get("rejected"), true)
-	                        );
-	                        break;
-
-
-	                    case "pending":
-
-	                        spec = spec.and(
-	                                (r, q, c) ->
-	                                        c.equal(r.get("inProgress"), false)
-	                        );
-	                        break;
-	     
-	                }
-	            }
-
-	            // DATE FILTER
-	            LocalDate fromDate = null;
-	            LocalDate toDate = null;
-
-	            if (filters.containsKey("dateFilter")) {
-
-	                String range =
-	                        filters.get("dateFilter")
-	                                .toString()
-	                                .replace("_", "")
-	                                .toUpperCase();
-
-	                LocalDate today = LocalDate.now();
-
-	                switch (range) {
-
-	                    case "TODAY":
-
-	                        fromDate = today;
-	                        toDate = today.plusDays(1);
-	                        break;
-
-	                    case "THISWEEK":
-
-	                        fromDate =
-	                                LocalDate.now()
-	                                        .minusWeeks(1)
-	                                        .with(DayOfWeek.SUNDAY);
-
-	                        toDate = today.plusDays(1);
-	                        break;
-
-	                    case "THISMONTH":
-
-	                        fromDate =
-	                                LocalDate.now()
-	                                        .withDayOfMonth(1);
-
-	                        toDate = today.plusDays(1);
-	                        break;
-
-	                    case "CUSTOM":
-
-	                        if (filters.containsKey("fromDate")
-	                                && filters.containsKey("toDate")) {
-
-	                            fromDate = LocalDate.parse(
-	                                    filters.get("fromDate")
-	                                            .toString()
-	                            );
-
-	                            toDate = LocalDate.parse(
-	                                    filters.get("toDate")
-	                                            .toString()
-	                            ).plusDays(1);
-	                        }
-
-	                        break;
-	                }
-	            }
-
-	            if (fromDate != null && toDate != null) {
-
-	                LocalDate finalFromDate = fromDate;
-	                LocalDate finalToDate = toDate;
-
-	                spec = spec.and((r, q, c) -> {
-
-	                    Predicate greaterThan =
-	                            c.greaterThanOrEqualTo(
-	                                    r.get("createdOn"),
-	                                    finalFromDate
-	                            );
-
-	                    Predicate lessThan =
-	                            c.lessThan(
-	                                    r.get("createdOn"),
-	                                    finalToDate
-	                            );
-
-	                    return c.and(
-	                            greaterThan,
-	                            lessThan
-	                    );
-	                });
-	            }
-	        }
-
-	        return spec.toPredicate(root, query, cb);
-	    };
-	}
-
+        return spec;
+    }
 }
