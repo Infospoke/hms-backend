@@ -104,6 +104,14 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 						entity.getLevelConfig(),
 
 						entity.getFunctionality(),
+						
+						entity.getApprovedComments(),
+						
+						entity.getDeactivateComments(),
+						
+						entity.getActivateComments(),
+						
+						entity.getRejectedComments(),
 
 						entity.getFunctionalityName()))
 				.toList();
