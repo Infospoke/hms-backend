@@ -51,54 +51,51 @@ public class SpecificationFilterRequest {
             return null;
         }
 
-        String range = getFilter("dateFilter");
+        String dateFilter = getFilter("dateFilter");
 
-        if (range == null) {
+        if (dateFilter == null) {
             return null;
         }
 
-        range = range.replace("_", "").toUpperCase();
+        dateFilter = dateFilter.replace("_", "").toUpperCase();
 
         LocalDate today = LocalDate.now();
 
         LocalDate fromDate = null;
         LocalDate toDate = null;
+        switch (dateFilter) {
+        
+		case "TODAY":
 
-        switch (range) {
+			fromDate = today;
+			toDate = today.plusDays(1);
+			break;
 
-        case "TODAY":
+		case "THISWEEK":
+	
 
-            fromDate = today;
-            toDate = today.plusDays(1);
-            break;
+			fromDate = LocalDate.now().minusWeeks(1).with(DayOfWeek.SUNDAY);
+			toDate = today.plusDays(1);
+			break;
 
-        case "THISWEEK":
+		case "THISMONTH":
 
-            fromDate = today.with(DayOfWeek.SUNDAY);
-            toDate = today.plusDays(1);
-            break;
+			fromDate = LocalDate.now().minusMonths(0).withDayOfMonth(1);
+			toDate = today.plusDays(1);
+			break;
 
-        case "THISMONTH":
+		case "CUSTOM":
 
-            fromDate = today.withDayOfMonth(1);
-            toDate = today.plusDays(1);
-            break;
+			if (filters.containsKey("fromDate") && filters.containsKey("toDate")) {
 
-        case "CUSTOM":
+				fromDate = LocalDate.parse(filters.get("fromDate").toString());
 
-            String from = getFilter("fromDate");
-            String to = getFilter("toDate");
+				toDate = LocalDate.parse(filters.get("toDate").toString()).plusDays(1);
+			}
 
-            if (from != null && to != null) {
-
-                fromDate = LocalDate.parse(from);
-
-                toDate = LocalDate.parse(to).plusDays(1);
-            }
-
-            break;
-        }
-
+			break;
+		}
+        
         if (fromDate == null || toDate == null) {
             return null;
         }
