@@ -105,15 +105,16 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 						entity.getFunctionality(),
 						
-						entity.getApprovedComments(),
-						
-						entity.getDeactivateComments(),
+						entity.getFunctionalityName(),
 						
 						entity.getActivateComments(),
 						
-						entity.getRejectedComments(),
+						entity.getDeactivateComments(),
+						
+						entity.getApprovedComments(),
+						
+						entity.getRejectedComments()))
 
-						entity.getFunctionalityName()))
 				.toList();
 
 		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
