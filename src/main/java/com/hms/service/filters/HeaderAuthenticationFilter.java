@@ -28,6 +28,14 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
+    	
+    	//skipping authentication for WebSocket handshake requests
+    	String path = request.getRequestURI();
+
+    	if (path.startsWith("/ws")) {
+    	    filterChain.doFilter(request, response);
+    	    return;
+    	}
 
         String authHeader = request.getHeader("Authorization");
 
