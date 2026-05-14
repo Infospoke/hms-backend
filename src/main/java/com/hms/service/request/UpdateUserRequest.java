@@ -13,4 +13,5 @@ public class UpdateUserRequest {
     private Integer businessUnitId;
     private Integer departmentId;
     private Boolean deactivate;
+    private Boolean activate;
 }

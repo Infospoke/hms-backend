@@ -21,5 +21,7 @@ public interface FunctionalityRepository extends JpaRepository<FunctionalityEnti
 	List<FunctionalityEntity> findByIsChaincreatedFalse();
 	
 	Optional<FunctionalityEntity> findByFunctionalityName(String name);
+	
+	Long countByIsChaincreatedTrue();
 
 }

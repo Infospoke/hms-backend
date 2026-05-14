@@ -311,7 +311,7 @@ public class Constants {
 	public static final String ROLE_NOT_BELONG_TO_DEPARTMENT = "Role id doesnot belong to this department";
 	public static final String PENDING = "Pending";
 	
-	private static final String SR_SUBMITTED_MAIL_BODY = "<html><body>"
+	public static final String SR_SUBMITTED_MAIL_BODY = "<html><body>"
 			+ "<p>Greetings</p>"
 			+ "<p>Your Staffing Requisition (SR) with ID <b>%s</b> has been successfully submitted.</p>"
 			+ "<p>We will review your request and get back to you shortly.</p>"
@@ -329,7 +329,28 @@ public class Constants {
 			+ "<p>Best regards,<br/>HMS Team</p>"
 			+ "</body></html>";
 	
-	private static final String SR_TO_BE_APPROVED_NOTIFY = "%s is awaiting your approval.";
-	private static final String SR_APPROVED_NOTIFY = "%s has been approved by %s.";
-	private static final String SR_REJECTED_NOTIFY = "%s has been rejected by %s.";
+	public static final String SR_TO_BE_APPROVED_NOTIFY = "%s is awaiting your approval.";
+	public static final String SR_APPROVED_NOTIFY = "%s has been approved by %s.";
+	public static final String SR_REJECTED_NOTIFY = "%s has been rejected by %s.";
+	
+	public static final String CHAIN_CREATED_SUCESSFULLY_MAIL_BODY = "<html><body>"
+			+ "<p>Greetings</p>"
+			+ "<p>Chain sucessfully created  with ID <b>%s</b>for the <b>%s</b></p>"
+			+ "<p>We will review your request and get back to you shortly.</p>"
+			+ "<br/>"
+			+ "<p>Best regards,<br/>HMS Team</p>"
+			+ "</body></html>";
+	
+	public static final String CHAIN_CREATED_MAIL_SUBJECT = "chain created  Successfully";
+	
+	public static final String CHAIN_TO_BE_APPROVED= "<html><body>"
+			+ "<p>Greetings</p>"
+			+ "<p>Chain sucessfully created  with ID <b>%s</b>for the <b>%s</b></p>"
+			+ "<p>Waiting for your approval.</p>"
+			+ "<br/>"
+			+ "<p>Best regards,<br/>HMS Team</p>"
+			+ "</body></html>";
+	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
 }
+
+

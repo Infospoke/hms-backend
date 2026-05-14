@@ -108,4 +108,5 @@ public class UserEntity {
 	private Boolean firstTimeMobileLogin;
 
 
+
 }

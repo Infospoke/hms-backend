@@ -29,8 +29,8 @@ public class NotificationEngineEntity {
 	    @Column(name = "message")
 	    private String message;
 	    
-	    @Column(name = "SR_Id")
-	    private String SRId;
+	    @Column(name = "process_id")
+	    private String processId;
 	    
 	    @Column(name="role_id")
 	    private Integer roleId;
