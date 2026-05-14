@@ -272,4 +272,18 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Functionalities fetched successfully", response);
 	}
+	
+	
+	@Override
+	public ApiResponse<List<DropDownResponse>> getAllFunctionality() {
+		 log.info("ConfigurationServiceImpl::Inside the getAllFunctionality method"); 
+
+		List<DropDownResponse> response = functionalityRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(fu -> new DropDownResponse(fu.getId(), fu.getFunctionalityName())).toList();
+		
+		 log.info("ConfigurationServiceImpl::Exit from the getAllFunctionality method"); 
+		 
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.DEPARTMENTS_FETCHED_SUCCESSFULLY, response);
+	}
+	
 }
