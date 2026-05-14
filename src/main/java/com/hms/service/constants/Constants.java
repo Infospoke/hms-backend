@@ -351,6 +351,7 @@ public class Constants {
 			+ "<p>Best regards,<br/>HMS Team</p>"
 			+ "</body></html>";
 	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
+	public static final String FUNCTIONALITY_FETCHED_SUCCESSFULLY = "Functionality fetched successfully";
 }
 
 

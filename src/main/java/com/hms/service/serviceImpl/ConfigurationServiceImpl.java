@@ -283,7 +283,7 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		
 		 log.info("ConfigurationServiceImpl::Exit from the getAllFunctionality method"); 
 		 
-		return ApiResponse.success(ResponseCode.SUCCESS, Constants.DEPARTMENTS_FETCHED_SUCCESSFULLY, response);
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.FUNCTIONALITY_FETCHED_SUCCESSFULLY, response);
 	}
 	
 }
