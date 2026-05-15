@@ -111,5 +111,15 @@ public class ConfigurationController {
 		
 		
 	}
+	
+	
+	@GetMapping("/functionality")
+	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getFunctionality() {
+
+		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getAllFunctionality();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 
 }
