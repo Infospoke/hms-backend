@@ -94,7 +94,7 @@ public class NotificationServiceImpl implements INotificationService {
         try {
             NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
             checkerEntity.setNotificationTitle(event.getCheckerNotificationTitle());
-            checkerEntity.setMessage(event.getMessage());
+            checkerEntity.setMessage(event.getCheckerMessage());
             checkerEntity.setProcessId(event.getProcessId());
             checkerEntity.setDeptName(event.getDeptName());
             checkerEntity.setRoleName(event.getCheckerRoleName());
@@ -103,7 +103,7 @@ public class NotificationServiceImpl implements INotificationService {
             
             NotificationEngineEntity makerEntity = new NotificationEngineEntity();
             makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
-            makerEntity.setMessage(event.getMakerEmailBody());
+            makerEntity.setMessage(event.getMakerMessage());
             makerEntity.setProcessId(event.getProcessId());
             makerEntity.setDeptName(event.getDeptName());
             makerEntity.setRoleName(event.getMakerRoleName());
@@ -165,28 +165,30 @@ public class NotificationServiceImpl implements INotificationService {
                 WebSocketNotification makerNotif = new WebSocketNotification(
                         event.getProcessId(),
                         event.getMakerNotificationTitle(),
-                        event.getMakerEmailBody(),
+                        event.getMakerMessage(),
                         event.getDeptName(),
-                        "MAKER",
+                        event.getType(),
                         event.getMakerRoleId()
                 );
                 messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotif);
                 log.info("NotificationServiceImpl :: WebSocket pushed to maker roleId: {}", event.getMakerRoleId());
             }
-
+            
+			Integer checkerRoleId = event.getRoleEmailMap().keySet().stream().findFirst().orElse(null);
+            
             if (event.getRoleEmailMap() != null) {
-                for (Integer checkerRoleId : event.getRoleEmailMap().keySet()) {
+               // for (Integer checkerRoleId : event.getRoleEmailMap().keySet()) {
                     WebSocketNotification checkerNotif = new WebSocketNotification(
                             event.getProcessId(),
                             event.getCheckerNotificationTitle(),
-                            event.getMessage(),
+                            event.getCheckerMessage(),
                             event.getDeptName(),
-                            "CHECKER",
+                            event.getType(),
                             checkerRoleId
                     );
                     messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerNotif);
                     log.info("NotificationServiceImpl :: WebSocket pushed to checker roleId: {}", checkerRoleId);
-                }
+                //}
             }
 
             log.info("NotificationServiceImpl :: WebSocket notification fully pushed for {}: {}", event.getType(), event.getProcessId());

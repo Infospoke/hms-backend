@@ -343,7 +343,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setMakerRoleName(roleName);
 		event.setMakerNotificationTitle(Constants.CHAIN_CREATED_MAIL_SUBJECT);
 		event.setDeptName(approvalChainEntity.getFunctionalityName());
-		event.setMessage("chain created");
+		event.setMakerMessage("chain created");
 		event.setType("Chain Created");
 		event.setMakerEmailBody(String.format(Constants.CHAIN_CREATED_SUCESSFULLY_MAIL_BODY, approvalChainEntity.getId(),approvalChainEntity.getFunctionalityName()));
 		
