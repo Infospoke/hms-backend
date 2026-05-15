@@ -28,4 +28,8 @@ public interface IConfigurationService {
 
 	ApiResponse<List<DropDownResponse>> getAllDepartments();
 
+	ApiResponse<List<DropDownResponse>> getAllFunctionality();
+	
+	
+
 }

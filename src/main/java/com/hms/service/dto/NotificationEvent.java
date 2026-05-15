@@ -32,6 +32,7 @@ public class NotificationEvent implements Serializable {
     private String makerNotificationTitle;
     private String checkerNotificationTitle;
     private String message;
+    private Integer makerRoleId;
     private Map<Integer, List<String>> roleEmailMap;  // roleId -> [email1, email2, ...]
     private String makerEmailAddress;
     private String checkerEmailBody;

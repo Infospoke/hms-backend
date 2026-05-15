@@ -20,6 +20,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.NotificationEvent;
+import com.hms.service.dto.WebSocketNotification;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.repository.NotificationEngineRepository;
 import com.hms.service.request.SpecificationFilterRequest;
@@ -161,13 +162,39 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     private void pushWebSocketNotification(NotificationEvent event) {
-    	log.info("Inside pushWebSocketNotification() for "+ event.getType()+": {}", event.getProcessId());
+        log.info("Inside pushWebSocketNotification() for {}: {}", event.getType(), event.getProcessId());
         try {
-            // Frontend subscribes to: /topic/notifications
-            messagingTemplate.convertAndSend("/topic/notifications", event);
-            log.info("NotificationServiceImpl :: WebSocket notification pushed for "+ event.getType()+": {}", event.getProcessId());
+            if (event.getMakerRoleId() != null) {
+                WebSocketNotification makerNotif = new WebSocketNotification(
+                        event.getProcessId(),
+                        event.getMakerNotificationTitle(),
+                        event.getMakerEmailBody(),
+                        event.getDeptName(),
+                        "MAKER",
+                        event.getMakerRoleId()
+                );
+                messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotif);
+                log.info("NotificationServiceImpl :: WebSocket pushed to maker roleId: {}", event.getMakerRoleId());
+            }
+
+            if (event.getRoleEmailMap() != null) {
+                for (Integer checkerRoleId : event.getRoleEmailMap().keySet()) {
+                    WebSocketNotification checkerNotif = new WebSocketNotification(
+                            event.getProcessId(),
+                            event.getCheckerNotificationTitle(),
+                            event.getMessage(),
+                            event.getDeptName(),
+                            "CHECKER",
+                            checkerRoleId
+                    );
+                    messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerNotif);
+                    log.info("NotificationServiceImpl :: WebSocket pushed to checker roleId: {}", checkerRoleId);
+                }
+            }
+
+            log.info("NotificationServiceImpl :: WebSocket notification fully pushed for {}: {}", event.getType(), event.getProcessId());
         } catch (Exception e) {
-            log.error("NotificationServiceImpl :: Failed to push WebSocket notification for "+ event.getType()+": {} - {}", event.getProcessId(), e.getMessage());
+            log.error("NotificationServiceImpl :: Failed to push WebSocket notification for {}: {} - {}", event.getType(), event.getProcessId(), e.getMessage());
         }
     }
      

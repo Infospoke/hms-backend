@@ -351,6 +351,7 @@ public class Constants {
 			+ "<p>Best regards,<br/>HMS Team</p>"
 			+ "</body></html>";
 	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
+
 	
 	public static final String CHAIN_REJECTED_MAIL_SUBJECT = "Approval Chain Creation Rejected";
 
@@ -457,6 +458,9 @@ public class Constants {
 	public static final String CHAIN_ACTIVATE_REJECTION_CONFIRMATION_BODY = "<html><body>" + "<p>Greetings</p>"
 			+ "<p>You have rejected activation of Approval Chain <b>%s</b> for <b>%s</b>.</p>"
 			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String FUNCTIONALITY_FETCHED_SUCCESSFULLY = "Functionality fetched successfully";
+
 }
 
 
