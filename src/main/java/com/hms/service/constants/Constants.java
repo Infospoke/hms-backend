@@ -351,6 +351,112 @@ public class Constants {
 			+ "<p>Best regards,<br/>HMS Team</p>"
 			+ "</body></html>";
 	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
+	
+	public static final String CHAIN_REJECTED_MAIL_SUBJECT = "Approval Chain Creation Rejected";
+
+	public static final String CHAIN_APPROVER_CONFIRMATION_SUBJECT = "You have approved an Approval Chain";
+
+	public static final String CHAIN_REJECTION_CONFIRMATION_SUBJECT = "You have rejected an Approval Chain";
+
+	public static final String CHAIN_DEACTIVATED_MAIL_SUBJECT = "Approval Chain Deactivated Successfully";
+
+	public static final String CHAIN_DEACTIVE_REJECTED_MAIL_SUBJECT = "Approval Chain Deactivation Rejected";
+
+	public static final String CHAIN_DEACTIVE_APPROVER_SUBJECT = "You approved Deactivation Request";
+
+	public static final String CHAIN_DEACTIVE_REJECTION_CONFIRMATION_SUBJECT = "You rejected Deactivation Request";
+
+	public static final String CHAIN_DEACTIVE_REQUEST_MAIL_SUBJECT = "Approval Chain Deactivation Request";
+	
+	public static final String CHAIN_ACTIVATED_MAIL_SUBJECT = "Approval Chain Activated Successfully";
+
+	public static final String CHAIN_ACTIVATE_APPROVER_SUBJECT = "You approved Activation Request";
+
+	public static final String CHAIN_ACTIVATION_REJECTED_MAIL_SUBJECT = "Approval Chain Activation Rejected";
+
+	public static final String CHAIN_ACTIVATE_REJECTION_CONFIRMATION_SUBJECT = "You rejected Activation Request";
+	
+	public static final String CHAIN_ACTIVATION_REQUEST_MAIL_SUBJECT = "Approval Chain Activation Request Raised";
+
+	public static final String CHAIN_ACTIVATION_REQUEST_MAIL_BODY = "<html><body>" + "<p>Greetings,</p>"
+			+ "<p>Activation request has been raised for Approval Chain ID <b>%s</b> "
+			+ "under functionality <b>%s</b>.</p>"
+			+ "<p>The request is currently pending for administrator approval.</p>" + "<br/>"
+			+ "<p>Best Regards,<br/>HMS Team</p>" + "</body></html>";
+	
+	public static final String CHAIN_DEACTIVATION_REQUEST_APPROVER_SUBJECT = "Approval Chain Deactivation Request Received";
+	public static final String CHAIN_DEACTIVATION_REQUEST_APPROVER_BODY = "<html><body>" + "<p>Greetings,</p>"
+			+ "<p>A deactivation request has been raised for Approval Chain ID <b>%s</b> "
+			+ "under functionality <b>%s</b>.</p>" + "<p>Please review and take appropriate action.</p>" + "<br/>"
+			+ "<p>Best Regards,<br/>HMS Team</p>" + "</body></html>";
+	
+	public static final String CHAIN_ACTIVATION_REQUEST_APPROVER_SUBJECT = "Approval Chain Activation Request Received";
+	
+	public static final String CHAIN_ACTIVATION_REQUEST_APPROVER_BODY = "<html><body>" + "<p>Greetings,</p>"
+			+ "<p>An activation request has been raised for Approval Chain ID <b>%s</b> "
+			+ "under functionality <b>%s</b>.</p>" + "<p>Please review and take appropriate action.</p>" + "<br/>"
+			+ "<p>Best Regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_DEACTIVATION_REQUEST_MAIL_SUBJECT = "Approval Chain Deactivation Request Raised";
+
+	public static final String CHAIN_DEACTIVATION_REQUEST_MAIL_BODY = "<html><body>" + "<p>Greetings,</p>"
+			+ "<p>Deactivation request has been raised for Approval Chain ID <b>%s</b> "
+			+ "under functionality <b>%s</b>.</p>"
+			+ "<p>The request is currently pending for administrator approval.</p>" + "<br/>"
+			+ "<p>Best Regards,<br/>HMS Team</p>" + "</body></html>";
+	
+	public static final String CHAIN_APPROVED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>Your Approval Chain with ID <b>%s</b> for <b>%s</b> has been approved successfully.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_REJECTED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>Your Approval Chain with ID <b>%s</b> for <b>%s</b> has been rejected.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_APPROVER_CONFIRMATION_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>You have successfully approved Approval Chain <b>%s</b> for <b>%s</b>.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_REJECTION_CONFIRMATION_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>You have rejected Approval Chain <b>%s</b> for <b>%s</b>.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_DEACTIVATED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>Approval Chain <b>%s</b> for <b>%s</b> has been deactivated successfully.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_DEACTIVE_REJECTED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>Your deactivation request for Approval Chain <b>%s</b> for <b>%s</b> was rejected.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_DEACTIVE_REQUEST_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>Approval Chain <b>%s</b> for <b>%s</b> has requested deactivation.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+	public static final String CHAIN_DEACTIVE_APPROVER_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>You have successfully approved the deactivation request for Approval Chain "
+			+ "<b>%s</b> for functionality <b>%s</b>.</p>" + "<br/><p>Best regards,<br/>HMS Team</p>"
+			+ "</body></html>";
+
+	public static final String CHAIN_DEACTIVE_REJECTION_CONFIRMATION_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>You have rejected the deactivation request for Approval Chain "
+			+ "<b>%s</b> for functionality <b>%s</b>.</p>" + "<br/><p>Best regards,<br/>HMS Team</p>"
+			+ "</body></html>";
+
+	public static final String CHAIN_ACTIVATED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>Approval Chain <b>%s</b> for <b>%s</b> has been activated successfully.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_ACTIVATION_REJECTED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>Your activation request for Approval Chain <b>%s</b> for <b>%s</b> was rejected.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_ACTIVATE_APPROVER_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>You have approved activation of Approval Chain <b>%s</b> for <b>%s</b>.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+	public static final String CHAIN_ACTIVATE_REJECTION_CONFIRMATION_BODY = "<html><body>" + "<p>Greetings</p>"
+			+ "<p>You have rejected activation of Approval Chain <b>%s</b> for <b>%s</b>.</p>"
+			+ "<br/><p>Best regards,<br/>HMS Team</p>" + "</body></html>";
 }
 
 
