@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class WebSocketNotification {
 
     private String processId;
-    private String title;
+    private String NotificationTitle;
     private String message;
     private String deptName;
     private String type;
