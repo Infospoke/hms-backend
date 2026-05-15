@@ -594,7 +594,7 @@ public class UserServiceImpl implements IUserService {
 
 			log.info("Generating token");
 
-			String token = jwtService.generateToken(user.getUserId(),user.getEmail(), user.getUsername(), role.getRoleName(),
+			String token = jwtService.generateToken(user.getUserId(),role.getRoleId(),user.getEmail(), user.getUsername(), role.getRoleName(),
 					permissionsList, user.getFirstTimeWebLogin(), user.getFirstTimeMobileLogin());
 
 			LoginResponse response = new LoginResponse();
