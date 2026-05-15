@@ -100,4 +100,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
 	Optional<UserEntity> findByUserId(Long submittedBy);
 
+	UserEntity findByUsername(String createdBy);
+
 }

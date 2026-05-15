@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,16 +61,15 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 	@Autowired
 	private UserRepository userRepository;
-	
+
 	@Autowired
 	private INotificationService notificationService;
-	
-	@Autowired 
+
+	@Autowired
 	private AssignRolesRepository assignRolesRepository;
-	
+
 	@Autowired
 	private RolesRepository rolesRepository;
-	
 
 	@Override
 	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
@@ -288,13 +288,12 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String userName = "";
 		String roleName = "";
-		Long userId=null;
+		Long userId = null;
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			String token = authHeader.substring(7);
 			userName = jwtService.extractUsernameFromClaims(token);
 			roleName = jwtService.extractRole(token);
-			userId=jwtService.extractUserId(token);
-			
+			userId = jwtService.extractUserId(token);
 
 		}
 		log.info("The username is :" + userName);
@@ -302,6 +301,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		approvalChainEntity.setCreatedBy(userName);
 		approvalChainEntity.setLevelConfig(request.getLevelConfig());
 		approvalChainEntity.setApproval("In_Progress");
+		approvalChainEntity.setRequestType("Chain Created");
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
 
@@ -314,19 +314,16 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		functionalityRepository.save(functionality);
 		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
 
-		
-		
-		
-		//emails sending
-		
+		// emails sending
+
 		String email = userRepository.findByUserId(userId).get().getEmail();
-		log.info("the emai is"+email );
+		log.info("the emai is" + email);
 		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
-		
-		Integer roleId=rolesRepository.findByRoleNameIgnoreCase("Administrator").getRoleId();
-		log.info("the role id is"+roleId);
-		List<Integer> userIds = assignRolesRepository.findByRoleId(roleId).stream()
-				.map(AssignRolesEntity::getUserId).toList();
+
+		Integer roleId = rolesRepository.findByRoleNameIgnoreCase("Administrator").getRoleId();
+		log.info("the role id is" + roleId);
+		List<Integer> userIds = assignRolesRepository.findByRoleId(roleId).stream().map(AssignRolesEntity::getUserId)
+				.toList();
 
 		List<String> emails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
 				.filter(Objects::nonNull).toList();
@@ -334,10 +331,10 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		roleEmailMap.put(roleId, emails);
 
 		log.info("Role Email Map : {}", roleEmailMap);
-		
+
 		NotificationEvent event = new NotificationEvent();
 		event.setProcessId(approvalChainEntity.getId().toString());
-		
+
 		log.info("mail sending started");
 		event.setMakerEmailAddress(email);
 		event.setMakerRoleName(roleName);
@@ -346,84 +343,340 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setMakerMessage("chain created");
 		event.setType("Chain Created");
 		event.setMakerEmailBody(String.format(Constants.CHAIN_CREATED_SUCESSFULLY_MAIL_BODY, approvalChainEntity.getId(),approvalChainEntity.getFunctionalityName()));
-		
+
 		event.setCheckerNotificationTitle(Constants.CHAIN_APPROVED_MAIL_SUBJECT);
-		event.setCheckerEmailBody(String.format(Constants.CHAIN_TO_BE_APPROVED,approvalChainEntity.getId(),approvalChainEntity.getFunctionalityName()));
+		event.setCheckerEmailBody(String.format(Constants.CHAIN_TO_BE_APPROVED, approvalChainEntity.getId(),
+				approvalChainEntity.getFunctionalityName()));
+		
 		event.setCheckerRoleName("Adminstrator");
 		event.setRoleEmailMap(roleEmailMap);
-		
+
 		notificationService.callNotification(event);
-		log.info("the event is "+event);
-
-
-
+		log.info("the event is " + event);
 
 		log.info("ApprovalChainServiceImpl::Exit from the createApprovalChain method");
 		return ApiResponse.success("Approval Chain Created Successfully");
 	}
 
+
+	
+	private void sendWorkflowNotification(String processId, String type, String message, String department,
+
+			String makerEmail, String makerRole, String makerTitle, String makerBody,
+
+			String checkerRole, String checkerTitle, String checkerBody,
+
+			Map<Integer, List<String>> roleEmailMap) {
+
+		NotificationEvent event = new NotificationEvent();
+
+		event.setProcessId(processId);
+		event.setType(type);
+
+		// MAKER
+
+		event.setMakerEmailAddress(makerEmail);
+		event.setMakerRoleName(makerRole);
+		event.setMakerNotificationTitle(makerTitle);
+		event.setMakerEmailBody(makerBody);
+
+		// CHECKER
+
+		event.setCheckerRoleName(checkerRole);
+		event.setCheckerNotificationTitle(checkerTitle);
+		event.setCheckerEmailBody(checkerBody);
+
+		event.setDeptName(department);
+		event.setCheckerMessage(message);
+
+		event.setRoleEmailMap(roleEmailMap);
+
+		log.info("the maker email is " + makerEmail);
+
+		log.info("the role map contains " + roleEmailMap);
+
+		notificationService.callNotification(event);
+	}
+	
 	@Override
 	public ApiResponse<?> updateApprovalChain(UpdateApprovalChainRequest request) {
 
-		log.info("ApprovalChainServiceImpl::Inside the updateApprovalChain method");
-		Optional<ApprovalChainEntity> approvalEntity = approvalChainRepository.findById(request.getId());
-		if (approvalEntity.isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Approval Chain not found");
-		}
+		log.info("ApprovalChainServiceImpl::Inside updateApprovalChain");
 
-		ApprovalChainEntity approvalChainEntity = approvalEntity.get();
+		ApprovalChainEntity approvalChainEntity = approvalChainRepository.findById(request.getId())
+				.orElseThrow(() -> new RuntimeException("Approval Chain not found"));
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
+
 		String userName = "";
 		String roleName = "";
+		Long userId = null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
 			String token = authHeader.substring(7);
+
 			userName = jwtService.extractUsernameFromClaims(token);
 			roleName = jwtService.extractRole(token);
-		}
-		log.info("the role name is :" + roleName);
-		if (roleName == null || !roleName.equalsIgnoreCase("Administrator")) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can update Approval Chain");
+			userId = jwtService.extractUserId(token);
 		}
 
-		if (request.getStatus() != null) {
+		UserEntity creator = userRepository.findByUsername(approvalChainEntity.getCreatedBy());
+		String creatorEmail = creator.getEmail();
 
-			String status = request.getStatus().trim().toUpperCase();
+		String approverEmail = userRepository.findByUserId(userId).map(UserEntity::getEmail).orElse(null);
 
-			if ("ACTIVE".equals(status)) {
-
-				approvalChainEntity.setStatus(status);
-				approvalChainEntity.setActivateComments(request.getActivateComments());
-
-				approvalChainEntity.setDeactivateComments(null);
-
-			} else if ("DEACTIVE".equals(status)) {
-
-				approvalChainEntity.setStatus(status);
-				approvalChainEntity.setDeactivateComments(request.getDeactivateComments());
-
-				approvalChainEntity.setActivateComments(null);
-			}
-		}
+		// Approval flow
 
 		if (request.getApproval() != null) {
+
+			if (!"Administrator".equalsIgnoreCase(roleName)) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can approve/reject");
+			}
 
 			String approval = request.getApproval().trim().toUpperCase();
 
 			if ("APPROVED".equals(approval)) {
 
-				approvalChainEntity.setApproval(approval);
+				approvalChainEntity.setApproval("Approved");
 				approvalChainEntity.setApprovedComments(request.getApprovedComments());
 
-				approvalChainEntity.setRejectedComments(null);
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(adminRoleId, List.of(approverEmail));
+
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+						"Approval Chain Approved", "Chain Configurations",
+
+						creatorEmail, "System Admin", Constants.CHAIN_APPROVED_MAIL_SUBJECT,
+						String.format(Constants.CHAIN_APPROVED_MAIL_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleName, Constants.CHAIN_APPROVER_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_APPROVER_CONFIRMATION_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleEmailMap);
 
 			} else if ("REJECTED".equals(approval)) {
 
-				approvalChainEntity.setApproval(approval);
+				approvalChainEntity.setApproval("Rejected");
 				approvalChainEntity.setRejectedComments(request.getRejectedComments());
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-				approvalChainEntity.setApprovedComments(null);
+				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(adminRoleId, List.of(approverEmail));
+
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+						"Approval Chain Rejected", "Chain Configurations",
+
+						creatorEmail, "System Admin", Constants.CHAIN_REJECTED_MAIL_SUBJECT,
+						String.format(Constants.CHAIN_REJECTED_MAIL_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleName, Constants.CHAIN_REJECTION_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_REJECTION_CONFIRMATION_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleEmailMap);
+			}
+		}
+
+		// Deactivate Request
+
+		if (request.getStatus() != null && "DEACTIVE".equalsIgnoreCase(request.getStatus())) {
+
+			if (!approvalChainEntity.getCreatedBy().equalsIgnoreCase(userName)) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request deactivation");
+			}
+
+			approvalChainEntity.setApproval("In_Progress");
+			approvalChainEntity.setDeactivateComments(request.getDeactivateComments());
+			approvalChainEntity.setRequestType("Chain-Deactive");
+			approvalChainEntity.setDeactiveApproval(false);
+
+			// mail sent to all admins
+
+			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+			Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase("Administrator").getRoleId();
+
+			List<Integer> userIds = assignRolesRepository.findByRoleId(adminRoleId).stream()
+					.map(AssignRolesEntity::getUserId).toList();
+
+			List<String> adminEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+					.filter(Objects::nonNull).distinct().collect(Collectors.toList());
+
+			roleEmailMap.put(adminRoleId, adminEmails);
+
+			sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+					"Deactivation Request Raised", "Chain Configurations",
+
+					creatorEmail, roleName, Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_SUBJECT,
+					String.format(Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_BODY, approvalChainEntity.getId(),
+							approvalChainEntity.getFunctionalityName()),
+
+					"Administrator", Constants.CHAIN_DEACTIVATION_REQUEST_APPROVER_SUBJECT,
+					String.format(Constants.CHAIN_DEACTIVATION_REQUEST_APPROVER_BODY, approvalChainEntity.getId(),
+							approvalChainEntity.getFunctionalityName()),
+
+					roleEmailMap);
+		}
+
+		// DEACTIVATION APPROVAL
+
+		if (request.getDeactiveApproval() != null) {
+
+			if (!"Administrator".equalsIgnoreCase(roleName)) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process deactivation");
+			}
+
+			if (Boolean.TRUE.equals(request.getDeactiveApproval())) {
+
+				approvalChainEntity.setStatus("DEACTIVE");
+				approvalChainEntity.setApproval("Approved");
+				approvalChainEntity.setDeactiveApproval(true);
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(adminRoleId, List.of(approverEmail));
+
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW", "Chain Deactivated",
+						"Chain Configuration",
+
+						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVATED_MAIL_SUBJECT,
+						String.format(Constants.CHAIN_DEACTIVATED_MAIL_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleName, Constants.CHAIN_DEACTIVE_APPROVER_SUBJECT,
+						String.format(Constants.CHAIN_DEACTIVE_APPROVER_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleEmailMap);
+
+			} else {
+
+				approvalChainEntity.setApproval("REJECTED");
+
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(adminRoleId, List.of(approverEmail));
+
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+						"Deactivation Rejected", "Chain Configurations",
+
+						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVE_REJECTED_MAIL_SUBJECT,
+						String.format(Constants.CHAIN_DEACTIVE_REJECTED_MAIL_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleName, Constants.CHAIN_DEACTIVE_REJECTION_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_DEACTIVE_REJECTION_CONFIRMATION_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleEmailMap);
+			}
+		}
+
+		// Activation Request
+
+		if (request.getStatus() != null && "ACTIVE".equalsIgnoreCase(request.getStatus())) {
+
+			if (!approvalChainEntity.getCreatedBy().equalsIgnoreCase(userName)) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request activation");
+			}
+
+			approvalChainEntity.setApproval("IN_PROGRESS");
+			approvalChainEntity.setActivateComments(request.getActivateComments());
+			approvalChainEntity.setRequestType("Chain-Active");
+
+			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+			Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase("Administrator").getRoleId();
+
+			List<Integer> userIds = assignRolesRepository.findByRoleId(adminRoleId).stream()
+					.map(AssignRolesEntity::getUserId).toList();
+
+			List<String> adminEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+					.filter(Objects::nonNull).distinct().collect(Collectors.toList());
+
+			roleEmailMap.put(adminRoleId, adminEmails);
+
+			sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+					"Activation Request Raised", "Chain Configurations",
+
+					creatorEmail, roleName, Constants.CHAIN_ACTIVATION_REQUEST_MAIL_SUBJECT,
+					String.format(Constants.CHAIN_ACTIVATION_REQUEST_MAIL_BODY, approvalChainEntity.getId(),
+							approvalChainEntity.getFunctionalityName()),
+
+					"Administrator", Constants.CHAIN_ACTIVATION_REQUEST_APPROVER_SUBJECT,
+					String.format(Constants.CHAIN_ACTIVATION_REQUEST_APPROVER_BODY, approvalChainEntity.getId(),
+							approvalChainEntity.getFunctionalityName()),
+
+					roleEmailMap);
+		}
+
+		// ACTIVATION APPROVAL
+
+		if (request.getActiveApproval() != null) {
+
+			if (!"Administrator".equalsIgnoreCase(roleName)) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process activation");
+			}
+
+			if (Boolean.TRUE.equals(request.getActiveApproval())) {
+
+				approvalChainEntity.setStatus("ACTIVE");
+				approvalChainEntity.setApproval("Approved");
+
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(adminRoleId, List.of(approverEmail));
+
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW", "Chain Activated",
+						"Chain Configurations",
+
+						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATED_MAIL_SUBJECT,
+						String.format(Constants.CHAIN_ACTIVATED_MAIL_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleName, Constants.CHAIN_ACTIVATE_APPROVER_SUBJECT,
+						String.format(Constants.CHAIN_ACTIVATE_APPROVER_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleEmailMap);
+
+			} else {
+
+				approvalChainEntity.setApproval("Rejected");
+
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(adminRoleId, List.of(approverEmail));
+
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+						"Activation Rejected", "Chain Configurations",
+
+						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATION_REJECTED_MAIL_SUBJECT,
+						String.format(Constants.CHAIN_ACTIVATION_REJECTED_MAIL_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleName, Constants.CHAIN_ACTIVATE_REJECTION_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_ACTIVATE_REJECTION_CONFIRMATION_BODY, approvalChainEntity.getId(),
+								approvalChainEntity.getFunctionalityName()),
+
+						roleEmailMap);
 			}
 		}
 
@@ -432,8 +685,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		approvalChainRepository.save(approvalChainEntity);
 
-		log.info("ApprovalChainServiceImpl::Exit from the updateApprovalChain method");
-
 		return ApiResponse.success("Approval Chain Updated Successfully");
 	}
+
 }

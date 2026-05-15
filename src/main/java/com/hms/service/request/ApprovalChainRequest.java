@@ -30,6 +30,7 @@ public class ApprovalChainRequest {
     private Integer functionality;
 
     private String approval;
+ 
     
     @Valid  
     @NotEmpty(message = "Level configuration is required")

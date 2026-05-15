@@ -59,6 +59,7 @@ public class NotificationServiceImpl implements INotificationService {
     public void callNotification(NotificationEvent event) {
     	
         log.info("Inside callNotification() for"+ event.getType()+": {}", event.getProcessId());
+        log.info("The event into the kafka : "+event);
         publishToKafka(event);
     }
 
@@ -103,10 +104,13 @@ public class NotificationServiceImpl implements INotificationService {
             
             NotificationEngineEntity makerEntity = new NotificationEngineEntity();
             makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
+            log.info("The event message to the Checker is : "+event.getMakerMessage());
             makerEntity.setMessage(event.getMakerMessage());
+
             makerEntity.setProcessId(event.getProcessId());
             makerEntity.setDeptName(event.getDeptName());
             makerEntity.setRoleName(event.getMakerRoleName());
+         
             makerEntity.setNotificationSentAt(LocalDateTime.now());
             makerEntity.setIsRead(false);
             
