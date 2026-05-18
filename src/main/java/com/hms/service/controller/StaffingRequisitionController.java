@@ -41,7 +41,7 @@ public class StaffingRequisitionController {
 	}
 
 	@PostMapping("/sr-list")
-	public ResponseEntity<ApiResponse<?>> getAll(@RequestBody SRFilterRequest request) {
+	public ResponseEntity<ApiResponse<?>> getAll(@RequestBody SpecificationFilterRequest request) {
 		ApiResponse<?> response = iStaffingRequisitionService.getAll(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

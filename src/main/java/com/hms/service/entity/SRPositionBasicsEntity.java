@@ -144,5 +144,7 @@ public class SRPositionBasicsEntity {
 	@Column(name="approver3_role")
 	private String approver3Role;
 
+	@Column(name="current_stage")
+	private String currentStage;
 
 }

@@ -457,4 +457,52 @@ public class SpecificationFilterRequest {
 
         return spec;
     }
-}
+
+		public Specification<SRPositionBasicsEntity> buildMyStaffingRequisitionSpecification(Long userId) {
+
+			return (root, query, cb) -> {
+
+				Predicate predicate = cb.conjunction();
+
+				predicate = cb.and(predicate, cb.equal(root.get("userId"), userId));
+
+				String jobTitle = getFilter("jobTitle");
+
+				if (jobTitle != null && !jobTitle.isBlank()) {
+
+					predicate = cb.and(predicate,
+							cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase().trim() + "%"));
+				}
+
+				String departmentId = getFilter("departmentId");
+
+				if (departmentId != null && !departmentId.isBlank()) {
+
+					predicate = cb.and(predicate, cb.equal(root.get("departmentId"), Integer.parseInt(departmentId)));
+				}
+
+				String requestedBy = getFilter("requestedBy");
+
+				if (requestedBy != null && !requestedBy.isBlank()) {
+
+					predicate = cb.and(predicate,
+							cb.like(cb.lower(root.get("createdBy")), "%" + requestedBy.toLowerCase().trim() + "%"));
+				}
+
+				String fromDate = getFilter("fromDate");
+
+				String toDate = getFilter("toDate");
+
+				if (fromDate != null && toDate != null && !fromDate.isBlank() && !toDate.isBlank()) {
+
+					LocalDate from = LocalDate.parse(fromDate);
+
+					LocalDate to = LocalDate.parse(toDate);
+
+					predicate = cb.and(predicate, cb.between(root.get("createdOn"), from, to));
+				}
+
+				return predicate;
+			};
+		}
+	}
