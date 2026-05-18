@@ -92,23 +92,6 @@ public class ApprovalChainEntity {
 
 	private String activateComments;
 	
-//	@Column(name="deactivate_approval_comments",length=300)
-//
-//	private String deactivateApprovalComments;
-//	
-//	
-//	@Column(name="deactivate_rejected_comments",length=300)
-//
-//	private String deactivateRejectedComments;
-//	
-//	@Column(name="activate_approval_comments",length=300)
-//
-//	private String activateApprovalComments;
-//
-//	@Column(name="activate_rejected_comments",length=300)
-//
-//	private String activateRejectedComments;
-	
 	@Column(name="functionality_name")
 
 	private String functionalityName;

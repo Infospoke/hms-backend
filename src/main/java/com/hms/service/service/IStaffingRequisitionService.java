@@ -1,5 +1,6 @@
 package com.hms.service.service;
 
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.SRFilterRequest;
@@ -23,6 +24,8 @@ public interface IStaffingRequisitionService {
 
 
 	ApiResponse<?> assignedSrsForApprovals(SpecificationFilterRequest request);
-
+	
+	ApiResponse<?> getAllApprovedServiceRequests(SpecificationFilterRequest request);
+    
 
 }

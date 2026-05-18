@@ -30,7 +30,7 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/departments")
 	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getDepartments() {
 
@@ -81,13 +81,13 @@ public class ConfigurationController {
 		return ResponseEntity.ok(response);
 
 	}
-	
+
 	@GetMapping("/get-all-functionalities")
 	public ResponseEntity<ApiResponse<?>> getAllFunctionalities() {
 
-	    ApiResponse<?> response = iConfigurationService.getAllFunctionalities();
+		ApiResponse<?> response = iConfigurationService.getAllFunctionalities();
 
-	    return ResponseEntity.ok(response);
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/position-basic-seniority-levels")
@@ -103,16 +103,14 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/get-jr")
-	public ResponseEntity<ApiResponse<?>>getJr(){
+	public ResponseEntity<ApiResponse<?>> getJr() {
 		ApiResponse<?> response = iConfigurationService.getJr();
 		return new ResponseEntity<>(response, HttpStatus.OK);
-		
-		
+
 	}
-	
-	
+
 	@GetMapping("/functionality")
 	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getFunctionality() {
 
@@ -121,5 +119,10 @@ public class ConfigurationController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	@GetMapping("/role-users")
+	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getUsersByRole() {
+		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getUsersByRole();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }

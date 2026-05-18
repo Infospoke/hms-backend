@@ -34,7 +34,7 @@ public class JwtFilter extends OncePerRequestFilter {
 		String path = request.getRequestURI();
 
 		if (path.startsWith("/hms/login/user-login") || path.startsWith("/hms/login/forgot-password")
-				|| path.startsWith("/hms/login/validate")|| path.startsWith("/hms/approval-chains")|| path.startsWith("/hms/notifications")
+				|| path.startsWith("/hms/login/validate")|| path.startsWith("/hms/create-job/**")|| path.startsWith("/hms/approval-chains")|| path.startsWith("/hms/notifications")
 				|| path.startsWith("/ws")) {
 
 			filterChain.doFilter(request, response);

@@ -71,126 +71,126 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 	@Autowired
 	private RolesRepository rolesRepository;
 
-	@Override
-	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
-
-		log.info("ApprovalChainServiceImpl:: Inside getApprovalChainsList");
-
-		if (request.getPage() == null || request.getSize() == null) {
-
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
-		}
-
-		if (request.getPage() < 0 || request.getSize() <= 0) {
-
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
-		}
-
-		Sort sort = Sort.by(
-
-				"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
-
-				request.getSortBy() != null ? request.getSortBy() : "id");
-
-		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-
-		Specification<ApprovalChainEntity> baseSpec = request.buildBaseSpec();
-
-		Page<ApprovalChainEntity> pageResult = approvalChainRepository.findAll(baseSpec, pageable);
-
-		List<ApprovalChainResponse> responseList = pageResult.getContent().stream()
-				.map(entity -> new ApprovalChainResponse(
-
-						entity.getId(),
-
-						entity.getChainName(),
-
-						entity.getDescription(),
-
-						entity.getStatus(),
-
-						entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0,
-
-						entity.getUpdatedBy(),
-
-						entity.getUpdatedAt(),
-
-						entity.getCreatedAt(),
-
-						entity.getCreatedBy(),
-
-						entity.getApproval(),
-
-						entity.getLevelConfig(),
-
-						entity.getFunctionality(),
-
-						entity.getFunctionalityName(),
-
-						entity.getActivateComments(),
-
-						entity.getDeactivateComments(),
-
-						entity.getApprovedComments(),
-
-						entity.getRejectedComments()))
-
-				.toList();
-
-		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
-
-		long totalCount = approvalChainRepository.count(countSpec);
-
-		long approvedCount = approvalChainRepository.count(countSpec.and(approvalEquals("APPROVED")));
-
-		long rejectedCount = approvalChainRepository.count(countSpec.and(approvalEquals("REJECTED")));
-
-		long inProgressCount = approvalChainRepository.count(countSpec.and(approvalEquals("IN_PROGRESS")));
-
-		long activeCount = approvalChainRepository.count(countSpec.and(statusEquals("ACTIVE")));
-
-		long deactiveCount = approvalChainRepository.count(countSpec.and(statusEquals("DEACTIVE")));
-
-		Map<String, Object> counts = new LinkedHashMap<>();
-
-		counts.put("total", totalCount);
-
-		counts.put("approved", approvedCount);
-
-		counts.put("rejected", rejectedCount);
-
-		counts.put("inProgress", inProgressCount);
-
-		counts.put("active", activeCount);
-
-		counts.put("deactive", deactiveCount);
-
-		Map<String, Object> response = new LinkedHashMap<>();
-
-		response.put("approvalChains", responseList);
-
-		response.put("currentPage", pageResult.getNumber());
-
-		response.put("totalPages", pageResult.getTotalPages());
-
-		response.put("totalElements", pageResult.getTotalElements());
-
-		response.put("counts", counts);
-
-		log.info("ApprovalChainServiceImpl:: Exit getApprovalChainsList");
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
-	}
-
-	private Specification<ApprovalChainEntity> approvalEquals(String value) {
-
-		return (r, q, c) -> c.equal(c.lower(r.get("approval")), value.toLowerCase());
-	}
-
-	private Specification<ApprovalChainEntity> statusEquals(String value) {
-
-		return (r, q, c) -> c.equal(c.lower(r.get("status")), value.toLowerCase());
-	}
+//	@Override
+//	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
+//
+//		log.info("ApprovalChainServiceImpl:: Inside getApprovalChainsList");
+//
+//		if (request.getPage() == null || request.getSize() == null) {
+//
+//			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+//		}
+//
+//		if (request.getPage() < 0 || request.getSize() <= 0) {
+//
+//			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+//		}
+//
+//		Sort sort = Sort.by(
+//
+//				"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+//
+//				request.getSortBy() != null ? request.getSortBy() : "id");
+//
+//		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+//
+//		Specification<ApprovalChainEntity> baseSpec = request.buildBaseSpec();
+//
+//		Page<ApprovalChainEntity> pageResult = approvalChainRepository.findAll(baseSpec, pageable);
+//
+//		List<ApprovalChainResponse> responseList = pageResult.getContent().stream()
+//				.map(entity -> new ApprovalChainResponse(
+//
+//						entity.getId(),
+//
+//						entity.getChainName(),
+//
+//						entity.getDescription(),
+//
+//						entity.getStatus(),
+//
+//						entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0,
+//
+//						entity.getUpdatedBy(),
+//
+//						entity.getUpdatedAt(),
+//
+//						entity.getCreatedAt(),
+//
+//						entity.getCreatedBy(),
+//
+//						entity.getApproval(),
+//
+//						entity.getLevelConfig(),
+//
+//						entity.getFunctionality(),
+//
+//						entity.getFunctionalityName(),
+//
+//						entity.getActivateComments(),
+//
+//						entity.getDeactivateComments(),
+//
+//						entity.getApprovedComments(),
+//
+//						entity.getRejectedComments()))
+//
+//				.toList();
+//
+//		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
+//
+//		long totalCount = approvalChainRepository.count(countSpec);
+//
+//		long approvedCount = approvalChainRepository.count(countSpec.and(approvalEquals("APPROVED")));
+//
+//		long rejectedCount = approvalChainRepository.count(countSpec.and(approvalEquals("REJECTED")));
+//
+//		long inProgressCount = approvalChainRepository.count(countSpec.and(approvalEquals("IN_PROGRESS")));
+//
+//		long activeCount = approvalChainRepository.count(countSpec.and(statusEquals("ACTIVE")));
+//
+//		long deactiveCount = approvalChainRepository.count(countSpec.and(statusEquals("DEACTIVE")));
+//
+//		Map<String, Object> counts = new LinkedHashMap<>();
+//
+//		counts.put("total", totalCount);
+//
+//		counts.put("approved", approvedCount);
+//
+//		counts.put("rejected", rejectedCount);
+//
+//		counts.put("inProgress", inProgressCount);
+//
+//		counts.put("active", activeCount);
+//
+//		counts.put("deactive", deactiveCount);
+//
+//		Map<String, Object> response = new LinkedHashMap<>();
+//
+//		response.put("approvalChains", responseList);
+//
+//		response.put("currentPage", pageResult.getNumber());
+//
+//		response.put("totalPages", pageResult.getTotalPages());
+//
+//		response.put("totalElements", pageResult.getTotalElements());
+//
+//		response.put("counts", counts);
+//
+//		log.info("ApprovalChainServiceImpl:: Exit getApprovalChainsList");
+//
+//		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+//	}
+//
+//	private Specification<ApprovalChainEntity> approvalEquals(String value) {
+//
+//		return (r, q, c) -> c.equal(c.lower(r.get("approval")), value.toLowerCase());
+//	}
+//
+//	private Specification<ApprovalChainEntity> statusEquals(String value) {
+//
+//		return (r, q, c) -> c.equal(c.lower(r.get("status")), value.toLowerCase());
+//	}
 
 	@Override
 	public ApiResponse<?> getApprovalChainCounts() {
@@ -305,7 +305,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
 
-		approvalChainRepository.save(approvalChainEntity);
+		
 
 		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository
 				.findById(request.getFunctionality());
@@ -313,6 +313,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		functionality.setIsChaincreated(true);
 		functionalityRepository.save(functionality);
 		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
+		
+		approvalChainRepository.save(approvalChainEntity);
 
 		// emails sending
 
@@ -348,7 +350,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setCheckerNotificationTitle(Constants.CHAIN_APPROVED_MAIL_SUBJECT);
 		event.setCheckerEmailBody(String.format(Constants.CHAIN_TO_BE_APPROVED, approvalChainEntity.getId(),
 				approvalChainEntity.getFunctionalityName()));
-		
+
 		event.setCheckerRoleName("Adminstrator");
 		event.setRoleEmailMap(roleEmailMap);
 
@@ -359,8 +361,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		return ApiResponse.success("Approval Chain Created Successfully");
 	}
 
-
-	
 	private void sendWorkflowNotification(String processId, String type, String message, String department,
 
 			String makerEmail, String makerRole, String makerTitle, String makerBody,
@@ -398,7 +398,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		notificationService.callNotification(event);
 	}
-	
+
 	@Override
 	public ApiResponse<?> updateApprovalChain(UpdateApprovalChainRequest request) {
 
@@ -689,4 +689,107 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		return ApiResponse.success("Approval Chain Updated Successfully");
 	}
 
+	@Override
+	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
+
+		log.info("ApprovalChainServiceImpl :: getApprovalChainsList started");
+
+		if (request.getPage() == null || request.getSize() == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+		}
+
+		if (request.getPage() < 0 || request.getSize() <= 0) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+		}
+
+		Sort sort = Sort.by("DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+				request.getSortBy() != null ? request.getSortBy() : "updatedAt");
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Specification<ApprovalChainEntity> listSpec = request.buildBaseSpec();
+
+		Page<ApprovalChainEntity> pageResult = approvalChainRepository.findAll(listSpec, pageable);
+
+		List<ApprovalChainResponse> responseList = pageResult.getContent().stream().map(this::mapToResponse).toList();
+
+		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
+
+		Map<String, Object> counts = new LinkedHashMap<>();
+
+		counts.put("total", approvalChainRepository.count(countSpec));
+
+		counts.put("active", approvalChainRepository.count(countSpec.and(statusEquals("ACTIVE"))));
+
+		counts.put("inactive", approvalChainRepository.count(countSpec.and(statusEquals("DEACTIVE"))));
+
+		counts.put("approved", approvalChainRepository.count(countSpec.and(approvalEquals("APPROVED"))));
+
+		counts.put("rejected", approvalChainRepository.count(countSpec.and(approvalEquals("REJECTED"))));
+
+		counts.put("inProgress", approvalChainRepository.count(countSpec.and(approvalEquals("IN_PROGRESS"))));
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("approvalChains", responseList);
+		response.put("currentPage", pageResult.getNumber());
+		response.put("totalPages", pageResult.getTotalPages());
+		response.put("totalElements", pageResult.getTotalElements());
+		response.put("counts", counts);
+
+		log.info("ApprovalChainServiceImpl :: getApprovalChainsList completed");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	}
+
+	private ApprovalChainResponse mapToResponse(ApprovalChainEntity entity) {
+
+		return new ApprovalChainResponse(
+
+				entity.getId(),
+
+				entity.getChainName(),
+
+				entity.getDescription(),
+
+				entity.getStatus(),
+
+				entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0,
+
+				entity.getUpdatedBy(),
+
+				entity.getUpdatedAt(),
+
+				entity.getCreatedAt(),
+
+				entity.getCreatedBy(),
+
+				entity.getApproval(),
+
+				entity.getLevelConfig(),
+
+				entity.getFunctionality(),
+
+				entity.getFunctionalityName(),
+
+				entity.getActivateComments(),
+
+				entity.getDeactivateComments(),
+
+				entity.getApprovedComments(),
+
+				entity.getRejectedComments(),
+				
+				entity.getRequestType());
+	}
+
+	private Specification<ApprovalChainEntity> approvalEquals(String value) {
+
+		return (root, query, cb) -> cb.equal(cb.lower(root.get("approval")), value.toLowerCase());
+	}
+
+	private Specification<ApprovalChainEntity> statusEquals(String value) {
+
+		return (root, query, cb) -> cb.equal(cb.lower(root.get("status")), value.toLowerCase());
+	}
 }

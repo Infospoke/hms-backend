@@ -22,44 +22,52 @@ import com.hms.service.wrappers.ApiResponse;
 @RequestMapping("/hms/staffing-requisition")
 @RestController()
 public class StaffingRequisitionController {
-	
+
 	@Autowired
 	private IStaffingRequisitionService iStaffingRequisitionService;
-	
+
 	@PostMapping("/new-staffing-requisition")
-	public ResponseEntity<ApiResponse<?>>newStaffingRequisition(@RequestPart(value="request") StaffingRequisitionRequest request,@RequestPart(value = "file", required = false) MultipartFile file){
-		ApiResponse<?> response=iStaffingRequisitionService.newStaffingRequisition(request,file);
-		return new ResponseEntity<>(response,HttpStatus.OK);
+	public ResponseEntity<ApiResponse<?>> newStaffingRequisition(
+			@RequestPart(value = "request") StaffingRequisitionRequest request,
+			@RequestPart(value = "file", required = false) MultipartFile file) {
+		ApiResponse<?> response = iStaffingRequisitionService.newStaffingRequisition(request, file);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/by-sr-id")
 	public ResponseEntity<ApiResponse<?>> getBySrId(@RequestParam(value = "request") String srId) {
-	    ApiResponse<?> response = iStaffingRequisitionService.getBySrId(srId);
-	    return new ResponseEntity<>(response, HttpStatus.OK);
+		ApiResponse<?> response = iStaffingRequisitionService.getBySrId(srId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@PostMapping("/sr-list")
 	public ResponseEntity<ApiResponse<?>> getAll(@RequestBody SRFilterRequest request) {
-	    ApiResponse<?> response = iStaffingRequisitionService.getAll(request);
-	    return new ResponseEntity<>(response, HttpStatus.OK);
+		ApiResponse<?> response = iStaffingRequisitionService.getAll(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	 
-	 @PostMapping("/sr-approval")
-	 public ResponseEntity<ApiResponse<?>>srApproval(@RequestBody UpdateSrRequest request){
-		 ApiResponse<?> response=iStaffingRequisitionService.srApproval(request);
-		 return new ResponseEntity<>(response,HttpStatus.OK);	 
-	 }
-	 
+
+	@PostMapping("/sr-approval")
+	public ResponseEntity<ApiResponse<?>> srApproval(@RequestBody UpdateSrRequest request) {
+		ApiResponse<?> response = iStaffingRequisitionService.srApproval(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 	@GetMapping("/sr-counts")
 	public ResponseEntity<ApiResponse<?>> getSrCounts() {
-	    ApiResponse<?> response = iStaffingRequisitionService.getSrCounts();
-	    return new ResponseEntity<>(response, HttpStatus.OK);
+		ApiResponse<?> response = iStaffingRequisitionService.getSrCounts();
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@PostMapping("/assigned-srs-for-approvals")
-	 public ResponseEntity<ApiResponse<?>> assignedSrsForApprovals(@RequestBody SpecificationFilterRequest request){
-	 ApiResponse<?> response = iStaffingRequisitionService.assignedSrsForApprovals(request);
-	 return new ResponseEntity<>(response,HttpStatus.OK);
-}
-	
+	public ResponseEntity<ApiResponse<?>> assignedSrsForApprovals(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iStaffingRequisitionService.assignedSrsForApprovals(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/approved-srs")
+	public ResponseEntity<ApiResponse<?>> getAllApprovedServiceRequests(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iStaffingRequisitionService.getAllApprovedServiceRequests(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
 }

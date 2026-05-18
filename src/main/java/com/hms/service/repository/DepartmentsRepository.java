@@ -23,4 +23,6 @@ public interface DepartmentsRepository extends JpaRepository<DepartmentsEntity, 
 
 	boolean existsByIdAndBusinessUnitId(Integer departmentId, Integer businessUnitId);
 	
+	Optional<DepartmentsEntity> findById(Integer id);
+	
 }

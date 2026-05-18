@@ -1,10 +1,12 @@
 package com.hms.service.serviceImpl;
 
 
+
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +15,10 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.JrResponseDto;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
@@ -23,6 +28,7 @@ import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SeniorityLevelRepository;
 import com.hms.service.repository.TravelRequirementRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.repository.UserTypeRepository;
 import com.hms.service.response.DropDownResponse;
 import com.hms.service.response.JrResponse;
@@ -53,6 +59,9 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	private UserTypeRepository userTypeRepository;
 	
 	@Autowired
+	private UserRepository userRepository;
+	
+	@Autowired
 	private ModuleRepository moduleRepository;
 	
 	@Autowired
@@ -67,6 +76,8 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	@Autowired
 	private FunctionalityRepository functionalityRepository;
 	
+	@Autowired
+	private AssignRolesRepository assignRolesRepository;
 
 	
 	@Override
@@ -286,4 +297,37 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		return ApiResponse.success(ResponseCode.SUCCESS, Constants.FUNCTIONALITY_FETCHED_SUCCESSFULLY, response);
 	}
 	
+	@Override
+	public ApiResponse<List<DropDownResponse>> getUsersByRole() {
+
+	    List<AssignRolesEntity> assignedUsers =
+	            assignRolesRepository.findByRoleId(42);
+
+	    List<DropDownResponse> response =
+	            assignedUsers.stream()
+	                    .map(assign -> {
+
+	                        UserEntity user =
+	                                userRepository
+	                                        .findByUserId(assign.getUserId())
+	                                        .orElse(null);
+
+	                        if (user == null) {
+	                            return null;
+	                        }
+
+	                        return new DropDownResponse(
+	                                user.getUserId().intValue(),
+	                                user.getUsername()
+	                        );
+	                    })
+	                    .filter(Objects::nonNull)
+	                    .toList();
+
+	    return new ApiResponse<>(
+	            ResponseCode.SUCCESS,
+	            "Users fetched successfully",
+	            response
+	    );
+	}
 }
