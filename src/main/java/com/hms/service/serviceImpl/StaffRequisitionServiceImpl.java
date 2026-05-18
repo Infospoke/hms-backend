@@ -140,7 +140,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private INotificationService notificationService;
-	
+
 //	@Autowired
 //	private UserServiceImpl userService;
 
@@ -184,9 +184,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				userId = getUserIdFromToken();
 
 				roleName = getRoleNameFromToken();
-
-				
-
 
 				srPositionBasicsEntity.setCreatedBy(username);
 				srPositionBasicsEntity.setUserId(userId);
@@ -490,9 +487,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					String makerEmail = userRepository.findByUserId(userId).get().getEmail();
 					log.info("maker email is" + makerEmail);
 					event.setMakerEmailAddress(makerEmail);
+					event.setMakerMessage(
+							"Staffing Requisition has been created successfully and submitted for Level 1 approval");
 					event.setMakerNotificationTitle(Constants.SR_SUBMITTED_MAIL_SUBJECT);
-					event.setMakerEmailBody(String.format(Constants.SR_SUBMITTED_MAIL_BODY, srEntity.getSrId()));
-
 
 					// Department Name
 					String deptName = "";
@@ -508,31 +505,29 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					}
 
 					event.setDeptName(deptName);
+					event.setMakerEmailBody(String.format(Constants.SR_SUBMITTED_MAIL_BODY, srEntity.getCreatedBy(),
+							srEntity.getSrId(), srEntity.getJobTitle(), event.getDeptName(), srEntity.getOpenings(),
+							srEntity.getLocation(), srEntity.getEmploymentType(), srEntity.getPriority(),
+							srEntity.getCreatedOn()));
+					log.info("");
 
 					event.setCheckerNotificationTitle(Constants.SR_SUBMITTED_MAIL_SUBJECT);
 
-					event.setMessage("New Staffing Requisition submitted for approval");
-					
+					event.setCheckerMessage("A new Staffing Requisition is awaiting your review and approval.");
+
 					event.setType("SR");
 
 					event.setRoleEmailMap(roleEmailMap);
 					log.info("role map is" + roleEmailMap);
-					for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
+					event.setCheckerEmailBody(String.format(Constants.SR_TO_BE_APPROVED_BY_FIRST_APPROVER_MAIL_BODY,
+							"Department Head", srEntity.getSrId(), srEntity.getJobTitle(), event.getDeptName(),
+							srEntity.getCreatedBy(), srEntity.getOpenings(), srEntity.getLocation(),
+							srEntity.getEmploymentType(), srEntity.getPriority(), srEntity.getCreatedOn()));
 
-						Integer roleId = entry.getKey();
-						List<String> emails = entry.getValue();
+					log.info("email body is" + event);
 
-						System.out.println("Role Id : " + roleId);
-						System.out.println("Emails : " + emails);
+					notificationService.callNotification(event);
 
-						event.setCheckerEmailBody(
-								String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, srEntity.getSrId()));
-
-						log.info("email body is" + event);
-
-						notificationService.callNotification(event);
-
-					}
 					log.info("The Event is : " + event);
 
 				}
@@ -1176,7 +1171,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						positonBasicsResponse.setDepartmentName(department.getDepartmentName());
 					}
 				}
-				
+
 				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
 				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
@@ -1187,7 +1182,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						positonBasicsResponse.setSeniorityLevelName(seniorityLevelName);
 					});
 				}
-				
+
 				positonBasicsResponse.setOpenings(srPositionBasicsEntity.getOpenings());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setWorkMode(srPositionBasicsEntity.getWorkMode());
@@ -1210,28 +1205,25 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setCommentsByApprover1(srPositionBasicsEntity.getCommentsByApprover1());
 				positonBasicsResponse.setCommentsByApprover2(srPositionBasicsEntity.getCommentsByApprover2());
 				positonBasicsResponse.setCommentsByApprover3(srPositionBasicsEntity.getCommentsByApprover3());
-				
-				Optional<ApprovalsChildEntity> optionalChildEntity = approvalsChildRepository.findByProcessId(srPositionBasicsEntity.getSrId());
+
+				Optional<ApprovalsChildEntity> optionalChildEntity = approvalsChildRepository
+						.findByProcessId(srPositionBasicsEntity.getSrId());
 
 				if (optionalChildEntity.isPresent()) {
 
-				    ApprovalsChildEntity childEntity = optionalChildEntity.get();
+					ApprovalsChildEntity childEntity = optionalChildEntity.get();
 
-				    List<Integer> roleIds = List.of(
-				            childEntity.getRole1(),
-				            childEntity.getRole2(),
-				            childEntity.getRole3());
+					List<Integer> roleIds = List.of(childEntity.getRole1(), childEntity.getRole2(),
+							childEntity.getRole3());
 
-				    List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
+					List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
 
-				    Map<Integer, String> roleMap =
-				            roles.stream().collect(Collectors.toMap(
-				                    r -> (Integer) r[0],
-				                    r -> (String) r[1]));
+					Map<Integer, String> roleMap = roles.stream()
+							.collect(Collectors.toMap(r -> (Integer) r[0], r -> (String) r[1]));
 
-				    positonBasicsResponse.setApprover1Role(roleMap.get(childEntity.getRole1()));
-				    positonBasicsResponse.setApprover2Role(roleMap.get(childEntity.getRole2()));
-				    positonBasicsResponse.setApprover3Role(roleMap.get(childEntity.getRole3()));
+					positonBasicsResponse.setApprover1Role(roleMap.get(childEntity.getRole1()));
+					positonBasicsResponse.setApprover2Role(roleMap.get(childEntity.getRole2()));
+					positonBasicsResponse.setApprover3Role(roleMap.get(childEntity.getRole3()));
 				}
 				response.setPositonBasicsResponse(positonBasicsResponse);
 			}
@@ -1258,13 +1250,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				budgetAndCompensationResponse.setId(budgetAndCompensationEntity.getId());
 				budgetAndCompensationResponse.setSrId(budgetAndCompensationEntity.getSrId());
-				budgetAndCompensationResponse.setProposedTotalCompensation(budgetAndCompensationEntity.getProposedTotalCompensation());
+				budgetAndCompensationResponse
+						.setProposedTotalCompensation(budgetAndCompensationEntity.getProposedTotalCompensation());
 				budgetAndCompensationResponse.setSigningBonus(budgetAndCompensationEntity.getSigningBonus());
 				budgetAndCompensationResponse.setEquity(budgetAndCompensationEntity.getEquity());
 				budgetAndCompensationResponse.setRelocationBudget(budgetAndCompensationEntity.getRelocationBudget());
-				budgetAndCompensationResponse.setSigningBonusAmount(budgetAndCompensationEntity.getSigningBonusAmount());
+				budgetAndCompensationResponse
+						.setSigningBonusAmount(budgetAndCompensationEntity.getSigningBonusAmount());
 				budgetAndCompensationResponse.setEquityAmount(budgetAndCompensationEntity.getEquityAmount());
-				budgetAndCompensationResponse.setRelocationBudgetAmount(budgetAndCompensationEntity.getRelocationBudgetAmount());
+				budgetAndCompensationResponse
+						.setRelocationBudgetAmount(budgetAndCompensationEntity.getRelocationBudgetAmount());
 				budgetAndCompensationResponse.setAnnualHiringCost(budgetAndCompensationEntity.getAnnualHiringCost());
 				budgetAndCompensationResponse.setSubmitted(budgetAndCompensationEntity.getSubmitted());
 				budgetAndCompensationResponse.setApproved(budgetAndCompensationEntity.getApproved());
@@ -1283,16 +1278,19 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						? Arrays.asList(rolesAndRequirementsEntity.getSkillsMustHave().split(","))
 						: Collections.emptyList());
 
-				rolesAndRequirementsResponse.setNiceToHaveSkills(rolesAndRequirementsEntity.getNiceToHaveSkills() != null
+				rolesAndRequirementsResponse
+						.setNiceToHaveSkills(rolesAndRequirementsEntity.getNiceToHaveSkills() != null
 								? Arrays.asList(rolesAndRequirementsEntity.getNiceToHaveSkills().split(","))
 								: Collections.emptyList());
-				rolesAndRequirementsResponse.setEducationRequirement(rolesAndRequirementsEntity.getEducationRequirement());
+				rolesAndRequirementsResponse
+						.setEducationRequirement(rolesAndRequirementsEntity.getEducationRequirement());
 				rolesAndRequirementsResponse.setTravelRequirement(rolesAndRequirementsEntity.getTravelRequirement());
 				rolesAndRequirementsResponse.setMinExperience(rolesAndRequirementsEntity.getMinExperience());
 				rolesAndRequirementsResponse.setMaxExperience(rolesAndRequirementsEntity.getMaxExperience());
 				rolesAndRequirementsResponse.setMinInterviewRounds(rolesAndRequirementsEntity.getMinInterviewRounds());
 				rolesAndRequirementsResponse.setMaxInterviewRounds(rolesAndRequirementsEntity.getMaxInterviewRounds());
-				rolesAndRequirementsResponse.setCertificationsRequired(rolesAndRequirementsEntity.getCertificationsRequired() != null
+				rolesAndRequirementsResponse
+						.setCertificationsRequired(rolesAndRequirementsEntity.getCertificationsRequired() != null
 								? Arrays.asList(rolesAndRequirementsEntity.getCertificationsRequired().split(","))
 								: Collections.emptyList());
 				rolesAndRequirementsResponse.setLanguages(rolesAndRequirementsEntity.getLanguages() != null
@@ -1369,7 +1367,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND,
 						List.of(Constants.NO_RECORDS_FOUND_IN_THE_DATABASE));
 			}
-
 			List<Map<String, Object>> list = pageData.getContent().stream().map(sr -> {
 				Map<String, Object> map = new HashMap<>();
 				map.put(Constants.SR_ID, sr.getSrId());
@@ -1418,23 +1415,22 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		return "SR-" + year + "-" + departmentCode + "-" + formattedSeq;
 	}
 
-	private void sendMakerMail(String srId,Long userId, String makerRoleName, String subject, String body, NotificationEvent event) {
+	private void sendMakerMail(String srId, Long userId, String makerMessage, String makerRoleName,
+			String notificationTitle, String body, NotificationEvent event) {
 
-	
 		String makerEmail = userRepository.findByUserId(userId).get().getEmail();
 
 		event.setType("SR");
-		
+
 		event.setProcessId(srId);
+		event.setMakerMessage(makerMessage);
+		event.setMakerRoleName(makerRoleName);
 
 		event.setMakerEmailAddress(makerEmail);
 
-		event.setMakerRoleName(makerRoleName);
-
-		event.setMakerNotificationTitle(subject);
+		event.setMakerNotificationTitle(notificationTitle);
 
 		event.setMakerEmailBody(body);
-	
 
 		notificationService.callNotification(event);
 	}
@@ -1445,7 +1441,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		Optional<ApprovalsChildEntity> optional = approvalsChildRepository.findByProcessId(request.getSrId());
 
-        NotificationEvent event = new NotificationEvent();
+		NotificationEvent event = new NotificationEvent();
 		if (optional.isEmpty()) {
 			log.error("No approval record found");
 			// return ApiResponse.error("No approval record found");
@@ -1473,7 +1469,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid approval flow",
 					List.of("No active approval level found"));
 		}
-
 
 		String roleName = getRoleNameFromToken();
 
@@ -1539,10 +1534,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 
 			SRPositionBasicsEntity pos = posOpt.get();
-			String srId=pos.getSrId();
+			String srId = pos.getSrId();
 			Long userId = pos.getUserId();
 			String makerRoleName = pos.getRoleName();
-			
 
 			// LEVEL CHECKING
 			int approvalLevel = 0;
@@ -1565,159 +1559,300 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 
 			// APPROVED
-			if (Boolean.TRUE.equals(request.getApproved())) {
+			boolean Approved = Boolean.TRUE.equals(request.getApproved());
 
-				// LEVEL 1
+			LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+			/*
+			 * --------------------------------- COMMON APPROVER DETAILS
+			 * ----------------------------------
+			 */
+
+			if (approvalLevel == 1) {
+
+				pos.setApprover1By(username);
+				pos.setApprover1Role(roleName);
+				pos.setDateOfApproval1(now);
+				pos.setCommentsByApprover1(request.getComments());
+
+			} else if (approvalLevel == 2) {
+
+				pos.setApprover2By(username);
+				pos.setApprover2Role(roleName);
+				pos.setDateOfApproval2(now);
+				pos.setCommentsByApprover2(request.getComments());
+
+			} else if (approvalLevel == 3) {
+
+				pos.setApprover3By(username);
+				pos.setApprover3Role(roleName);
+				pos.setDateOfApproval3(now);
+				pos.setCommentsByApprover3(request.getComments());
+			}
+
+			// APPROVED FLOW
+
+			if (Approved) {
+
 				if (approvalLevel == 1) {
 
-					// PositionBasic table
 					pos.setApprover1(true);
-					pos.setApprover1By(username);
-					pos.setApprover1Role(roleName);
-					pos.setDateOfApproval1(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-					pos.setCommentsByApprover1(request.getComments());
-					
 
-					// Child table → enable next level
+					// enable next level
 					entity.setApprover2(true);
-
-				}
-
-				// LEVEL 2
-				else if (approvalLevel == 2) {
-
-					// PositionBasic table
-					pos.setApprover2(true);
-					pos.setApprover2By(username);
-					pos.setApprover2Role(roleName);
-					pos.setDateOfApproval2(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-					pos.setCommentsByApprover2(request.getComments());
-					
-
-					// Child table → enable next level
-					entity.setApprover3(true);
-
-				}
-
-				// LEVEL 3
-				else if (approvalLevel == 3) {
-
-					// SRPositionBasic table
-					pos.setApprover3(true);
-					pos.setApprover3By(username);
-					pos.setApprover3Role(roleName);
-					pos.setDateOfApproval3(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-					pos.setCommentsByApprover3(request.getComments());
-
-					// final approval completed
-					pos.setApproved(true);
-					pos.setInProgress(true);
-
-				}
-
-				// common updates
-				pos.setRejected(false);
-
-				// save both tables
-				positionBasicsRepository.save(pos);
-				approvalsChildRepository.save(entity);
-
-				Map<Integer, List<String>> roleEmailMap =
-				        processApprovalChain(request.getSrId());
-
-			
-				if (roleEmailMap != null && !roleEmailMap.isEmpty()) {
-
-				        event.setProcessId(srId);
-				        
-				        event.setType("SR");
-
-				        event.setCheckerRoleName(roleName);
-
-				        event.setCheckerNotificationTitle(
-				                "SR Approval Required");
-
-				        event.setMessage(
-				                "SR moved to next approval level");
-
-				        event.setRoleEmailMap((roleEmailMap));
-
-				        event.setCheckerEmailBody(
-				                String.format(
-				                        Constants.SR_TO_BE_APPROVED_MAIL_BODY,
-				                        pos.getSrId()));
-
-				        
-				        if (approvalLevel == 1) {
-
-							sendMakerMail(srId,userId, makerRoleName, "SR Approved",
-									String.format(Constants.SR_APPROVED_NOTIFY, pos.getSrId(), pos.getApprover1By()),event);
-						}
-
-						else if (approvalLevel == 2) {
-
-							sendMakerMail(srId,userId, makerRoleName, "SR Approved",
-									String.format(Constants.SR_APPROVED_NOTIFY, pos.getSrId(), pos.getApprover1By()),event);
-						}
-
-						else if (approvalLevel == 3) {
-
-							sendMakerMail(srId,userId, makerRoleName, "SR Fully Approved",
-									String.format("Your SR %s has been fully approved", pos.getSrId()),event);
-						}
-				      
-				    
-				}
-
-		
-			
-				
-
-
-				return ApiResponse.success("Approved successfully at level " + approvalLevel);
-
-			} else {
-
-				// REJECTED
-
-				pos.setRejected(true);
-				pos.setInProgress(true);
-
-				// optional rejection details
-				if (approvalLevel == 1) {
-
-					pos.setApprover1By(username);
-					pos.setApprover1Role(roleName);
-					pos.setDateOfApproval1(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-					pos.setCommentsByApprover1(request.getComments());
 
 				} else if (approvalLevel == 2) {
 
-					pos.setApprover2By(username);
-					pos.setApprover2Role(roleName);
-					pos.setDateOfApproval2(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-					pos.setCommentsByApprover2(request.getComments());
+					pos.setApprover2(true);
+
+					// enable next level
+					entity.setApprover3(true);
 
 				} else if (approvalLevel == 3) {
 
-					pos.setApprover3By(username);
-					pos.setApprover3Role(roleName);
-					pos.setDateOfApproval3(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-					pos.setCommentsByApprover3(request.getComments());
+					pos.setApprover3(true);
+
+					// final approval
+					pos.setApproved(true);
+					pos.setInProgress(true);
 				}
 
-				positionBasicsRepository.save(pos);
-				sendMakerMail(srId,
+				pos.setRejected(false);
 
-						userId, makerRoleName,
+			} else {
 
-						"SR Rejected",
+				/*
+				 * --------------------------------- REJECT FLOW
+				 * ----------------------------------
+				 */
 
-						String.format(Constants.SR_REJECTED_NOTIFY, pos.getSrId(), approvalLevel),event);
-
-				return ApiResponse.success("Rejected successfully at level " + approvalLevel);
+				pos.setRejected(true);
+				pos.setInProgress(true);
 			}
+
+			/*
+			 * --------------------------------- SAVE COMMON
+			 * ----------------------------------
+			 */
+
+			positionBasicsRepository.save(pos);
+			approvalsChildRepository.save(entity);
+
+			/*
+			 * --------------------------------- COMMON MAIL DATA
+			 * ----------------------------------
+			 */
+
+			Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getSrId());
+
+			if (roleEmailMap != null && !roleEmailMap.isEmpty()) {
+
+				Integer deptId = pos.getDepartmentId();
+
+				String deptName = departmentsRepository.findById(deptId).get().getDepartmentName();
+
+				event.setProcessId(srId);
+				event.setType("SR");
+				event.setCheckerRoleName(roleName);
+				event.setRoleEmailMap(roleEmailMap);
+
+				/*
+				 * --------------------------------- APPROVED MAIL FLOW
+				 * ----------------------------------
+				 */
+
+				String levelName = "";
+				String approverName = "";
+				Object approvalStatus = null;
+				LocalDateTime approvedDate = null;
+
+				/*
+				 * --------------------------------- APPROVAL / REJECTION LEVEL DATA
+				 * ----------------------------------
+				 */
+
+				if (approvalLevel == 1) {
+
+					levelName = "Department Head";
+
+					// APPROVER DETAILS
+					pos.setApprover1By(username);
+					pos.setApprover1Role(roleName);
+					pos.setDateOfApproval1(now);
+					pos.setCommentsByApprover1(request.getComments());
+
+					approverName = pos.getApprover1By();
+					approvedDate = pos.getDateOfApproval1();
+
+					if (Approved) {
+
+						pos.setApprover1(true);
+
+						approvalStatus = pos.getApprover1();
+
+						// ENABLE NEXT LEVEL
+						entity.setApprover2(true);
+
+					}
+
+				} else if (approvalLevel == 2) {
+
+					levelName = "HRBP";
+
+					pos.setApprover2By(username);
+					pos.setApprover2Role(roleName);
+					pos.setDateOfApproval2(now);
+					pos.setCommentsByApprover2(request.getComments());
+
+					approverName = pos.getApprover2By();
+					approvedDate = pos.getDateOfApproval2();
+
+					if (Approved) {
+
+						pos.setApprover2(true);
+
+						approvalStatus = pos.getApprover2();
+
+						// ENABLE NEXT LEVEL
+						entity.setApprover3(true);
+					}
+
+				} else if (approvalLevel == 3) {
+
+					levelName = "Finance";
+
+					pos.setApprover3By(username);
+					pos.setApprover3Role(roleName);
+					pos.setDateOfApproval3(now);
+					pos.setCommentsByApprover3(request.getComments());
+
+					approverName = pos.getApprover3By();
+					approvedDate = pos.getDateOfApproval3();
+
+					if (Approved) {
+
+						pos.setApprover3(true);
+
+						approvalStatus = pos.getApprover3();
+
+						// FINAL APPROVAL
+						pos.setApproved(true);
+						pos.setInProgress(true);
+					}
+				}
+
+				// APPROVED FLOW
+
+				if (Approved) {
+
+					pos.setRejected(false);
+
+					// SAVE TABLES
+					positionBasicsRepository.save(pos);
+					approvalsChildRepository.save(entity);
+
+					if (roleEmailMap != null && !roleEmailMap.isEmpty()) {
+
+						event.setProcessId(srId);
+
+						event.setType("SR");
+
+						event.setCheckerRoleName(roleName);
+
+						event.setRoleEmailMap(roleEmailMap);
+
+						event.setCheckerMessage(
+								"A Staffing Requisition is now under your approval flow for review and approval");
+
+						event.setCheckerEmailBody(String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, pos.getSrId(),
+								pos.getJobTitle(), deptName, pos.getCreatedBy(), pos.getOpenings(), pos.getLocation(),
+								pos.getEmploymentType(), pos.getPriority(), pos.getCreatedOn()));
+
+						String makerSubject = "";
+						String makerTitle = "";
+						String makerMailBody = "";
+
+						// LEVEL 1
+
+						if (approvalLevel == 1) {
+
+							makerSubject = "Your Staffing Requisition has been approved by Level 1 (Department Head) and is now under Level 2 approval flow";
+
+							makerTitle = "Level 1 Approved — Department Head";
+
+							makerMailBody = String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, pos.getCreatedBy(),
+									approverName, pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(),
+									pos.getLocation(), pos.getEmploymentType(), pos.getPriority());
+						}
+
+						// LEVEL 2
+
+						else if (approvalLevel == 2) {
+
+							makerSubject = "Your Staffing Requisition has been approved by Level 2 (HRBP) and is now under Level 3 approval flow";
+
+							makerTitle = "Level 2 Approved — HRBP";
+
+							makerMailBody = String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, pos.getCreatedBy(),
+									approverName, pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(),
+									pos.getLocation(), pos.getEmploymentType(), pos.getPriority());
+						}
+
+						// LEVEL 3
+
+						else if (approvalLevel == 3) {
+
+							makerSubject = "Your Staffing Requisition has been fully approved successfully and is now ready for Recruiter Assignment and Job Creation";
+
+							makerTitle = "Level 3 Approved — Finance ";
+
+							makerMailBody = String.format(Constants.SR_FULLY_APPROVED_NOTIFY, pos.getCreatedBy(),
+									pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
+									pos.getEmploymentType(), pos.getPriority());
+							log.info(makerMailBody);
+						}
+
+						event.setCheckerNotificationTitle(makerTitle);
+
+						// MAIL TO MAKER
+
+						sendMakerMail(srId, userId, makerSubject, makerRoleName, makerTitle, makerMailBody, event);
+					}
+
+					return ApiResponse.success("Approved successfully at level " + approvalLevel);
+				}
+
+				// REJECTED FLOW
+
+				else {
+
+					pos.setRejected(true);
+					pos.setInProgress(true);
+
+					// SAVE
+					positionBasicsRepository.save(pos);
+
+					String rejectedMailBody = String.format(Constants.SR_REJECTED_NOTIFY, pos.getCreatedBy(),
+							pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
+							pos.getEmploymentType(), pos.getPriority(), levelName, approverName, approvedDate,
+							request.getComments());
+
+					event.setCheckerNotificationTitle("Level " + approvalLevel + " Rejected — " + levelName);
+
+					event.setCheckerMessage("A Staffing Requisition has been rejected in the approval flow.");
+
+					event.setCheckerEmailBody(rejectedMailBody);
+
+					// MAIL TO MAKER
+
+					sendMakerMail(srId, userId, "Your Staffing Requisition has been rejected by Level " + approvalLevel
+							+ " (" + levelName + ")", makerRoleName, "SR Rejected", rejectedMailBody, event);
+				}
+
+			}
+			return ApiResponse.success("Rejected successfully at level " + approvalLevel);
 		}
+
 	}
 
 	public ApiResponse<?> getSrCounts() {
@@ -1849,7 +1984,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		List<SRPositionBasicsEntity> srEntities = srPage.getContent();
 
-
 		Map<String, Object> countFilters = new HashMap<>();
 
 		if (request.getFilters() != null) {
@@ -1959,7 +2093,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		Map<String, Object> response = new HashMap<>();
 
 		response.put("content", responseList);
-		
+
 		response.put("totalItems", srPage.getTotalElements());
 
 		Map<String, Object> counts = new HashMap<>();

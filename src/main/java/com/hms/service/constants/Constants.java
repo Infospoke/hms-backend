@@ -1,39 +1,37 @@
 package com.hms.service.constants;
 
-
 public class Constants {
 
-	
 	public static final String BUCKET = "srdemandsupportingdocumentsbucket";
 	public static final String UNDER_SCORE = "_";
-    public static final String USER_TYPE_REQUIRED = "User Type is required";
-    public static final String FIRST_NAME_REQUIRED = "First Name is required";
-    public static final String FIRST_NAME_SIZE = "First Name must be between 2 and 50 characters";
-    public static final String FIRST_NAME_INVALID = "First Name should contain only alphabets";
-    public static final String LAST_NAME_REQUIRED = "Last Name is required";
-    public static final String LAST_NAME_SIZE = "Last Name must be between 1 and 50 characters";
-    public static final String LAST_NAME_INVALID = "Last Name should contain only alphabets";
-    public static final String EMPLOYEE_ID_REQUIRED = "Employee ID is required";
-    public static final String EMAIL_REQUIRED = "Email is required";
-    public static final String EMAIL_INVALID = "Invalid email format";
-    public static final String MOBILE_REQUIRED = "Mobile number is required";
-    public static final String MOBILE_INVALID = "Mobile number must contain only digits";
-    public static final String ALT_MOBILE_INVALID = "Alternate number must contain only digits";
-    public static final String DOB_REQUIRED = "Date of Birth is required";
-    public static final String EMPLOYMENT_TYPE_REQUIRED = "Employment Type is required";
-    public static final String BUSINESS_UNIT_REQUIRED = "Business Unit is required";
-    public static final String DEPARTMENT_REQUIRED = "Department is required";
-    public static final String ROLE_REQUIRED = "Role is required";
-    public static final Integer MIN_AGE = 18;
-    public static final int PASSWORD_LENGTH = 10;
-    public static final int PIN_LENGTH = 6;
-    public static final String NUMERIC_CODE = "0123456789";
-    public static final String SPECIAL_CHARS_CODE = "@#$%";
-    public static final String ALPHABETS_CAPS_CODE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    public static final String ALPHABETS_SMALL_CODE = "abcdefghijklmnopqrstuvwxyz";
+	public static final String USER_TYPE_REQUIRED = "User Type is required";
+	public static final String FIRST_NAME_REQUIRED = "First Name is required";
+	public static final String FIRST_NAME_SIZE = "First Name must be between 2 and 50 characters";
+	public static final String FIRST_NAME_INVALID = "First Name should contain only alphabets";
+	public static final String LAST_NAME_REQUIRED = "Last Name is required";
+	public static final String LAST_NAME_SIZE = "Last Name must be between 1 and 50 characters";
+	public static final String LAST_NAME_INVALID = "Last Name should contain only alphabets";
+	public static final String EMPLOYEE_ID_REQUIRED = "Employee ID is required";
+	public static final String EMAIL_REQUIRED = "Email is required";
+	public static final String EMAIL_INVALID = "Invalid email format";
+	public static final String MOBILE_REQUIRED = "Mobile number is required";
+	public static final String MOBILE_INVALID = "Mobile number must contain only digits";
+	public static final String ALT_MOBILE_INVALID = "Alternate number must contain only digits";
+	public static final String DOB_REQUIRED = "Date of Birth is required";
+	public static final String EMPLOYMENT_TYPE_REQUIRED = "Employment Type is required";
+	public static final String BUSINESS_UNIT_REQUIRED = "Business Unit is required";
+	public static final String DEPARTMENT_REQUIRED = "Department is required";
+	public static final String ROLE_REQUIRED = "Role is required";
+	public static final Integer MIN_AGE = 18;
+	public static final int PASSWORD_LENGTH = 10;
+	public static final int PIN_LENGTH = 6;
+	public static final String NUMERIC_CODE = "0123456789";
+	public static final String SPECIAL_CHARS_CODE = "@#$%";
+	public static final String ALPHABETS_CAPS_CODE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	public static final String ALPHABETS_SMALL_CODE = "abcdefghijklmnopqrstuvwxyz";
 	public static final String EMAIL_ALREADY_EXISTS = "Email already exists";
 	public static final String EMPLOYEE_ID_ALREADY_EXISTS = "Employee ID already exists";
-	public static final String INVALID_DOB_FORMAT =  "Invalid Date of Birth format. Expected format: yyyy-MM-dd";
+	public static final String INVALID_DOB_FORMAT = "Invalid Date of Birth format. Expected format: yyyy-MM-dd";
 	public static final String USER_AGE_MUST_BE_ABOVE_18 = "User must be at least 18 years old";
 	public static final String ALTERNATIVE_NUMBER_MUST_BE_DIFFERENT = "Alternate number cannot be same as mobile number";
 	public static final String USER_CREATED_SUCCESSFULLY = "User created successfully";
@@ -58,7 +56,6 @@ public class Constants {
 	public static final String ROLE_PERMISSION_DETAILS_FETCHED_SUCCESSFULLY = "Role permission details fetched successfully";
 	public static final String ROLE_PERMISSION_UPDATED_SUCCESSFULLY = "Role Permission updated sucessfully";
 
-
 	public static final String SENIORITY_FETCHED_SUCCESSFULLY = "Seniority level fetched successfully";
 	public static final String TRAVEL_REQUIREMENTS_FETCHED_SUCCESSFULLY = "Travel Requirements Fteched Successfully";
 	public static final String USER_TYPES_FETCHED_SUCCESSFULLY = "user types fetched successfully";
@@ -68,7 +65,7 @@ public class Constants {
 	public static final String PIN_IS_REQUIRED = "Pin is required";
 	public static final String PASSWORD_IS_REQUIRED = "Password is required";
 	public static final String CHANNEL_IS_REQUIRED = "Channel is required";
-	public static final String SUCCESS =  "success";
+	public static final String SUCCESS = "success";
 	public static final String SR_ID_IS_REQUIRED = "SR ID is required";
 	public static final String SR_ID_CANNOT_BE_NULL_OR_EMPTY = "SR Id cannot be null or empty";
 	public static final String NO_DATA_FOUND = "No data found";
@@ -209,148 +206,216 @@ public class Constants {
 	public static final String MAIL_FAILURE = "Failed to send the email";
 	public static final String FORGOT_PASSWORD_SUBJECT = "Your New Login Credentials";
 
-	public static final String FORGOT_PASSWORD_BODY =
-	        "<html><body>"
-	        + "<p>Dear %s,</p>"
+	public static final String FORGOT_PASSWORD_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
-	        + "<p>This is to inform you that your password for the Nexus HMS Portal has been successfully reset.</p>"
+			+ "<p>This is to inform you that your password for the Nexus HMS Portal has been successfully reset.</p>"
 
-	        + "<p>Please use the temporary password below to log in:</p>"
+			+ "<p>Please use the temporary password below to log in:</p>"
 
-	        + "<p><b>Username:</b> %s<br/>"
-	        + "<b>Temporary Password:</b> %s</p>"
+			+ "<p><b>Username:</b> %s<br/>" + "<b>Temporary Password:</b> %s</p>"
 
-	        + "<p>You are required to log in and change your password immediately. "
-	        + "This temporary password is valid for a limited time and will expire after first use or as per system policy.</p>"
+			+ "<p>You are required to log in and change your password immediately. "
+			+ "This temporary password is valid for a limited time and will expire after first use or as per system policy.</p>"
 
-	        + "<p><b>Security Advisory:</b></p>"
-	        + "<ul>"
-	        + "<li>Do not share your password with anyone</li>"
-	        + "<li>Ensure your new password complies with the organization’s security standards</li>"
-	        + "<li>If you did not initiate this request, please report it immediately</li>"
-	        + "</ul>"
+			+ "<p><b>Security Advisory:</b></p>" + "<ul>" + "<li>Do not share your password with anyone</li>"
+			+ "<li>Ensure your new password complies with the organization’s security standards</li>"
+			+ "<li>If you did not initiate this request, please report it immediately</li>" + "</ul>"
 
-	        + "<p>For any assistance, please contact the IT Support Team </p>"
+			+ "<p>For any assistance, please contact the IT Support Team </p>"
 
-	        + "<br/>"
-	        + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
 
-	        + "</body></html>";
-    
-	public static final String FORGOT_PIN_BODY =
-	        "<html><body>"
-	        + "<p>Dear %s,</p>"
+			+ "</body></html>";
 
-	        + "<p>This is to inform you that your Mobile PIN for accessing the Nexus HMS application has been successfully reset.</p>"
+	public static final String FORGOT_PIN_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
-	        + "<p>Please find your temporary Mobile PIN below:</p>"
+			+ "<p>This is to inform you that your Mobile PIN for accessing the Nexus HMS application has been successfully reset.</p>"
 
-	        + "<p><b>Username:</b> %s<br/>"
-	        + "<b>Temporary Mobile PIN:</b> %s</p>"
+			+ "<p>Please find your temporary Mobile PIN below:</p>"
 
-	        + "<p>You are required to log in to the mobile application and update your PIN immediately. "
-	        + "This temporary PIN is valid for a limited duration and will expire after first use or as per system policy.</p>"
+			+ "<p><b>Username:</b> %s<br/>" + "<b>Temporary Mobile PIN:</b> %s</p>"
 
-	        + "<p><b>Security Advisory:</b></p>"
-	        + "<ul>"
-	        + "<li>Do not share your Mobile PIN with anyone</li>"
-	        + "<li>Avoid using easily guessable PINs (e.g., 1234, birth dates)</li>"
-	        + "<li>If you did not initiate this request, please report it immediately to the IT Support Team</li>"
-	        + "</ul>"
+			+ "<p>You are required to log in to the mobile application and update your PIN immediately. "
+			+ "This temporary PIN is valid for a limited duration and will expire after first use or as per system policy.</p>"
 
-	        + "<p>For any assistance, please contact IT Support </p>"
+			+ "<p><b>Security Advisory:</b></p>" + "<ul>" + "<li>Do not share your Mobile PIN with anyone</li>"
+			+ "<li>Avoid using easily guessable PINs (e.g., 1234, birth dates)</li>"
+			+ "<li>If you did not initiate this request, please report it immediately to the IT Support Team</li>"
+			+ "</ul>"
 
-	        + "<br/>"
-	        + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+			+ "<p>For any assistance, please contact IT Support </p>"
 
-	        + "</body></html>";
-    		
-    		
+			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+
+			+ "</body></html>";
+
 	public static final String USER_CREATED_MAIL_SUBJECT = "User Account Created - HMS";
-	public static final String USER_CREATED_MAIL_BODY =
-		    "<div style='font-family:Segoe UI,Arial,sans-serif; background-color:#f5f7fa; padding:20px;'>" +
+	public static final String USER_CREATED_MAIL_BODY = "<div style='font-family:Segoe UI,Arial,sans-serif; background-color:#f5f7fa; padding:20px;'>"
+			+
 
-		    "<div style='max-width:600px; margin:auto; background:#ffffff; border-radius:10px; " +
-		    "box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:30px;'>" +
+			"<div style='max-width:600px; margin:auto; background:#ffffff; border-radius:10px; "
+			+ "box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:30px;'>" +
 
-		    "<p>Dear <b>%s</b>,</p>" +
+			"<p>Dear <b>%s</b>,</p>" +
 
-		    "<p>Greetings from the HR Team at <b>Nexus HMS</b>.</p>" +
+			"<p>Greetings from the HR Team at <b>Nexus HMS</b>.</p>" +
 
-		    "<p>This is to inform you that your user account for the <b>Nexus HMS Portal</b> has been successfully created.</p>" +
+			"<p>This is to inform you that your user account for the <b>Nexus HMS Portal</b> has been successfully created.</p>"
+			+
 
-		    "<p>Please find your system-generated login credentials below:</p>" +
+			"<p>Please find your system-generated login credentials below:</p>" +
 
-		    "<div style='background:#f1f3f6; padding:20px; border-radius:8px; margin:20px 0;'>" +
+			"<div style='background:#f1f3f6; padding:20px; border-radius:8px; margin:20px 0;'>" +
 
-		    "<p style='margin:8px 0;'><b>Username:</b> %s</p>" +
-		    "<p style='margin:8px 0;'><b>Temporary Password:</b> %s</p>" +
-		    "<p style='margin:8px 0;'><b>Temporary PIN:</b> %s</p>" +
+			"<p style='margin:8px 0;'><b>Username:</b> %s</p>"
+			+ "<p style='margin:8px 0;'><b>Temporary Password:</b> %s</p>"
+			+ "<p style='margin:8px 0;'><b>Temporary PIN:</b> %s</p>" +
 
-		    "</div>" +
+			"</div>" +
 
-		    "<p style='color:#C0392B;'><b>Note:</b> These credentials are valid only for 24 hours from the time of issuance.</p>" +
+			"<p style='color:#C0392B;'><b>Note:</b> These credentials are valid only for 24 hours from the time of issuance.</p>"
+			+
 
-		    "<p>You are required to log in using the above credentials and complete the initial setup process. " +
-		    "For security compliance, you must change your password and PIN upon first login.</p>" +
+			"<p>You are required to log in using the above credentials and complete the initial setup process. "
+			+ "For security compliance, you must change your password and PIN upon first login.</p>" +
 
-		    "<p>Please ensure that your new credentials meet the organization’s security standards and are kept strictly confidential.</p>" +
+			"<p>Please ensure that your new credentials meet the organization’s security standards and are kept strictly confidential.</p>"
+			+
 
-		    "<p>If you encounter any issues while accessing the portal, please contact the HR/IT Support Team at " +
-		    ".</p>" +
+			"<p>If you encounter any issues while accessing the portal, please contact the HR/IT Support Team at "
+			+ ".</p>" +
 
-		    "<p>We wish you a successful and rewarding journey with Nexus HMS.</p>" +
+			"<p>We wish you a successful and rewarding journey with Nexus HMS.</p>" +
 
-		    "<br>" +
-		    "<p>Warm regards,<br><b>HR Team</b><br>Nexus HMS</p>" +
+			"<br>" + "<p>Warm regards,<br><b>HR Team</b><br>Nexus HMS</p>" +
 
-		    "</div></div>";
+			"</div></div>";
 	public static final String EMPLOYEE_ID_SIZE = "Employee id must be between 1 and 4 characters";
 	public static final String INVALID_ROLE_ID = "Invalid role id";
 	public static final String INVALID_DEPARTMENT_FOR_BUSINESS_UNIT = "Invalid departmet for bussiness id";
 	public static final String ROLE_NOT_BELONG_TO_DEPARTMENT = "Role id doesnot belong to this department";
 	public static final String PENDING = "Pending";
-	
-	public static final String SR_SUBMITTED_MAIL_BODY = "<html><body>"
-			+ "<p>Greetings</p>"
-			+ "<p>Your Staffing Requisition (SR) with ID <b>%s</b> has been successfully submitted.</p>"
-			+ "<p>We will review your request and get back to you shortly.</p>"
-			+ "<br/>"
-			+ "<p>Best regards,<br/>HMS Team</p>"
-			+ "</body></html>";
-	
+
+	public static final String SR_SUBMITTED_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>Your Staffing Requisition (SR) has been successfully created in the "
+			+ "Hiring Management System (HMS).</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
+			+ "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>"
+			+ "<li><b>Created Date:</b> %s</li>" + "</ul>"
+			+ "<p>The requisition has been successfully submitted and forwarded for the "
+			+ "approval process as per the configured workflow.</p>"
+			+ "<p>You will receive further notifications on the approval status and " + "subsequent actions.</p>"
+			+ "<br/>" + "<p>Regards,<br/>" + "Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+
 	public static final String SR_SUBMITTED_MAIL_SUBJECT = "SR Submitted Successfully";
-	
-	public static final String SR_TO_BE_APPROVED_MAIL_BODY = "<html><body>"
-			+ "<p>Greetings</p>"
-			+ "<p>The Staffing Requisition (SR) with ID <b>%s</b> is pending your approval.</p>"
-			+ "<p>Please review the request and take the necessary action at your earliest convenience.</p>"
-			+ "<br/>"
-			+ "<p>Best regards,<br/>HMS Team</p>"
+
+	public static final String SR_TO_BE_APPROVED_BY_FIRST_APPROVER_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
+
+			+ "<p>A new Staffing Requisition (SR) has been successfully submitted by the Hiring Manager "
+			+ "and is currently pending your review and approval in the Nexus Hiring Management System (HMS).</p>"
+
+			+ "<p>Please find the requisition summary below:</p>"
+
+			+ "<ul>" + "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Hiring Manager:</b> %s</li>" + "<li><b>Number of Positions:</b> %s</li>"
+			+ "<li><b>Job Location:</b> %s</li>" + "<li><b>Employment Type:</b> %s</li>"
+			+ "<li><b>Priority:</b> %s</li>" + "<li><b>Submission Date:</b> %s</li>" + "</ul>"
+
+			+ "<p>The request has been submitted as part of the ongoing hiring requirements "
+			+ "and is awaiting your approval to proceed further in the recruitment workflow.</p>"
+
+			+ "<p>Kindly review the requisition and take the necessary action at your earliest convenience.</p>"
+
+			+ "<p>If additional clarification is required, please coordinate with the respective Hiring Manager.</p>"
+
+			+ "<br/>" + "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>"
+
 			+ "</body></html>";
-	
-	public static final String SR_TO_BE_APPROVED_NOTIFY = "%s is awaiting your approval.";
-	public static final String SR_APPROVED_NOTIFY = "%s has been approved by %s.";
-	public static final String SR_REJECTED_NOTIFY = "%s has been rejected by %s.";
-	
-	public static final String CHAIN_CREATED_SUCESSFULLY_MAIL_BODY = "<html><body>"
-			+ "<p>Greetings</p>"
+
+	public static final String SR_TO_BE_APPROVED_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>The below Staffing Requisition (SR) has been reviewed and approved by "
+			+ "the previous approver and is now pending your review and approval in the "
+			+ "Nexus Hiring Management System (HMS).</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
+			+ "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Hiring Manager:</b> %s</li>" + "<li><b>Number of Positions:</b> %s</li>"
+			+ "<li><b>Job Location:</b> %s</li>" + "<li><b>Employment Type:</b> %s</li>"
+			+ "<li><b>Priority:</b> %s</li>" + "</ul>"
+			+ "<p>The approval workflow is currently with you for further action.</p>"
+			+ "<p>Kindly review the requisition and take the necessary action at your " + "earliest convenience.</p>"
+			+ "<p>For any additional clarification, please contact the respective " + "Hiring Manager.</p>" + "<br/>"
+			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+
+	public static final String SR_FULLY_APPROVED_NOTIFY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>We are pleased to inform you that the below Staffing Requisition (SR) "
+			+ "has been successfully approved by all required approvers in the " + "Nexus Hiring Management System (HMS).</p>"
+			+ "<p><b>Requisition Summary:</b></p>" + "<ul>" + "<li><b>SR ID:</b> %s</li>"
+			+ "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
+			+ "<p><b>Approval Status:</b></p>" + "<ul>" + "<li><b>Final Approval Status:</b> Approved</li>"
+			+ "<li><b>Approved On:</b> %s</li>" + "<li><b>Recruitment Status:</b> Open for Hiring</li>" + "</ul>"
+			+ "<p>The requisition approval workflow has been completed successfully, "
+			+ "and the SR is now available for the recruitment and recruiter assignment process.</p>" + "<br/>"
+			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+
+	public static final String SR_REJECTED_NOTIFY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>The below Staffing Requisition (SR) has been reviewed and rejected "
+			+ "during the approval process in the Nexus Hiring Management System (HMS).</p>"
+			+ "<p><b>Requisition Summary:</b></p>" + "<ul>" + "<li><b>SR ID:</b> %s</li>"
+			+ "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
+			+ "<p><b>Approval Workflow Details:</b></p>" + "<ul>" + "<li><b>Current Workflow Stage:</b> %s</li>"
+			+ "<li><b>Reviewed By:</b> %s</li>" + "<li><b>Approval Status:</b> Rejected</li>"
+			+ "<li><b>Reviewed On:</b> %s</li>" + "</ul>" + "<p><b>Reviewer Comments / Remarks:</b><br/>%s</p>"
+			+ "<p>The approval workflow has been stopped due to the rejection at the " + "above approval stage.</p>"
+			+ "<p>Kindly review the comments provided and make the necessary corrections "
+			+ "before resubmitting the requisition, if required.</p>"
+			+ "Nexus Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+	public static final String CHAIN_CREATED_SUCESSFULLY_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
 			+ "<p>Chain sucessfully created  with ID <b>%s</b>for the <b>%s</b></p>"
-			+ "<p>We will review your request and get back to you shortly.</p>"
+			+ "<p>We will review your request and get back to you shortly.</p>" + "<br/>"
+			+ "<p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+	public static final String SR_APPROVED_NOTIFY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>The below Staffing Requisition (SR) has been reviewed and approved by %s in the Nexus Hiring Management System (HMS).</p>"
+
+			+ "<p><b>Requisition Summary:</b></p>"
+
+			+ "<ul>" + "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
+
+			+ "<p><b>Approval Details:</b></p>"
+
+			+ "<ul>" + "<li><b>Approved By:</b> %s</li>" + "<li><b>Approval Status:</b> Approved</li>"
+			+ "<li><b>Approved On:</b> %s</li>"
+			+ "<li><b>Current Workflow Status:</b> Moved to Next Approval Stage</li>" + "</ul>"
+
+			+ "<p>The requisition has been successfully moved to the next step in the "
+			+ "approval workflow for further review and processing.</p>"
+
 			+ "<br/>"
-			+ "<p>Best regards,<br/>HMS Team</p>"
+
+			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>"
+
 			+ "</body></html>";
-	
+
 	public static final String CHAIN_CREATED_MAIL_SUBJECT = "chain created  Successfully";
-	
-	public static final String CHAIN_TO_BE_APPROVED= "<html><body>"
-			+ "<p>Greetings</p>"
+
+	public static final String CHAIN_TO_BE_APPROVED = "<html><body>" + "<p>Greetings</p>"
 			+ "<p>Chain sucessfully created  with ID <b>%s</b>for the <b>%s</b></p>"
-			+ "<p>Waiting for your approval.</p>"
-			+ "<br/>"
-			+ "<p>Best regards,<br/>HMS Team</p>"
-			+ "</body></html>";
+			+ "<p>Waiting for your approval.</p>" + "<br/>" + "<p>Best regards,<br/>HMS Team</p>" + "</body></html>";
 	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
 }
-
-
