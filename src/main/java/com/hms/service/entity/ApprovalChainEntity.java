@@ -96,6 +96,16 @@ public class ApprovalChainEntity {
 
 	private String functionalityName;
 
+	
+	@Column(name="active_approval")
+	private Boolean activeApproval;
+	
+	@Column(name="deactive_approval")
+	private Boolean deactiveApproval;
+	
+	@Column(name="request_type")
+	private String requestType;
+
 
     @JdbcTypeCode(SqlTypes.JSON)
 

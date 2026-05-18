@@ -395,4 +395,66 @@ public class SpecificationFilterRequest {
 
         return spec;
     }
+    
+    
+    public Specification<SRPositionBasicsEntity>
+    buildApprovedSrSpecification() {
+
+        Specification<SRPositionBasicsEntity> spec =
+                Specification.allOf();
+
+        spec = spec.and(
+                (r, q, c) ->
+                        c.equal(r.get("approved"), true)
+        );
+
+        String search = getFilter("search");
+
+        if (search != null) {
+
+            spec = spec.and((r, q, c) -> c.or(
+
+                    c.like(
+                            c.lower(r.get("srId")),
+                            "%" + search.toLowerCase() + "%"
+                    ),
+
+                    c.like(
+                            c.lower(r.get("jobTitle")),
+                            "%" + search.toLowerCase() + "%"
+                    )
+            ));
+        }
+
+        String departmentId = getFilter("departmentId");
+
+        if (departmentId != null) {
+
+            spec = spec.and(
+                    (r, q, c) ->
+                            c.equal(
+                                    r.get("departmentId"),
+                                    Integer.parseInt(departmentId)
+                            )
+            );
+        }
+
+        String requestedBy = getFilter("requestedBy");
+
+        if (requestedBy != null) {
+
+            spec = spec.and(
+                    likeSpec("createdBy", requestedBy)
+            );
+        }
+
+        Specification<SRPositionBasicsEntity> dateSpec =
+                dateSpec("dateOfApproval3");
+
+        if (dateSpec != null) {
+            spec = spec.and(dateSpec);
+        }
+
+        return spec;
+    }
 }

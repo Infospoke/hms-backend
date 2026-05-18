@@ -44,4 +44,6 @@ public class ApprovalChainResponse {
     private String approvedComments;
     
     private String rejectedComments;
+    
+    private String requestType;
 }

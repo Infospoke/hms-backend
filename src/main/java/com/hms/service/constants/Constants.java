@@ -296,6 +296,7 @@ public class Constants {
 	public static final String ROLE_NOT_BELONG_TO_DEPARTMENT = "Role id doesnot belong to this department";
 	public static final String PENDING = "Pending";
 
+
 	public static final String SR_SUBMITTED_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
 			+ "<p>Your Staffing Requisition (SR) has been successfully created in the "
 			+ "Hiring Management System (HMS).</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
@@ -309,7 +310,7 @@ public class Constants {
 			+ "<br/>" + "<p>Regards,<br/>" + "Hiring Management System (HMS)</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
-	public static final String SR_SUBMITTED_MAIL_SUBJECT = "SR Submitted Successfully";
+	
 
 	public static final String SR_TO_BE_APPROVED_BY_FIRST_APPROVER_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
@@ -379,10 +380,7 @@ public class Constants {
 			+ "before resubmitting the requisition, if required.</p>"
 			+ "Nexus Hiring Management System (HMS)</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
-	public static final String CHAIN_CREATED_SUCESSFULLY_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
-			+ "<p>Chain sucessfully created  with ID <b>%s</b>for the <b>%s</b></p>"
-			+ "<p>We will review your request and get back to you shortly.</p>" + "<br/>"
-			+ "<p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
 	public static final String SR_APPROVED_NOTIFY = "<html><body>"
 
 			+ "<p>Dear %s,</p>"
@@ -409,13 +407,597 @@ public class Constants {
 			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
 
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>"
+			+ "</body></html>";
+
+	
+	public static final String SR_SUBMITTED_MAIL_SUBJECT = "SR Submitted Successfully";
+
+	
+
+	public static final String SR_TO_BE_APPROVED_NOTIFY = "%s is awaiting your approval.";
+	
+
+	public static final String CHAIN_CREATED_SUCESSFULLY_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "Your approval chain configuration has been created successfully "
+			+ "in the Nexus Hiring Management System(HMS) and submitted for approval." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Status:</b> Pending Approval</p>" + "<p><b>Submitted By:</b> %s</p>"
+			+ "<p><b>Submitted On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain is currently under review and awaiting approval " + "from the Administrator."
+			+ "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring management System(HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
 
 			+ "</body></html>";
 
 	public static final String CHAIN_CREATED_MAIL_SUBJECT = "chain created  Successfully";
 
-	public static final String CHAIN_TO_BE_APPROVED = "<html><body>" + "<p>Greetings</p>"
-			+ "<p>Chain sucessfully created  with ID <b>%s</b>for the <b>%s</b></p>"
-			+ "<p>Waiting for your approval.</p>" + "<br/>" + "<p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+
+
+	public static final String CHAIN_TO_BE_APPROVED = "<html><body>"
+
+			+ "<p>Dear Administrator,</p>"
+
+			+ "<p>" + "A new approval chain configuration has been created and submitted "
+			+ "for approval in the Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Status:</b> Pending Approval</p>" + "<p><b>Submitted By:</b> %s</p>"
+			+ "<p><b>Submitted On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval workflow is currently awaiting your review and approval "
+			+ "for further activation." + "</p>"
+
+			+ "<p>" + "Kindly review the configuration and take the necessary action " + "at your earliest convenience."
+			+ "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring management System(HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	public static final String CHAIN_TO_BE_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
+	
+
 	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
+
+	public static final String CHAIN_REJECTED_MAIL_SUBJECT = "Approval Chain Creation Rejected";
+
+	public static final String CHAIN_APPROVER_CONFIRMATION_SUBJECT = "You have approved an Approval Chain";
+
+	public static final String CHAIN_REJECTION_CONFIRMATION_SUBJECT = "You have rejected an Approval Chain";
+
+	public static final String CHAIN_DEACTIVATED_MAIL_SUBJECT = "Approval Chain Deactivated Successfully";
+
+	public static final String CHAIN_DEACTIVE_REJECTED_MAIL_SUBJECT = "Approval Chain Deactivation Rejected";
+
+	public static final String CHAIN_DEACTIVE_APPROVER_SUBJECT = "You approved Deactivation Request";
+
+	public static final String CHAIN_DEACTIVE_REJECTION_CONFIRMATION_SUBJECT = "You rejected Deactivation Request";
+
+	public static final String CHAIN_DEACTIVE_REQUEST_MAIL_SUBJECT = "Approval Chain Deactivation Request";
+
+	public static final String CHAIN_ACTIVATED_MAIL_SUBJECT = "Approval Chain Activated Successfully";
+
+	public static final String CHAIN_ACTIVATE_APPROVER_SUBJECT = "You approved Activation Request";
+
+	public static final String CHAIN_ACTIVATION_REJECTED_MAIL_SUBJECT = "Approval Chain Activation Rejected";
+
+	public static final String CHAIN_ACTIVATE_REJECTION_CONFIRMATION_SUBJECT = "You rejected Activation Request";
+
+	public static final String CHAIN_ACTIVATION_REQUEST_MAIL_SUBJECT = "Approval Chain Activation Request Raised";
+
+	public static final String CHAIN_ACTIVATION_REQUEST_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "Your request for activation of the below approval chain "
+			+ "has been successfully submitted in Nexus HMS." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Activation Request</p>" + "<p><b>Status:</b> Submitted for Approval</p>"
+			+ "<p><b>Requested On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The request is currently under the approval process " + "and awaiting reviewer action." + "</p>"
+
+			+ "<p>" + "You will receive further notifications based on " + "the approval workflow status." + "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	public static final String CHAIN_DEACTIVATION_REQUEST_APPROVER_SUBJECT = "Approval Chain Deactivation Request Received";
+	public static final String CHAIN_DEACTIVATION_REQUEST_APPROVER_BODY = "<html><body>"
+
+			+ "<p>Dear Administrator,</p>"
+
+			+ "<p>" + "A request for the deactivation of the below approval chain "
+			+ "has been submitted in the Nexus Hiring Management System and is awaiting your review." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Functionality:</b> %s</p>" + "<p><b>Request Type:</b> Deactivation Request</p>"
+			+ "<p><b>Request Status:</b> Pending Approval</p>" + "<p><b>Requested By:</b> %s</p>"
+			+ "<p><b>Requested On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval workflow is currently awaiting your review "
+			+ "and approval for further processing." + "</p>"
+
+			+ "<p>" + "Kindly review the configuration and take the necessary action " + "at your earliest convenience."
+			+ "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_ACTIVATION_REQUEST_APPROVER_SUBJECT = "Approval Chain Activation Request Received";
+
+	public static final String CHAIN_ACTIVATION_REQUEST_APPROVER_BODY = "<html><body>"
+
+			+ "<p>Dear Administrator,</p>"
+
+			+ "<p>" + "A request for activation of the below approval chain "
+			+ "has been submitted and is awaiting your review in Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Activation Request</p>" + "<p><b>Status:</b> Pending Approval</p>"
+			+ "<p><b>Submitted By:</b> %s</p>" + "<p><b>Submitted On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Kindly review the request and take the necessary action." + "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	public static final String CHAIN_DEACTIVATION_REQUEST_MAIL_SUBJECT = "Approval Chain Deactivation Request Raised";
+
+	public static final String CHAIN_DEACTIVATION_REQUEST_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "Your request for the deactivation of the below approval chain "
+			+ "has been successfully submitted in the Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Functionality:</b> %s</p>" + "<p><b>Request Type:</b> Deactivation Request</p>"
+			+ "<p><b>Request Status:</b> Submitted for Approval</p>" + "<p><b>Requested On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The request is currently under the approval process " + "and awaiting reviewer action." + "</p>"
+
+			+ "<p>" + "You will receive further notifications based on " + "the approval workflow status." + "</p>"
+
+			+ "<p>" + "You can track the request status from the Nexus Portal." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_REJECTED_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that the below approval chain " + "has been rejected in Nexus Hiring Management System(HMS)."
+			+ "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Status:</b> Rejected</p>" + "<p><b>Reviewed On:</b> %s</p>"
+
+			+ "<p><b>Reviewer Comments / Remarks:</b></p>" + "<p>%s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain has not been activated in the system." + "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_APPROVED_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that the below approval chain "
+			+ "has been successfully approved in Nexus HMS." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Status:</b> Approved</p>" + "<p><b>Approved On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
+			+ "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	
+	public static final String CHAIN_APPROVER_CONFIRMATION_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that you have successfully approved "
+			+ "the below approval chain in Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Status:</b> Approved</p>" + "<p><b>Approved On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
+			+ "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	
+
+	public static final String CHAIN_REJECTION_CONFIRMATION_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that you have successfully rejected "
+			+ "the below approval chain in Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Status:</b> Rejected</p>" + "<p><b>Rejected On:</b> %s</p>"
+
+			+ "<p><b>Reviewer Comments / Remarks:</b></p>" + "<p>%s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain has not been activated in the system." + "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_DEACTIVE_REJECTED_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that the deactivation request raised "
+			+ "for the below approval chain has been reviewed and rejected " + "in Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Deactivation Request</p>" + "<p><b>Status:</b> Rejected</p>"
+			+ "<p><b>Reviewed On:</b> %s</p>"
+
+			+ "<p><b>Reviewer Comments / Remarks:</b></p>" + "<p>%s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain will remain active as the deactivation " + "request was not approved."
+			+ "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_DEACTIVE_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "You have successfully approved the below approval chain deactivation "
+			+ "request in the Nexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Functionality:</b> %s</p>" + "<p><b>Request Type:</b> Deactivation Request</p>"
+			+ "<p><b>Approval Status:</b> Approved</p>" + "<p><b>Approved On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain has now been successfully deactivated "
+			+ "and is no longer active for workflow processing." + "</p>"
+
+			+ "<p>" + "You can review the request details from the Nexus Portal." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_DEACTIVATED_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that the below approval chain "
+			+ "has been successfully deactivated by the Administrator " + "in Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Status:</b> Deactivated</p>" + "<p><b>Deactivated On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain is now inactive and will no longer " + "be available for workflow processing."
+			+ "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	public static final String CHAIN_DEACTIVE_REJECTION_CONFIRMATION_BODY = "<html><body>"
+
+			+ "<p>Dear Administrator,</p>"
+
+			+ "<p>" + "You have successfully rejected the deactivation request "
+			+ "for the below approval chain in Nexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Deactivation Request</p>" + "<p><b>Status:</b> Rejected</p>"
+			+ "<p><b>Rejected On:</b> %s</p>"
+
+			+ "<p><b>Reviewer Comments / Remarks:</b></p>" + "<p>%s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain will remain active in the system." + "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_ACTIVATED_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that the activation request for the below "
+			+ "approval chain has been successfully approved in Nexus Hiring Management System(HMS)." + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Activation Request</p>" + "<p><b>Status:</b> Approved</p>"
+			+ "<p><b>Approved On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
+			+ "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	public static final String CHAIN_ACTIVATE_APPROVER_BODY = "<html><body>"
+
+			+ "<p>Dear Administrator,</p>"
+
+			+ "<p>" + "This is to inform you that you have successfully approved "
+			+ "the activation request for the below approval chain in Nexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Activation Request</p>" + "<p><b>Status:</b> Approved</p>"
+			+ "<p><b>Approved On:</b> %s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
+			+ "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String CHAIN_ACTIVATION_REJECTED_MAIL_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that the activation request for the below "
+			+ "approval chain has been rejected inNexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Activation Request</p>" + "<p><b>Status:</b> Rejected</p>"
+			+ "<p><b>Reviewed On:</b> %s</p>"
+
+			+ "<p><b>Reviewer Comments / Remarks:</b></p>" + "<p>%s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain will remain inactive in the system." + "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+	
+	public static final String CHAIN_ACTIVATE_REJECTION_CONFIRMATION_BODY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>" + "This is to inform you that you have successfully rejected "
+			+ "the activation request for the below approval chain in Nexus Hiring Management System(HMS)" + "</p>"
+
+			+ "<p><b>Chain Configuration Details:</b></p>"
+
+			+ "<p><b>Chain ID:</b> %s</p>" + "<p><b>Chain Name:</b> %s</p>" + "<p><b>Description:</b> %s</p>"
+			+ "<p><b>Request Type:</b> Activation Request</p>" + "<p><b>Status:</b> Rejected</p>"
+			+ "<p><b>Rejected On:</b> %s</p>"
+
+			+ "<p><b>Reviewer Comments / Remarks:</b></p>" + "<p>%s</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "The approval chain will remain inactive in the system." + "</p>"
+
+			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+
+			+ "<br/>"
+
+			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
+
+			+ "</body></html>";
+
+	public static final String FUNCTIONALITY_FETCHED_SUCCESSFULLY = "Functionality fetched successfully";
+
 }
