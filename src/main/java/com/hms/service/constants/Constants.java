@@ -296,21 +296,126 @@ public class Constants {
 	public static final String ROLE_NOT_BELONG_TO_DEPARTMENT = "Role id doesnot belong to this department";
 	public static final String PENDING = "Pending";
 
-	public static final String SR_SUBMITTED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
-			+ "<p>Your Staffing Requisition (SR) with ID <b>%s</b> has been successfully submitted.</p>"
-			+ "<p>We will review your request and get back to you shortly.</p>" + "<br/>"
-			+ "<p>Best regards,<br/>HMS Team</p>" + "</body></html>";
 
+	public static final String SR_SUBMITTED_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>Your Staffing Requisition (SR) has been successfully created in the "
+			+ "Hiring Management System (HMS).</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
+			+ "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>"
+			+ "<li><b>Created Date:</b> %s</li>" + "</ul>"
+			+ "<p>The requisition has been successfully submitted and forwarded for the "
+			+ "approval process as per the configured workflow.</p>"
+			+ "<p>You will receive further notifications on the approval status and " + "subsequent actions.</p>"
+			+ "<br/>" + "<p>Regards,<br/>" + "Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+
+	
+
+	public static final String SR_TO_BE_APPROVED_BY_FIRST_APPROVER_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
+
+			+ "<p>A new Staffing Requisition (SR) has been successfully submitted by the Hiring Manager "
+			+ "and is currently pending your review and approval in the Nexus Hiring Management System (HMS).</p>"
+
+			+ "<p>Please find the requisition summary below:</p>"
+
+			+ "<ul>" + "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Hiring Manager:</b> %s</li>" + "<li><b>Number of Positions:</b> %s</li>"
+			+ "<li><b>Job Location:</b> %s</li>" + "<li><b>Employment Type:</b> %s</li>"
+			+ "<li><b>Priority:</b> %s</li>" + "<li><b>Submission Date:</b> %s</li>" + "</ul>"
+
+			+ "<p>The request has been submitted as part of the ongoing hiring requirements "
+			+ "and is awaiting your approval to proceed further in the recruitment workflow.</p>"
+
+			+ "<p>Kindly review the requisition and take the necessary action at your earliest convenience.</p>"
+
+			+ "<p>If additional clarification is required, please coordinate with the respective Hiring Manager.</p>"
+
+			+ "<br/>" + "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>"
+
+			+ "</body></html>";
+
+	public static final String SR_TO_BE_APPROVED_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>The below Staffing Requisition (SR) has been reviewed and approved by "
+			+ "the previous approver and is now pending your review and approval in the "
+			+ "Nexus Hiring Management System (HMS).</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
+			+ "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Hiring Manager:</b> %s</li>" + "<li><b>Number of Positions:</b> %s</li>"
+			+ "<li><b>Job Location:</b> %s</li>" + "<li><b>Employment Type:</b> %s</li>"
+			+ "<li><b>Priority:</b> %s</li>" + "</ul>"
+			+ "<p>The approval workflow is currently with you for further action.</p>"
+			+ "<p>Kindly review the requisition and take the necessary action at your " + "earliest convenience.</p>"
+			+ "<p>For any additional clarification, please contact the respective " + "Hiring Manager.</p>" + "<br/>"
+			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+
+	public static final String SR_FULLY_APPROVED_NOTIFY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>We are pleased to inform you that the below Staffing Requisition (SR) "
+			+ "has been successfully approved by all required approvers in the " + "Nexus Hiring Management System (HMS).</p>"
+			+ "<p><b>Requisition Summary:</b></p>" + "<ul>" + "<li><b>SR ID:</b> %s</li>"
+			+ "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
+			+ "<p><b>Approval Status:</b></p>" + "<ul>" + "<li><b>Final Approval Status:</b> Approved</li>"
+			+ "<li><b>Approved On:</b> %s</li>" + "<li><b>Recruitment Status:</b> Open for Hiring</li>" + "</ul>"
+			+ "<p>The requisition approval workflow has been completed successfully, "
+			+ "and the SR is now available for the recruitment and recruiter assignment process.</p>" + "<br/>"
+			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+
+	public static final String SR_REJECTED_NOTIFY = "<html><body>" + "<p>Dear %s,</p>"
+			+ "<p>The below Staffing Requisition (SR) has been reviewed and rejected "
+			+ "during the approval process in the Nexus Hiring Management System (HMS).</p>"
+			+ "<p><b>Requisition Summary:</b></p>" + "<ul>" + "<li><b>SR ID:</b> %s</li>"
+			+ "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
+			+ "<p><b>Approval Workflow Details:</b></p>" + "<ul>" + "<li><b>Current Workflow Stage:</b> %s</li>"
+			+ "<li><b>Reviewed By:</b> %s</li>" + "<li><b>Approval Status:</b> Rejected</li>"
+			+ "<li><b>Reviewed On:</b> %s</li>" + "</ul>" + "<p><b>Reviewer Comments / Remarks:</b><br/>%s</p>"
+			+ "<p>The approval workflow has been stopped due to the rejection at the " + "above approval stage.</p>"
+			+ "<p>Kindly review the comments provided and make the necessary corrections "
+			+ "before resubmitting the requisition, if required.</p>"
+			+ "Nexus Hiring Management System (HMS)</p>"
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
+
+	public static final String SR_APPROVED_NOTIFY = "<html><body>"
+
+			+ "<p>Dear %s,</p>"
+
+			+ "<p>The below Staffing Requisition (SR) has been reviewed and approved by %s in the Nexus Hiring Management System (HMS).</p>"
+
+			+ "<p><b>Requisition Summary:</b></p>"
+
+			+ "<ul>" + "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
+			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
+
+			+ "<p><b>Approval Details:</b></p>"
+
+			+ "<ul>" + "<li><b>Approved By:</b> %s</li>" + "<li><b>Approval Status:</b> Approved</li>"
+			+ "<li><b>Approved On:</b> %s</li>"
+			+ "<li><b>Current Workflow Status:</b> Moved to Next Approval Stage</li>" + "</ul>"
+
+			+ "<p>The requisition has been successfully moved to the next step in the "
+			+ "approval workflow for further review and processing.</p>"
+
+			+ "<br/>"
+
+			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+
+			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>"
+			+ "</body></html>";
+
+	
 	public static final String SR_SUBMITTED_MAIL_SUBJECT = "SR Submitted Successfully";
 
-	public static final String SR_TO_BE_APPROVED_MAIL_BODY = "<html><body>" + "<p>Greetings</p>"
-			+ "<p>The Staffing Requisition (SR) with ID <b>%s</b> is pending your approval.</p>"
-			+ "<p>Please review the request and take the necessary action at your earliest convenience.</p>" + "<br/>"
-			+ "<p>Best regards,<br/>HMS Team</p>" + "</body></html>";
+	
 
 	public static final String SR_TO_BE_APPROVED_NOTIFY = "%s is awaiting your approval.";
-	public static final String SR_APPROVED_NOTIFY = "%s has been approved by %s.";
-	public static final String SR_REJECTED_NOTIFY = "%s has been rejected by %s.";
+	
 
 	public static final String CHAIN_CREATED_SUCESSFULLY_MAIL_BODY = "<html><body>"
 
@@ -338,9 +443,12 @@ public class Constants {
 
 			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
 
+
 			+ "</body></html>";
 
 	public static final String CHAIN_CREATED_MAIL_SUBJECT = "chain created  Successfully";
+
+
 
 	public static final String CHAIN_TO_BE_APPROVED = "<html><body>"
 
@@ -374,6 +482,7 @@ public class Constants {
 			+ "</body></html>";
 	public static final String CHAIN_TO_BE_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
 	
+
 	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
 
 	public static final String CHAIN_REJECTED_MAIL_SUBJECT = "Approval Chain Creation Rejected";
