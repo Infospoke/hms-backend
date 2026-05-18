@@ -510,8 +510,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					event.setCheckerNotificationTitle(Constants.SR_SUBMITTED_MAIL_SUBJECT);
 
 
+
 					event.setCheckerMessage("New Staffing Requisition submitted for approval");
              		event.setMakerMessage("New Staffing Requisition submitted for approval");
+
 					
 
 					event.setType("SR");
@@ -1632,9 +1634,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					event.setCheckerRoleName(roleName);
 
 
+
 					event.setCheckerNotificationTitle("SR Approval Required");
 
 				        event.setCheckerMessage(
+
 				                "SR moved to next approval level");
 
 

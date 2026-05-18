@@ -22,6 +22,10 @@ public class UpdateApprovalChainRequest {
 	private String activateComments;
 
 	private Boolean activeApproval;
+	
+	private String comments;
+	
+	private String description;
 
 	private Boolean deactiveApproval;
 
