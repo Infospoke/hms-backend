@@ -240,7 +240,7 @@ public class NotificationServiceImpl implements INotificationService {
                 request.getSize(),
                 sort
         );
-     // LIST FILTERS
+     
         Specification<NotificationEngineEntity> baseSpec =
                 request.toNotificationSpecification();
 
@@ -250,7 +250,7 @@ public class NotificationServiceImpl implements INotificationService {
                         pageable
                 );
 
-        // COUNT FILTERS
+       
         Specification<NotificationEngineEntity> countSpec =
                 request.buildNotificationCountSpec();
 

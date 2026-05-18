@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hms.service.entity.CreateJob;
+import com.hms.service.entity.CreateJobEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.CreateJobRepository;
@@ -43,7 +43,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		RolesAndRequirementsEntity rolesData = rolesAndRequirementsRepository.findBySrId(srId)
 				.orElseThrow(() -> new RuntimeException("Roles & Requirements data not found"));
 
-		CreateJob createJob = new CreateJob();
+		CreateJobEntity createJob = new CreateJobEntity();
 
 		createJob.setJobTitle(srData.getJobTitle());
 		createJob.setBusinessUnitId(srData.getBusinessUnitId());
@@ -63,7 +63,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		createJob.setJobCode(jobCode);
 
-		Optional<CreateJob> existingJob =
+		Optional<CreateJobEntity> existingJob =
 		        createJobRepository.findByJobCode(jobCode);
 
 		if (existingJob.isPresent()) {
@@ -85,14 +85,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		createJob.setSubmit(false);
 
-		CreateJob savedJob = createJobRepository.save(createJob);
+		CreateJobEntity savedJob = createJobRepository.save(createJob);
 
 		CreateJobResponse response = mapToResponse(savedJob);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "job details saved as draft successfully", response);
 	}
 
-	private CreateJobResponse mapToResponse(CreateJob entity) {
+	private CreateJobResponse mapToResponse(CreateJobEntity entity) {
 
 		CreateJobResponse response = new CreateJobResponse();
 
