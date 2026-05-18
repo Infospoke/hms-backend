@@ -23,7 +23,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -510,7 +509,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					event.setCheckerNotificationTitle(Constants.SR_SUBMITTED_MAIL_SUBJECT);
 
-					event.setMessage("New Staffing Requisition submitted for approval");
+
+					event.setCheckerMessage("New Staffing Requisition submitted for approval");
+             		event.setMakerMessage("New Staffing Requisition submitted for approval");
+					
 
 					event.setType("SR");
 
@@ -983,7 +985,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		if (req.getMinSalary() != null && req.getMaxSalary() != null && req.getProposedTotalCompensation() != null) {
 			Long min = req.getMinSalary();
 			Long max = req.getMaxSalary();
-			int proposed = req.getProposedTotalCompensation();
+			Long proposed = req.getAnnualHiringCost();
 			if (min > max) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid salary range",
 
@@ -1629,9 +1631,14 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					event.setCheckerRoleName(roleName);
 
+
 					event.setCheckerNotificationTitle("SR Approval Required");
 
-					event.setMessage("SR moved to next approval level");
+				        event.setCheckerMessage(
+				                "SR moved to next approval level");
+
+
+					event.setCheckerMessage("SR moved to next approval level");
 
 					event.setRoleEmailMap((roleEmailMap));
 

@@ -342,10 +342,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setMakerRoleName(roleName);
 		event.setMakerNotificationTitle(Constants.CHAIN_CREATED_MAIL_SUBJECT);
 		event.setDeptName(approvalChainEntity.getFunctionalityName());
-		event.setMessage("chain created");
-		event.setType("Chain Configurations");
-		event.setMakerEmailBody(String.format(Constants.CHAIN_CREATED_SUCESSFULLY_MAIL_BODY,
-				approvalChainEntity.getId(), approvalChainEntity.getFunctionalityName()));
+		event.setMakerMessage("chain created");
+		event.setType("Chain Created");
+		event.setMakerEmailBody(String.format(Constants.CHAIN_CREATED_SUCESSFULLY_MAIL_BODY, approvalChainEntity.getId(),approvalChainEntity.getFunctionalityName()));
 
 		event.setCheckerNotificationTitle(Constants.CHAIN_APPROVED_MAIL_SUBJECT);
 		event.setCheckerEmailBody(String.format(Constants.CHAIN_TO_BE_APPROVED, approvalChainEntity.getId(),
@@ -388,7 +387,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setCheckerEmailBody(checkerBody);
 
 		event.setDeptName(department);
-		event.setMessage(message);
+		event.setCheckerMessage(message);
 
 		event.setRoleEmailMap(roleEmailMap);
 
