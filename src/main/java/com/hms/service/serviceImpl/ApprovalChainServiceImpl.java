@@ -38,6 +38,7 @@ import com.hms.service.request.ApprovalChainRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateApprovalChainRequest;
 import com.hms.service.response.ApprovalChainResponse;
+import com.hms.service.response.CommentTimelineResponse;
 import com.hms.service.service.IApprovalChainService;
 import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
@@ -75,8 +76,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 	@Autowired
 	private RolesRepository rolesRepository;
-	
-	@Autowired 
+
+	@Autowired
 	private ChildLinkCommentsRepository childLinkCommentsRepository;
 
 	@Override
@@ -129,21 +130,37 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		}
 
 		ApprovalChainResponse response = new ApprovalChainResponse();
+
 		BeanUtils.copyProperties(entity, response);
 
 		response.setLevels(entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0);
 
 		response.setLevelConfig(entity.getLevelConfig());
+
 		if (entity.getFunctionality() != null) {
 
 			Optional<FunctionalityEntity> functionalityOptional = functionalityRepository
 					.findById(entity.getFunctionality());
 
-			if (functionalityOptional.isPresent()) {
-
-				response.setFunctionalityName(functionalityOptional.get().getFunctionalityName());
-			}
+			functionalityOptional
+					.ifPresent(functionality -> response.setFunctionalityName(functionality.getFunctionalityName()));
 		}
+
+		List<ChildLinkCommentsEntity> commentsList = childLinkCommentsRepository.findByChainId(entity.getId());
+
+		List<CommentTimelineResponse> timeline = commentsList.stream().map(comment -> {
+
+			CommentTimelineResponse dto = new CommentTimelineResponse();
+
+			dto.setAction(comment.getAction());
+			dto.setComments(comment.getComments());
+			dto.setDescription(comment.getDescription());
+
+			return dto;
+
+		}).toList();
+
+		response.setCommentTimeline(timeline);
 
 		log.info("ApprovalChainServiceImpl:: Exit getApprovalChainById");
 
@@ -162,7 +179,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		}
 		ApprovalChainEntity approvalChainEntity = new ApprovalChainEntity();
-		
+
 		ChildLinkCommentsEntity childLinkCommentsEntity = new ChildLinkCommentsEntity();
 
 		approvalChainEntity.setChainName(request.getChainName());
@@ -171,7 +188,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		if (functionalityRepository.existsById(request.getFunctionality())) {
 			approvalChainEntity.setFunctionality(request.getFunctionality());
 		} else {
-			
+
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Functionality is not matched"));
 		}
 
@@ -195,23 +212,20 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
 
-
 		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository
 				.findById(request.getFunctionality());
 		FunctionalityEntity functionality = functionalityEntity.get();
 		functionality.setIsChaincreated(true);
 		functionalityRepository.save(functionality);
 		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
-		
+
 		approvalChainRepository.save(approvalChainEntity);
 
-		
 		childLinkCommentsEntity.setChainId(approvalChainEntity.getId());
 		childLinkCommentsEntity.setAction("Create");
 		childLinkCommentsEntity.setDescription(approvalChainEntity.getDescription());
-		
-		childLinkCommentsRepository.save(childLinkCommentsEntity);
 
+		childLinkCommentsRepository.save(childLinkCommentsEntity);
 
 		// emails sending
 
@@ -242,27 +256,14 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		event.setMakerMessage("Approval Chain has been created successfully and submitted for approval.");
 		event.setType("Chain Configurations");
-		event.setMakerEmailBody(String.format(
-		        Constants.CHAIN_CREATED_SUCESSFULLY_MAIL_BODY,
-		        userName,
-		        approvalChainEntity.getId(),
-		        approvalChainEntity.getChainName(),
-		        approvalChainEntity.getDescription(),
-		        userName,
-		        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-		));
+		event.setMakerEmailBody(String.format(Constants.CHAIN_CREATED_SUCESSFULLY_MAIL_BODY, userName,
+				approvalChainEntity.getId(), approvalChainEntity.getChainName(), approvalChainEntity.getDescription(),
+				userName, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))));
 		event.setCheckerMessage("A new Approval Chain is awaiting your review and approval.");
 		event.setCheckerNotificationTitle(Constants.CHAIN_TO_BE_APPROVED_MAIL_SUBJECT);
-		event.setCheckerEmailBody(String.format(
-		        Constants.CHAIN_TO_BE_APPROVED,
-		        approvalChainEntity.getId(),
-		        approvalChainEntity.getChainName(),
-		        approvalChainEntity.getDescription(),  
-		        userName,
-		        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-		));
-
-	
+		event.setCheckerEmailBody(String.format(Constants.CHAIN_TO_BE_APPROVED, approvalChainEntity.getId(),
+				approvalChainEntity.getChainName(), approvalChainEntity.getDescription(), userName,
+				LocalDateTime.now(ZoneId.of("Asia/Kolkata"))));
 
 		event.setCheckerRoleName("Adminstrator");
 		event.setRoleEmailMap(roleEmailMap);
@@ -274,9 +275,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		return ApiResponse.success("Approval Chain Created Successfully");
 	}
 
-	
 	private void sendWorkflowNotification(String processId, String type, String makerMessage, String department,
-
 
 			String makerEmail, String makerRole, String makerTitle, String makerBody,
 
@@ -307,8 +306,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setMakerMessage(makerMessage);
 		event.setCheckerMessage(checkerMessage);
 
-
-
 		event.setRoleEmailMap(roleEmailMap);
 
 		log.info("the maker email is " + makerEmail);
@@ -325,7 +322,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		ApprovalChainEntity approvalChainEntity = approvalChainRepository.findById(request.getId())
 				.orElseThrow(() -> new RuntimeException("Approval Chain not found"));
-		
+
 		ChildLinkCommentsEntity childLinkCommentsEntity = new ChildLinkCommentsEntity();
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
@@ -336,10 +333,10 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		String chainName = approvalChainEntity.getChainName();
 		String description = approvalChainEntity.getDescription();
 		String functionalityName = approvalChainEntity.getFunctionalityName();
-		String createdBy=approvalChainEntity.getCreatedBy();
-		
-		Integer chainId=approvalChainEntity.getId();
-		
+		String createdBy = approvalChainEntity.getCreatedBy();
+
+		Integer chainId = approvalChainEntity.getId();
+
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
@@ -371,7 +368,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Approve");
 				childLinkCommentsEntity.setComments(request.getComments());
-				
+
 				approvalChainEntity.setApprovedComments(request.getApprovedComments());
 
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
@@ -384,24 +381,13 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 						"Your Approval Chain has been approved successfully and is now active.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_APPROVED_MAIL_SUBJECT,
-						String.format(
-						        Constants.CHAIN_APPROVED_MAIL_BODY,
-						        createdBy,
-						        chainId,
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-						),
+						String.format(Constants.CHAIN_APPROVED_MAIL_BODY, createdBy, chainId, chainName, description,
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
-						roleName,"You have successfully approved the Approval Chain.", Constants.CHAIN_APPROVER_CONFIRMATION_SUBJECT,
-						String.format(
-						        Constants.CHAIN_APPROVER_CONFIRMATION_BODY,
-						        userName,
-						        approvalChainEntity.getId(),
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-						),
+						roleName, "You have successfully approved the Approval Chain.",
+						Constants.CHAIN_APPROVER_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_APPROVER_CONFIRMATION_BODY, userName, approvalChainEntity.getId(),
+								chainName, description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 						roleEmailMap);
 
 			} else if ("REJECTED".equals(approval)) {
@@ -410,7 +396,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Reject");
 				childLinkCommentsEntity.setComments(request.getComments());
-				
+
 				approvalChainEntity.setRejectedComments(request.getRejectedComments());
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
@@ -422,27 +408,16 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 						"Your Approval Chain has been rejected by the reviewer.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_REJECTED_MAIL_SUBJECT,
-						String.format(
-						        Constants.CHAIN_REJECTED_MAIL_BODY,
-						        createdBy,
-						        chainId,
-						        chainName,
-						        description,
-						        request.getComments(),
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-						    
+						String.format(Constants.CHAIN_REJECTED_MAIL_BODY, createdBy, chainId, chainName, description,
+								request.getComments(), LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
+
 						),
 
-						roleName,"You have successfully rejected the Approval Chain.", Constants.CHAIN_REJECTION_CONFIRMATION_SUBJECT,
-						String.format(
-						        Constants.CHAIN_REJECTION_CONFIRMATION_BODY,
-						        userName,
-						        approvalChainEntity.getId(),
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata")),
-						        null
-						),
+						roleName, "You have successfully rejected the Approval Chain.",
+						Constants.CHAIN_REJECTION_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_REJECTION_CONFIRMATION_BODY, userName,
+								approvalChainEntity.getId(), chainName, description,
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata")), null),
 
 						roleEmailMap);
 			}
@@ -464,7 +439,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			childLinkCommentsEntity.setChainId(chainId);
 			childLinkCommentsEntity.setAction("Deactive");
 			childLinkCommentsEntity.setDescription(request.getDescription());
-			
 
 			// mail sent to all admins
 
@@ -484,26 +458,13 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 					"Approval Chain deactivation request submitted successfully.", functionalityName,
 
 					creatorEmail, roleName, Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_SUBJECT,
-					String.format(
-					        Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_BODY,
-					        userName,
-					        chainId,
-					        chainName,
-					        description,
-					        functionalityName,
-					        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-					),
+					String.format(Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_BODY, userName, chainId, chainName,
+							description, functionalityName, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
-					"Administrator","Approval Chain deactivation request is awaiting your approval.", Constants.CHAIN_DEACTIVATION_REQUEST_APPROVER_SUBJECT,
-					String.format(
-					        Constants.CHAIN_DEACTIVATION_REQUEST_APPROVER_BODY,
-					        chainId,
-					        chainName,
-					        description,
-					        functionalityName,
-					        userName,
-					        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-					),
+					"Administrator", "Approval Chain deactivation request is awaiting your approval.",
+					Constants.CHAIN_DEACTIVATION_REQUEST_APPROVER_SUBJECT,
+					String.format(Constants.CHAIN_DEACTIVATION_REQUEST_APPROVER_BODY, chainId, chainName, description,
+							functionalityName, userName, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
 					roleEmailMap);
 		}
@@ -522,41 +483,29 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				approvalChainEntity.setApproval("Approved");
 				approvalChainEntity.setDeactiveApproval(true);
 				approvalChainEntity.setActiveApproval(false);
-				
-				//child table
+
+				// child table
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Approve");
 				childLinkCommentsEntity.setComments(request.getComments());
-				
+
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
 
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
-				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW", "Your Approval Chain has been deactivated successfully.",
-						functionalityName,
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+						"Your Approval Chain has been deactivated successfully.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVATED_MAIL_SUBJECT,
-						String.format(
-						        Constants.CHAIN_DEACTIVATED_MAIL_BODY,
-						       createdBy,
-						       chainId,
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-						),
+						String.format(Constants.CHAIN_DEACTIVATED_MAIL_BODY, createdBy, chainId, chainName, description,
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
-						roleName,"You have successfully approved the Approval Chain deactivation request.", Constants.CHAIN_DEACTIVE_APPROVER_SUBJECT,
-						String.format(
-						        Constants.CHAIN_DEACTIVATED_MAIL_BODY,
-						        userName,
-						        chainId,
-						        chainName,
-						        description,
-						        functionalityName,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-						),
+						roleName, "You have successfully approved the Approval Chain deactivation request.",
+						Constants.CHAIN_DEACTIVE_APPROVER_SUBJECT,
+						String.format(Constants.CHAIN_DEACTIVATED_MAIL_BODY, userName, chainId, chainName, description,
+								functionalityName, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
 						roleEmailMap);
 
@@ -564,8 +513,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 				approvalChainEntity.setApproval("REJECTED");
 				approvalChainEntity.setDeactiveApproval(false);
-				//child table details
-				
+				// child table details
+
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Reject");
 				childLinkCommentsEntity.setComments(request.getComments());
@@ -580,26 +529,14 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 						"Your Approval Chain deactivation request has been rejected.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVE_REJECTED_MAIL_SUBJECT,
-						String.format(
-						        Constants.CHAIN_DEACTIVE_REJECTED_MAIL_BODY,
-						        createdBy,
-						        chainId,
-						        chainName,
-						        description,
-						        request.getComments(),
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata")),
-						        null
-						),
+						String.format(Constants.CHAIN_DEACTIVE_REJECTED_MAIL_BODY, createdBy, chainId, chainName,
+								description, request.getComments(), LocalDateTime.now(ZoneId.of("Asia/Kolkata")), null),
 
-						roleName,"You have successfully rejected the Approval Chain deactivation request.", Constants.CHAIN_DEACTIVE_REJECTION_CONFIRMATION_SUBJECT,
-						String.format(
-						        Constants.CHAIN_DEACTIVE_REJECTION_CONFIRMATION_BODY,
-						        chainId,
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata")),
-						        request.getDeactivateComments()
-						),
+						roleName, "You have successfully rejected the Approval Chain deactivation request.",
+						Constants.CHAIN_DEACTIVE_REJECTION_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_DEACTIVE_REJECTION_CONFIRMATION_BODY, chainId, chainName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata")),
+								request.getDeactivateComments()),
 						roleEmailMap);
 			}
 		}
@@ -615,9 +552,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 			approvalChainEntity.setApproval("IN_PROGRESS");
 			approvalChainEntity.setRequestType("Chain-Active");
-			
-			//child table details
-			
+
+			// child table details
+
 			childLinkCommentsEntity.setChainId(chainId);
 			childLinkCommentsEntity.setAction("Active");
 			childLinkCommentsEntity.setDescription(request.getDescription());
@@ -638,24 +575,13 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 					"Approval Chain activation request submitted successfully.", functionalityName,
 
 					creatorEmail, roleName, Constants.CHAIN_ACTIVATION_REQUEST_MAIL_SUBJECT,
-					String.format(
-					        Constants.CHAIN_ACTIVATION_REQUEST_MAIL_BODY,
-					        userName,
-					        approvalChainEntity.getId(),
-					        chainName,
-					        description,
-					        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-					),
+					String.format(Constants.CHAIN_ACTIVATION_REQUEST_MAIL_BODY, userName, approvalChainEntity.getId(),
+							chainName, description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
-					"Administrator","Approval Chain activation request is awaiting your approval.", Constants.CHAIN_ACTIVATION_REQUEST_APPROVER_SUBJECT,
-					String.format(
-					        Constants.CHAIN_ACTIVATION_REQUEST_APPROVER_BODY,
-			                chainId,
-					        chainName,
-					        description,
-					        approvalChainEntity.getCreatedBy(),
-					        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-					),
+					"Administrator", "Approval Chain activation request is awaiting your approval.",
+					Constants.CHAIN_ACTIVATION_REQUEST_APPROVER_SUBJECT,
+					String.format(Constants.CHAIN_ACTIVATION_REQUEST_APPROVER_BODY, chainId, chainName, description,
+							approvalChainEntity.getCreatedBy(), LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
 					roleEmailMap);
 		}
@@ -673,9 +599,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				approvalChainEntity.setStatus("ACTIVE");
 				approvalChainEntity.setApproval("Approved");
 				approvalChainEntity.setActiveApproval(true);
-				approvalChainEntity.setDeactiveApproval(false);			
-				//child table details
-				
+				approvalChainEntity.setDeactiveApproval(false);
+				// child table details
+
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Approve");
 				childLinkCommentsEntity.setComments(request.getComments());
@@ -686,41 +612,29 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
-				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW", "Your Approval Chain activation request has been approved successfully.",
-						functionalityName,
+				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
+						"Your Approval Chain activation request has been approved successfully.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATED_MAIL_SUBJECT,
-						String.format(
-						        Constants.CHAIN_ACTIVATED_MAIL_BODY,
-						        createdBy,
-						        chainId,
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-						),
+						String.format(Constants.CHAIN_ACTIVATED_MAIL_BODY, createdBy, chainId, chainName, description,
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
-						roleName,"You have successfully approved the Approval Chain activation request.", Constants.CHAIN_ACTIVATE_APPROVER_SUBJECT,
-						String.format(
-						        Constants.CHAIN_ACTIVATE_APPROVER_BODY,
-						        approvalChainEntity.getId(),
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-						),
+						roleName, "You have successfully approved the Approval Chain activation request.",
+						Constants.CHAIN_ACTIVATE_APPROVER_SUBJECT,
+						String.format(Constants.CHAIN_ACTIVATE_APPROVER_BODY, approvalChainEntity.getId(), chainName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 						roleEmailMap);
 
 			} else {
 
 				approvalChainEntity.setApproval("Rejected");
 				approvalChainEntity.setActiveApproval(false);
-				
-				
-                //child table details
-				
+
+				// child table details
+
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Reject");
 				childLinkCommentsEntity.setComments(request.getComments());
-
 
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
@@ -732,26 +646,14 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 						"Your Approval Chain activation request has been rejected.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATION_REJECTED_MAIL_SUBJECT,
-						String.format(
-						        Constants.CHAIN_ACTIVATION_REJECTED_MAIL_BODY,
-						       createdBy,
-						       chainId,
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata")),
-						        request.getComments()
-						),
+						String.format(Constants.CHAIN_ACTIVATION_REJECTED_MAIL_BODY, createdBy, chainId, chainName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata")), request.getComments()),
 
-						roleName,"You have successfully rejected the Approval Chain activation request." ,Constants.CHAIN_ACTIVATE_REJECTION_CONFIRMATION_SUBJECT,
-						String.format(
-						        Constants.CHAIN_ACTIVATE_REJECTION_CONFIRMATION_BODY,
-						        userName,
-						        approvalChainEntity.getId(),
-						        chainName,
-						        description,
-						        LocalDateTime.now(ZoneId.of("Asia/Kolkata")),
-						        request.getActivateComments()
-						),
+						roleName, "You have successfully rejected the Approval Chain activation request.",
+						Constants.CHAIN_ACTIVATE_REJECTION_CONFIRMATION_SUBJECT,
+						String.format(Constants.CHAIN_ACTIVATE_REJECTION_CONFIRMATION_BODY, userName,
+								approvalChainEntity.getId(), chainName, description,
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata")), request.getActivateComments()),
 						roleEmailMap);
 			}
 		}
@@ -760,8 +662,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		approvalChainEntity.setUpdatedAt(LocalDate.now());
 
 		approvalChainRepository.save(approvalChainEntity);
-		
-		childLinkCommentsRepository.save(childLinkCommentsEntity);		
+
+		childLinkCommentsRepository.save(childLinkCommentsEntity);
 
 		return ApiResponse.success("Approval Chain Updated Successfully");
 	}
@@ -821,43 +723,45 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 	private ApprovalChainResponse mapToResponse(ApprovalChainEntity entity) {
 
-		return new ApprovalChainResponse(
+		ApprovalChainResponse response = new ApprovalChainResponse();
 
-				entity.getId(),
+		response.setId(entity.getId());
 
-				entity.getChainName(),
+		response.setChainName(entity.getChainName());
 
-				entity.getDescription(),
+		response.setDescription(entity.getDescription());
 
-				entity.getStatus(),
+		response.setStatus(entity.getStatus());
 
-				entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0,
+		response.setLevels(entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0);
 
-				entity.getUpdatedBy(),
+		response.setUpdatedBy(entity.getUpdatedBy());
 
-				entity.getUpdatedAt(),
+		response.setUpdatedAt(entity.getUpdatedAt());
 
-				entity.getCreatedAt(),
+		response.setCreatedAt(entity.getCreatedAt());
 
-				entity.getCreatedBy(),
+		response.setCreatedBy(entity.getCreatedBy());
 
-				entity.getApproval(),
+		response.setApproval(entity.getApproval());
 
-				entity.getLevelConfig(),
+		response.setLevelConfig(entity.getLevelConfig());
 
-				entity.getFunctionality(),
+		response.setFunctionality(entity.getFunctionality());
 
-				entity.getFunctionalityName(),
+		response.setFunctionalityName(entity.getFunctionalityName());
 
-				entity.getActivateComments(),
+		response.setActivateComments(entity.getActivateComments());
 
-				entity.getDeactivateComments(),
+		response.setDeactivateComments(entity.getDeactivateComments());
 
-				entity.getApprovedComments(),
+		response.setApprovedComments(entity.getApprovedComments());
 
-				entity.getRejectedComments(),
-				
-				entity.getRequestType());
+		response.setRejectedComments(entity.getRejectedComments());
+
+		response.setRequestType(entity.getRequestType());
+
+		return response;
 	}
 
 	private Specification<ApprovalChainEntity> approvalEquals(String value) {
