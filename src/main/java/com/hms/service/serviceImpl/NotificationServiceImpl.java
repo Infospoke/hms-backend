@@ -95,7 +95,7 @@ public class NotificationServiceImpl implements INotificationService {
         try {
             NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
             checkerEntity.setNotificationTitle(event.getCheckerNotificationTitle());
-            checkerEntity.setMessage(event.getMessage());
+            checkerEntity.setMakerMessage(event.getMakerMessage());
             checkerEntity.setProcessId(event.getProcessId());
             checkerEntity.setDeptName(event.getDeptName());
             checkerEntity.setRoleName(event.getCheckerRoleName());
@@ -104,8 +104,8 @@ public class NotificationServiceImpl implements INotificationService {
             
             NotificationEngineEntity makerEntity = new NotificationEngineEntity();
             makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
-            log.info("The event message to the Checker is : "+event.getMessage());
-            makerEntity.setMessage(event.getMessage());
+           // log.info("The event message to the Checker is : "+event.getMessage());
+            makerEntity.setCheckerMessage(event.getCheckerMesagge());
             makerEntity.setProcessId(event.getProcessId());
             makerEntity.setDeptName(event.getDeptName());
             makerEntity.setRoleName(event.getMakerRoleName());
@@ -170,7 +170,7 @@ public class NotificationServiceImpl implements INotificationService {
                         event.getMakerNotificationTitle(),
                         event.getMakerEmailBody(),
                         event.getDeptName(),
-                        "MAKER",
+                        event.getMakerMessage(),
                         event.getMakerRoleId()
                 );
                 messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotif);
@@ -182,9 +182,9 @@ public class NotificationServiceImpl implements INotificationService {
                     WebSocketNotification checkerNotif = new WebSocketNotification(
                             event.getProcessId(),
                             event.getCheckerNotificationTitle(),
-                            event.getMessage(),
+                            event.getCheckerMesagge(),
                             event.getDeptName(),
-                            "CHECKER",
+                            event.getType(),
                             checkerRoleId
                     );
                     messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerNotif);

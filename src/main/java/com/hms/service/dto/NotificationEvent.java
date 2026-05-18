@@ -31,11 +31,12 @@ public class NotificationEvent implements Serializable {
     private String deptName;
     private String makerNotificationTitle;
     private String checkerNotificationTitle;
-    private String message;
+    private String makerMessage;
     private Integer makerRoleId;
     private Map<Integer, List<String>> roleEmailMap;  // roleId -> [email1, email2, ...]
     private String makerEmailAddress;
     private String checkerEmailBody;
+    private String checkerMesagge;
     private String makerEmailBody;
     private String type;
     //private LocalDateTime triggeredAt;
