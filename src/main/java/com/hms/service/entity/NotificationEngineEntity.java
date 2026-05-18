@@ -26,12 +26,9 @@ public class NotificationEngineEntity {
 	    @Column(name = "notification_title")
 	    private String notificationTitle;
 	    
-	    @Column(name = "maker_message")
-	    private String makerMessage;
+	    @Column(name = "message")
+	    private String message;
 	    
-	    @Column(name="checker_message")
-	    private String checkerMessage;	    
-	 
 	    @Column(name = "process_id")
 	    private String processId;
 	    

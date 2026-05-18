@@ -43,7 +43,8 @@ public class SecurityConfig {
 										"/hms/approval-chains/**",
 										"/hms/login/forgot-password",
 										"/ws/**",                          // WebSocket STOMP handshake
-										"/hms/notifications/**"          // Notification test endpoint
+										"/hms/notifications/**" ,          // Notification test endpoint
+										"/hms/create-job/**"         
 								).permitAll()
 								.anyRequest().authenticated())
 				.addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

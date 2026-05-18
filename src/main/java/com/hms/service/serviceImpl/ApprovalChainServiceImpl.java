@@ -79,126 +79,126 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 	@Autowired 
 	private ChildLinkCommentsRepository childLinkCommentsRepository;
 
-	@Override
-	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
-
-		log.info("ApprovalChainServiceImpl:: Inside getApprovalChainsList");
-
-		if (request.getPage() == null || request.getSize() == null) {
-
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
-		}
-
-		if (request.getPage() < 0 || request.getSize() <= 0) {
-
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
-		}
-
-		Sort sort = Sort.by(
-
-				"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
-
-				request.getSortBy() != null ? request.getSortBy() : "id");
-
-		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-
-		Specification<ApprovalChainEntity> baseSpec = request.buildBaseSpec();
-
-		Page<ApprovalChainEntity> pageResult = approvalChainRepository.findAll(baseSpec, pageable);
-
-		List<ApprovalChainResponse> responseList = pageResult.getContent().stream()
-				.map(entity -> new ApprovalChainResponse(
-
-						entity.getId(),
-
-						entity.getChainName(),
-
-						entity.getDescription(),
-
-						entity.getStatus(),
-
-						entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0,
-
-						entity.getUpdatedBy(),
-
-						entity.getUpdatedAt(),
-
-						entity.getCreatedAt(),
-
-						entity.getCreatedBy(),
-
-						entity.getApproval(),
-
-						entity.getLevelConfig(),
-
-						entity.getFunctionality(),
-
-						entity.getFunctionalityName(),
-
-						entity.getActivateComments(),
-
-						entity.getDeactivateComments(),
-
-						entity.getApprovedComments(),
-
-						entity.getRejectedComments()))
-
-				.toList();
-
-		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
-
-		long totalCount = approvalChainRepository.count(countSpec);
-
-		long approvedCount = approvalChainRepository.count(countSpec.and(approvalEquals("APPROVED")));
-
-		long rejectedCount = approvalChainRepository.count(countSpec.and(approvalEquals("REJECTED")));
-
-		long inProgressCount = approvalChainRepository.count(countSpec.and(approvalEquals("IN_PROGRESS")));
-
-		long activeCount = approvalChainRepository.count(countSpec.and(statusEquals("ACTIVE")));
-
-		long deactiveCount = approvalChainRepository.count(countSpec.and(statusEquals("DEACTIVE")));
-
-		Map<String, Object> counts = new LinkedHashMap<>();
-
-		counts.put("total", totalCount);
-
-		counts.put("approved", approvedCount);
-
-		counts.put("rejected", rejectedCount);
-
-		counts.put("inProgress", inProgressCount);
-
-		counts.put("active", activeCount);
-
-		counts.put("deactive", deactiveCount);
-
-		Map<String, Object> response = new LinkedHashMap<>();
-
-		response.put("approvalChains", responseList);
-
-		response.put("currentPage", pageResult.getNumber());
-
-		response.put("totalPages", pageResult.getTotalPages());
-
-		response.put("totalElements", pageResult.getTotalElements());
-
-		response.put("counts", counts);
-
-		log.info("ApprovalChainServiceImpl:: Exit getApprovalChainsList");
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
-	}
-
-	private Specification<ApprovalChainEntity> approvalEquals(String value) {
-
-		return (r, q, c) -> c.equal(c.lower(r.get("approval")), value.toLowerCase());
-	}
-
-	private Specification<ApprovalChainEntity> statusEquals(String value) {
-
-		return (r, q, c) -> c.equal(c.lower(r.get("status")), value.toLowerCase());
-	}
+//	@Override
+//	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
+//
+//		log.info("ApprovalChainServiceImpl:: Inside getApprovalChainsList");
+//
+//		if (request.getPage() == null || request.getSize() == null) {
+//
+//			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+//		}
+//
+//		if (request.getPage() < 0 || request.getSize() <= 0) {
+//
+//			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+//		}
+//
+//		Sort sort = Sort.by(
+//
+//				"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+//
+//				request.getSortBy() != null ? request.getSortBy() : "id");
+//
+//		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+//
+//		Specification<ApprovalChainEntity> baseSpec = request.buildBaseSpec();
+//
+//		Page<ApprovalChainEntity> pageResult = approvalChainRepository.findAll(baseSpec, pageable);
+//
+//		List<ApprovalChainResponse> responseList = pageResult.getContent().stream()
+//				.map(entity -> new ApprovalChainResponse(
+//
+//						entity.getId(),
+//
+//						entity.getChainName(),
+//
+//						entity.getDescription(),
+//
+//						entity.getStatus(),
+//
+//						entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0,
+//
+//						entity.getUpdatedBy(),
+//
+//						entity.getUpdatedAt(),
+//
+//						entity.getCreatedAt(),
+//
+//						entity.getCreatedBy(),
+//
+//						entity.getApproval(),
+//
+//						entity.getLevelConfig(),
+//
+//						entity.getFunctionality(),
+//
+//						entity.getFunctionalityName(),
+//
+//						entity.getActivateComments(),
+//
+//						entity.getDeactivateComments(),
+//
+//						entity.getApprovedComments(),
+//
+//						entity.getRejectedComments()))
+//
+//				.toList();
+//
+//		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
+//
+//		long totalCount = approvalChainRepository.count(countSpec);
+//
+//		long approvedCount = approvalChainRepository.count(countSpec.and(approvalEquals("APPROVED")));
+//
+//		long rejectedCount = approvalChainRepository.count(countSpec.and(approvalEquals("REJECTED")));
+//
+//		long inProgressCount = approvalChainRepository.count(countSpec.and(approvalEquals("IN_PROGRESS")));
+//
+//		long activeCount = approvalChainRepository.count(countSpec.and(statusEquals("ACTIVE")));
+//
+//		long deactiveCount = approvalChainRepository.count(countSpec.and(statusEquals("DEACTIVE")));
+//
+//		Map<String, Object> counts = new LinkedHashMap<>();
+//
+//		counts.put("total", totalCount);
+//
+//		counts.put("approved", approvedCount);
+//
+//		counts.put("rejected", rejectedCount);
+//
+//		counts.put("inProgress", inProgressCount);
+//
+//		counts.put("active", activeCount);
+//
+//		counts.put("deactive", deactiveCount);
+//
+//		Map<String, Object> response = new LinkedHashMap<>();
+//
+//		response.put("approvalChains", responseList);
+//
+//		response.put("currentPage", pageResult.getNumber());
+//
+//		response.put("totalPages", pageResult.getTotalPages());
+//
+//		response.put("totalElements", pageResult.getTotalElements());
+//
+//		response.put("counts", counts);
+//
+//		log.info("ApprovalChainServiceImpl:: Exit getApprovalChainsList");
+//
+//		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+//	}
+//
+//	private Specification<ApprovalChainEntity> approvalEquals(String value) {
+//
+//		return (r, q, c) -> c.equal(c.lower(r.get("approval")), value.toLowerCase());
+//	}
+//
+//	private Specification<ApprovalChainEntity> statusEquals(String value) {
+//
+//		return (r, q, c) -> c.equal(c.lower(r.get("status")), value.toLowerCase());
+//	}
 
 	@Override
 	public ApiResponse<?> getApprovalChainCounts() {
@@ -316,7 +316,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
 
-	
 
 		Optional<FunctionalityEntity> functionalityEntity = functionalityRepository
 				.findById(request.getFunctionality());
@@ -326,13 +325,14 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		approvalChainEntity.setFunctionalityName(functionality.getFunctionalityName());
 		
 		approvalChainRepository.save(approvalChainEntity);
+
 		
 		childLinkCommentsEntity.setChainId(approvalChainEntity.getId());
 		childLinkCommentsEntity.setAction("Create");
 		childLinkCommentsEntity.setDescription(approvalChainEntity.getDescription());
 		
 		childLinkCommentsRepository.save(childLinkCommentsEntity);
-	
+
 
 		// emails sending
 
@@ -360,6 +360,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setMakerRoleName(roleName);
 		event.setMakerNotificationTitle(Constants.CHAIN_CREATED_MAIL_SUBJECT);
 		event.setDeptName(approvalChainEntity.getFunctionalityName());
+
 		event.setMakerMessage("Approval Chain has been created successfully and submitted for approval.");
 		event.setType("Chain Configurations");
 		event.setMakerEmailBody(String.format(
@@ -371,7 +372,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		        userName,
 		        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
 		));
-		event.setCheckerMesagge("A new Approval Chain is awaiting your review and approval.");
+		event.setCheckerMessage("A new Approval Chain is awaiting your review and approval.");
 		event.setCheckerNotificationTitle(Constants.CHAIN_TO_BE_APPROVED_MAIL_SUBJECT);
 		event.setCheckerEmailBody(String.format(
 		        Constants.CHAIN_TO_BE_APPROVED,
@@ -381,6 +382,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		        userName,
 		        LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
 		));
+
+	
+
 		event.setCheckerRoleName("Adminstrator");
 		event.setRoleEmailMap(roleEmailMap);
 
@@ -391,9 +395,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		return ApiResponse.success("Approval Chain Created Successfully");
 	}
 
-
 	
 	private void sendWorkflowNotification(String processId, String type, String makerMessage, String department,
+
 
 			String makerEmail, String makerRole, String makerTitle, String makerBody,
 
@@ -420,8 +424,11 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setCheckerEmailBody(checkerBody);
 
 		event.setDeptName(department);
+
 		event.setMakerMessage(makerMessage);
-		event.setCheckerMesagge(checkerMessage);
+		event.setCheckerMessage(checkerMessage);
+
+
 
 		event.setRoleEmailMap(roleEmailMap);
 
@@ -431,7 +438,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		notificationService.callNotification(event);
 	}
-	
+
 	@Override
 	public ApiResponse<?> updateApprovalChain(UpdateApprovalChainRequest request) {
 
@@ -451,7 +458,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		String description = approvalChainEntity.getDescription();
 		String functionalityName = approvalChainEntity.getFunctionalityName();
 		String createdBy=approvalChainEntity.getCreatedBy();
+		
 		Integer chainId=approvalChainEntity.getId();
+		
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
@@ -493,7 +502,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
-						"Your Approval Chain has been approved successfully and is now active.", "Chain Configurations",
+						"Your Approval Chain has been approved successfully and is now active.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_APPROVED_MAIL_SUBJECT,
 						String.format(
@@ -531,7 +540,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
-						"Your Approval Chain has been rejected by the reviewer.", "Chain Configurations",
+						"Your Approval Chain has been rejected by the reviewer.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_REJECTED_MAIL_SUBJECT,
 						String.format(
@@ -593,7 +602,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			roleEmailMap.put(adminRoleId, adminEmails);
 
 			sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
-					"Approval Chain deactivation request submitted successfully.", "Chain Configurations",
+					"Approval Chain deactivation request submitted successfully.", functionalityName,
 
 					creatorEmail, roleName, Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_SUBJECT,
 					String.format(
@@ -647,7 +656,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW", "Your Approval Chain has been deactivated successfully.",
-						"Chain Configuration",
+						functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVATED_MAIL_SUBJECT,
 						String.format(
@@ -689,7 +698,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
-						"Your Approval Chain deactivation request has been rejected.", "Chain Configurations",
+						"Your Approval Chain deactivation request has been rejected.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVE_REJECTED_MAIL_SUBJECT,
 						String.format(
@@ -747,7 +756,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			roleEmailMap.put(adminRoleId, adminEmails);
 
 			sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
-					"Approval Chain activation request submitted successfully.", "Chain Configurations",
+					"Approval Chain activation request submitted successfully.", functionalityName,
 
 					creatorEmail, roleName, Constants.CHAIN_ACTIVATION_REQUEST_MAIL_SUBJECT,
 					String.format(
@@ -799,7 +808,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW", "Your Approval Chain activation request has been approved successfully.",
-						"Chain Configurations",
+						functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATED_MAIL_SUBJECT,
 						String.format(
@@ -841,7 +850,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				roleEmailMap.put(adminRoleId, List.of(approverEmail));
 
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
-						"Your Approval Chain activation request has been rejected.", "Chain Configurations",
+						"Your Approval Chain activation request has been rejected.", functionalityName,
 
 						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATION_REJECTED_MAIL_SUBJECT,
 						String.format(
@@ -878,4 +887,107 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		return ApiResponse.success("Approval Chain Updated Successfully");
 	}
 
+	@Override
+	public ApiResponse<?> getApprovalChainsList(SpecificationFilterRequest request) {
+
+		log.info("ApprovalChainServiceImpl :: getApprovalChainsList started");
+
+		if (request.getPage() == null || request.getSize() == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+		}
+
+		if (request.getPage() < 0 || request.getSize() <= 0) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+		}
+
+		Sort sort = Sort.by("DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+				request.getSortBy() != null ? request.getSortBy() : "updatedAt");
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Specification<ApprovalChainEntity> listSpec = request.buildBaseSpec();
+
+		Page<ApprovalChainEntity> pageResult = approvalChainRepository.findAll(listSpec, pageable);
+
+		List<ApprovalChainResponse> responseList = pageResult.getContent().stream().map(this::mapToResponse).toList();
+
+		Specification<ApprovalChainEntity> countSpec = request.buildCountSpec();
+
+		Map<String, Object> counts = new LinkedHashMap<>();
+
+		counts.put("total", approvalChainRepository.count(countSpec));
+
+		counts.put("active", approvalChainRepository.count(countSpec.and(statusEquals("ACTIVE"))));
+
+		counts.put("inactive", approvalChainRepository.count(countSpec.and(statusEquals("DEACTIVE"))));
+
+		counts.put("approved", approvalChainRepository.count(countSpec.and(approvalEquals("APPROVED"))));
+
+		counts.put("rejected", approvalChainRepository.count(countSpec.and(approvalEquals("REJECTED"))));
+
+		counts.put("inProgress", approvalChainRepository.count(countSpec.and(approvalEquals("IN_PROGRESS"))));
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("approvalChains", responseList);
+		response.put("currentPage", pageResult.getNumber());
+		response.put("totalPages", pageResult.getTotalPages());
+		response.put("totalElements", pageResult.getTotalElements());
+		response.put("counts", counts);
+
+		log.info("ApprovalChainServiceImpl :: getApprovalChainsList completed");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	}
+
+	private ApprovalChainResponse mapToResponse(ApprovalChainEntity entity) {
+
+		return new ApprovalChainResponse(
+
+				entity.getId(),
+
+				entity.getChainName(),
+
+				entity.getDescription(),
+
+				entity.getStatus(),
+
+				entity.getLevelConfig() != null ? entity.getLevelConfig().size() : 0,
+
+				entity.getUpdatedBy(),
+
+				entity.getUpdatedAt(),
+
+				entity.getCreatedAt(),
+
+				entity.getCreatedBy(),
+
+				entity.getApproval(),
+
+				entity.getLevelConfig(),
+
+				entity.getFunctionality(),
+
+				entity.getFunctionalityName(),
+
+				entity.getActivateComments(),
+
+				entity.getDeactivateComments(),
+
+				entity.getApprovedComments(),
+
+				entity.getRejectedComments(),
+				
+				entity.getRequestType());
+	}
+
+	private Specification<ApprovalChainEntity> approvalEquals(String value) {
+
+		return (root, query, cb) -> cb.equal(cb.lower(root.get("approval")), value.toLowerCase());
+	}
+
+	private Specification<ApprovalChainEntity> statusEquals(String value) {
+
+		return (root, query, cb) -> cb.equal(cb.lower(root.get("status")), value.toLowerCase());
+	}
 }
