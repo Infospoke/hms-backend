@@ -224,6 +224,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		childLinkCommentsEntity.setChainId(approvalChainEntity.getId());
 		childLinkCommentsEntity.setAction("Create");
 		childLinkCommentsEntity.setDescription(approvalChainEntity.getDescription());
+		childLinkCommentsEntity.setCreatedBy(userName);
+		childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+		
 
 		childLinkCommentsRepository.save(childLinkCommentsEntity);
 
@@ -368,6 +371,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Approve");
 				childLinkCommentsEntity.setComments(request.getComments());
+				childLinkCommentsEntity.setCreatedBy(userName);
+				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 				approvalChainEntity.setApprovedComments(request.getApprovedComments());
 
@@ -393,9 +398,12 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			} else if ("REJECTED".equals(approval)) {
 
 				approvalChainEntity.setApproval("Rejected");
+				//child link comments 
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Reject");
 				childLinkCommentsEntity.setComments(request.getComments());
+				childLinkCommentsEntity.setCreatedBy(userName);
+				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 				approvalChainEntity.setRejectedComments(request.getRejectedComments());
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
@@ -439,6 +447,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			childLinkCommentsEntity.setChainId(chainId);
 			childLinkCommentsEntity.setAction("Deactive");
 			childLinkCommentsEntity.setDescription(request.getDescription());
+			childLinkCommentsEntity.setCreatedBy(userName);
+			childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 			// mail sent to all admins
 
@@ -488,6 +498,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Approve");
 				childLinkCommentsEntity.setComments(request.getComments());
+				childLinkCommentsEntity.setCreatedBy(userName);
+				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
@@ -518,6 +530,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Reject");
 				childLinkCommentsEntity.setComments(request.getComments());
+				childLinkCommentsEntity.setCreatedBy(userName);
+				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
@@ -558,6 +572,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			childLinkCommentsEntity.setChainId(chainId);
 			childLinkCommentsEntity.setAction("Active");
 			childLinkCommentsEntity.setDescription(request.getDescription());
+			childLinkCommentsEntity.setCreatedBy(userName);
+			childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
@@ -605,6 +621,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Approve");
 				childLinkCommentsEntity.setComments(request.getComments());
+				childLinkCommentsEntity.setCreatedBy(userName);
+				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
@@ -635,6 +653,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setChainId(chainId);
 				childLinkCommentsEntity.setAction("Reject");
 				childLinkCommentsEntity.setComments(request.getComments());
+				childLinkCommentsEntity.setCreatedBy(userName);
+				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 

@@ -1,5 +1,7 @@
 package com.hms.service.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -33,5 +35,11 @@ public class ChildLinkCommentsEntity {
 	  
 	  @Column(name="description")
 	  private String description;
+	  
+	  @Column(name="created_by")
+	  private String createdBy;
+	  
+	  @Column(name="created_at")
+	  private LocalDateTime createdAt;
 
 }
