@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.request.LevelConfig;
 
 import lombok.AllArgsConstructor;
@@ -46,4 +47,7 @@ public class ApprovalChainResponse {
     private String rejectedComments;
     
     private String requestType;
+
+    private List<CommentTimelineResponse> commentTimeline;
+
 }

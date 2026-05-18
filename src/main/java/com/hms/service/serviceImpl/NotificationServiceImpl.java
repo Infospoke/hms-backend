@@ -97,7 +97,9 @@ public class NotificationServiceImpl implements INotificationService {
         try {
             NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
             checkerEntity.setNotificationTitle(event.getCheckerNotificationTitle());
+
             checkerEntity.setMessage(event.getCheckerMessage());
+
             checkerEntity.setProcessId(event.getProcessId());
             checkerEntity.setDeptName(event.getDeptName());
             checkerEntity.setRoleName(event.getCheckerRoleName());
@@ -106,8 +108,11 @@ public class NotificationServiceImpl implements INotificationService {
             
             NotificationEngineEntity makerEntity = new NotificationEngineEntity();
             makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
+
+
             log.info("The event message to the Checker is : "+event.getMakerMessage());
             makerEntity.setMessage(event.getMakerMessage());
+
 
             makerEntity.setProcessId(event.getProcessId());
             makerEntity.setDeptName(event.getDeptName());
@@ -173,7 +178,9 @@ public class NotificationServiceImpl implements INotificationService {
                         event.getMakerNotificationTitle(),
                         event.getMakerMessage(),
                         event.getDeptName(),
+
                         event.getType(),
+
                         event.getMakerRoleId()
                 );
                 messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotification);
@@ -240,7 +247,7 @@ public class NotificationServiceImpl implements INotificationService {
                 request.getSize(),
                 sort
         );
-     // LIST FILTERS
+     
         Specification<NotificationEngineEntity> baseSpec =
                 request.toNotificationSpecification();
 
@@ -250,7 +257,7 @@ public class NotificationServiceImpl implements INotificationService {
                         pageable
                 );
 
-        // COUNT FILTERS
+       
         Specification<NotificationEngineEntity> countSpec =
                 request.buildNotificationCountSpec();
 
