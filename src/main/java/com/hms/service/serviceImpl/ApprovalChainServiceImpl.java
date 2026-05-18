@@ -155,6 +155,8 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			dto.setAction(comment.getAction());
 			dto.setComments(comment.getComments());
 			dto.setDescription(comment.getDescription());
+			dto.setCreatedAt(comment.getCreatedAt());
+			dto.setCreatedBy(comment.getCreatedBy());
 
 			return dto;
 
