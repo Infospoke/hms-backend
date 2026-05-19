@@ -31,6 +31,8 @@ public interface IConfigurationService {
 	ApiResponse<List<DropDownResponse>> getAllFunctionality();
 	
 	ApiResponse<List<DropDownResponse>> getUsersByRole();
+
+	ApiResponse<List<DropDownResponse>> getAiOptions();
 	
 	
 

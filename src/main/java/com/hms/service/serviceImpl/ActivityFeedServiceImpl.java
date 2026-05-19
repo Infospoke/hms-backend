@@ -1,6 +1,7 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,7 +30,7 @@ public class ActivityFeedServiceImpl implements IActivityFeedService {
 	    log.info("ActivityFeedServiceImpl::Inside the getallFeeds method");
 
 	    try {
-	        LocalDateTime to = LocalDateTime.now();
+	        LocalDateTime to = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 	        LocalDateTime from = to.minusHours(24);
 
 	        List<ActivityFeedEntity> entities =

@@ -1,6 +1,6 @@
 package com.hms.service.response;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +14,7 @@ public class SrApprovalResponse {
 	private String jobTitle;
 	private String Department;
 	private String overAllStatus;
-	private LocalDate createdOn;
+	private LocalDateTime createdOn;
 	private String CurrentStage;
 	
 	
