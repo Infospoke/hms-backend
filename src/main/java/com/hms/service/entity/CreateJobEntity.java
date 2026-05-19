@@ -1,6 +1,7 @@
 package com.hms.service.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -68,6 +69,12 @@ public class CreateJobEntity {
 	
 	@Column(name="submit")
 	private Boolean submit=false;
+	
+	@Column(name="created_by")
+	private String createdBy;
+	
+	@Column(name="created_at")
+	private LocalDateTime createdAt;
 	
 	
 

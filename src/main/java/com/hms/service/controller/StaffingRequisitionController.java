@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.request.UpdateSrRequest;
@@ -41,9 +39,15 @@ public class StaffingRequisitionController {
 	}
 
 	@PostMapping("/sr-list")
-	public ResponseEntity<ApiResponse<?>> getAll(@RequestBody SRFilterRequest request) {
-		ApiResponse<?> response = iStaffingRequisitionService.getAll(request);
+	public ResponseEntity<ApiResponse<?>> getAllSrList(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iStaffingRequisitionService.getAllSrList(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@GetMapping("/get-all-sr-list-count")
+	public ResponseEntity<ApiResponse<?>> getAllSrListCount() {
+	    ApiResponse<?> response = iStaffingRequisitionService.getAllSrListCount();
+	    return new ResponseEntity<>(response,HttpStatus.OK);
 	}
 
 	@PostMapping("/sr-approval")

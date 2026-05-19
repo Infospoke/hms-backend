@@ -1,6 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -62,7 +61,6 @@ import com.hms.service.request.LevelConfig;
 import com.hms.service.request.PositonBascicsRequest;
 import com.hms.service.request.ReviewRequest;
 import com.hms.service.request.RolesAndRequirementsRequest;
-import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.SourcingStrategyRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
@@ -178,7 +176,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity = new SRPositionBasicsEntity();
 				srPositionBasicsEntity.setSubmitted(false);
 				srPositionBasicsEntity.setApproved(false);
-				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
+				srPositionBasicsEntity.setCreatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				srId = generateSrId(positonBasicsRequest.getDepartmentId());
 				srPositionBasicsEntity.setSrId(srId);
 
@@ -1369,62 +1367,324 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					List.of(e.getMessage()));
 		}
 	}
-
+	
 	@Override
-	public ApiResponse<?> getAll(SRFilterRequest request) {
-		log.info("StaffRequisitionsServiceImpl : Inside getAll method");
+	public ApiResponse<?> getAllSrList(SpecificationFilterRequest request) {
+
 		try {
-			int page = request.getPage();
-			int size = request.getSize();
-
-			Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdOn"));
-
+			int page = request.getPage() != null ? request.getPage() : 0;
+			
+			int size = request.getSize() != null ? request.getSize() : 10;
+			
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "createdOn";
+			
+			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+			
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+			
 			String authHeader = httpServletRequest.getHeader("Authorization");
+			
 			Long userId = null;
 
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				
+				String token = authHeader.substring(7);
+				
+				userId = jwtService.extractUserId(token);
+				
+			} else {
+				
+				return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+			}
+			
+			Specification<SRPositionBasicsEntity> spec = request.buildMyStaffingRequisitionSpecification(userId);
+
+			Page<SRPositionBasicsEntity> pageResult = positionBasicsRepository.findAll(spec, pageable);
+
+			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findAll(spec);
+			
+			long allCount = allData.size();
+			
+			long draftCount = allData.stream().filter(sr -> Boolean.FALSE.equals(sr.getSubmitted())).count();
+
+			long approvedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getApproved()))
+					.count();
+
+			long rejectedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+
+
+			long pendingCount = allData
+					.stream().filter(sr -> Boolean.TRUE.equals(sr.getSubmitted())
+							&& !Boolean.TRUE.equals(sr.getApproved()) && !Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+			
+			Map<Integer, String> departmentMap = departmentsRepository.findAll().stream()
+					.collect(Collectors.toMap(DepartmentsEntity::getId, DepartmentsEntity::getDepartmentName));
+
+			List<Map<String, Object>> content = pageResult.getContent().stream().map(sr -> {
+				Map<String, Object> map = new LinkedHashMap<>();
+
+				map.put("id", sr.getId());
+				map.put("srId", sr.getSrId());
+				map.put("jobTitle", sr.getJobTitle());
+				map.put("departmentName", departmentMap.get(sr.getDepartmentId()));
+				map.put("requestedBy", sr.getCreatedBy());
+				map.put("requestedOn", sr.getCreatedOn());
+				map.put("currentStage",getCurrentStage(sr));
+				map.put("pipeline", getPipeline(sr));
+				
+
+				String status;
+
+				if (Boolean.TRUE.equals(sr.getApproved())) {
+					
+					status = "Approved";
+					
+				} else if (Boolean.TRUE.equals(sr.getRejected())) {
+					
+					status = "Rejected";
+					
+				} else if (Boolean.FALSE.equals(sr.getSubmitted())) {
+
+					status = "Draft";
+
+				} else {
+
+					status = "Pending";
+				}
+				map.put("status", status);
+
+				return map;
+
+			}).toList();
+
+			Map<String, Object> response = new LinkedHashMap<>();
+
+			response.put("content", content);
+			response.put("currentPage", pageResult.getNumber());
+			response.put("totalPages", pageResult.getTotalPages());
+			response.put("totalElements", pageResult.getTotalElements());
+			response.put("allRequisitions", allCount);
+			response.put("approvedCount", approvedCount);
+			response.put("rejectedCount", rejectedCount);
+			response.put("pendingCount", pendingCount);
+			response.put("draftCount", draftCount);
+			return ApiResponse.success(ResponseCode.SUCCESS, "SR Data fetched successfully", response);
+			
+			}
+		 catch (Exception e) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch SR data", List.of(e.getMessage()));
+		}
+	}
+
+	private String getCurrentStage(SRPositionBasicsEntity sr) {
+
+		try {
+
+			Optional<ApprovalsChildEntity> optionalChild = approvalsChildRepository.findByProcessId(sr.getSrId());
+
+			if (optionalChild.isEmpty()) {
+
+			    return null;
+			}
+
+			ApprovalsChildEntity child = optionalChild.get();
+
+
+			List<Integer> roleIds = new ArrayList<>();
+
+			if (child.getRole1() != null) {
+				roleIds.add(child.getRole1());
+			}
+
+			if (child.getRole2() != null) {
+				roleIds.add(child.getRole2());
+			}
+
+			if (child.getRole3() != null) {
+				roleIds.add(child.getRole3());
+			}
+
+			List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
+
+			Map<Integer, String> roleMap = roles.stream()
+					.collect(Collectors.toMap(r -> (Integer) r[0], r -> (String) r[1]));
+
+			if (Boolean.TRUE.equals(sr.getRejected())) {
+
+
+			    if (Boolean.TRUE.equals(sr.getApprover3())) {
+
+			        return roleMap.get(child.getRole3());
+			    }
+
+			    if (Boolean.TRUE.equals(sr.getApprover2())) {
+
+			        return roleMap.get(child.getRole2());
+			    }
+
+			    if (Boolean.TRUE.equals(sr.getApprover1())) {
+
+			        return roleMap.get(child.getRole1());
+			    }
+
+			    return roleMap.get(child.getRole1());
+			}
+
+			if (Boolean.TRUE.equals(sr.getApprover1()) && Boolean.TRUE.equals(sr.getApprover2())
+					&& Boolean.TRUE.equals(sr.getApprover3())) {
+
+				 return roleMap.get(child.getRole3());
+			}
+
+			if (!Boolean.TRUE.equals(sr.getApprover1())) {
+
+				return roleMap.get(child.getRole1());
+			}
+
+			if (Boolean.TRUE.equals(sr.getApprover1()) && !Boolean.TRUE.equals(sr.getApprover2())) {
+
+				return roleMap.get(child.getRole2());
+			}
+
+			if (Boolean.TRUE.equals(sr.getApprover1()) && Boolean.TRUE.equals(sr.getApprover2())
+					&& !Boolean.TRUE.equals(sr.getApprover3())) {
+
+				return roleMap.get(child.getRole3());
+			}
+
+			return null;
+
+		} catch (Exception e) {
+
+			return null;
+		}
+	}
+	
+	private List<String> getPipeline(SRPositionBasicsEntity sr) {
+
+		try {
+
+			List<String> pipeline = new ArrayList<>();
+
+			if (sr.getRoleName() != null) {
+
+				pipeline.add(sr.getRoleName());
+			}
+			
+			Optional<ApprovalsChildEntity> optionalChild = approvalsChildRepository.findByProcessId(sr.getSrId());
+
+			if (optionalChild.isEmpty()) {
+
+				return pipeline;
+			}
+
+			ApprovalsChildEntity child = optionalChild.get();
+
+			List<Integer> roleIds = new ArrayList<>();
+
+			if (child.getRole1() != null) {
+				roleIds.add(child.getRole1());
+			}
+
+			if (child.getRole2() != null) {
+				roleIds.add(child.getRole2());
+			}
+
+			if (child.getRole3() != null) {
+				roleIds.add(child.getRole3());
+			}
+
+			List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
+
+			Map<Integer, String> roleMap = roles.stream()
+					.collect(Collectors.toMap(r -> (Integer) r[0], r -> (String) r[1]));
+
+			if (child.getRole1() != null) {
+
+				pipeline.add(roleMap.get(child.getRole1()));
+			}
+
+			if (child.getRole2() != null) {
+
+				pipeline.add(roleMap.get(child.getRole2()));
+			}
+
+			if (child.getRole3() != null) {
+
+				pipeline.add(roleMap.get(child.getRole3()));
+			}
+
+			return pipeline;
+
+		} catch (Exception e) {
+
+			return Collections.emptyList();
+		}
+	}
+	
+	@Override
+	public ApiResponse<?> getAllSrListCount() {
+
+		try {
+			String authHeader = httpServletRequest.getHeader("Authorization");
+
+			Long userId = null;
+
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
 				String token = authHeader.substring(7);
 
 				userId = jwtService.extractUserId(token);
+
 			} else {
+
 				return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
 			}
 
-			Page<SRPositionBasicsEntity> pageData = positionBasicsRepository.findByUserId(userId, pageable);
+			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findByUserId(userId);
 
-			if (pageData.isEmpty()) {
-				log.warn("No SR records found for userId: {}", userId);
-				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND,
-						List.of(Constants.NO_RECORDS_FOUND_IN_THE_DATABASE));
-			}
-			List<Map<String, Object>> list = pageData.getContent().stream().map(sr -> {
-				Map<String, Object> map = new HashMap<>();
-				map.put(Constants.SR_ID, sr.getSrId());
-				map.put(Constants.JOB_TITLE, sr.getJobTitle());
-				map.put(Constants.CREATED_DATE, sr.getCreatedOn());
+			long allCount = allData.size();
 
-				String status;
-				if (Boolean.TRUE.equals(sr.getApproved())) {
-					status = Constants.APPROVED;
-				} else if (Boolean.TRUE.equals(sr.getSubmitted())) {
-					status = Constants.PENDING;
-				} else {
-					status = Constants.DRAFT;
-				}
-				map.put(Constants.STATUS, status);
-				return map;
-			}).toList();
-			log.info("SUCCESS - userId: {} | Records: {}", userId, pageData.getTotalElements());
-			return ApiResponse.success(ResponseCode.SUCCESS, Constants.SR_DATA_FETCHED_SUCCESSFULLY,
-					Map.of(Constants.CONTENT, list, Constants.CURRENT_PAGE, pageData.getNumber(), Constants.TOTAL_PAGES,
-							pageData.getTotalPages(), Constants.TOTAL_ELEMENTS, pageData.getTotalElements()));
+			long draftCount = allData.stream().filter(sr -> Boolean.FALSE.equals(sr.getSubmitted())).count();
+
+			long approvedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getApproved()))
+					.count();
+
+			long rejectedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+
+			long pendingCount = allData
+					.stream().filter(sr -> Boolean.TRUE.equals(sr.getSubmitted())
+							&& !Boolean.TRUE.equals(sr.getApproved()) && !Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+
+			Map<String, Object> response = new LinkedHashMap<>();
+
+			response.put("allRequisitions", allCount);
+
+			response.put("draftCount", draftCount);
+
+			response.put("pendingCount", pendingCount);
+
+			response.put("approvedCount", approvedCount);
+
+			response.put("rejectedCount", rejectedCount);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "SR list counts fetched successfully", response);
+
 		} catch (Exception e) {
-			log.error("ERROR fetching SR list", e);
-			log.info("StaffRequisitionsServiceImpl : Exit from getAll method");
-			return ApiResponse.failure(ResponseCode.FAILURE, Constants.FAILED_TO_FETCH_SR_DATA,
-					List.of(e.getMessage()));
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch SR list counts", List.of(e.getMessage()));
 		}
 	}
+	
 
 	private String generateSrId(Integer businessUnitId) {
 
@@ -2081,4 +2341,5 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		return new ApprovedSrResponse(entity.getSrId(), entity.getJobTitle(), departmentName, entity.getCreatedBy(),
 				entity.getDateOfApproval3());
 	}
+
 }

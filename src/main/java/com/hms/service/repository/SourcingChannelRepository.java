@@ -9,5 +9,5 @@ import com.hms.service.entity.SourcingChannelEntity;
 @Repository
 public interface SourcingChannelRepository extends JpaRepository<SourcingChannelEntity, Integer> {
 
-	List<SourcingChannelEntity> findByJobId(Integer jobId);
+	List<SourcingChannelEntity> findByIdIn(List<Integer> ids);
 }
