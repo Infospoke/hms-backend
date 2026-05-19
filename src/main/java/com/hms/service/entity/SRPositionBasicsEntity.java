@@ -143,6 +143,10 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="approver3_role")
 	private String approver3Role;
+	
+	@Column(name="maker_role_id")
+	private Integer makerRoleId;
+	
 
 
 }
