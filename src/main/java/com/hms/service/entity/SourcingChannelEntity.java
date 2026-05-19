@@ -21,9 +21,6 @@ public class SourcingChannelEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     
-    @Column(name = "job_id")
-    private Integer jobId;
-
     @Column(name = "channel_name")
     private String channelName;
 
@@ -32,10 +29,7 @@ public class SourcingChannelEntity {
 
     @Column(name = "cost")
     private String cost;
+
+	
     
-    @Column(name = "post_job")
-    private Boolean postJob=false;
-    
-    @Column(name = "referral_amount")
-    private String referralAmount;
 }
