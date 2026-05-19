@@ -1397,24 +1397,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findAll(spec);
 			
-			long allCount = allData.size();
-			
-			long draftCount = allData.stream().filter(sr -> Boolean.FALSE.equals(sr.getSubmitted())).count();
-
-			long approvedCount = allData.stream()
-					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getApproved()))
-					.count();
-
-			long rejectedCount = allData.stream()
-					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getRejected()))
-					.count();
-
-
-			long pendingCount = allData
-					.stream().filter(sr -> Boolean.TRUE.equals(sr.getSubmitted())
-							&& !Boolean.TRUE.equals(sr.getApproved()) && !Boolean.TRUE.equals(sr.getRejected()))
-					.count();
-			
 			Map<Integer, String> departmentMap = departmentsRepository.findAll().stream()
 					.collect(Collectors.toMap(DepartmentsEntity::getId, DepartmentsEntity::getDepartmentName));
 
@@ -1465,16 +1447,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}).toList();
 
 			Map<String, Object> response = new LinkedHashMap<>();
-
-			response.put("allRequisitions", allCount);
-
-			response.put("approvedCount", approvedCount);
-
-			response.put("rejectedCount", rejectedCount);
-
-			response.put("pendingCount", pendingCount);
-
-			response.put("draftCount", draftCount);
 
 			response.put("content", content);
 
@@ -1636,6 +1608,64 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		} catch (Exception e) {
 
 			return Collections.emptyList();
+		}
+	}
+	
+	@Override
+	public ApiResponse<?> getAllSrListCount() {
+
+		try {
+			String authHeader = httpServletRequest.getHeader("Authorization");
+
+			Long userId = null;
+
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+				String token = authHeader.substring(7);
+
+				userId = jwtService.extractUserId(token);
+
+			} else {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+			}
+
+			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findByUserId(userId);
+
+			long allCount = allData.size();
+
+			long draftCount = allData.stream().filter(sr -> Boolean.FALSE.equals(sr.getSubmitted())).count();
+
+			long approvedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getApproved()))
+					.count();
+
+			long rejectedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+
+			long pendingCount = allData
+					.stream().filter(sr -> Boolean.TRUE.equals(sr.getSubmitted())
+							&& !Boolean.TRUE.equals(sr.getApproved()) && !Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+
+			Map<String, Object> response = new LinkedHashMap<>();
+
+			response.put("allRequisitions", allCount);
+
+			response.put("draftCount", draftCount);
+
+			response.put("pendingCount", pendingCount);
+
+			response.put("approvedCount", approvedCount);
+
+			response.put("rejectedCount", rejectedCount);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "SR list counts fetched successfully", response);
+
+		} catch (Exception e) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch SR list counts", List.of(e.getMessage()));
 		}
 	}
 	

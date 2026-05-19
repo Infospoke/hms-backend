@@ -45,6 +45,12 @@ public class StaffingRequisitionController {
 		ApiResponse<?> response = iStaffingRequisitionService.getAll(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/get-all-sr-list-count")
+	public ResponseEntity<ApiResponse<?>> getAllSrListCount() {
+	    ApiResponse<?> response = iStaffingRequisitionService.getAllSrListCount();
+	    return new ResponseEntity<>(response,HttpStatus.OK);
+	}
 
 	@PostMapping("/sr-approval")
 	public ResponseEntity<ApiResponse<?>> srApproval(@RequestBody UpdateSrRequest request) {

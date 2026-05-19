@@ -26,6 +26,8 @@ public interface IStaffingRequisitionService {
 	ApiResponse<?> getAllApprovedServiceRequests(SpecificationFilterRequest request);
 
 	ApiResponse<?> getAll(SpecificationFilterRequest request);
+
+	ApiResponse<?> getAllSrListCount();
     
 
 }
