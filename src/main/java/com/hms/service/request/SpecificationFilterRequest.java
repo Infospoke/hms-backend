@@ -30,6 +30,8 @@ public class SpecificationFilterRequest {
     private String sortBy = "id";
 
     private String direction = "DESC";
+    
+    private String status;
 
     private Map<String, Object> filters;
 
@@ -505,32 +507,24 @@ public class SpecificationFilterRequest {
 							cb.like(cb.lower(root.get("createdBy")), "%" + requestedBy.toLowerCase().trim() + "%"));
 				}
 
-				String status = getFilter("status");
+				String status = getStatus();
 
 				if (status != null && !status.isBlank()) {
-
-					// APPROVED
 
 					if ("APPROVED".equalsIgnoreCase(status)) {
 
 						predicate = cb.and(predicate, cb.isTrue(root.get("approved")));
 					}
 
-					// REJECTED
-
 					else if ("REJECTED".equalsIgnoreCase(status)) {
 
 						predicate = cb.and(predicate, cb.isTrue(root.get("rejected")));
 					}
 
-					// DRAFT
-
 					else if ("DRAFT".equalsIgnoreCase(status)) {
 
 						predicate = cb.and(predicate, cb.isFalse(root.get("submitted")));
 					}
-
-					// PENDING
 
 					else if ("PENDING".equalsIgnoreCase(status)) {
 
@@ -544,63 +538,18 @@ public class SpecificationFilterRequest {
 					}
 				}
 					
-				String dateFilter = getFilter("dateFilter");
+				Specification<SRPositionBasicsEntity> dateSpecification =
+				        dateSpec("createdOn");
 
-				if (dateFilter != null && !dateFilter.isBlank()) {
-					
-					 dateFilter = dateFilter
-					            .replace("_", " ")
-					            .trim();
+				if (dateSpecification != null) {
 
-					LocalDate today = LocalDate.now();
+					Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
 
-					// TODAY
-
-					if ("TODAY".equalsIgnoreCase(dateFilter)) {
-
-						predicate = cb.and(predicate, cb.equal(root.get("createdOn"), today));
-					}
-
-					// THIS WEEK
-
-					else if ("THIS WEEK".equalsIgnoreCase(dateFilter)) {
-
-						LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
-
-						LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
-
-						predicate = cb.and(predicate, cb.between(root.get("createdOn"), startOfWeek, endOfWeek));
-					}
-
-					// THIS MONTH
-
-					else if ("THIS MONTH".equalsIgnoreCase(dateFilter)) {
-
-						LocalDate startOfMonth = today.withDayOfMonth(1);
-
-						LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-
-						predicate = cb.and(predicate, cb.between(root.get("createdOn"), startOfMonth, endOfMonth));
-					}
-					
-					else if ("CUSTOM".equalsIgnoreCase(dateFilter)) {
-
-						String fromDate = getFilter("fromDate");
-
-						String toDate = getFilter("toDate");
-
-						if (fromDate != null && toDate != null && !fromDate.isBlank() && !toDate.isBlank()) {
-
-							LocalDate from = LocalDate.parse(fromDate);
-
-							LocalDate to = LocalDate.parse(toDate);
-
-							predicate = cb.and(predicate, cb.between(root.get("createdOn"), from, to));
-						}
-					}
+					predicate = cb.and(predicate, datePredicate);
 				}
 
 				return predicate;
 			};
 		}
+
 	}

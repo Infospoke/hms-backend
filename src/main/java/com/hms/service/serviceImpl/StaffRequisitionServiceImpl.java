@@ -1390,10 +1390,18 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 			
 			Specification<SRPositionBasicsEntity> spec = request.buildMyStaffingRequisitionSpecification(userId);
-
+			
 			Page<SRPositionBasicsEntity> pageResult = positionBasicsRepository.findAll(spec, pageable);
 
-			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findAll(spec);
+	        String status = request.getStatus();
+
+	        request.setStatus(null);
+
+			Specification<SRPositionBasicsEntity> countSpec = request.buildMyStaffingRequisitionSpecification(userId);
+
+			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findAll(countSpec);
+
+	        request.setStatus(status);
 			
 			long allCount = allData.size();
 			
@@ -1429,23 +1437,23 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				map.put("pipeline", getPipeline(sr));
 				
 
-				String status;
+				String srStatus;
 
 				if (Boolean.TRUE.equals(sr.getApproved())) {
 					
-					status = "Approved";
+					srStatus = "Approved";
 					
 				} else if (Boolean.TRUE.equals(sr.getRejected())) {
 					
-					status = "Rejected";
+					srStatus = "Rejected";
 					
 				} else if (Boolean.FALSE.equals(sr.getSubmitted())) {
 
-					status = "Draft";
+					srStatus = "Draft";
 
 				} else {
 
-					status = "Pending";
+					srStatus = "Pending";
 				}
 				map.put("status", status);
 
@@ -1475,75 +1483,81 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	private String getCurrentStage(SRPositionBasicsEntity sr) {
 
 		try {
-
+			
 			Optional<ApprovalsChildEntity> optionalChild = approvalsChildRepository.findByProcessId(sr.getSrId());
 
 			if (optionalChild.isEmpty()) {
 
-			    return null;
+				return null;
 			}
 
 			ApprovalsChildEntity child = optionalChild.get();
-
-
+			
 			List<Integer> roleIds = new ArrayList<>();
 
 			if (child.getRole1() != null) {
+
 				roleIds.add(child.getRole1());
 			}
 
 			if (child.getRole2() != null) {
+
 				roleIds.add(child.getRole2());
 			}
 
 			if (child.getRole3() != null) {
+
 				roleIds.add(child.getRole3());
 			}
+
+			
+			System.out.println(roleIds);
 
 			List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
 
 			Map<Integer, String> roleMap = roles.stream()
 					.collect(Collectors.toMap(r -> (Integer) r[0], r -> (String) r[1]));
 
+			if (Boolean.FALSE.equals(sr.getSubmitted())) {
+
+				return "Draft";
+			}
+
 			if (Boolean.TRUE.equals(sr.getRejected())) {
 
 
-			    if (Boolean.TRUE.equals(sr.getApprover3())) {
+				if (Boolean.TRUE.equals(sr.getApprover3())) {
 
-			        return roleMap.get(child.getRole3());
-			    }
+					return roleMap.get(child.getRole3());
+				}
 
-			    if (Boolean.TRUE.equals(sr.getApprover2())) {
+				if (Boolean.TRUE.equals(sr.getApprover2())) {
 
-			        return roleMap.get(child.getRole2());
-			    }
-
-			    if (Boolean.TRUE.equals(sr.getApprover1())) {
-
-			        return roleMap.get(child.getRole1());
-			    }
-
-			    return roleMap.get(child.getRole1());
-			}
-
-			if (Boolean.TRUE.equals(sr.getApprover1()) && Boolean.TRUE.equals(sr.getApprover2())
-					&& Boolean.TRUE.equals(sr.getApprover3())) {
-
-				 return roleMap.get(child.getRole3());
-			}
-
-			if (!Boolean.TRUE.equals(sr.getApprover1())) {
+					return roleMap.get(child.getRole2());
+				}
 
 				return roleMap.get(child.getRole1());
 			}
+			
+			if (Boolean.TRUE.equals(sr.getSubmitted())) {
 
-			if (Boolean.TRUE.equals(sr.getApprover1()) && !Boolean.TRUE.equals(sr.getApprover2())) {
+				if (!Boolean.TRUE.equals(sr.getApprover1())) {
 
-				return roleMap.get(child.getRole2());
-			}
+					System.out.println(child.getRole1());
+					System.out.println(roleMap);
+					
+					return roleMap.get(child.getRole1());
+				}
 
-			if (Boolean.TRUE.equals(sr.getApprover1()) && Boolean.TRUE.equals(sr.getApprover2())
-					&& !Boolean.TRUE.equals(sr.getApprover3())) {
+				if (!Boolean.TRUE.equals(sr.getApprover2())) {
+
+					return roleMap.get(child.getRole2());
+				}
+
+				if (!Boolean.TRUE.equals(sr.getApprover3())) {
+
+					return roleMap.get(child.getRole3());
+				}
 
 				return roleMap.get(child.getRole3());
 			}
@@ -1552,6 +1566,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		} catch (Exception e) {
 
+			 e.printStackTrace();
 			return null;
 		}
 	}
