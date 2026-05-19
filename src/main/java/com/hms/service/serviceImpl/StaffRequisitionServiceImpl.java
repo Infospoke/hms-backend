@@ -1,6 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -176,7 +175,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity = new SRPositionBasicsEntity();
 				srPositionBasicsEntity.setSubmitted(false);
 				srPositionBasicsEntity.setApproved(false);
-				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
+				srPositionBasicsEntity.setCreatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				srId = generateSrId(positonBasicsRequest.getDepartmentId());
 				srPositionBasicsEntity.setSrId(srId);
 

@@ -29,7 +29,5 @@ public class SourcingChannelEntity {
 
     @Column(name = "cost")
     private String cost;
-
-	
-    
+	    
 }

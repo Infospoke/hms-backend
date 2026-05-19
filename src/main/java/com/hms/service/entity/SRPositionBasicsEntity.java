@@ -76,7 +76,7 @@ public class SRPositionBasicsEntity {
 	private String srId;
 	
 	@Column(name="created_on")
-	private LocalDate createdOn;
+	private LocalDateTime createdOn;
 	
 	@Column(name="created_by")
 	private String createdBy;

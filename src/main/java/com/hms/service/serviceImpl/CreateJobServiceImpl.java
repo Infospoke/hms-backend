@@ -1,5 +1,7 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +22,11 @@ import com.hms.service.request.CreateJobRequest;
 import com.hms.service.response.CreateJobResponse;
 import com.hms.service.response.SourcingChannelResponse;
 import com.hms.service.service.ICreateJobService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -34,6 +38,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private CreateJobRepository createJobRepository;
+	
+	@Autowired
+	private JwtService jwtService;
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+
 
 	@Autowired
 	private RolesAndRequirementsRepository rolesAndRequirementsRepository;
@@ -60,7 +71,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		CreateJobEntity jobEntity = createJobRepository.findByJobCode(jobCode).orElse(null);
 
 		boolean isUpdate = jobEntity != null;
-
+	
 		if (!isUpdate) {
 
 			jobEntity = buildCreateJobEntity(srData, rolesData, request, jobCode);
@@ -81,6 +92,18 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	private CreateJobEntity buildCreateJobEntity(SRPositionBasicsEntity srData, RolesAndRequirementsEntity rolesData,
 			CreateJobRequest request, String jobCode) {
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		String userName = "";
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userName = jwtService.extractUsernameFromClaims(token);
+		}
+
 
 		CreateJobEntity entity = new CreateJobEntity();
 
@@ -111,6 +134,10 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		entity.setMaxExperience(rolesData.getMaxExperience());
 
 		entity.setAdditionalNotes(trimValue(request.getAdditionalNotes()));
+		
+		entity.setCreatedBy(userName);
+		
+		entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 		entity.setSubmit(false);
 
