@@ -1360,77 +1360,85 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	}
 	
 	@Override
-	public ApiResponse<?> getAll(SpecificationFilterRequest request) {
+	public ApiResponse<?> getAllSrList(SpecificationFilterRequest request) {
 
 		try {
-
 			int page = request.getPage() != null ? request.getPage() : 0;
-
+			
 			int size = request.getSize() != null ? request.getSize() : 10;
-
+			
 			String sortBy = request.getSortBy() != null ? request.getSortBy() : "createdOn";
-
+			
 			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
 					: Sort.Direction.DESC;
-
+			
 			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-
+			
 			String authHeader = httpServletRequest.getHeader("Authorization");
-
+			
 			Long userId = null;
 
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
+				
 				String token = authHeader.substring(7);
-
+				
 				userId = jwtService.extractUserId(token);
-
+				
 			} else {
-
+				
 				return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
 			}
-
+			
 			Specification<SRPositionBasicsEntity> spec = request.buildMyStaffingRequisitionSpecification(userId);
-
 
 			Page<SRPositionBasicsEntity> pageResult = positionBasicsRepository.findAll(spec, pageable);
 
 			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findAll(spec);
 			
+			long allCount = allData.size();
+			
+			long draftCount = allData.stream().filter(sr -> Boolean.FALSE.equals(sr.getSubmitted())).count();
+
+			long approvedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getApproved()))
+					.count();
+
+			long rejectedCount = allData.stream()
+					.filter(sr -> Boolean.TRUE.equals(sr.getSubmitted()) && Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+
+
+			long pendingCount = allData
+					.stream().filter(sr -> Boolean.TRUE.equals(sr.getSubmitted())
+							&& !Boolean.TRUE.equals(sr.getApproved()) && !Boolean.TRUE.equals(sr.getRejected()))
+					.count();
+			
 			Map<Integer, String> departmentMap = departmentsRepository.findAll().stream()
 					.collect(Collectors.toMap(DepartmentsEntity::getId, DepartmentsEntity::getDepartmentName));
 
-
 			List<Map<String, Object>> content = pageResult.getContent().stream().map(sr -> {
-
 				Map<String, Object> map = new LinkedHashMap<>();
 
 				map.put("id", sr.getId());
-
 				map.put("srId", sr.getSrId());
-
 				map.put("jobTitle", sr.getJobTitle());
-
 				map.put("departmentName", departmentMap.get(sr.getDepartmentId()));
-
 				map.put("requestedBy", sr.getCreatedBy());
-
 				map.put("requestedOn", sr.getCreatedOn());
-				
 				map.put("currentStage",getCurrentStage(sr));
-
 				map.put("pipeline", getPipeline(sr));
+				
 
 				String status;
 
 				if (Boolean.TRUE.equals(sr.getApproved())) {
-
+					
 					status = "Approved";
-
+					
 				} else if (Boolean.TRUE.equals(sr.getRejected())) {
-
+					
 					status = "Rejected";
-
+					
 				} else if (Boolean.FALSE.equals(sr.getSubmitted())) {
 
 					status = "Draft";
@@ -1439,7 +1447,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					status = "Pending";
 				}
-
 				map.put("status", status);
 
 				return map;
@@ -1449,18 +1456,18 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			Map<String, Object> response = new LinkedHashMap<>();
 
 			response.put("content", content);
-
 			response.put("currentPage", pageResult.getNumber());
-
 			response.put("totalPages", pageResult.getTotalPages());
-
 			response.put("totalElements", pageResult.getTotalElements());
-
+			response.put("allRequisitions", allCount);
+			response.put("approvedCount", approvedCount);
+			response.put("rejectedCount", rejectedCount);
+			response.put("pendingCount", pendingCount);
+			response.put("draftCount", draftCount);
 			return ApiResponse.success(ResponseCode.SUCCESS, "SR Data fetched successfully", response);
 			
 			}
 		 catch (Exception e) {
-
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch SR data", List.of(e.getMessage()));
 		}
 	}

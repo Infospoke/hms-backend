@@ -477,12 +477,17 @@ public class SpecificationFilterRequest {
 
 				predicate = cb.and(predicate, cb.equal(root.get("userId"), userId));
 
-				String jobTitle = getFilter("jobTitle");
+				String search = getFilter("jobTitle");
 
-				if (jobTitle != null && !jobTitle.isBlank()) {
+				if (search != null && !search.isBlank()) {
 
-					predicate = cb.and(predicate,
-							cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase().trim() + "%"));
+					Predicate jobTitlePredicate = cb.like(cb.lower(root.get("jobTitle")),
+							"%" + search.toLowerCase().trim() + "%");
+
+					Predicate srIdPredicate = cb.like(cb.lower(root.get("srId")),
+							"%" + search.toLowerCase().trim() + "%");
+
+					predicate = cb.and(predicate, cb.or(jobTitlePredicate, srIdPredicate));
 				}
 
 				String departmentId = getFilter("departmentId");
@@ -500,17 +505,99 @@ public class SpecificationFilterRequest {
 							cb.like(cb.lower(root.get("createdBy")), "%" + requestedBy.toLowerCase().trim() + "%"));
 				}
 
-				String fromDate = getFilter("fromDate");
+				String status = getFilter("status");
 
-				String toDate = getFilter("toDate");
+				if (status != null && !status.isBlank()) {
 
-				if (fromDate != null && toDate != null && !fromDate.isBlank() && !toDate.isBlank()) {
+					// APPROVED
 
-					LocalDate from = LocalDate.parse(fromDate);
+					if ("APPROVED".equalsIgnoreCase(status)) {
 
-					LocalDate to = LocalDate.parse(toDate);
+						predicate = cb.and(predicate, cb.isTrue(root.get("approved")));
+					}
 
-					predicate = cb.and(predicate, cb.between(root.get("createdOn"), from, to));
+					// REJECTED
+
+					else if ("REJECTED".equalsIgnoreCase(status)) {
+
+						predicate = cb.and(predicate, cb.isTrue(root.get("rejected")));
+					}
+
+					// DRAFT
+
+					else if ("DRAFT".equalsIgnoreCase(status)) {
+
+						predicate = cb.and(predicate, cb.isFalse(root.get("submitted")));
+					}
+
+					// PENDING
+
+					else if ("PENDING".equalsIgnoreCase(status)) {
+
+						predicate = cb.and(predicate,
+
+								cb.isTrue(root.get("submitted")),
+
+								cb.isFalse(root.get("approved")),
+
+								cb.isFalse(root.get("rejected")));
+					}
+				}
+					
+				String dateFilter = getFilter("dateFilter");
+
+				if (dateFilter != null && !dateFilter.isBlank()) {
+					
+					 dateFilter = dateFilter
+					            .replace("_", " ")
+					            .trim();
+
+					LocalDate today = LocalDate.now();
+
+					// TODAY
+
+					if ("TODAY".equalsIgnoreCase(dateFilter)) {
+
+						predicate = cb.and(predicate, cb.equal(root.get("createdOn"), today));
+					}
+
+					// THIS WEEK
+
+					else if ("THIS WEEK".equalsIgnoreCase(dateFilter)) {
+
+						LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+
+						LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
+						predicate = cb.and(predicate, cb.between(root.get("createdOn"), startOfWeek, endOfWeek));
+					}
+
+					// THIS MONTH
+
+					else if ("THIS MONTH".equalsIgnoreCase(dateFilter)) {
+
+						LocalDate startOfMonth = today.withDayOfMonth(1);
+
+						LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+
+						predicate = cb.and(predicate, cb.between(root.get("createdOn"), startOfMonth, endOfMonth));
+					}
+					
+					else if ("CUSTOM".equalsIgnoreCase(dateFilter)) {
+
+						String fromDate = getFilter("fromDate");
+
+						String toDate = getFilter("toDate");
+
+						if (fromDate != null && toDate != null && !fromDate.isBlank() && !toDate.isBlank()) {
+
+							LocalDate from = LocalDate.parse(fromDate);
+
+							LocalDate to = LocalDate.parse(toDate);
+
+							predicate = cb.and(predicate, cb.between(root.get("createdOn"), from, to));
+						}
+					}
 				}
 
 				return predicate;
