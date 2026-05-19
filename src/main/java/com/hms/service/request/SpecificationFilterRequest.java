@@ -179,6 +179,12 @@ public class SpecificationFilterRequest {
         if (chainName != null) {
             spec = spec.and(likeSpec("chainName", chainName));
         }
+        
+        String functionalityName = getFilter("functionalityName");
+        if (functionalityName != null) {
+            spec = spec.and(likeSpec("functionalityName", functionalityName));
+        }
+        
 
         String search = getFilter("search");
 
@@ -229,6 +235,11 @@ public class SpecificationFilterRequest {
 
         if (chainName != null) {
             spec = spec.and(likeSpec("chainName", chainName));
+        }
+        
+        String functionalityName = getFilter("functionalityName");
+        if (functionalityName != null) {
+            spec = spec.and(likeSpec("functionalityName", functionalityName));
         }
 
         String search = getFilter("search");

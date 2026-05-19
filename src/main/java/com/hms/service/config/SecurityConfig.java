@@ -40,6 +40,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(
 						auth -> auth.requestMatchers(
 										"/hms/login/user-login",
+										"/hms/configurations/**",
 										"/hms/approval-chains/**",
 										"/hms/login/forgot-password",
 										"/ws/**",                          // WebSocket STOMP handshake
