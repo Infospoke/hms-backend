@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -72,25 +73,22 @@ public class NotificationServiceImpl implements INotificationService {
 
     // Kafka Consumer — save to DB + send emails to all roles + push WebSocket
 	@KafkaListener(topics = "${hms.kafka.notification-topic}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "kafkaListenerContainerFactory")
-    public void consumeNotification(NotificationEvent event) {
+    public void consumeNotification(NotificationEvent event,Acknowledgment acknowledgment) {
         log.info("NotificationServiceImpl :: consumeNotification() - received event for "+ event.getType()+": {}", event.getProcessId());
 
         //Save notification to DB (one record per SR)
-        saveNotification(event);
-        
+        saveNotification(event,acknowledgment);
         
         //Push real-time WebSocket notification to all subscribers
         pushWebSocketNotification(event);
 
         // Send email to every user in the roleEmailMap
         sendEmailsToAllRoles(event);
-
-
         log.info("NotificationServiceImpl :: Notification fully processed for "+ event.getType()+": {}", event.getProcessId());
     }
 
 
-    private void saveNotification(NotificationEvent event) {
+    private void saveNotification(NotificationEvent event,Acknowledgment acknowledgment) {
     	log.info("Inside saveNotification() for "+ event.getType()+": {}", event.getProcessId());
     	List<NotificationEngineEntity> notificationsList = new ArrayList<>();
     	
@@ -126,6 +124,9 @@ public class NotificationServiceImpl implements INotificationService {
             
             notificationEngineRepository.saveAll(notificationsList);
             log.info("NotificationServiceImpl :: Notifications saved to DB for "+ event.getType()+": {}", event.getProcessId());
+            
+            acknowledgment.acknowledge(); // Manually acknowledge after successful DB save
+            
         } catch (Exception e) {
             log.error("NotificationServiceImpl :: Failed to save notification for "+ event.getType()+": {} - {}", event.getProcessId(), e.getMessage());
         }
