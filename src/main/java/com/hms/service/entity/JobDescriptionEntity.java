@@ -1,41 +1,32 @@
 package com.hms.service.entity;
 
-import java.util.List;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
-import com.hms.service.request.SourcingChannelRequest;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_sourcing_channel")
+@Table(name = "tb_job_description")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SourcingChannelEntity {
-
-    @Id
+public class JobDescriptionEntity {
+	
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     
     @Column(name = "job_id")
     private Integer jobId;
+    
+    @Lob
+    @Column(name="description",columnDefinition ="TEXT")
+    private String description;
 
-
-    @JdbcTypeCode(SqlTypes.JSON)
-
-	@Column(name = "channel_config", columnDefinition = "json")
-
-	private List<SourcingChannelRequest> sourcingChannelRequest;
-	    
 }

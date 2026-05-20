@@ -78,6 +78,9 @@ public class SRPositionBasicsEntity {
 	@Column(name="created_on")
 	private LocalDateTime createdOn;
 	
+	@Column(name="submitted_on")
+	private LocalDateTime submittedOn;
+	
 	@Column(name="created_by")
 	private String createdBy;
 	
