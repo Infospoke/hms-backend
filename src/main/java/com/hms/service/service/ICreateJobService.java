@@ -5,8 +5,8 @@ import com.hms.service.wrappers.ApiResponse;
 
 public interface ICreateJobService {
 
-	ApiResponse<?> createJobFromSr(String srId, CreateJobRequest request);
+	ApiResponse<?> getJobDetails(String srId);
 
-	ApiResponse<?> getCreateJobDetails(String srId);
+	ApiResponse<?> createJob(CreateJobRequest request);
 
 }
