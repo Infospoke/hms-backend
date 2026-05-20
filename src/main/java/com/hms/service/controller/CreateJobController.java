@@ -22,18 +22,18 @@ import jakarta.validation.Valid;
 public class CreateJobController {
 	@Autowired
 	private ICreateJobService iCreateJobService;
-
-	@PostMapping("/job/{srId}")
-	public ResponseEntity<ApiResponse<?>> createJobFromSr(@PathVariable("srId") String srId,
-			@Valid @RequestBody CreateJobRequest request) {
-		ApiResponse<?> response = iCreateJobService.createJobFromSr(srId, request);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
-
-	@GetMapping("details/{srId}")
-	public ResponseEntity<ApiResponse<?>> getCreateJobDetails(@PathVariable("srId") String srId) {
-
-		ApiResponse<?> response = iCreateJobService.getCreateJobDetails(srId);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+//
+//	@PostMapping("/job/{srId}")
+//	public ResponseEntity<ApiResponse<?>> createJobFromSr(@PathVariable("srId") String srId,
+//			@Valid @RequestBody CreateJobRequest request) {
+//		ApiResponse<?> response = iCreateJobService.createJobFromSr(srId, request);
+//		return new ResponseEntity<>(response, HttpStatus.OK);
+//	}
+//
+//	@GetMapping("details/{srId}")
+//	public ResponseEntity<ApiResponse<?>> getCreateJobDetails(@PathVariable("srId") String srId) {
+//
+//		ApiResponse<?> response = iCreateJobService.getCreateJobDetails(srId);
+//		return new ResponseEntity<>(response, HttpStatus.OK);
+//	}
 }

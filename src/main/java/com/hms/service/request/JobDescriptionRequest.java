@@ -1,5 +1,7 @@
 package com.hms.service.request;
 
+
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,13 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SourcingChannelRequest {
+public class JobDescriptionRequest {
 
-    private Integer jobId;
+	private Integer jobId;
 	
-    private String channelName;
-
-    private Boolean postJob;
-
-    private String referralAmount;
+	private String description;
+	
 }

@@ -43,6 +43,7 @@ public class SecurityConfig {
 										"/hms/configurations/**",
 										"/hms/approval-chains/**",
 										"/hms/login/forgot-password",
+										"/hms/staffing-requisition/**",
 										"/ws/**",                          // WebSocket STOMP handshake
 										"/hms/notifications/**" ,          // Notification test endpoint
 										"/hms/create-job/**"         
