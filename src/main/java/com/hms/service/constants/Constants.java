@@ -446,7 +446,7 @@ public class Constants {
 
 			+ "</body></html>";
 
-	public static final String CHAIN_CREATED_MAIL_SUBJECT = "chain created  Successfully";
+	public static final String CHAIN_CREATED_MAIL_SUBJECT = "Chain created  Successfully";
 
 
 
@@ -480,10 +480,9 @@ public class Constants {
 			+ "<p>" + "This is a system-generated email. Please do not reply to this email." + "</p>"
 
 			+ "</body></html>";
-	public static final String CHAIN_TO_BE_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
+	public static final String CHAIN_TO_BE_APPROVED_MAIL_SUBJECT = "Chain created and waiting for your approval";
 	
-
-	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "chain created waiting for your approval";
+	public static final String CHAIN_APPROVED_MAIL_SUBJECT = "Chain created and waiting for your approval";
 
 	public static final String CHAIN_REJECTED_MAIL_SUBJECT = "Approval Chain Creation Rejected";
 
