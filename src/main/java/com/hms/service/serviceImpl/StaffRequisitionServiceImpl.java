@@ -438,7 +438,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
-					entity.setSubmittedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					entity.setSubmittedOn(LocalDateTime.now());
 					positionBasicsRepository.save(entity);
 
 				});
@@ -1218,7 +1218,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setPriority(srPositionBasicsEntity.getPriority());
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
-				positonBasicsResponse.setSubmittedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+				positonBasicsResponse.setSubmittedOn(srPositionBasicsEntity.getSubmittedOn());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());
 				positonBasicsResponse.setUserId(srPositionBasicsEntity.getUserId());
