@@ -267,14 +267,10 @@ public class NotificationServiceImpl implements INotificationService {
 				request.getSortBy() != null ? request.getSortBy() : "notificationSentAt");
 
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-     
-//		Specification<NotificationEngineEntity> baseSpec = request.toNotificationSpecification();
 
 		Specification<NotificationEngineEntity> baseSpec = request.toNotificationSpecification().and(hasRoleId(roleId));
 
 		Page<NotificationEngineEntity> pageResult = notificationEngineRepository.findAll(baseSpec, pageable);
-
-//		Specification<NotificationEngineEntity> countSpec = request.buildNotificationCountSpec();
 		
 		Specification<NotificationEngineEntity> countSpec = request.buildNotificationCountSpec().and(hasRoleId(roleId));
 
@@ -348,10 +344,6 @@ public class NotificationServiceImpl implements INotificationService {
 				.orElseThrow(() -> new RuntimeException("Role not assigned"));
 
 		Integer roleId = assignRole.getRoleId();
-
-//        Long total = notificationEngineRepository.count();
-//        Long read = notificationEngineRepository.countByIsRead(true);
-//        Long unread = notificationEngineRepository.countByIsRead(false);
         
         Long total = notificationEngineRepository.countByRoleId(roleId);
 
