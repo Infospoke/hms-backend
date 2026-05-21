@@ -197,7 +197,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String userName = "";
 		String roleName = "";
-		Long userId = null;
+		Long userId= null;
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			String token = authHeader.substring(7);
 			userName = jwtService.extractUsernameFromClaims(token);
@@ -205,9 +205,12 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			userId = jwtService.extractUserId(token);
 
 		}
+		
+		Integer makerRoleId=assignRolesRepository.findByUserId(userId.intValue()).get().getRoleId();
 		log.info("The username is :" + userName);
 		log.info("the role name is :" + roleName);
 		approvalChainEntity.setCreatedBy(userName);
+		approvalChainEntity.setUserId(userId.intValue());
 		approvalChainEntity.setLevelConfig(request.getLevelConfig());
 		approvalChainEntity.setApproval("In_Progress");
 		approvalChainEntity.setRequestType("Chain Created");
@@ -258,6 +261,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setMakerRoleName(roleName);
 		event.setMakerNotificationTitle(Constants.CHAIN_CREATED_MAIL_SUBJECT);
 		event.setDeptName(approvalChainEntity.getFunctionalityName());
+		event.setMakerRoleId(makerRoleId);
 
 		event.setMakerMessage("Approval Chain has been created successfully and submitted for approval.");
 		event.setType("Chain Configurations");
@@ -282,7 +286,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 	private void sendWorkflowNotification(String processId, String type, String makerMessage, String department,
 
-			String makerEmail, String makerRole, String makerTitle, String makerBody,
+			String makerEmail, String makerRole, Integer makerRoleId,String makerTitle, String makerBody,
 
 			String checkerRole, String checkerMessage, String checkerTitle, String checkerBody,
 
@@ -299,6 +303,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		event.setMakerRoleName(makerRole);
 		event.setMakerNotificationTitle(makerTitle);
 		event.setMakerEmailBody(makerBody);
+		event.setMakerRoleId(makerRoleId);
 
 		// CHECKER
 
@@ -339,8 +344,13 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		String description = approvalChainEntity.getDescription();
 		String functionalityName = approvalChainEntity.getFunctionalityName();
 		String createdBy = approvalChainEntity.getCreatedBy();
+		Integer makerUserId=approvalChainEntity.getUserId();
 
 		Integer chainId = approvalChainEntity.getId();
+		
+		Integer makerRoleId=assignRolesRepository.findByUserId(makerUserId).get().getRoleId();
+		
+		String makerRoleName=rolesRepository.findByRoleId(makerRoleId).get().getRoleName();
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
@@ -376,8 +386,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setCreatedBy(userName);
 				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
-				approvalChainEntity.setApprovedComments(request.getApprovedComments());
-
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
@@ -387,7 +395,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 						"Your Approval Chain has been approved successfully and is now active.", functionalityName,
 
-						creatorEmail, "System Admin", Constants.CHAIN_APPROVED_MAIL_SUBJECT,
+						creatorEmail, makerRoleName,makerRoleId, Constants.CHAIN_APPROVED_MAIL_SUBJECT,
 						String.format(Constants.CHAIN_APPROVED_MAIL_BODY, createdBy, chainId, chainName, description,
 								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
@@ -406,8 +414,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				childLinkCommentsEntity.setComments(request.getComments());
 				childLinkCommentsEntity.setCreatedBy(userName);
 				childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-
-				approvalChainEntity.setRejectedComments(request.getRejectedComments());
+;
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 				Integer adminRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
@@ -417,7 +424,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 						"Your Approval Chain has been rejected by the reviewer.", functionalityName,
 
-						creatorEmail, "System Admin", Constants.CHAIN_REJECTED_MAIL_SUBJECT,
+						creatorEmail, makerRoleName,makerRoleId, Constants.CHAIN_REJECTED_MAIL_SUBJECT,
 						String.format(Constants.CHAIN_REJECTED_MAIL_BODY, createdBy, chainId, chainName, description,
 								request.getComments(), LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
 
@@ -469,7 +476,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 					"Approval Chain deactivation request submitted successfully.", functionalityName,
 
-					creatorEmail, roleName, Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_SUBJECT,
+					creatorEmail, makerRoleName,makerRoleId, Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_SUBJECT,
 					String.format(Constants.CHAIN_DEACTIVATION_REQUEST_MAIL_BODY, userName, chainId, chainName,
 							description, functionalityName, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
@@ -512,7 +519,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 						"Your Approval Chain has been deactivated successfully.", functionalityName,
 
-						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVATED_MAIL_SUBJECT,
+						creatorEmail, makerRoleName,makerRoleId, Constants.CHAIN_DEACTIVATED_MAIL_SUBJECT,
 						String.format(Constants.CHAIN_DEACTIVATED_MAIL_BODY, createdBy, chainId, chainName, description,
 								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
@@ -544,7 +551,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 						"Your Approval Chain deactivation request has been rejected.", functionalityName,
 
-						creatorEmail, "System Admin", Constants.CHAIN_DEACTIVE_REJECTED_MAIL_SUBJECT,
+						creatorEmail, makerRoleName, makerRoleId,Constants.CHAIN_DEACTIVE_REJECTED_MAIL_SUBJECT,
 						String.format(Constants.CHAIN_DEACTIVE_REJECTED_MAIL_BODY, createdBy, chainId, chainName,
 								description, request.getComments(), LocalDateTime.now(ZoneId.of("Asia/Kolkata")), null),
 
@@ -592,7 +599,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 					"Approval Chain activation request submitted successfully.", functionalityName,
 
-					creatorEmail, roleName, Constants.CHAIN_ACTIVATION_REQUEST_MAIL_SUBJECT,
+					creatorEmail,makerRoleName,makerRoleId, Constants.CHAIN_ACTIVATION_REQUEST_MAIL_SUBJECT,
 					String.format(Constants.CHAIN_ACTIVATION_REQUEST_MAIL_BODY, userName, approvalChainEntity.getId(),
 							chainName, description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
@@ -635,7 +642,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 						"Your Approval Chain activation request has been approved successfully.", functionalityName,
 
-						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATED_MAIL_SUBJECT,
+						creatorEmail,makerRoleName,makerRoleId, Constants.CHAIN_ACTIVATED_MAIL_SUBJECT,
 						String.format(Constants.CHAIN_ACTIVATED_MAIL_BODY, createdBy, chainId, chainName, description,
 								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
 
@@ -667,7 +674,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				sendWorkflowNotification(approvalChainEntity.getId().toString(), "CHAIN_WORKFLOW",
 						"Your Approval Chain activation request has been rejected.", functionalityName,
 
-						creatorEmail, "System Admin", Constants.CHAIN_ACTIVATION_REJECTED_MAIL_SUBJECT,
+						creatorEmail, makerRoleName,makerRoleId, Constants.CHAIN_ACTIVATION_REJECTED_MAIL_SUBJECT,
 						String.format(Constants.CHAIN_ACTIVATION_REJECTED_MAIL_BODY, createdBy, chainId, chainName,
 								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata")), request.getComments()),
 
@@ -773,13 +780,13 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		response.setFunctionalityName(entity.getFunctionalityName());
 
-		response.setActivateComments(entity.getActivateComments());
-
-		response.setDeactivateComments(entity.getDeactivateComments());
-
-		response.setApprovedComments(entity.getApprovedComments());
-
-		response.setRejectedComments(entity.getRejectedComments());
+//		response.setActivateComments(entity.getActivateComments());
+//
+//		response.setDeactivateComments(entity.getDeactivateComments());
+//
+//		response.setApprovedComments(entity.getApprovedComments());
+//
+//		response.setRejectedComments(entity.getRejectedComments());
 
 		response.setRequestType(entity.getRequestType());
 
