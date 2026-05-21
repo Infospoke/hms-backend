@@ -185,9 +185,39 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	}
 
 	@Override
-	public ApiResponse<?> getRecruiterAssignmentDetails(Integer jobId, FilterRequest request) {
+	public ApiResponse<?> getRecruiterAssignmentSummary(Integer jobId) {
 
-		log.info("RecruiterDashboardServiceImpl ::Inside getRecruiterAssignmentDetails method");
+		try {
+
+			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
+
+			long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus())).count();
+
+			long pendingCount = assignments.stream().filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count();
+
+			long declinedCount = assignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus())).count();
+
+			Map<String, Object> response = new LinkedHashMap<>();
+
+			response.put("totalAssigned", assignments.size());
+
+			response.put("acceptedCount", acceptedCount);
+
+			response.put("pendingCount", pendingCount);
+
+			response.put("declinedCount", declinedCount);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Assignment cards summary fetched successfully", response);
+
+		} catch (Exception e) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch assignment summary",
+					List.of(e.getMessage()));
+		}
+	}
+
+	@Override
+	public ApiResponse<?> getRecruiterAssignmentDetailsList(Integer jobId, FilterRequest request) {
 
 		try {
 
@@ -202,25 +232,9 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-			CreateJobDetailsEntity job = createJobDetailsRepository.findById(jobId)
-					.orElseThrow(() -> new RuntimeException("Job not found"));
-
 			Page<RecruiterAssignmentEntity> assignmentPage = recruiterAssignmentRepository.findByJobId(jobId, pageable);
 
-			List<RecruiterAssignmentEntity> assignments = assignmentPage.getContent();
-
-
-			List<RecruiterAssignmentEntity> allAssignments = recruiterAssignmentRepository.findByJobId(jobId);
-
-			long acceptedCount = allAssignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus()))
-					.count();
-
-			long pendingCount = allAssignments.stream().filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count();
-
-			long declinedCount = allAssignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus()))
-					.count();
-
-			List<Map<String, Object>> recruiterList = assignments.stream().map(a -> {
+			List<Map<String, Object>> recruiterList = assignmentPage.getContent().stream().map(a -> {
 
 				Map<String, Object> map = new LinkedHashMap<>();
 
@@ -264,14 +278,6 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Map<String, Object> response = new LinkedHashMap<>();
 
-			response.put("totalAssigned", allAssignments.size());
-
-			response.put("acceptedCount", acceptedCount);
-
-			response.put("pendingCount", pendingCount);
-
-			response.put("declinedCount", declinedCount);
-
 			response.put("content", recruiterList);
 
 			response.put("currentPage", assignmentPage.getNumber());
@@ -280,11 +286,13 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			response.put("totalElements", assignmentPage.getTotalElements());
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Job details fetched successfully", response);
+			return ApiResponse.success(ResponseCode.SUCCESS, "Recruiter assignment list fetched successfully",
+					response);
 
 		} catch (Exception e) {
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch job details", List.of(e.getMessage()));
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch recruiter assignment list",
+					List.of(e.getMessage()));
 		}
 	}
 

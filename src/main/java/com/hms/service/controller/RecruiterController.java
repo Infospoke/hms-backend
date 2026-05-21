@@ -35,9 +35,17 @@ public class RecruiterController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@PostMapping("/job-assignment-details/{jobId}")
-	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetails(@PathVariable("jobId") Integer jobId,@RequestBody FilterRequest request) {
-		ApiResponse<?> response = recruiterService.getRecruiterAssignmentDetails(jobId, request);
+	@GetMapping("/job-assignment-summary/{jobId}")
+	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentSummary(@PathVariable("jobId") Integer jobId) {
+
+		ApiResponse<?> response = recruiterService.getRecruiterAssignmentSummary(jobId);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/job-assignment-details-list/{jobId}")
+	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetailsList(@PathVariable("jobId") Integer jobId,@RequestBody FilterRequest request) {
+		ApiResponse<?> response = recruiterService.getRecruiterAssignmentDetailsList(jobId, request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

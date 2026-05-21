@@ -9,6 +9,7 @@ public interface IRecruiterService {
 	ApiResponse<?> getRecruiterCardsCounts();
 	ApiResponse<?> getAllRecruiterAssignmentList(SpecificationFilterRequest request);
 	ApiResponse<?> getMyJobAssignmentsCounts();
-	ApiResponse<?> getRecruiterAssignmentDetails(Integer jobId, FilterRequest request);
+	ApiResponse<?> getRecruiterAssignmentSummary(Integer jobId);
+	ApiResponse<?> getRecruiterAssignmentDetailsList(Integer jobId, FilterRequest request);
 
 }
