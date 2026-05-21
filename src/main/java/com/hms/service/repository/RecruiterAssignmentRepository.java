@@ -45,5 +45,9 @@ public interface RecruiterAssignmentRepository extends JpaRepository<RecruiterAs
 	Object getStatusCounts();
 
 	List<RecruiterAssignmentEntity> findByJobId(Integer id);
+	
+	Long countByUserId(Integer userId);
+
+	Long countByUserIdAndStatus(Integer userId,String status);
 
 }

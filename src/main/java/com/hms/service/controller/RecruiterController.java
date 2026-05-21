@@ -23,25 +23,27 @@ public class RecruiterController {
 
 	@GetMapping("/counts")
 	public ResponseEntity<ApiResponse<?>> getRecruiterCardsCounts() {
-
 		ApiResponse<?> response = recruiterService.getRecruiterCardsCounts();
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/job-assignment-list")
 	public ResponseEntity<ApiResponse<?>> getAllRecruiterAssignmentList(@RequestBody SpecificationFilterRequest request) {
-
 		ApiResponse<?> response = recruiterService.getAllRecruiterAssignmentList(request);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/job-assignment-details/{jobId}")
 	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetails(@PathVariable("jobId") Integer jobId) {
-
 		ApiResponse<?> response = recruiterService.getRecruiterAssignmentDetails(jobId);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/my-job-assignments-count")
+	public ResponseEntity<ApiResponse<?>> getMyJobAssignmentsCounts() {
+	    ApiResponse<?> response = recruiterService.getMyJobAssignmentsCounts();
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	
 }

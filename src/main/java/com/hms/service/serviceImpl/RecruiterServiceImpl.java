@@ -1,5 +1,6 @@
 package com.hms.service.serviceImpl;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,9 +29,11 @@ import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IRecruiterService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -53,6 +56,12 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+
+	@Autowired
+	private JwtService jwtService;
 
 	@Override
 	public ApiResponse<?> getRecruiterCardsCounts() {
@@ -251,5 +260,50 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch job details", List.of(e.getMessage()));
 		}
+	}
+
+	@Override
+	public ApiResponse<?> getMyJobAssignmentsCounts() {
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token);
+
+		} else {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+		}
+
+		Integer recruiterUserId = userId.intValue();
+
+		Long totalAssignments = recruiterAssignmentRepository.countByUserId(recruiterUserId);
+
+		Long accepted = recruiterAssignmentRepository.countByUserIdAndStatus(recruiterUserId, "Accepted");
+
+		Long pending = recruiterAssignmentRepository.countByUserIdAndStatus(recruiterUserId, "Pending");
+
+		Long declined = recruiterAssignmentRepository.countByUserIdAndStatus(recruiterUserId, "Declined");
+
+		Long totalOpenings = createJobDetailsRepository.getTotalOpeningsByUserId(recruiterUserId);
+
+		Map<String, Object> response = new HashMap<>();
+
+		response.put("totalAssignments", totalAssignments);
+
+		response.put("accepted", accepted);
+
+		response.put("pending", pending);
+
+		response.put("declined", declined);
+
+		response.put("totalOpenings", totalOpenings);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 }
