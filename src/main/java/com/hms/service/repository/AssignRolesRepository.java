@@ -30,5 +30,7 @@ public interface AssignRolesRepository extends JpaRepository<AssignRolesEntity, 
 
 	Page<AssignRolesEntity> findAll(Specification<AssignRolesEntity> recruiterSpecification, Pageable pageable);
 
+//	Integer findByUserId(Long userId);
+
 
 }
