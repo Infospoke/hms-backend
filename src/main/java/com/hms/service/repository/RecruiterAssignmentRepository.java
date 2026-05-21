@@ -57,8 +57,14 @@ public interface RecruiterAssignmentRepository extends JpaRepository<RecruiterAs
 		        WHERE ra.userId IN :userIds
 		        GROUP BY ra.userId
 		    """)
-		    List<Object[]> findAssignmentCounts(
-		            @Param("userIds") List<Integer> userIds
-		    );
+		    List<Object[]> findAssignmentCounts(@Param("userIds") List<Integer> userIds);
 
+			@Query("""
+					SELECT r.status, COUNT(r)
+					FROM RecruiterAssignmentEntity r
+					WHERE r.userId = :userId
+					GROUP BY r.status
+					""")
+			List<Object[]> getStatusCountsByUserId(@Param("userId") Integer userId);
+		    
 }

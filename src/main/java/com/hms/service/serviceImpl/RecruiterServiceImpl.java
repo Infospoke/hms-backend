@@ -284,11 +284,31 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 		Long totalAssignments = recruiterAssignmentRepository.countByUserId(recruiterUserId);
 
-		Long accepted = recruiterAssignmentRepository.countByUserIdAndStatus(recruiterUserId, "Accepted");
+		List<Object[]> statusCounts = recruiterAssignmentRepository.getStatusCountsByUserId(recruiterUserId);
 
-		Long pending = recruiterAssignmentRepository.countByUserIdAndStatus(recruiterUserId, "Pending");
+		Long accepted = 0L;
+		Long pending = 0L;
+		Long declined = 0L;
 
-		Long declined = recruiterAssignmentRepository.countByUserIdAndStatus(recruiterUserId, "Declined");
+		for (Object[] row : statusCounts) {
+
+			String status = (String) row[0];
+
+			Long count = (Long) row[1];
+
+			if ("Accepted".equalsIgnoreCase(status)) {
+
+				accepted = count;
+
+			} else if ("Pending".equalsIgnoreCase(status)) {
+
+				pending = count;
+
+			} else if ("Declined".equalsIgnoreCase(status)) {
+
+				declined = count;
+			}
+		}
 
 		Long totalOpenings = createJobDetailsRepository.getTotalOpeningsByUserId(recruiterUserId);
 
