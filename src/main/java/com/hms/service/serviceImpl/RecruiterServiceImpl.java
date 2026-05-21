@@ -27,6 +27,7 @@ import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.FilterRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IRecruiterService;
 import com.hms.service.utils.JwtService;
@@ -100,7 +101,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 	@Override
 	public ApiResponse<?> getAllRecruiterAssignmentList(SpecificationFilterRequest request) {
-		
+
 		log.info("RecruiterDashboardServiceImpl ::Inside getAllRecruiterAssignmentList method");
 
 		try {
@@ -184,22 +185,40 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	}
 
 	@Override
-	public ApiResponse<?> getRecruiterAssignmentDetails(Integer jobId) {
-		
+	public ApiResponse<?> getRecruiterAssignmentDetails(Integer jobId, FilterRequest request) {
+
 		log.info("RecruiterDashboardServiceImpl ::Inside getRecruiterAssignmentDetails method");
 
 		try {
 
+			int page = request.getPage() != null ? request.getPage() : 0;
+
+			int size = request.getSize() != null ? request.getSize() : 10;
+
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "id";
+
+			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
 			CreateJobDetailsEntity job = createJobDetailsRepository.findById(jobId)
 					.orElseThrow(() -> new RuntimeException("Job not found"));
 
-			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
+			Page<RecruiterAssignmentEntity> assignmentPage = recruiterAssignmentRepository.findByJobId(jobId, pageable);
 
-			long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus())).count();
+			List<RecruiterAssignmentEntity> assignments = assignmentPage.getContent();
 
-			long pendingCount = assignments.stream().filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count();
 
-			long declinedCount = assignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus())).count();
+			List<RecruiterAssignmentEntity> allAssignments = recruiterAssignmentRepository.findByJobId(jobId);
+
+			long acceptedCount = allAssignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus()))
+					.count();
+
+			long pendingCount = allAssignments.stream().filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count();
+
+			long declinedCount = allAssignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus()))
+					.count();
 
 			List<Map<String, Object>> recruiterList = assignments.stream().map(a -> {
 
@@ -220,6 +239,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 						roleName = role.getRoleName();
 					}
 				}
+
 				map.put("id", a.getId());
 
 				map.put("userId", a.getUserId());
@@ -244,7 +264,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Map<String, Object> response = new LinkedHashMap<>();
 
-			response.put("totalAssigned", assignments.size());
+			response.put("totalAssigned", allAssignments.size());
 
 			response.put("acceptedCount", acceptedCount);
 
@@ -252,7 +272,13 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			response.put("declinedCount", declinedCount);
 
-			response.put("recruiters", recruiterList);
+			response.put("content", recruiterList);
+
+			response.put("currentPage", assignmentPage.getNumber());
+
+			response.put("totalPages", assignmentPage.getTotalPages());
+
+			response.put("totalElements", assignmentPage.getTotalElements());
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Job details fetched successfully", response);
 
