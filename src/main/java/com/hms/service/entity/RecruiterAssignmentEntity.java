@@ -1,5 +1,5 @@
 package com.hms.service.entity;
- 
+
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -48,3 +48,4 @@ public class RecruiterAssignmentEntity {
     
  
 }
+

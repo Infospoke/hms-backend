@@ -1,28 +1,35 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.hms.service.entity.CreateJobEntity;
-import com.hms.service.entity.JobPostingEntity;
+import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.JobDescriptionEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingChannelEntity;
-import com.hms.service.repository.CreateJobRepository;
-import com.hms.service.repository.JobPostingRepository;
+import com.hms.service.repository.BusinessUnitRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
+import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.SourcingChannelRepository;
+import com.hms.service.request.CreateJobDetailsRequest;
 import com.hms.service.request.CreateJobRequest;
-import com.hms.service.response.CreateJobResponse;
-import com.hms.service.response.SourcingChannelResponse;
+import com.hms.service.request.JobDescriptionRequest;
+import com.hms.service.request.SourcingChannelRequest;
+import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.service.ICreateJobService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -33,144 +40,31 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	private PositionBasicsRepository positionBasicsRepository;
 
 	@Autowired
-	private CreateJobRepository createJobRepository;
+	private CreateJobDetailsRepository createJobDetailsRepository;
+
+//	@Autowired
+//	private CreateJobRepository createJobRepository;
+
+	@Autowired
+	private JwtService jwtService;
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+
+	@Autowired
+	private DepartmentsRepository departmentsRepository;
+
+	@Autowired
+	private BusinessUnitRepository businessUnitRepository;
+
+	@Autowired
+	private JobDescriptionRepository jobDescriptionRepository;
 
 	@Autowired
 	private RolesAndRequirementsRepository rolesAndRequirementsRepository;
 
 	@Autowired
-	private JobPostingRepository jobPostingRepository;
-
-	@Autowired
 	private SourcingChannelRepository sourcingChannelRepository;
-
-	@Override
-	public ApiResponse<?> createJobFromSr(String srId, CreateJobRequest request) {
-
-		log.info("Inside createJobFromSr service");
-
-		SRPositionBasicsEntity srData = positionBasicsRepository.findBySrId(srId)
-				.orElseThrow(() -> new RuntimeException("SR data not found"));
-
-		RolesAndRequirementsEntity rolesData = rolesAndRequirementsRepository.findBySrId(srId)
-				.orElseThrow(() -> new RuntimeException("Roles & Requirements data not found"));
-
-		String jobCode = generateJobCode(srId);
-
-		CreateJobEntity jobEntity = createJobRepository.findByJobCode(jobCode).orElse(null);
-
-		boolean isUpdate = jobEntity != null;
-
-		if (!isUpdate) {
-
-			jobEntity = buildCreateJobEntity(srData, rolesData, request, jobCode);
-		}
-
-		else {
-
-			jobEntity.setAdditionalNotes(trimValue(request.getAdditionalNotes()));
-		}
-
-		CreateJobEntity savedJob = createJobRepository.save(jobEntity);
-
-		saveSelectedChannels(jobCode, savedJob.getId(), request);
-
-		return ApiResponse.success(ResponseCode.SUCCESS,
-				isUpdate ? "Job updated successfully" : "Job created successfully");
-	}
-
-	private CreateJobEntity buildCreateJobEntity(SRPositionBasicsEntity srData, RolesAndRequirementsEntity rolesData,
-			CreateJobRequest request, String jobCode) {
-
-		CreateJobEntity entity = new CreateJobEntity();
-
-		entity.setJobTitle(srData.getJobTitle());
-
-		entity.setBusinessUnitId(srData.getBusinessUnitId());
-
-		entity.setDepartmentId(srData.getDepartmentId());
-
-		entity.setLocation(srData.getLocation());
-
-		entity.setOpenings(srData.getOpenings());
-
-		entity.setTargetStartDate(srData.getTargetStartDate());
-
-		entity.setWorkMode(srData.getWorkMode());
-
-		entity.setEmploymentType(srData.getEmploymentType());
-
-		entity.setJobCode(jobCode);
-
-		entity.setSkillsMustHave(rolesData.getSkillsMustHave());
-
-		entity.setNiceToHaveSkills(rolesData.getNiceToHaveSkills());
-
-		entity.setMinExperience(rolesData.getMinExperience());
-
-		entity.setMaxExperience(rolesData.getMaxExperience());
-
-		entity.setAdditionalNotes(trimValue(request.getAdditionalNotes()));
-
-		entity.setSubmit(false);
-
-		return entity;
-	}
-
-	private void saveSelectedChannels(String jobCode,Integer jobId, CreateJobRequest request) {
-
-		if (request.getChannelIds() == null || request.getChannelIds().isEmpty()) {
-
-			return;
-		}
-
-		List<SourcingChannelEntity> channels = sourcingChannelRepository.findByIdIn(request.getChannelIds());
-
-		if (channels.size() != request.getChannelIds().size()) {
-
-			throw new RuntimeException("Invalid channel ids provided");
-		}
-
-		if (request.getChannelIds().contains(5) && trimValue(request.getReferralAmount()) == null) {
-
-			throw new RuntimeException("Referral amount is required for Employee Referral");
-		}
-
-		List<JobPostingEntity> mappings = request.getChannelIds().stream()
-				.map(channelId -> buildChannelEntity(jobCode,jobId,channelId, request)).toList();
-
-		jobPostingRepository.saveAll(mappings);
-	}
-
-	private JobPostingEntity buildChannelEntity(String jobCode,Integer jobId, Integer channelId, CreateJobRequest request) {
-
-		JobPostingEntity entity = new JobPostingEntity();
-
-		entity.setJobCode(jobCode);
-		
-		entity.setJobId(jobId);
-
-		entity.setSourcingChannelId(channelId);
-
-		entity.setPostJob(true);
-
-		if (channelId.equals(5)) {
-
-			entity.setReferralAmount(trimValue(request.getReferralAmount()));
-		}
-
-		return entity;
-	}
-
-//	private void validateDuplicateJob(String jobCode) {
-//
-//		boolean alreadyExists = createJobRepository.findByJobCode(jobCode).isPresent();
-//
-//		if (alreadyExists) {
-//
-//			throw new RuntimeException("Job already created for this SR ID");
-//		}
-//	}
 
 	private String generateJobCode(String srId) {
 
@@ -181,73 +75,424 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return srId;
 	}
 
-	private String trimValue(String value) {
-
-		return value != null && !value.trim().isEmpty()
-
-				? value.trim()
-
-				: null;
-	}
-
 	@Override
-	public ApiResponse<?> getCreateJobDetails(String srId) {
-
-		log.info("Inside getCreateJobDetails service");
+	public ApiResponse<?> getJobDetails(String srId) {
 
 		SRPositionBasicsEntity srData = positionBasicsRepository.findBySrId(srId)
 				.orElseThrow(() -> new RuntimeException("SR data not found"));
 
 		RolesAndRequirementsEntity rolesData = rolesAndRequirementsRepository.findBySrId(srId)
-				.orElseThrow(() -> new RuntimeException("Roles data not found"));
+				.orElseThrow(() -> new RuntimeException("Roles & Requirements data not found"));
 
-		List<SourcingChannelEntity> channels = sourcingChannelRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+		CreateJobDetailsResponse response = new CreateJobDetailsResponse();
 
-		CreateJobResponse response = new CreateJobResponse();
-
+		response.setSrId(srData.getSrId());
+		response.setJobCode(generateJobCode(srData.getSrId()));
 		response.setJobTitle(srData.getJobTitle());
-
 		response.setBusinessUnitId(srData.getBusinessUnitId());
-
 		response.setDepartmentId(srData.getDepartmentId());
-
 		response.setLocation(srData.getLocation());
-
+		response.setWorkMode(srData.getWorkMode());
+		response.setEmploymentType(srData.getEmploymentType());
 		response.setOpenings(srData.getOpenings());
-
 		response.setTargetStartDate(srData.getTargetStartDate());
 
-		response.setWorkMode(srData.getWorkMode());
+		if (rolesData != null) {
 
-		response.setEmploymentType(srData.getEmploymentType());
+			response.setSkillsMustHave(rolesData.getSkillsMustHave());
+			response.setNiceToHaveSkills(rolesData.getNiceToHaveSkills());
+			response.setMinExperience(rolesData.getMinExperience());
+			response.setMaxExperience(rolesData.getMaxExperience());
 
-		response.setJobCode(generateJobCode(srData.getSrId()));
+		}
 
-		response.setMinExperience(rolesData.getMinExperience());
-
-		response.setMaxExperience(rolesData.getMaxExperience());
-
-		response.setSkillsMustHave(rolesData.getSkillsMustHave());
-
-		response.setNiceToHaveSkills(rolesData.getNiceToHaveSkills());
-
-		response.setChannels(channels.stream().map(this::mapChannelResponse).toList());
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "Create Job details fetched successfully", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Job Details fetched successfully", response);
 	}
 
-	private SourcingChannelResponse mapChannelResponse(SourcingChannelEntity entity) {
+	@Override
+	public ApiResponse<?> createJob(CreateJobRequest request) {
 
-		SourcingChannelResponse response = new SourcingChannelResponse();
+		// createJob details
+		log.info("CreateJobServiceImpl :: Inside the createJob method");
 
-		response.setId(entity.getId());
+		if (request == null) {
 
-		response.setChannelName(entity.getChannelName());
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Request body cannot be null"));
+		}
 
-		response.setBestFor(entity.getBestFor());
+		String authHeader = httpServletRequest.getHeader("Authorization");
 
-		response.setCost(entity.getCost());
+		String userName = "";
 
-		return response;
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userName = jwtService.extractUsernameFromClaims(token);
+		}
+
+		if (request.getCreateJobDetailsRequest() != null) {
+
+			CreateJobDetailsRequest req = request.getCreateJobDetailsRequest();
+
+			ApiResponse<?> error = validateCreateJobDetailsRequest(req);
+
+			if (error != null) {
+				return error;
+			}
+
+			CreateJobDetailsEntity entity = null;
+
+			if (req.getJobId() != null) {
+
+				entity = createJobDetailsRepository.findById(req.getJobId()).orElse(null);
+			}
+
+			entity.setJobTitle(req.getJobTitle());
+
+			entity.setBusinessUnitId(req.getBusinessUnitId());
+
+			entity.setDepartmentId(req.getDepartmentId());
+
+			entity.setLocation(req.getLocation());
+
+			entity.setJobCode(req.getJobCode());
+
+			entity.setOpenings(req.getOpenings());
+
+			entity.setTargetStartDate(req.getTargetStartDate());
+
+			entity.setWorkMode(req.getWorkMode());
+
+			entity.setEmploymentType(req.getEmploymentType());
+
+			entity.setSkillsMustHave(req.getSkillsMustHave());
+
+			entity.setNiceToHaveSkills(req.getNiceToHaveSkills());
+
+			entity.setMinExperience(req.getMinExperience());
+
+			entity.setMaxExperience(req.getMaxExperience());
+
+			entity.setAdditionalNotes(req.getAdditionalNotes());
+
+			entity.setCreatedBy(userName);
+
+			entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+			entity = createJobDetailsRepository.save(entity);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job details Saved Successfully");
+		}
+
+		// job description
+
+		if (request.getJobDescriptionRequest() != null) {
+
+			JobDescriptionRequest req = request.getJobDescriptionRequest();
+
+			ApiResponse<?> error = validateJobDescriptionRequest(req);
+
+			if (error != null) {
+				return error;
+			}
+
+			JobDescriptionEntity entity = null;
+
+			if (req.getJobId() != null) {
+
+				entity = jobDescriptionRepository.findByJobId(req.getJobId()).orElse(null);
+			}
+
+			if (entity == null) {
+
+				entity = new JobDescriptionEntity();
+			}
+
+			entity.setJobId(req.getJobId());
+
+			entity.setDescription(req.getDescription());
+
+			entity = jobDescriptionRepository.save(entity);
+			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Description Saved Successfully");
+
+		}
+
+		// sourcing channel
+		if (request.getSourcingChannelRequest() != null) {
+
+			SourcingChannelRequest req = request.getSourcingChannelRequest();
+
+			ApiResponse<?> error = validateSourcingChannelRequest(req);
+
+			if (error != null) {
+				return error;
+			}
+
+			SourcingChannelEntity entity = null;
+
+			if (req.getJobId() != null) {
+
+				entity = sourcingChannelRepository.findByJobId(req.getJobId()).orElse(null);
+			}
+
+			if (entity == null) {
+
+				entity = new SourcingChannelEntity();
+			}
+
+			entity.setJobId(req.getJobId());
+
+			entity.setSourcingChannelRequest(List.of(req));
+
+			entity = sourcingChannelRepository.save(entity);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Sourcing Channel Saved Successfully");
+		}
+		return null;
 	}
+
+	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getJobTitle() != null) {
+
+			error = validateObject(req.getJobTitle(), "jobTitle");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getBusinessUnitId() != null) {
+
+			error = validateObject(req.getBusinessUnitId(), "businessUnitId");
+
+			if (error != null)
+				return error;
+
+			if (!businessUnitRepository.existsById(req.getBusinessUnitId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid businessUnitId"));
+			}
+		}
+
+		if (req.getDepartmentId() != null) {
+
+			error = validateObject(req.getDepartmentId(), "departmentId");
+
+			if (error != null)
+				return error;
+
+			if (!departmentsRepository.existsById(req.getDepartmentId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid departmentId"));
+			}
+		}
+
+		if (req.getLocation() != null) {
+
+			error = validateObject(req.getLocation(), "location");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getJobCode() != null) {
+
+			error = validateObject(req.getJobCode(), "jobCode");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getOpenings() != null) {
+
+			error = validateObject(req.getOpenings(), "openings");
+
+			if (error != null)
+				return error;
+
+			if (req.getOpenings() <= 0) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Openings must be greater than 0"));
+			}
+		}
+
+		if (req.getTargetStartDate() != null) {
+
+			error = validateObject(req.getTargetStartDate().toString(), "targetStartDate");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getWorkMode() != null) {
+
+			error = validateObject(req.getWorkMode(), "workMode");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getEmploymentType() != null) {
+
+			error = validateObject(req.getEmploymentType(), "employmentType");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getSkillsMustHave() != null) {
+
+			error = validateObject(req.getSkillsMustHave(), "skillsMustHave");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getNiceToHaveSkills() != null) {
+
+			error = validateObject(req.getNiceToHaveSkills(), "niceToHaveSkills");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getMinExperience() != null) {
+
+			error = validateObject(req.getMinExperience(), "minExperience");
+
+			if (error != null)
+				return error;
+
+			if (req.getMinExperience() < 0) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+						List.of("minExperience cannot be negative"));
+			}
+		}
+
+		if (req.getMaxExperience() != null) {
+
+			error = validateObject(req.getMaxExperience(), "maxExperience");
+
+			if (error != null)
+				return error;
+
+			if (req.getMaxExperience() < 0) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+						List.of("maxExperience cannot be negative"));
+			}
+		}
+
+		if (req.getMinExperience() != null && req.getMaxExperience() != null) {
+
+			if (req.getMinExperience() > req.getMaxExperience()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+						List.of("minExperience cannot be greater than maxExperience"));
+			}
+		}
+
+		return null;
+	}
+
+	public ApiResponse<?> validateJobDescriptionRequest(JobDescriptionRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getJobId() != null) {
+
+			error = validateObject(req.getJobId(), "jobId");
+
+			if (error != null)
+				return error;
+
+			if (!createJobDetailsRepository.existsById(req.getJobId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
+			}
+		}
+
+		if (req.getDescription() != null) {
+
+			error = validateObject(req.getDescription(), "description");
+
+			if (error != null)
+				return error;
+		}
+
+		return null;
+	}
+
+	public ApiResponse<?> validateObject(Object value, String fieldName) {
+
+		if (value == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(fieldName + " is required"));
+		}
+
+		if (value instanceof String str) {
+
+			if (str.trim().isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(fieldName + " cannot be empty"));
+			}
+		}
+
+		if (value instanceof Integer number) {
+
+			if (number <= 0) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+						List.of(fieldName + " must be greater than 0"));
+			}
+		}
+
+		return null;
+	}
+
+	public ApiResponse<?> validateSourcingChannelRequest(SourcingChannelRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getJobId() != null) {
+
+			error = validateObject(req.getJobId(), "jobId");
+
+			if (error != null)
+				return error;
+
+			if (!createJobDetailsRepository.existsById(req.getJobId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
+			}
+		}
+
+		if (req.getChannelName() != null) {
+
+			error = validateObject(req.getChannelName(), "channelName");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getPostJob() == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("postJob is required"));
+		}
+
+		if (req.getReferralAmount() != null) {
+
+			error = validateObject(req.getReferralAmount(), "referralAmount");
+
+			if (error != null)
+				return error;
+		}
+
+		return null;
+	}
+
 }

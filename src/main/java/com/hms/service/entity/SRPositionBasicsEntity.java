@@ -76,7 +76,10 @@ public class SRPositionBasicsEntity {
 	private String srId;
 	
 	@Column(name="created_on")
-	private LocalDate createdOn;
+	private LocalDateTime createdOn;
+	
+	@Column(name="submitted_on")
+	private LocalDateTime submittedOn;
 	
 	@Column(name="created_by")
 	private String createdBy;
@@ -143,6 +146,10 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="approver3_role")
 	private String approver3Role;
+	
+	@Column(name="maker_role_id")
+	private Integer makerRoleId;
+	
 
 	@Column(name="current_stage")
 	private String currentStage;

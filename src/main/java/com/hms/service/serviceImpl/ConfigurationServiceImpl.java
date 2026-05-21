@@ -18,6 +18,7 @@ import com.hms.service.dto.JrResponseDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.AiOptionsRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -78,6 +79,9 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
+	
+	@Autowired
+	private AiOptionsRepository aiOptionsRepository;
 
 	
 	@Override
@@ -329,5 +333,18 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	            "Users fetched successfully",
 	            response
 	    );
+	}
+
+	@Override
+	public ApiResponse<List<DropDownResponse>> getAiOptions() {
+		
+		List<DropDownResponse> response = aiOptionsRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(ai -> new DropDownResponse(ai.getId(), ai.getAiOptions())).toList();
+		
+		 log.info("ConfigurationServiceImpl::Exit from the getAllFunctionality method"); 
+		 
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.FUNCTIONALITY_FETCHED_SUCCESSFULLY, response);
+		
+		
 	}
 }

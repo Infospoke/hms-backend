@@ -43,7 +43,7 @@ public class PositonBasicsResponse {
     
     private Boolean approved;
 
-    private LocalDate createdOn;
+    private LocalDateTime createdOn;
     
     private String createdBy;
     
@@ -78,6 +78,8 @@ public class PositonBasicsResponse {
     private String approver2Role;
 
     private String approver3Role;
+
+	private LocalDateTime submittedOn;
     
     //private List<String>reportingManagerName;
     

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -16,17 +17,25 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.WebSocketNotification;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.NotificationEngineEntity;
+import com.hms.service.entity.RolesEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.NotificationEngineRepository;
+import com.hms.service.repository.RolesRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateNotificationRequest;
 import com.hms.service.service.IMailService;
 import com.hms.service.service.INotificationService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
@@ -47,12 +56,21 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Autowired
     private NotificationEngineRepository notificationEngineRepository;
+    
+    @Autowired
+    private AssignRolesRepository assignRolesRepository;
 
     @Autowired
     private IMailService mailService;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+    
+    @Autowired
+    private HttpServletRequest httpServletRequest;
+    
+    @Autowired
+	private JwtService jwtService;
 
 
     @Override
@@ -72,25 +90,22 @@ public class NotificationServiceImpl implements INotificationService {
 
     // Kafka Consumer — save to DB + send emails to all roles + push WebSocket
 	@KafkaListener(topics = "${hms.kafka.notification-topic}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "kafkaListenerContainerFactory")
-    public void consumeNotification(NotificationEvent event) {
+    public void consumeNotification(NotificationEvent event,Acknowledgment acknowledgment) {
         log.info("NotificationServiceImpl :: consumeNotification() - received event for "+ event.getType()+": {}", event.getProcessId());
 
         //Save notification to DB (one record per SR)
-        saveNotification(event);
-        
+        saveNotification(event,acknowledgment);
         
         //Push real-time WebSocket notification to all subscribers
         pushWebSocketNotification(event);
 
         // Send email to every user in the roleEmailMap
         sendEmailsToAllRoles(event);
-
-
         log.info("NotificationServiceImpl :: Notification fully processed for "+ event.getType()+": {}", event.getProcessId());
     }
 
 
-    private void saveNotification(NotificationEvent event) {
+    private void saveNotification(NotificationEvent event,Acknowledgment acknowledgment) {
     	log.info("Inside saveNotification() for "+ event.getType()+": {}", event.getProcessId());
     	List<NotificationEngineEntity> notificationsList = new ArrayList<>();
     	
@@ -126,6 +141,9 @@ public class NotificationServiceImpl implements INotificationService {
             
             notificationEngineRepository.saveAll(notificationsList);
             log.info("NotificationServiceImpl :: Notifications saved to DB for "+ event.getType()+": {}", event.getProcessId());
+            
+            acknowledgment.acknowledge(); // Manually acknowledge after successful DB save
+            
         } catch (Exception e) {
             log.error("NotificationServiceImpl :: Failed to save notification for "+ event.getType()+": {} - {}", event.getProcessId(), e.getMessage());
         }
@@ -212,67 +230,56 @@ public class NotificationServiceImpl implements INotificationService {
      
     @Override
     public ApiResponse<?> getNotifications(SpecificationFilterRequest request) {
+    	
+    	String authHeader = httpServletRequest.getHeader("Authorization");
 
-        log.info("NotificationServiceImpl:: Inside getNotifications");
+    	Long userId = null;
 
-        if (request.getPage() == null || request.getSize() == null) {
+    	if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-            return ApiResponse.failure(
-                    ResponseCode.FAILURE,                    "failure",
-                    List.of("page and size must be provided")
-            );
-        }
+    	    String token = authHeader.substring(7);
 
-        if (request.getPage() < 0 || request.getSize() <= 0) {
+    	    userId = jwtService.extractUserId(token);
 
-            return ApiResponse.failure(
-                    ResponseCode.FAILURE,
-                    "failure",
-                    List.of("Invalid page or size values")
-            );
-        }
+		} else {
 
-        Sort sort = Sort.by(
-                "DESC".equalsIgnoreCase(request.getDirection())
-                        ? Sort.Direction.DESC
-                        : Sort.Direction.ASC,
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+		}
 
-                request.getSortBy() != null
-                        ? request.getSortBy()
-                        : "notificationSentAt"
-        );
+		AssignRolesEntity assignRole = assignRolesRepository.findByUserId(userId.intValue())
+				.orElseThrow(() -> new RuntimeException("Role not assigned"));
 
-        Pageable pageable = PageRequest.of(
-                request.getPage(),
-                request.getSize(),
-                sort
-        );
-     
-        Specification<NotificationEngineEntity> baseSpec =
-                request.toNotificationSpecification();
+    	Integer roleId = assignRole.getRoleId();
+    	
+		log.info("NotificationServiceImpl:: Inside getNotifications");
 
-        Page<NotificationEngineEntity> pageResult =
-                notificationEngineRepository.findAll(
-                        baseSpec,
-                        pageable
-                );
+		if (request.getPage() == null || request.getSize() == null) {
 
-       
-        Specification<NotificationEngineEntity> countSpec =
-                request.buildNotificationCountSpec();
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+		}
 
-        long totalCount =
-                notificationEngineRepository.count(countSpec);
+		if (request.getPage() < 0 || request.getSize() <= 0) {
 
-        long readCount =
-                notificationEngineRepository.count(
-                        countSpec.and(isReadEquals(true))
-                );
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+		}
 
-        long unreadCount =
-                notificationEngineRepository.count(
-                        countSpec.and(isReadEquals(false))
-                );
+		Sort sort = Sort.by("DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+
+				request.getSortBy() != null ? request.getSortBy() : "notificationSentAt");
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Specification<NotificationEngineEntity> baseSpec = request.toNotificationSpecification().and(hasRoleId(roleId));
+
+		Page<NotificationEngineEntity> pageResult = notificationEngineRepository.findAll(baseSpec, pageable);
+		
+		Specification<NotificationEngineEntity> countSpec = request.buildNotificationCountSpec().and(hasRoleId(roleId));
+
+		long totalCount = notificationEngineRepository.count(countSpec);
+
+		long readCount = notificationEngineRepository.count(countSpec.and(isReadEquals(true)));
+
+		long unreadCount = notificationEngineRepository.count(countSpec.and(isReadEquals(false)));
 
         Map<String, Object> counts = new LinkedHashMap<>();
 
@@ -301,6 +308,12 @@ public class NotificationServiceImpl implements INotificationService {
         );
     }
 
+    private Specification<NotificationEngineEntity> hasRoleId(Integer roleId) {
+
+        return (root, query, cb) ->
+                cb.equal(root.get("roleId"), roleId);
+    }
+    
     private Specification<NotificationEngineEntity> isReadEquals(
             Boolean value) {
 
@@ -312,10 +325,32 @@ public class NotificationServiceImpl implements INotificationService {
     public ApiResponse<?> getNotificationCounts() {
 
         log.info("NotificationServiceImpl:: Inside getNotificationCounts");
+        
+		String authHeader = httpServletRequest.getHeader("Authorization");
 
-        Long total = notificationEngineRepository.count();
-        Long read = notificationEngineRepository.countByIsRead(true);
-        Long unread = notificationEngineRepository.countByIsRead(false);
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token);
+
+		} else {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+		}
+
+		AssignRolesEntity assignRole = assignRolesRepository.findByUserId(userId.intValue())
+				.orElseThrow(() -> new RuntimeException("Role not assigned"));
+
+		Integer roleId = assignRole.getRoleId();
+        
+        Long total = notificationEngineRepository.countByRoleId(roleId);
+
+		Long read = notificationEngineRepository.countByRoleIdAndIsRead(roleId, true);
+
+		Long unread = notificationEngineRepository.countByRoleIdAndIsRead(roleId, false);
 
         Map<String, Object> response = new HashMap<>();
         response.put("total", total);

@@ -15,13 +15,13 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.RecruiterCardsCountDto;
 import com.hms.service.entity.AssignRolesEntity;
-import com.hms.service.entity.CreateJobEntity;
+import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AssignRolesRepository;
-import com.hms.service.repository.CreateJobRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.RolesRepository;
@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RecruiterServiceImpl implements IRecruiterService {
 	@Autowired
-	private CreateJobRepository createJobRepository;
+	private CreateJobDetailsRepository createJobDetailsRepository;
 
 	@Autowired
 	private RecruiterAssignmentRepository recruiterAssignmentRepository;
@@ -63,7 +63,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			RecruiterCardsCountDto responseDto = new RecruiterCardsCountDto();
 
-			responseDto.setTotalJobs(createJobRepository.countBySubmitTrue());
+			responseDto.setTotalJobs(createJobDetailsRepository.countBySubmitTrue());
 
 			responseDto.setTotalAssignees(recruiterAssignmentRepository.countByIdIsNotNull());
 
@@ -107,9 +107,9 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-			Specification<CreateJobEntity> spec = request.buildJobSpecification();
+			Specification<CreateJobDetailsEntity> spec = request.buildJobSpecification();
 
-			Page<CreateJobEntity> pageResult = createJobRepository.findAll(spec, pageable);
+			Page<CreateJobDetailsEntity> pageResult = createJobDetailsRepository.findAll(spec, pageable);
 
 			Map<Integer, String> departmentMap = departmentsRepository.findAll().stream()
 					.collect(Collectors.toMap(DepartmentsEntity::getId, DepartmentsEntity::getDepartmentName));
@@ -181,7 +181,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 		try {
 
-			CreateJobEntity job = createJobRepository.findById(jobId)
+			CreateJobDetailsEntity job = createJobDetailsRepository.findById(jobId)
 					.orElseThrow(() -> new RuntimeException("Job not found"));
 
 			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);

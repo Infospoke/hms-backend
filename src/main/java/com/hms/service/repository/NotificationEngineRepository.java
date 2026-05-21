@@ -13,4 +13,9 @@ public interface NotificationEngineRepository
 		extends JpaRepository<NotificationEngineEntity, Integer>, JpaSpecificationExecutor<NotificationEngineEntity> {
 
 	Long countByIsRead(boolean isRead);
+
+	Long countByRoleId(Integer roleId);
+
+    Long countByRoleIdAndIsRead(Integer roleId, boolean isRead);
+    
 }

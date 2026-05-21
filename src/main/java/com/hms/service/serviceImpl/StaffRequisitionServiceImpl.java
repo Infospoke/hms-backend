@@ -1,6 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -60,11 +58,9 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
 import com.hms.service.request.LevelConfig;
-import com.hms.service.request.ListingRequest;
 import com.hms.service.request.PositonBascicsRequest;
 import com.hms.service.request.ReviewRequest;
 import com.hms.service.request.RolesAndRequirementsRequest;
-import com.hms.service.request.SRFilterRequest;
 import com.hms.service.request.SourcingStrategyRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
@@ -159,7 +155,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		String srId = null;
 		Long userId = null;
-		
+		Integer roleId=null;		
 
 		ApiResponse<?> finalResponse = null;
 		if (request.getPositonBascicsRequest() != null) {
@@ -179,7 +175,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				srPositionBasicsEntity = new SRPositionBasicsEntity();
 				srPositionBasicsEntity.setSubmitted(false);
 				srPositionBasicsEntity.setApproved(false);
-				srPositionBasicsEntity.setCreatedOn(LocalDate.now());
+				srPositionBasicsEntity.setCreatedOn(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				srId = generateSrId(positonBasicsRequest.getDepartmentId());
 				srPositionBasicsEntity.setSrId(srId);
 
@@ -188,10 +184,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				userId = getUserIdFromToken();
 
 				String roleName = getRoleNameFromToken();
+				
+				 roleId=rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
 
 				srPositionBasicsEntity.setCreatedBy(username);
 				srPositionBasicsEntity.setUserId(userId);
 				srPositionBasicsEntity.setRoleName(roleName);
+				srPositionBasicsEntity.setMakerRoleId(roleId);
 
 			}
 			srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
@@ -439,6 +438,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
+					entity.setSubmittedOn(LocalDateTime.now());
 					positionBasicsRepository.save(entity);
 
 				});
@@ -471,8 +471,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				});
 
 				processApprovalChain(finalSrId);
-
+                Integer checkerRoleId=null;
 				Map<Integer, List<String>> roleEmailMap = processApprovalChain(finalSrId);
+				for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
+
+				     checkerRoleId = entry.getKey();
+				}
+				
 
 				Optional<SRPositionBasicsEntity> srOptional = positionBasicsRepository.findBySrId(finalSrId);
 
@@ -484,10 +489,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					userId = srEntity.getUserId();
 
 					event.setProcessId(srEntity.getSrId());
-
-					// event.setJobTitle(srEntity.getJobTitle());
+					
+					
 
 					event.setMakerRoleName(srEntity.getRoleName());
+					event.setMakerRoleId(srEntity.getMakerRoleId());
 					String makerEmail = userRepository.findByUserId(userId).get().getEmail();
 					log.info("maker email is" + makerEmail);
 					event.setMakerEmailAddress(makerEmail);
@@ -515,6 +521,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					
 
 					event.setCheckerNotificationTitle("SR Created ");
+					
+					String checkerRoleName=rolesRepository.findByRoleId(checkerRoleId).get().getRoleName();
+					event.setCheckerRoleName(checkerRoleName);
 
 					event.setCheckerMessage("A new Staffing Requisition is awaiting your review and approval.");
 
@@ -651,16 +660,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		}
 
 		// CHECK ACTIVE STATUS
-		if (!"ACTIVE".equalsIgnoreCase(approvalChainEntity.getStatus())) {
+//		if (!"ACTIVE".equalsIgnoreCase(approvalChainEntity.getStatus())) {
+//
+//			throw new RuntimeException("Approval chain is inactive");
+//
+//		}
 
-			throw new RuntimeException("Approval chain is inactive");
-
-		}
-
-		// ==========================
+		
 		// REMAINING CODE WILL RUN
 		// ONLY IF STATUS IS ACTIVE
-		// ==========================
+		
 
 		List<LevelConfig> levels = approvalChainEntity.getLevelConfig();
 
@@ -1209,6 +1218,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setPriority(srPositionBasicsEntity.getPriority());
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
+				positonBasicsResponse.setSubmittedOn(srPositionBasicsEntity.getSubmittedOn());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());
 				positonBasicsResponse.setUserId(srPositionBasicsEntity.getUserId());
@@ -1390,10 +1400,18 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 			
 			Specification<SRPositionBasicsEntity> spec = request.buildMyStaffingRequisitionSpecification(userId);
-
+			
 			Page<SRPositionBasicsEntity> pageResult = positionBasicsRepository.findAll(spec, pageable);
 
-			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findAll(spec);
+	        String status = request.getStatus();
+
+	        request.setStatus(null);
+
+			Specification<SRPositionBasicsEntity> countSpec = request.buildMyStaffingRequisitionSpecification(userId);
+
+			List<SRPositionBasicsEntity> allData = positionBasicsRepository.findAll(countSpec);
+
+	        request.setStatus(status);
 			
 			long allCount = allData.size();
 			
@@ -1429,23 +1447,23 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				map.put("pipeline", getPipeline(sr));
 				
 
-				String status;
+				String srStatus;
 
 				if (Boolean.TRUE.equals(sr.getApproved())) {
 					
-					status = "Approved";
+					srStatus = "Approved";
 					
 				} else if (Boolean.TRUE.equals(sr.getRejected())) {
 					
-					status = "Rejected";
+					srStatus = "Rejected";
 					
 				} else if (Boolean.FALSE.equals(sr.getSubmitted())) {
 
-					status = "Draft";
+					srStatus = "Draft";
 
 				} else {
 
-					status = "Pending";
+					srStatus = "Pending";
 				}
 				map.put("status", status);
 
@@ -1475,75 +1493,81 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	private String getCurrentStage(SRPositionBasicsEntity sr) {
 
 		try {
-
+			
 			Optional<ApprovalsChildEntity> optionalChild = approvalsChildRepository.findByProcessId(sr.getSrId());
 
 			if (optionalChild.isEmpty()) {
 
-			    return null;
+				return null;
 			}
 
 			ApprovalsChildEntity child = optionalChild.get();
-
-
+			
 			List<Integer> roleIds = new ArrayList<>();
 
 			if (child.getRole1() != null) {
+
 				roleIds.add(child.getRole1());
 			}
 
 			if (child.getRole2() != null) {
+
 				roleIds.add(child.getRole2());
 			}
 
 			if (child.getRole3() != null) {
+
 				roleIds.add(child.getRole3());
 			}
+
+			
+			System.out.println(roleIds);
 
 			List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
 
 			Map<Integer, String> roleMap = roles.stream()
 					.collect(Collectors.toMap(r -> (Integer) r[0], r -> (String) r[1]));
 
+			if (Boolean.FALSE.equals(sr.getSubmitted())) {
+
+				return "Draft";
+			}
+
 			if (Boolean.TRUE.equals(sr.getRejected())) {
 
 
-			    if (Boolean.TRUE.equals(sr.getApprover3())) {
+				if (Boolean.TRUE.equals(sr.getApprover3())) {
 
-			        return roleMap.get(child.getRole3());
-			    }
+					return roleMap.get(child.getRole3());
+				}
 
-			    if (Boolean.TRUE.equals(sr.getApprover2())) {
+				if (Boolean.TRUE.equals(sr.getApprover2())) {
 
-			        return roleMap.get(child.getRole2());
-			    }
-
-			    if (Boolean.TRUE.equals(sr.getApprover1())) {
-
-			        return roleMap.get(child.getRole1());
-			    }
-
-			    return roleMap.get(child.getRole1());
-			}
-
-			if (Boolean.TRUE.equals(sr.getApprover1()) && Boolean.TRUE.equals(sr.getApprover2())
-					&& Boolean.TRUE.equals(sr.getApprover3())) {
-
-				 return roleMap.get(child.getRole3());
-			}
-
-			if (!Boolean.TRUE.equals(sr.getApprover1())) {
+					return roleMap.get(child.getRole2());
+				}
 
 				return roleMap.get(child.getRole1());
 			}
+			
+			if (Boolean.TRUE.equals(sr.getSubmitted())) {
 
-			if (Boolean.TRUE.equals(sr.getApprover1()) && !Boolean.TRUE.equals(sr.getApprover2())) {
+				if (!Boolean.TRUE.equals(sr.getApprover1())) {
 
-				return roleMap.get(child.getRole2());
-			}
+					System.out.println(child.getRole1());
+					System.out.println(roleMap);
+					
+					return roleMap.get(child.getRole1());
+				}
 
-			if (Boolean.TRUE.equals(sr.getApprover1()) && Boolean.TRUE.equals(sr.getApprover2())
-					&& !Boolean.TRUE.equals(sr.getApprover3())) {
+				if (!Boolean.TRUE.equals(sr.getApprover2())) {
+
+					return roleMap.get(child.getRole2());
+				}
+
+				if (!Boolean.TRUE.equals(sr.getApprover3())) {
+
+					return roleMap.get(child.getRole3());
+				}
 
 				return roleMap.get(child.getRole3());
 			}
@@ -1552,6 +1576,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		} catch (Exception e) {
 
+			 e.printStackTrace();
 			return null;
 		}
 	}
@@ -1696,7 +1721,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		return "SR-" + year + "-" + departmentCode + "-" + formattedSeq;
 	}
 
-	private void sendMakerMail(String srId, Long userId, String makerMessage, String makerRoleName,
+	private void sendMakerMail(String srId, Long userId,Integer makerRoleId, String makerMessage, String makerRoleName,
 			String notificationTitle, String body, NotificationEvent event) {
 
 		String makerEmail = userRepository.findByUserId(userId).get().getEmail();
@@ -1706,6 +1731,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		event.setProcessId(srId);
 		event.setMakerMessage(makerMessage);
 		event.setMakerRoleName(makerRoleName);
+		event.setMakerRoleId(makerRoleId);
 
 		event.setMakerEmailAddress(makerEmail);
 
@@ -1817,6 +1843,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		String srId = pos.getSrId();
 		Long userId = pos.getUserId();
 		String makerRoleName = pos.getRoleName();
+		Integer makerRoleId=pos.getMakerRoleId();
 
 		//FIND APPROVAL LEVEL
 	
@@ -1937,15 +1964,21 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	//COMMON MAIL DATA
 	
-		Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getSrId());
-
+		Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getSrId()); 
+		Integer roleId=null;
+		for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
+                   roleId = entry.getKey();
+		}
+		
+        String checkerRoleName=rolesRepository.findByRoleId(roleId).get().getRoleName();
 		Integer deptId = pos.getDepartmentId();
 
 		String deptName = departmentsRepository.findById(deptId).get().getDepartmentName();
 
 		event.setProcessId(srId);
+		event.setDeptName(deptName);
 		event.setType("SR");
-		event.setCheckerRoleName(roleName);
+		event.setCheckerRoleName(checkerRoleName);
 		event.setRoleEmailMap(roleEmailMap);
 
 		// APPROVED FLOW
@@ -1963,6 +1996,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			String makerSubject = "";
 			String makerTitle = "";
 			String makerMailBody = "";
+			
 
 			if (approvalLevel == 1) {
 
@@ -1971,7 +2005,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				makerTitle = "Level 1 Approved — Department Head";
 
 				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
-						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
+						pos.getSrId(), pos.getJobTitle(), deptName,pos.getOpenings(), pos.getLocation(),
 						pos.getEmploymentType(), pos.getPriority(), approverName, approvalStatus, approvedDate);
 
 			} else if (approvalLevel == 2) {
@@ -1995,7 +2029,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 						pos.getPriority(), approvedDate);
 			}
 
-			sendMakerMail(srId, userId, makerSubject, makerRoleName, makerTitle, makerMailBody, event);
+			sendMakerMail(srId, userId,makerRoleId, makerSubject, makerRoleName, makerTitle, makerMailBody, event);
 
 			return ApiResponse.success("Approved successfully at level " + approvalLevel);
 		}
@@ -2015,9 +2049,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			event.setCheckerEmailBody(rejectedMailBody);
 
-			sendMakerMail(srId, userId,
+			sendMakerMail(srId, userId,makerRoleId,
 					"Your Staffing Requisition has been rejected by Level " + approvalLevel + " (" + levelName + ")",
-					makerRoleName, "SR Rejected", rejectedMailBody, event);
+					makerRoleName,"SR Rejected", rejectedMailBody, event);
 
 			return ApiResponse.success("Rejected successfully at level " + approvalLevel);
 		}

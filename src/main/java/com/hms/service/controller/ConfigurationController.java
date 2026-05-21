@@ -124,5 +124,11 @@ public class ConfigurationController {
 		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getUsersByRole();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/get-ai-options")
+	public ResponseEntity<ApiResponse<List<DropDownResponse>>>  getAiOtions() {
+		ApiResponse<List<DropDownResponse>> response =iConfigurationService.getAiOptions();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }
