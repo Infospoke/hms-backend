@@ -3,6 +3,9 @@ package com.hms.service.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,6 +27,8 @@ public interface AssignRolesRepository extends JpaRepository<AssignRolesEntity, 
 		    GROUP BY ar.roleId
 		""")
 		List<Object[]> countUsersByRoleIds(@Param("roleIds") List<Integer> roleIds);
+
+	Page<AssignRolesEntity> findAll(Specification<AssignRolesEntity> recruiterSpecification, Pageable pageable);
 
 
 }

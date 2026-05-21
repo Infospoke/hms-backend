@@ -1,19 +1,33 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobDescriptionEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
+import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingChannelEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -21,6 +35,7 @@ import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
+import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.CreateJobDetailsRequest;
@@ -29,7 +44,9 @@ import com.hms.service.request.JobCreationReviewRequest;
 import com.hms.service.request.JobDescriptionRequest;
 import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SourcingChannelRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.CreateJobDetailsResponse;
+import com.hms.service.response.RecruiterDetailsResponse;
 import com.hms.service.service.ICreateJobService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -74,6 +91,12 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private RecruiterAssignmentRepository recruiterAssignmentRepository;
+
+	@Autowired
+	private RolesRepository rolesRepository;
+
+	@Autowired
+	private AssignRolesRepository assignRolesRepository;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -285,12 +308,12 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				entity.setAssignedBy(userName);
 
-				entity.setAssignedAt(LocalDate.now());
+				entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 				recruiterAssignmentRepository.save(entity);
 			}
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "success","Recruiters Assigned Successfully");
+			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Recruiters Assigned Successfully");
 		}
 
 		// review request
@@ -320,9 +343,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			entity = createJobDetailsRepository.save(entity);
 
-			return ApiResponse.success(ResponseCode.SUCCESS,"success", "Job Review Updated Successfully");
+			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Review Updated Successfully");
 		}
-		return  ApiResponse.success(ResponseCode.SUCCESS,"success", "Job Created Successfully");
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 	}
 
 	// Validations for createJobDetailsRequest
@@ -646,4 +669,154 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
+	@Override
+	public ApiResponse<?> getRecruiters(SpecificationFilterRequest request) {
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+		List<Integer> departmentIds = request.getIntegerListFilter("departmentIds");
+
+		List<Integer> roleIds = request.getIntegerListFilter("roleIds");
+
+		String search = request.getFilter("search");
+
+		Set<Integer> finalRoleIds = new LinkedHashSet<>();
+
+		if (departmentIds != null && !departmentIds.isEmpty() && roleIds != null && !roleIds.isEmpty()) {
+
+			List<Integer> mappedRoleIds = rolesRepository.findByDepartmentIdIn(departmentIds).stream()
+					.filter(role -> roleIds.contains(role.getId())).map(RolesEntity::getId).toList();
+
+			finalRoleIds.addAll(mappedRoleIds);
+
+		} else if (departmentIds != null && !departmentIds.isEmpty()) {
+
+			List<Integer> departmentRoleIds = rolesRepository.findByDepartmentIdIn(departmentIds).stream()
+					.map(RolesEntity::getId).toList();
+
+			finalRoleIds.addAll(departmentRoleIds);
+
+		} else if (roleIds != null && !roleIds.isEmpty()) {
+
+			finalRoleIds.addAll(roleIds);
+		}
+
+		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
+				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
+
+		if (assignRolesPage.isEmpty()) {
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyList());
+		}
+
+		List<AssignRolesEntity> assignRoles = assignRolesPage.getContent();
+
+		List<Integer> userIds = assignRoles.stream().map(AssignRolesEntity::getUserId).distinct().toList();
+
+		List<UserEntity> users = userRepository.findByIdIn(userIds);
+
+		Map<Integer, UserEntity> userMap = users.stream().collect(Collectors.toMap(UserEntity::getId, user -> user));
+
+		List<RolesEntity> roles = rolesRepository.findAllById(finalRoleIds);
+
+		Map<Integer, RolesEntity> roleMap = roles.stream().collect(Collectors.toMap(RolesEntity::getId, role -> role));
+
+		List<Object[]> counts = recruiterAssignmentRepository.findAssignmentCounts(userIds);
+
+		Map<Integer, Long> countMap = counts.stream()
+				.collect(Collectors.toMap(row -> (Integer) row[0], row -> (Long) row[1]));
+
+		Map<Integer, Map<Integer, List<RecruiterDetailsResponse>>> groupedMap = new LinkedHashMap<>();
+
+		for (AssignRolesEntity assign : assignRoles) {
+
+			UserEntity user = userMap.get(assign.getUserId());
+
+			if (user == null) {
+				continue;
+			}
+
+			RolesEntity role = roleMap.get(assign.getRoleId());
+
+			if (role == null) {
+				continue;
+			}
+
+			if (search != null && !search.isBlank()) {
+
+				boolean matches = (user.getUsername() != null
+						&& user.getUsername().toLowerCase().contains(search.toLowerCase()))
+
+						||
+
+						(user.getEmail() != null && user.getEmail().toLowerCase().contains(search.toLowerCase()))
+
+						||
+
+						(role.getRoleName() != null && role.getRoleName().toLowerCase().contains(search.toLowerCase()));
+
+				if (!matches) {
+					continue;
+				}
+			}
+
+			RecruiterDetailsResponse recruiter = new RecruiterDetailsResponse();
+
+			recruiter.setUserId(user.getId());
+
+			recruiter.setRecruiterName(user.getUsername());
+
+			recruiter.setEmail(user.getEmail());
+
+			recruiter.setRoleName(role.getRoleName());
+
+			recruiter.setTotalAssignments(countMap.getOrDefault(user.getId(), 0L));
+
+			groupedMap.computeIfAbsent(role.getDepartmentId(), k -> new LinkedHashMap<>())
+					.computeIfAbsent(role.getId(), k -> new ArrayList<>()).add(recruiter);
+		}
+
+		List<Map<String, Object>> departments = new ArrayList<>();
+
+		for (Map.Entry<Integer, Map<Integer, List<RecruiterDetailsResponse>>> departmentEntry : groupedMap.entrySet()) {
+
+			Map<String, Object> departmentMap = new LinkedHashMap<>();
+
+			departmentMap.put("departmentId", departmentEntry.getKey());
+
+			List<Map<String, Object>> rolesList = new ArrayList<>();
+
+			for (Map.Entry<Integer, List<RecruiterDetailsResponse>> roleEntry : departmentEntry.getValue().entrySet()) {
+
+				RolesEntity role = roleMap.get(roleEntry.getKey());
+
+				Map<String, Object> roleData = new LinkedHashMap<>();
+
+				roleData.put("roleId", roleEntry.getKey());
+
+				roleData.put("roleName", role != null ? role.getRoleName() : null);
+
+				roleData.put("users", roleEntry.getValue());
+
+				rolesList.add(roleData);
+			}
+
+			departmentMap.put("roles", rolesList);
+
+			departments.add(departmentMap);
+		}
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("totalElements", assignRolesPage.getTotalElements());
+
+		response.put("totalPages", assignRolesPage.getTotalPages());
+
+		response.put("currentPage", request.getPage());
+
+		response.put("departments", departments);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Recruiters fetched successfully", response);
+	}
 }
