@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
@@ -37,9 +38,12 @@ import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.ChannelRequest;
 import com.hms.service.request.CreateJobDetailsRequest;
 import com.hms.service.request.CreateJobRequest;
+import com.hms.service.request.JobCreationReviewRequest;
 import com.hms.service.request.JobDescriptionRequest;
+import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.CreateJobDetailsResponse;
@@ -142,11 +146,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	}
 
 	@Override
+	@Transactional
 	public ApiResponse<?> createJob(CreateJobRequest request) {
 
 		// createJob details
-		log.info("CreateJobServiceImpl :: Inside the createJob method");
 
+		log.info("CreateJobServiceImpl :: Inside the createJob method");
+		Integer id = null;
 		if (request == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Request body cannot be null"));
@@ -179,6 +185,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				entity = createJobDetailsRepository.findById(req.getJobId()).orElse(null);
 			}
+			if (entity == null) {
+
+				entity = new CreateJobDetailsEntity();
+
+				entity.setCreatedBy(userName);
+
+				entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+			}
 
 			entity.setJobTitle(req.getJobTitle());
 
@@ -208,13 +222,10 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			entity.setAdditionalNotes(req.getAdditionalNotes());
 
-			entity.setCreatedBy(userName);
-
-			entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-
 			entity = createJobDetailsRepository.save(entity);
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job details Saved Successfully");
+			id = entity.getId();
+
 		}
 
 		// job description
@@ -246,43 +257,106 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			entity.setDescription(req.getDescription());
 
 			entity = jobDescriptionRepository.save(entity);
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Description Saved Successfully");
 
 		}
 
 		// sourcing channel
-		if (request.getSourcingChannelRequest() != null) {
+		if (request.getSourcingChannelRequest() != null && !request.getSourcingChannelRequest().isEmpty()) {
 
-			SourcingChannelRequest req = request.getSourcingChannelRequest();
+			List<SourcingChannelRequest> reqList = request.getSourcingChannelRequest();
 
-			ApiResponse<?> error = validateSourcingChannelRequest(req);
+			for (SourcingChannelRequest req : reqList) {
 
-			if (error != null) {
-				return error;
+				ApiResponse<?> error = validateSourcingChannelRequest(req);
+
+				if (error != null) {
+					return error;
+				}
 			}
 
-			SourcingChannelEntity entity = null;
+			Integer jobId = reqList.get(0).getJobId();
 
-			if (req.getJobId() != null) {
-
-				entity = sourcingChannelRepository.findByJobId(req.getJobId()).orElse(null);
-			}
+			SourcingChannelEntity entity = sourcingChannelRepository.findByJobId(jobId).orElse(null);
 
 			if (entity == null) {
 
 				entity = new SourcingChannelEntity();
 			}
 
-			entity.setJobId(req.getJobId());
+			entity.setJobId(jobId);
 
-			entity.setSourcingChannelRequest(List.of(req));
+			entity.setSourcingChannelRequest(reqList);
 
-			entity = sourcingChannelRepository.save(entity);
-
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Sourcing Channel Saved Successfully");
+			sourcingChannelRepository.save(entity);
 		}
-		return null;
+		// recuriter assignment
+
+		if (request.getSourcingChannelRequest() != null && !request.getSourcingChannelRequest().isEmpty()) {
+
+			List<SourcingChannelRequest> reqList = request.getSourcingChannelRequest();
+
+			for (SourcingChannelRequest req : reqList) {
+
+				ApiResponse<?> error = validateSourcingChannelRequest(req);
+
+				if (error != null) {
+					return error;
+				}
+			}
+
+			Integer jobId = reqList.get(0).getJobId();
+
+			SourcingChannelEntity entity = sourcingChannelRepository.findByJobId(jobId).orElse(null);
+
+			if (entity == null) {
+
+				entity = new SourcingChannelEntity();
+			}
+
+			entity.setJobId(jobId);
+
+			entity.setSourcingChannelRequest(reqList);
+
+			sourcingChannelRepository.save(entity);
+		}
+
+		// review request
+
+		if (request.getJobCreationReviewRequest() != null) {
+
+			JobCreationReviewRequest req = request.getJobCreationReviewRequest();
+
+			ApiResponse<?> error = validateJobCreationReviewRequest(req);
+
+			if (error != null) {
+				return error;
+			}
+
+			CreateJobDetailsEntity entity = createJobDetailsRepository.findById(req.getJobId()).orElse(null);
+
+			if (entity == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Job Details not found"));
+			}
+
+			entity.setSubmit(req.getSubmit());
+
+			entity = createJobDetailsRepository.save(entity);
+
+		}
+		boolean onlyCreateJobRequest = request.getCreateJobDetailsRequest() != null
+				&& request.getJobDescriptionRequest() == null && request.getSourcingChannelRequest() == null
+				&& request.getRecuriterAssignmentRequest() == null && request.getJobCreationReviewRequest() == null;
+
+		if (onlyCreateJobRequest) {
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Job details Saved Successfully", id);
+		}
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 	}
+
+	// Validations for createJobDetailsRequest
 
 	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req) {
 
@@ -431,6 +505,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
+	// validations for jobDescriptionRequest
+
 	public ApiResponse<?> validateJobDescriptionRequest(JobDescriptionRequest req) {
 
 		ApiResponse<?> error;
@@ -459,6 +535,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
+	// validations for object
+
 	public ApiResponse<?> validateObject(Object value, String fieldName) {
 
 		if (value == null) {
@@ -486,6 +564,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
+	// validations for soucingChannelRequest
 	public ApiResponse<?> validateSourcingChannelRequest(SourcingChannelRequest req) {
 
 		ApiResponse<?> error;
@@ -503,480 +582,256 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			}
 		}
 
-		if (req.getChannelName() != null) {
+		if (req.getChannels() == null || req.getChannels().isEmpty()) {
 
-			error = validateObject(req.getChannelName(), "channelName");
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("channels cannot be empty"));
+		}
+
+		for (ChannelRequest channel : req.getChannels()) {
+
+			if (channel.getChannelName() != null) {
+
+				error = validateObject(channel.getChannelName(), "channelName");
+
+				if (error != null)
+					return error;
+			}
+
+			if (channel.getPostJob() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("postJob is required"));
+			}
+
+			if (channel.getReferralAmount() != null) {
+
+				error = validateObject(channel.getReferralAmount(), "referralAmount");
+
+				if (error != null)
+					return error;
+			}
+		}
+
+		return null;
+	}
+
+	// validations for RecruiterAssignmentRequest
+	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getJobId() != null) {
+
+			error = validateObject(req.getJobId(), "jobId");
 
 			if (error != null)
 				return error;
+
+			if (!createJobDetailsRepository.existsById(req.getJobId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
+			}
 		}
 
-		if (req.getPostJob() == null) {
+		if (req.getUserIds() != null) {
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("postJob is required"));
+			if (req.getUserIds().isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
+			}
+
+			for (Integer userId : req.getUserIds()) {
+
+				if (userId == null || userId <= 0) {
+
+					return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
+				}
+
+				if (!userRepository.existsByUserId(userId)) {
+
+					return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+							List.of("User not found for userId : " + userId));
+				}
+			}
 		}
 
-		if (req.getReferralAmount() != null) {
+		return null;
+	}
 
-			error = validateObject(req.getReferralAmount(), "referralAmount");
+	// validationds for review request
+
+	public ApiResponse<?> validateJobCreationReviewRequest(JobCreationReviewRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getJobId() != null) {
+
+			error = validateObject(req.getJobId(), "jobId");
 
 			if (error != null)
 				return error;
+
+			if (!createJobDetailsRepository.existsById(req.getJobId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
+			}
+		}
+
+		if (req.getSubmit() == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("submit is required"));
 		}
 
 		return null;
 	}
 
 	@Override
+	public ApiResponse<?> getRecruiters(SpecificationFilterRequest request) {
 
-	public ApiResponse<?> getRecruiters(
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
-			SpecificationFilterRequest request
+		List<Integer> departmentIds = request.getIntegerListFilter("departmentIds");
 
-	) {
+		List<Integer> roleIds = request.getIntegerListFilter("roleIds");
 
-		Pageable pageable = PageRequest.of(
+		String search = request.getFilter("search");
 
-				request.getPage(),
+		Set<Integer> finalRoleIds = new LinkedHashSet<>();
 
-				request.getSize(),
+		if (departmentIds != null && !departmentIds.isEmpty() && roleIds != null && !roleIds.isEmpty()) {
 
-				Sort.by(
-
-						Sort.Direction.fromString(
-
-								request.getDirection()
-
-						),
-
-						request.getSortBy()
-
-				)
-
-		);
-
-		List<Integer> departmentIds =
-
-				request.getIntegerListFilter("departmentIds");
-
-		List<Integer> roleIds =
-
-				request.getIntegerListFilter("roleIds");
-
-		String search =
-
-				request.getFilter("search");
-
-		Set<Integer> finalRoleIds =
-
-				new LinkedHashSet<>();
-
-		if (departmentIds != null && !departmentIds.isEmpty()
-
-				&&
-
-				roleIds != null && !roleIds.isEmpty()) {
-
-			List<Integer> mappedRoleIds =
-
-					rolesRepository
-
-							.findByDepartmentIdIn(departmentIds)
-
-							.stream()
-
-							.filter(role ->
-
-							roleIds.contains(role.getId())
-
-							)
-
-							.map(RolesEntity::getId)
-
-							.toList();
+			List<Integer> mappedRoleIds = rolesRepository.findByDepartmentIdIn(departmentIds).stream()
+					.filter(role -> roleIds.contains(role.getId())).map(RolesEntity::getId).toList();
 
 			finalRoleIds.addAll(mappedRoleIds);
 
-		}
+		} else if (departmentIds != null && !departmentIds.isEmpty()) {
 
-		else if (departmentIds != null && !departmentIds.isEmpty()) {
-
-			List<Integer> departmentRoleIds =
-
-					rolesRepository
-
-							.findByDepartmentIdIn(departmentIds)
-
-							.stream()
-
-							.map(RolesEntity::getId)
-
-							.toList();
+			List<Integer> departmentRoleIds = rolesRepository.findByDepartmentIdIn(departmentIds).stream()
+					.map(RolesEntity::getId).toList();
 
 			finalRoleIds.addAll(departmentRoleIds);
 
-		}
-
-		else if (roleIds != null && !roleIds.isEmpty()) {
+		} else if (roleIds != null && !roleIds.isEmpty()) {
 
 			finalRoleIds.addAll(roleIds);
-
 		}
 
-		Page<AssignRolesEntity> assignRolesPage =
-
-				assignRolesRepository.findAll(
-
-						request.buildRecruiterSpecification(
-
-								new ArrayList<>(finalRoleIds)
-
-						),
-
-						pageable
-
-				);
+		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
+				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
 
 		if (assignRolesPage.isEmpty()) {
 
-			return ApiResponse.success(
-
-					ResponseCode.SUCCESS,
-
-					"No recruiters found",
-
-					Collections.emptyList()
-
-			);
-
+			return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyList());
 		}
 
-		List<AssignRolesEntity> assignRoles =
+		List<AssignRolesEntity> assignRoles = assignRolesPage.getContent();
 
-				assignRolesPage.getContent();
+		List<Integer> userIds = assignRoles.stream().map(AssignRolesEntity::getUserId).distinct().toList();
 
-		List<Integer> userIds =
+		List<UserEntity> users = userRepository.findByIdIn(userIds);
 
-				assignRoles.stream()
+		Map<Integer, UserEntity> userMap = users.stream().collect(Collectors.toMap(UserEntity::getId, user -> user));
 
-						.map(AssignRolesEntity::getUserId)
+		List<RolesEntity> roles = rolesRepository.findAllById(finalRoleIds);
 
-						.distinct()
+		Map<Integer, RolesEntity> roleMap = roles.stream().collect(Collectors.toMap(RolesEntity::getId, role -> role));
 
-						.toList();
+		List<Object[]> counts = recruiterAssignmentRepository.findAssignmentCounts(userIds);
 
-		List<UserEntity> users =
+		Map<Integer, Long> countMap = counts.stream()
+				.collect(Collectors.toMap(row -> (Integer) row[0], row -> (Long) row[1]));
 
-				userRepository.findByIdIn(userIds);
-
-		Map<Integer, UserEntity> userMap =
-
-				users.stream()
-
-						.collect(Collectors.toMap(
-
-								UserEntity::getId,
-
-								user -> user
-
-						));
-
-		List<RolesEntity> roles =
-
-				rolesRepository.findAllById(finalRoleIds);
-
-		Map<Integer, RolesEntity> roleMap =
-
-				roles.stream()
-
-						.collect(Collectors.toMap(
-
-								RolesEntity::getId,
-
-								role -> role
-
-						));
-
-		List<Object[]> counts =
-
-				recruiterAssignmentRepository
-
-						.findAssignmentCounts(userIds);
-
-		Map<Integer, Long> countMap =
-
-				counts.stream()
-
-						.collect(Collectors.toMap(
-
-								row -> (Integer) row[0],
-
-								row -> (Long) row[1]
-
-						));
-
-		Map<Integer, Map<Integer,
-
-				List<RecruiterDetailsResponse>>>
-
-		groupedMap = new LinkedHashMap<>();
+		Map<Integer, Map<Integer, List<RecruiterDetailsResponse>>> groupedMap = new LinkedHashMap<>();
 
 		for (AssignRolesEntity assign : assignRoles) {
 
-			UserEntity user =
-
-					userMap.get(assign.getUserId());
+			UserEntity user = userMap.get(assign.getUserId());
 
 			if (user == null) {
-
 				continue;
-
 			}
 
-			RolesEntity role =
-
-					roleMap.get(assign.getRoleId());
+			RolesEntity role = roleMap.get(assign.getRoleId());
 
 			if (role == null) {
-
 				continue;
-
 			}
 
 			if (search != null && !search.isBlank()) {
 
-				boolean matches =
+				boolean matches = (user.getUsername() != null
+						&& user.getUsername().toLowerCase().contains(search.toLowerCase()))
 
-						(user.getUsername() != null
+						||
 
-								&& user.getUsername()
+						(user.getEmail() != null && user.getEmail().toLowerCase().contains(search.toLowerCase()))
 
-										.toLowerCase()
+						||
 
-										.contains(search.toLowerCase()))
-
-								||
-
-								(user.getEmail() != null
-
-										&& user.getEmail()
-
-												.toLowerCase()
-
-												.contains(search.toLowerCase()))
-
-								||
-
-								(role.getRoleName() != null
-
-										&& role.getRoleName()
-
-												.toLowerCase()
-
-												.contains(search.toLowerCase()));
+						(role.getRoleName() != null && role.getRoleName().toLowerCase().contains(search.toLowerCase()));
 
 				if (!matches) {
-
 					continue;
-
 				}
-
 			}
 
-			RecruiterDetailsResponse recruiter =
-
-					new RecruiterDetailsResponse();
+			RecruiterDetailsResponse recruiter = new RecruiterDetailsResponse();
 
 			recruiter.setUserId(user.getId());
 
-			recruiter.setRecruiterName(
+			recruiter.setRecruiterName(user.getUsername());
 
-					user.getUsername()
+			recruiter.setEmail(user.getEmail());
 
-			);
+			recruiter.setRoleName(role.getRoleName());
 
-			recruiter.setEmail(
+			recruiter.setTotalAssignments(countMap.getOrDefault(user.getId(), 0L));
 
-					user.getEmail()
-
-			);
-
-			recruiter.setRoleName(
-
-					role.getRoleName()
-
-			);
-
-			recruiter.setTotalAssignments(
-
-					countMap.getOrDefault(
-
-							user.getId(),
-
-							0L
-
-					)
-
-			);
-
-			groupedMap
-
-					.computeIfAbsent(
-
-							role.getDepartmentId(),
-
-							k -> new LinkedHashMap<>()
-
-					)
-
-					.computeIfAbsent(
-
-							role.getId(),
-
-							k -> new ArrayList<>()
-
-					)
-
-					.add(recruiter);
-
+			groupedMap.computeIfAbsent(role.getDepartmentId(), k -> new LinkedHashMap<>())
+					.computeIfAbsent(role.getId(), k -> new ArrayList<>()).add(recruiter);
 		}
 
-		List<Map<String, Object>> departments =
+		List<Map<String, Object>> departments = new ArrayList<>();
 
-				new ArrayList<>();
+		for (Map.Entry<Integer, Map<Integer, List<RecruiterDetailsResponse>>> departmentEntry : groupedMap.entrySet()) {
 
-		for (Map.Entry<Integer,
+			Map<String, Object> departmentMap = new LinkedHashMap<>();
 
-				Map<Integer,
+			departmentMap.put("departmentId", departmentEntry.getKey());
 
-						List<RecruiterDetailsResponse>>>
+			List<Map<String, Object>> rolesList = new ArrayList<>();
 
-		departmentEntry
+			for (Map.Entry<Integer, List<RecruiterDetailsResponse>> roleEntry : departmentEntry.getValue().entrySet()) {
 
-		: groupedMap.entrySet()) {
+				RolesEntity role = roleMap.get(roleEntry.getKey());
 
-			Map<String, Object> departmentMap =
+				Map<String, Object> roleData = new LinkedHashMap<>();
 
-					new LinkedHashMap<>();
+				roleData.put("roleId", roleEntry.getKey());
 
-			departmentMap.put(
+				roleData.put("roleName", role != null ? role.getRoleName() : null);
 
-					"departmentId",
-
-					departmentEntry.getKey()
-
-			);
-
-			List<Map<String, Object>> rolesList =
-
-					new ArrayList<>();
-
-			for (Map.Entry<Integer,
-
-					List<RecruiterDetailsResponse>>
-
-			roleEntry
-
-			: departmentEntry.getValue().entrySet()) {
-
-				RolesEntity role =
-
-						roleMap.get(roleEntry.getKey());
-
-				Map<String, Object> roleData =
-
-						new LinkedHashMap<>();
-
-				roleData.put(
-
-						"roleId",
-
-						roleEntry.getKey()
-
-				);
-
-				roleData.put(
-
-						"roleName",
-
-						role != null
-
-								? role.getRoleName()
-
-								: null
-
-				);
-
-				roleData.put(
-
-						"users",
-
-						roleEntry.getValue()
-
-				);
+				roleData.put("users", roleEntry.getValue());
 
 				rolesList.add(roleData);
-
 			}
 
-			departmentMap.put(
-
-					"roles",
-
-					rolesList
-
-			);
+			departmentMap.put("roles", rolesList);
 
 			departments.add(departmentMap);
-
 		}
 
-		Map<String, Object> response =
+		Map<String, Object> response = new LinkedHashMap<>();
 
-				new LinkedHashMap<>();
+		response.put("totalElements", assignRolesPage.getTotalElements());
 
-		response.put(
+		response.put("totalPages", assignRolesPage.getTotalPages());
 
-				"totalElements",
+		response.put("currentPage", request.getPage());
 
-				assignRolesPage.getTotalElements()
+		response.put("departments", departments);
 
-		);
-
-		response.put(
-
-				"totalPages",
-
-				assignRolesPage.getTotalPages()
-
-		);
-
-		response.put(
-
-				"currentPage",
-
-				request.getPage()
-
-		);
-
-		response.put(
-
-				"departments",
-
-				departments
-
-		);
-
-		return ApiResponse.success(
-
-				ResponseCode.SUCCESS,
-
-				"Recruiters fetched successfully",
-
-				response
-
-		);
-
+		return ApiResponse.success(ResponseCode.SUCCESS, "Recruiters fetched successfully", response);
 	}
-
 }

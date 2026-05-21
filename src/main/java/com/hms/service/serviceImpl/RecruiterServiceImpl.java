@@ -1,5 +1,6 @@
 package com.hms.service.serviceImpl;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +27,14 @@ import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.FilterRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IRecruiterService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -53,6 +57,12 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+
+	@Autowired
+	private JwtService jwtService;
 
 	@Override
 	public ApiResponse<?> getRecruiterCardsCounts() {
@@ -91,7 +101,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 	@Override
 	public ApiResponse<?> getAllRecruiterAssignmentList(SpecificationFilterRequest request) {
-		
+
 		log.info("RecruiterDashboardServiceImpl ::Inside getAllRecruiterAssignmentList method");
 
 		try {
@@ -175,22 +185,40 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	}
 
 	@Override
-	public ApiResponse<?> getRecruiterAssignmentDetails(Integer jobId) {
-		
+	public ApiResponse<?> getRecruiterAssignmentDetails(Integer jobId, FilterRequest request) {
+
 		log.info("RecruiterDashboardServiceImpl ::Inside getRecruiterAssignmentDetails method");
 
 		try {
 
+			int page = request.getPage() != null ? request.getPage() : 0;
+
+			int size = request.getSize() != null ? request.getSize() : 10;
+
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "id";
+
+			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
+					: Sort.Direction.DESC;
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
 			CreateJobDetailsEntity job = createJobDetailsRepository.findById(jobId)
 					.orElseThrow(() -> new RuntimeException("Job not found"));
 
-			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
+			Page<RecruiterAssignmentEntity> assignmentPage = recruiterAssignmentRepository.findByJobId(jobId, pageable);
 
-			long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus())).count();
+			List<RecruiterAssignmentEntity> assignments = assignmentPage.getContent();
 
-			long pendingCount = assignments.stream().filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count();
 
-			long declinedCount = assignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus())).count();
+			List<RecruiterAssignmentEntity> allAssignments = recruiterAssignmentRepository.findByJobId(jobId);
+
+			long acceptedCount = allAssignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus()))
+					.count();
+
+			long pendingCount = allAssignments.stream().filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count();
+
+			long declinedCount = allAssignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus()))
+					.count();
 
 			List<Map<String, Object>> recruiterList = assignments.stream().map(a -> {
 
@@ -211,6 +239,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 						roleName = role.getRoleName();
 					}
 				}
+
 				map.put("id", a.getId());
 
 				map.put("userId", a.getUserId());
@@ -235,7 +264,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Map<String, Object> response = new LinkedHashMap<>();
 
-			response.put("totalAssigned", assignments.size());
+			response.put("totalAssigned", allAssignments.size());
 
 			response.put("acceptedCount", acceptedCount);
 
@@ -243,7 +272,13 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			response.put("declinedCount", declinedCount);
 
-			response.put("recruiters", recruiterList);
+			response.put("content", recruiterList);
+
+			response.put("currentPage", assignmentPage.getNumber());
+
+			response.put("totalPages", assignmentPage.getTotalPages());
+
+			response.put("totalElements", assignmentPage.getTotalElements());
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Job details fetched successfully", response);
 
@@ -251,5 +286,70 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch job details", List.of(e.getMessage()));
 		}
+	}
+
+	@Override
+	public ApiResponse<?> getMyJobAssignmentsCounts() {
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token);
+
+		} else {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+		}
+
+		Integer recruiterUserId = userId.intValue();
+
+		Long totalAssignments = recruiterAssignmentRepository.countByUserId(recruiterUserId);
+
+		List<Object[]> statusCounts = recruiterAssignmentRepository.getStatusCountsByUserId(recruiterUserId);
+
+		Long accepted = 0L;
+		Long pending = 0L;
+		Long declined = 0L;
+
+		for (Object[] row : statusCounts) {
+
+			String status = (String) row[0];
+
+			Long count = (Long) row[1];
+
+			if ("Accepted".equalsIgnoreCase(status)) {
+
+				accepted = count;
+
+			} else if ("Pending".equalsIgnoreCase(status)) {
+
+				pending = count;
+
+			} else if ("Declined".equalsIgnoreCase(status)) {
+
+				declined = count;
+			}
+		}
+
+		Long totalOpenings = createJobDetailsRepository.getTotalOpeningsByUserId(recruiterUserId);
+
+		Map<String, Object> response = new HashMap<>();
+
+		response.put("totalAssignments", totalAssignments);
+
+		response.put("accepted", accepted);
+
+		response.put("pending", pending);
+
+		response.put("declined", declined);
+
+		response.put("totalOpenings", totalOpenings);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 }

@@ -1,8 +1,10 @@
 package com.hms.service.repository;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,14 +49,26 @@ public interface RecruiterAssignmentRepository extends JpaRepository<RecruiterAs
 
 	List<RecruiterAssignmentEntity> findByJobId(Integer id);
 
-	   @Query("""
-		        SELECT ra.userId, COUNT(ra.id)
-		        FROM RecruiterAssignmentEntity ra
-		        WHERE ra.userId IN :userIds
-		        GROUP BY ra.userId
-		    """)
-		    List<Object[]> findAssignmentCounts(
-		            @Param("userIds") List<Integer> userIds
-		    );
+	Long countByUserId(Integer userId);
+
+	Long countByUserIdAndStatus(Integer userId, String status);
+
+	@Query("""
+			    SELECT ra.userId, COUNT(ra.id)
+			    FROM RecruiterAssignmentEntity ra
+			    WHERE ra.userId IN :userIds
+			    GROUP BY ra.userId
+			""")
+	List<Object[]> findAssignmentCounts(@Param("userIds") List<Integer> userIds);
+
+	@Query("""
+			SELECT r.status, COUNT(r)
+			FROM RecruiterAssignmentEntity r
+			WHERE r.userId = :userId
+			GROUP BY r.status
+			""")
+	List<Object[]> getStatusCountsByUserId(@Param("userId") Integer userId);
+
+	Page<RecruiterAssignmentEntity> findByJobId(Integer jobId, Pageable pageable);
 
 }
