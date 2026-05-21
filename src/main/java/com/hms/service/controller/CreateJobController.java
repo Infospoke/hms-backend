@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.CreateJobRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.ICreateJobService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -34,6 +35,13 @@ public class CreateJobController {
 
 		ApiResponse<?> response = iCreateJobService.getJobDetails(srId);
 		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/get-recruiters")
+	public ResponseEntity<ApiResponse<?>> getRecruiters(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iCreateJobService.getRecruiters(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
 	}
 
 }

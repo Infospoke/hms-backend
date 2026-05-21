@@ -1,6 +1,8 @@
 package com.hms.service.service;
 
 import java.util.List;
+
+import com.hms.service.request.RolesByDepartmentIdsRequest;
 import com.hms.service.response.DropDownResponse;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -33,6 +35,8 @@ public interface IConfigurationService {
 	ApiResponse<List<DropDownResponse>> getUsersByRole();
 
 	ApiResponse<List<DropDownResponse>> getAiOptions();
+
+	ApiResponse<List<DropDownResponse>> getRolesByDepartments(RolesByDepartmentIdsRequest request);
 	
 	
 

@@ -31,5 +31,7 @@ public interface RolesRepository extends JpaRepository<RolesEntity, Integer> {
 		List<Object[]> findRoleNamesByIds(
 		        @Param("roleIds") List<Integer> roleIds);
 
+	List<RolesEntity> findByDepartmentIdIn(List<Integer> departmentIds);
+
 	
 }

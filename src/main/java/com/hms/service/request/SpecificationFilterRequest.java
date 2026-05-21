@@ -4,11 +4,13 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.data.jpa.domain.Specification;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hms.service.entity.ApprovalChainEntity;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -40,7 +42,7 @@ public class SpecificationFilterRequest {
 
 	private Map<String, Object> filters;
 
-	private String getFilter(String key) {
+	public String getFilter(String key) {
 
 		if (filters == null || !filters.containsKey(key)) {
 
@@ -795,6 +797,59 @@ public class SpecificationFilterRequest {
 		}
 
 		return spec;
+	}
+
+	public List<Integer> getIntegerListFilter(String key) {
+
+		if (filters == null || !filters.containsKey(key)) {
+			return List.of();
+		}
+
+		Object value = filters.get(key);
+
+		if (value == null) {
+			return List.of();
+		}
+
+		if (value instanceof List<?> list) {
+
+			return list.stream()
+
+					.filter(Objects::nonNull)
+
+					.map(item -> Integer.parseInt(item.toString()))
+
+					.toList();
+		}
+
+		return List.of();
+
+	}
+
+	public Specification<AssignRolesEntity>
+
+			buildRecruiterSpecification(
+
+					List<Integer> roleIds
+
+	) {
+
+		Specification<AssignRolesEntity> spec =
+
+				Specification.allOf();
+
+		if (roleIds != null && !roleIds.isEmpty()) {
+
+			spec = spec.and(
+
+					(r, q, c) -> r.get("roleId").in(roleIds)
+
+			);
+
+		}
+
+		return spec;
+
 	}
 
 }

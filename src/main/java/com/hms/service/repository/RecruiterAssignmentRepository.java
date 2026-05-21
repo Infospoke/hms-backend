@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.RecruiterAssignmentEntity;
@@ -45,5 +46,15 @@ public interface RecruiterAssignmentRepository extends JpaRepository<RecruiterAs
 	Object getStatusCounts();
 
 	List<RecruiterAssignmentEntity> findByJobId(Integer id);
+
+	   @Query("""
+		        SELECT ra.userId, COUNT(ra.id)
+		        FROM RecruiterAssignmentEntity ra
+		        WHERE ra.userId IN :userIds
+		        GROUP BY ra.userId
+		    """)
+		    List<Object[]> findAssignmentCounts(
+		            @Param("userIds") List<Integer> userIds
+		    );
 
 }
