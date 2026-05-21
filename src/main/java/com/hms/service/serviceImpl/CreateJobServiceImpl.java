@@ -1,5 +1,6 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobDescriptionEntity;
+import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingChannelEntity;
@@ -17,11 +19,15 @@ import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
+import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.SourcingChannelRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.request.CreateJobDetailsRequest;
 import com.hms.service.request.CreateJobRequest;
+import com.hms.service.request.JobCreationReviewRequest;
 import com.hms.service.request.JobDescriptionRequest;
+import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.service.ICreateJobService;
@@ -65,6 +71,12 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private SourcingChannelRepository sourcingChannelRepository;
+
+	@Autowired
+	private RecruiterAssignmentRepository recruiterAssignmentRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	private String generateJobCode(String srId) {
 
@@ -249,8 +261,71 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Sourcing Channel Saved Successfully");
 		}
-		return null;
+		// recuriter assignment
+
+		if (request.getRecuriterAssignmentRequest() != null) {
+
+			RecuriterAssignmentRequest req = request.getRecuriterAssignmentRequest();
+
+			ApiResponse<?> error = validateRecruiterAssignmentRequest(req);
+
+			if (error != null) {
+				return error;
+			}
+
+			for (Integer userId : req.getUserIds()) {
+
+				RecruiterAssignmentEntity entity = new RecruiterAssignmentEntity();
+
+				entity.setJobId(req.getJobId());
+
+				entity.setUserId(userId);
+
+				entity.setStatus("PENDING");
+
+				entity.setAssignedBy(userName);
+
+				entity.setAssignedAt(LocalDate.now());
+
+				recruiterAssignmentRepository.save(entity);
+			}
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "success","Recruiters Assigned Successfully");
+		}
+
+		// review request
+
+		if (request.getJobCreationReviewRequest() != null) {
+
+			JobCreationReviewRequest req = request.getJobCreationReviewRequest();
+
+			ApiResponse<?> error = validateJobCreationReviewRequest(req);
+
+			if (error != null) {
+				return error;
+			}
+
+			CreateJobDetailsEntity entity = createJobDetailsRepository.findById(req.getJobId()).orElse(null);
+
+			if (entity == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Job Details not found"));
+			}
+
+			entity.setSubmit(req.getSubmit());
+
+			entity.setUpdatedBy(userName);
+
+			entity.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+			entity = createJobDetailsRepository.save(entity);
+
+			return ApiResponse.success(ResponseCode.SUCCESS,"success", "Job Review Updated Successfully");
+		}
+		return  ApiResponse.success(ResponseCode.SUCCESS,"success", "Job Created Successfully");
 	}
+
+	// Validations for createJobDetailsRequest
 
 	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req) {
 
@@ -399,6 +474,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
+	// validations for jobDescriptionRequest
+
 	public ApiResponse<?> validateJobDescriptionRequest(JobDescriptionRequest req) {
 
 		ApiResponse<?> error;
@@ -427,6 +504,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
+	// validations for object
+
 	public ApiResponse<?> validateObject(Object value, String fieldName) {
 
 		if (value == null) {
@@ -453,6 +532,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		return null;
 	}
+
+	// validations for soucingChannelRequest
 
 	public ApiResponse<?> validateSourcingChannelRequest(SourcingChannelRequest req) {
 
@@ -490,6 +571,76 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			if (error != null)
 				return error;
+		}
+		return null;
+
+	}
+
+	// validations for RecruiterAssignmentRequest
+	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getJobId() != null) {
+
+			error = validateObject(req.getJobId(), "jobId");
+
+			if (error != null)
+				return error;
+
+			if (!createJobDetailsRepository.existsById(req.getJobId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
+			}
+		}
+
+		if (req.getUserIds() != null) {
+
+			if (req.getUserIds().isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
+			}
+
+			for (Integer userId : req.getUserIds()) {
+
+				if (userId == null || userId <= 0) {
+
+					return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
+				}
+
+				if (!userRepository.existsById(Long.valueOf(userId))) {
+
+					return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+							List.of("User not found for userId : " + userId));
+				}
+			}
+		}
+
+		return null;
+	}
+
+	// validationds for review request
+
+	public ApiResponse<?> validateJobCreationReviewRequest(JobCreationReviewRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getJobId() != null) {
+
+			error = validateObject(req.getJobId(), "jobId");
+
+			if (error != null)
+				return error;
+
+			if (!createJobDetailsRepository.existsById(req.getJobId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
+			}
+		}
+
+		if (req.getSubmit() == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("submit is required"));
 		}
 
 		return null;

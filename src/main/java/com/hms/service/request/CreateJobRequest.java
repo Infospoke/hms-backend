@@ -23,5 +23,8 @@ public class CreateJobRequest {
    @Valid
    private JobDescriptionRequest jobDescriptionRequest;
    
+   @Valid
+   private JobCreationReviewRequest jobCreationReviewRequest;
+   
    
 }
