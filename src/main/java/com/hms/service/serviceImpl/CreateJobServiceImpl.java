@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
@@ -145,11 +146,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	}
 
 	@Override
+	@Transactional
 	public ApiResponse<?> createJob(CreateJobRequest request) {
 
 		// createJob details
-		log.info("CreateJobServiceImpl :: Inside the createJob method");
 
+		log.info("CreateJobServiceImpl :: Inside the createJob method");
+		Integer id = null;
 		if (request == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Request body cannot be null"));
@@ -182,6 +185,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				entity = createJobDetailsRepository.findById(req.getJobId()).orElse(null);
 			}
+			if (entity == null) {
+
+				entity = new CreateJobDetailsEntity();
+
+				entity.setCreatedBy(userName);
+
+				entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+			}
 
 			entity.setJobTitle(req.getJobTitle());
 
@@ -211,13 +222,10 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			entity.setAdditionalNotes(req.getAdditionalNotes());
 
-			entity.setCreatedBy(userName);
-
-			entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-
 			entity = createJobDetailsRepository.save(entity);
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job details Saved Successfully");
+			id = entity.getId();
+
 		}
 
 		// job description
@@ -249,71 +257,67 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			entity.setDescription(req.getDescription());
 
 			entity = jobDescriptionRepository.save(entity);
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Description Saved Successfully");
 
 		}
 
 		// sourcing channel
-		if (request.getSourcingChannelRequest() != null) {
+		if (request.getSourcingChannelRequest() != null && !request.getSourcingChannelRequest().isEmpty()) {
 
-			SourcingChannelRequest req = request.getSourcingChannelRequest();
+			List<SourcingChannelRequest> reqList = request.getSourcingChannelRequest();
 
-			ApiResponse<?> error = validateSourcingChannelRequest(req);
+			for (SourcingChannelRequest req : reqList) {
 
-			if (error != null) {
-				return error;
+				ApiResponse<?> error = validateSourcingChannelRequest(req);
+
+				if (error != null) {
+					return error;
+				}
 			}
 
-			SourcingChannelEntity entity = null;
+			Integer jobId = reqList.get(0).getJobId();
 
-			if (req.getJobId() != null) {
-
-				entity = sourcingChannelRepository.findByJobId(req.getJobId()).orElse(null);
-			}
+			SourcingChannelEntity entity = sourcingChannelRepository.findByJobId(jobId).orElse(null);
 
 			if (entity == null) {
 
 				entity = new SourcingChannelEntity();
 			}
 
-			entity.setJobId(req.getJobId());
+			entity.setJobId(jobId);
 
-			entity.setSourcingChannelRequest(List.of(req));
+			entity.setSourcingChannelRequest(reqList);
 
-			entity = sourcingChannelRepository.save(entity);
-
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Sourcing Channel Saved Successfully");
+			sourcingChannelRepository.save(entity);
 		}
 		// recuriter assignment
 
-		if (request.getRecuriterAssignmentRequest() != null) {
+		if (request.getSourcingChannelRequest() != null && !request.getSourcingChannelRequest().isEmpty()) {
 
-			RecuriterAssignmentRequest req = request.getRecuriterAssignmentRequest();
+			List<SourcingChannelRequest> reqList = request.getSourcingChannelRequest();
 
-			ApiResponse<?> error = validateRecruiterAssignmentRequest(req);
+			for (SourcingChannelRequest req : reqList) {
 
-			if (error != null) {
-				return error;
+				ApiResponse<?> error = validateSourcingChannelRequest(req);
+
+				if (error != null) {
+					return error;
+				}
 			}
 
-			for (Integer userId : req.getUserIds()) {
+			Integer jobId = reqList.get(0).getJobId();
 
-				RecruiterAssignmentEntity entity = new RecruiterAssignmentEntity();
+			SourcingChannelEntity entity = sourcingChannelRepository.findByJobId(jobId).orElse(null);
 
-				entity.setJobId(req.getJobId());
+			if (entity == null) {
 
-				entity.setUserId(userId);
-
-				entity.setStatus("PENDING");
-
-				entity.setAssignedBy(userName);
-
-				entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-
-				recruiterAssignmentRepository.save(entity);
+				entity = new SourcingChannelEntity();
 			}
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Recruiters Assigned Successfully");
+			entity.setJobId(jobId);
+
+			entity.setSourcingChannelRequest(reqList);
+
+			sourcingChannelRepository.save(entity);
 		}
 
 		// review request
@@ -337,14 +341,18 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			entity.setSubmit(req.getSubmit());
 
-			entity.setUpdatedBy(userName);
-
-			entity.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-
 			entity = createJobDetailsRepository.save(entity);
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Review Updated Successfully");
 		}
+		boolean onlyCreateJobRequest = request.getCreateJobDetailsRequest() != null
+				&& request.getJobDescriptionRequest() == null && request.getSourcingChannelRequest() == null
+				&& request.getRecuriterAssignmentRequest() == null && request.getJobCreationReviewRequest() == null;
+
+		if (onlyCreateJobRequest) {
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Job details Saved Successfully", id);
+		}
+
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 	}
 
@@ -631,7 +639,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
 				}
 
-				if (!userRepository.existsById(Long.valueOf(userId))) {
+				if (!userRepository.existsByUserId(userId)) {
 
 					return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
 							List.of("User not found for userId : " + userId));

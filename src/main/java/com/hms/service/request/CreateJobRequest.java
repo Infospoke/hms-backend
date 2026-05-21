@@ -1,6 +1,8 @@
 package com.hms.service.request;
 
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +17,7 @@ public class CreateJobRequest {
    private CreateJobDetailsRequest createJobDetailsRequest;
    
    @Valid
-   private SourcingChannelRequest sourcingChannelRequest;
+   private List<SourcingChannelRequest> sourcingChannelRequest;
    
    @Valid
    private RecuriterAssignmentRequest recuriterAssignmentRequest;
