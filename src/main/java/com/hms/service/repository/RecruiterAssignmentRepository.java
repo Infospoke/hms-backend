@@ -1,5 +1,7 @@
 package com.hms.service.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -66,5 +68,7 @@ public interface RecruiterAssignmentRepository extends JpaRepository<RecruiterAs
 			GROUP BY r.status
 			""")
 	List<Object[]> getStatusCountsByUserId(@Param("userId") Integer userId);
+
+	Page<RecruiterAssignmentEntity> findByJobId(Integer jobId, Pageable pageable);
 
 }
