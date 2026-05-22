@@ -21,8 +21,8 @@ public class JobDescriptionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     
-    @Column(name = "job_id")
-    private Integer jobId;
+    @Column(name = "sr_id")
+    private String srId;
     
    
     @Column(name="description",columnDefinition ="TEXT")

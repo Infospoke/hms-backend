@@ -81,6 +81,9 @@ public class CreateJobDetailsEntity {
 	
 	@Column(name="updated_at")
 	private LocalDateTime updatedAt;
+	
+	@Column(name="sr_id")
+	private String srId;
 
 	
 	

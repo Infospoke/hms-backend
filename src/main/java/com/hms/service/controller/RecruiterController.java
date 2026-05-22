@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.SpecificationFilterRequest;
-import com.hms.service.request.UpdateRecruitersAssignmentRequest;
 import com.hms.service.service.IRecruiterService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -36,17 +35,17 @@ public class RecruiterController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@GetMapping("/job-assignment-summary/{jobId}")
-	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentSummary(@PathVariable("jobId") Integer jobId) {
+	@GetMapping("/job-assignment-summary/{srId}")
+	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentSummary(@PathVariable("srId") String srId) {
 
-		ApiResponse<?> response = recruiterService.getRecruiterAssignmentSummary(jobId);
+		ApiResponse<?> response = recruiterService.getRecruiterAssignmentSummary(srId);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/job-assignment-details-list/{jobId}")
-	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetailsList(@PathVariable("jobId") Integer jobId,@RequestBody FilterRequest request) {
-		ApiResponse<?> response = recruiterService.getRecruiterAssignmentDetailsList(jobId, request);
+	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetailsList(@PathVariable("srId") String srId,@RequestBody FilterRequest request) {
+		ApiResponse<?> response = recruiterService.getRecruiterAssignmentDetailsList(srId, request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

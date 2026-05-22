@@ -1,11 +1,10 @@
 package com.hms.service.entity;
 
-import java.util.List;
+import java.util.Map;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import com.hms.service.request.SourcingChannelRequest;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,14 +27,20 @@ public class SourcingChannelEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     
-    @Column(name = "job_id")
-    private Integer jobId;
+    @Column(name = "sr_id")
+    private String srId;
 
 
     @JdbcTypeCode(SqlTypes.JSON)
 
 	@Column(name = "channel_config", columnDefinition = "json")
 
-	private List<SourcingChannelRequest> sourcingChannelRequest;
+	private Map<String, Boolean> sourcingChannelRequest;
+    
+    @Column(name="referral")
+    private Boolean referral;
+    
+    @Column(name="referral_amount")
+    private double referralAmount;
 	    
 }

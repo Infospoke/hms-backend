@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,9 +20,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hms.service.dto.RecruiterInfoDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobDescriptionEntity;
+import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -38,10 +41,8 @@ import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
 import com.hms.service.repository.UserRepository;
-import com.hms.service.request.ChannelRequest;
 import com.hms.service.request.CreateJobDetailsRequest;
 import com.hms.service.request.CreateJobRequest;
-import com.hms.service.request.JobCreationReviewRequest;
 import com.hms.service.request.JobDescriptionRequest;
 import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SourcingChannelRequest;
@@ -65,9 +66,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
-
-//	@Autowired
-//	private CreateJobRepository createJobRepository;
 
 	@Autowired
 	private JwtService jwtService;
@@ -152,213 +150,180 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		// createJob details
 
 		log.info("CreateJobServiceImpl :: Inside the createJob method");
-		Integer id = null;
 		if (request == null) {
-
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Request body cannot be null"));
 		}
 
-		String authHeader = httpServletRequest.getHeader("Authorization");
+		if (request.getSrId() != null) {
 
-		String userName = "";
+			Optional<SRPositionBasicsEntity> srOptional = positionBasicsRepository.findBySrId(request.getSrId());
+			if (srOptional.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", "Invalid SRID");
 
-		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
-			String token = authHeader.substring(7);
-
-			userName = jwtService.extractUsernameFromClaims(token);
-		}
-
-		if (request.getCreateJobDetailsRequest() != null) {
-
-			CreateJobDetailsRequest req = request.getCreateJobDetailsRequest();
-
-			ApiResponse<?> error = validateCreateJobDetailsRequest(req);
-
-			if (error != null) {
-				return error;
 			}
 
-			CreateJobDetailsEntity entity = null;
+			String authHeader = httpServletRequest.getHeader("Authorization");
 
-			if (req.getJobId() != null) {
+			String userName = "";
 
-				entity = createJobDetailsRepository.findById(req.getJobId()).orElse(null);
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+				String token = authHeader.substring(7);
+
+				userName = jwtService.extractUsernameFromClaims(token);
 			}
-			if (entity == null) {
+			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
+			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
+			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
+			List<RecruiterAssignmentEntity> list = new ArrayList<>();
 
-				entity = new CreateJobDetailsEntity();
+			if (request.getCreateJobDetailsRequest() != null) {
 
-				entity.setCreatedBy(userName);
+				CreateJobDetailsRequest req = request.getCreateJobDetailsRequest();
 
-				entity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-			}
-
-			entity.setJobTitle(req.getJobTitle());
-
-			entity.setBusinessUnitId(req.getBusinessUnitId());
-
-			entity.setDepartmentId(req.getDepartmentId());
-
-			entity.setLocation(req.getLocation());
-
-			entity.setJobCode(req.getJobCode());
-
-			entity.setOpenings(req.getOpenings());
-
-			entity.setTargetStartDate(req.getTargetStartDate());
-
-			entity.setWorkMode(req.getWorkMode());
-
-			entity.setEmploymentType(req.getEmploymentType());
-
-			entity.setSkillsMustHave(req.getSkillsMustHave());
-
-			entity.setNiceToHaveSkills(req.getNiceToHaveSkills());
-
-			entity.setMinExperience(req.getMinExperience());
-
-			entity.setMaxExperience(req.getMaxExperience());
-
-			entity.setAdditionalNotes(req.getAdditionalNotes());
-
-			entity = createJobDetailsRepository.save(entity);
-
-			id = entity.getId();
-
-		}
-
-		// job description
-
-		if (request.getJobDescriptionRequest() != null) {
-
-			JobDescriptionRequest req = request.getJobDescriptionRequest();
-
-			ApiResponse<?> error = validateJobDescriptionRequest(req);
-
-			if (error != null) {
-				return error;
-			}
-
-			JobDescriptionEntity entity = null;
-
-			if (req.getJobId() != null) {
-
-				entity = jobDescriptionRepository.findByJobId(req.getJobId()).orElse(null);
-			}
-
-			if (entity == null) {
-
-				entity = new JobDescriptionEntity();
-			}
-
-			entity.setJobId(req.getJobId());
-
-			entity.setDescription(req.getDescription());
-
-			entity = jobDescriptionRepository.save(entity);
-
-		}
-
-		// sourcing channel
-		if (request.getSourcingChannelRequest() != null && !request.getSourcingChannelRequest().isEmpty()) {
-
-			List<SourcingChannelRequest> reqList = request.getSourcingChannelRequest();
-
-			for (SourcingChannelRequest req : reqList) {
-
-				ApiResponse<?> error = validateSourcingChannelRequest(req);
+				ApiResponse<?> error = validateCreateJobDetailsRequest(req, request.getSrId());
 
 				if (error != null) {
 					return error;
 				}
+
+				createJobDetailsEntity.setSrId(request.getSrId());
+				createJobDetailsEntity.setCreatedBy(userName);
+
+				createJobDetailsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+				createJobDetailsEntity.setJobTitle(req.getJobTitle());
+
+				createJobDetailsEntity.setBusinessUnitId(req.getBusinessUnitId());
+
+				createJobDetailsEntity.setDepartmentId(req.getDepartmentId());
+
+				createJobDetailsEntity.setLocation(req.getLocation());
+
+				createJobDetailsEntity.setJobCode(req.getJobCode());
+
+				createJobDetailsEntity.setOpenings(req.getOpenings());
+
+				createJobDetailsEntity.setTargetStartDate(req.getTargetStartDate());
+
+				createJobDetailsEntity.setWorkMode(req.getWorkMode());
+
+				createJobDetailsEntity.setEmploymentType(req.getEmploymentType());
+
+				createJobDetailsEntity.setSkillsMustHave(req.getSkillsMustHave());
+
+				createJobDetailsEntity.setNiceToHaveSkills(req.getNiceToHaveSkills());
+
+				createJobDetailsEntity.setMinExperience(req.getMinExperience());
+
+				createJobDetailsEntity.setMaxExperience(req.getMaxExperience());
+
+				createJobDetailsEntity.setAdditionalNotes(req.getAdditionalNotes());
+				createJobDetailsEntity.setSubmit(request.getSubmit());
+				
 			}
 
-			Integer jobId = reqList.get(0).getJobId();
+			// job description
 
-			SourcingChannelEntity entity = sourcingChannelRepository.findByJobId(jobId).orElse(null);
+			if (request.getJobDescriptionRequest() != null) {
 
-			if (entity == null) {
+				JobDescriptionRequest req = request.getJobDescriptionRequest();
 
-				entity = new SourcingChannelEntity();
-			}
-
-			entity.setJobId(jobId);
-
-			entity.setSourcingChannelRequest(reqList);
-
-			sourcingChannelRepository.save(entity);
-		}
-		// recuriter assignment
-
-		if (request.getSourcingChannelRequest() != null && !request.getSourcingChannelRequest().isEmpty()) {
-
-			List<SourcingChannelRequest> reqList = request.getSourcingChannelRequest();
-
-			for (SourcingChannelRequest req : reqList) {
-
-				ApiResponse<?> error = validateSourcingChannelRequest(req);
+				ApiResponse<?> error = validateJobDescriptionRequest(req, request.getSrId());
 
 				if (error != null) {
 					return error;
 				}
+
+				descriptionEntity.setSrId(request.getSrId());
+
+				descriptionEntity.setDescription(req.getDescription());
+
 			}
 
-			Integer jobId = reqList.get(0).getJobId();
+			// sourcing channel
+			if (request.getSourcingChannelRequest() != null) {
 
-			SourcingChannelEntity entity = sourcingChannelRepository.findByJobId(jobId).orElse(null);
+				ApiResponse<?> error = validateSourcingChannelRequest(request.getSourcingChannelRequest(),
+						request.getSrId());
 
-			if (entity == null) {
+				if (error != null) {
+					return error;
+				}
 
-				entity = new SourcingChannelEntity();
+				Map<String, Boolean> map = new LinkedHashMap<>();
+				map.putAll(request.getSourcingChannelRequest().getChannels());
+
+				channelEntity.setSourcingChannelRequest(map);
+
+				if (request.getSourcingChannelRequest().getReferral()) {
+					error = validateObject(request.getSourcingChannelRequest().getReferralAmount(), "referralAmount");
+
+					if (error != null)
+						return error;
+				}
+				channelEntity.setReferral(true);
+				channelEntity.setReferralAmount(request.getSourcingChannelRequest().getReferralAmount());
+				channelEntity.setSrId(request.getSrId());
+
+			}
+			// recuriter assignment
+
+			if (request.getRecuriterAssignmentRequest() != null) {
+
+				RecuriterAssignmentRequest req = request.getRecuriterAssignmentRequest();
+				ApiResponse<?> error = validateRecruiterAssignmentRequest(req, request.getSrId());
+
+				if (error != null) {
+					return error;
+				}
+
+				for (RecruiterInfoDto recruiter : req.getRecruiterInfoDtos()) {
+
+					RecruiterAssignmentEntity entity = new RecruiterAssignmentEntity();
+
+					entity.setSrId(request.getSrId());
+
+					entity.setUserId(recruiter.getUserId());
+					
+					entity.setRoleId(recruiter.getRoleId());
+					
+					entity.setRoleName(recruiter.getRoleName());
+					
+					entity.setEmail(recruiter.getEmail());
+					
+					entity.setUserName(recruiter.getUserName());
+
+					entity.setStatus("PENDING");
+
+					entity.setAssignedBy(userName);
+
+					entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+					list.add(entity);
+				}
+
+			}
+			SRPositionBasicsEntity basicsEntity=srOptional.get();
+			basicsEntity.setJobSubmit(true);
+			positionBasicsRepository.save(basicsEntity);
+			createJobDetailsRepository.save(createJobDetailsEntity);
+			jobDescriptionRepository.save(descriptionEntity);
+			sourcingChannelRepository.save(channelEntity);
+			if (list.size() > 0) {
+				recruiterAssignmentRepository.saveAll(list);
+
 			}
 
-			entity.setJobId(jobId);
-
-			entity.setSourcingChannelRequest(reqList);
-
-			sourcingChannelRepository.save(entity);
-		}
-
-		// review request
-
-		if (request.getJobCreationReviewRequest() != null) {
-
-			JobCreationReviewRequest req = request.getJobCreationReviewRequest();
-
-			ApiResponse<?> error = validateJobCreationReviewRequest(req);
-
-			if (error != null) {
-				return error;
-			}
-
-			CreateJobDetailsEntity entity = createJobDetailsRepository.findById(req.getJobId()).orElse(null);
-
-			if (entity == null) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Job Details not found"));
-			}
-
-			entity.setSubmit(req.getSubmit());
-
-			entity = createJobDetailsRepository.save(entity);
-
-		}
-		boolean onlyCreateJobRequest = request.getCreateJobDetailsRequest() != null
-				&& request.getJobDescriptionRequest() == null && request.getSourcingChannelRequest() == null
-				&& request.getRecuriterAssignmentRequest() == null && request.getJobCreationReviewRequest() == null;
-
-		if (onlyCreateJobRequest) {
-
-			return ApiResponse.success(ResponseCode.SUCCESS, "Job details Saved Successfully", id);
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
+
 	}
 
 	// Validations for createJobDetailsRequest
 
-	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req) {
+	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {
 
 		ApiResponse<?> error;
 
@@ -507,22 +472,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	// validations for jobDescriptionRequest
 
-	public ApiResponse<?> validateJobDescriptionRequest(JobDescriptionRequest req) {
+	public ApiResponse<?> validateJobDescriptionRequest(JobDescriptionRequest req, String srId) {
 
 		ApiResponse<?> error;
-
-		if (req.getJobId() != null) {
-
-			error = validateObject(req.getJobId(), "jobId");
-
-			if (error != null)
-				return error;
-
-			if (!createJobDetailsRepository.existsById(req.getJobId())) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
-			}
-		}
 
 		if (req.getDescription() != null) {
 
@@ -543,142 +495,38 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(fieldName + " is required"));
 		}
-
-		if (value instanceof String str) {
-
-			if (str.trim().isEmpty()) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(fieldName + " cannot be empty"));
-			}
-		}
-
-		if (value instanceof Integer number) {
-
-			if (number <= 0) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-						List.of(fieldName + " must be greater than 0"));
-			}
-		}
-
 		return null;
 	}
 
 	// validations for soucingChannelRequest
-	public ApiResponse<?> validateSourcingChannelRequest(SourcingChannelRequest req) {
+	public ApiResponse<?> validateSourcingChannelRequest(SourcingChannelRequest req, String srId) {
 
-		ApiResponse<?> error;
-
-		if (req.getJobId() != null) {
-
-			error = validateObject(req.getJobId(), "jobId");
-
-			if (error != null)
-				return error;
-
-			if (!createJobDetailsRepository.existsById(req.getJobId())) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
-			}
-		}
-
-		if (req.getChannels() == null || req.getChannels().isEmpty()) {
+		if (req.getChannels().size() < 0) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("channels cannot be empty"));
-		}
-
-		for (ChannelRequest channel : req.getChannels()) {
-
-			if (channel.getChannelName() != null) {
-
-				error = validateObject(channel.getChannelName(), "channelName");
-
-				if (error != null)
-					return error;
-			}
-
-			if (channel.getPostJob() == null) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("postJob is required"));
-			}
-
-			if (channel.getReferralAmount() != null) {
-
-				error = validateObject(channel.getReferralAmount(), "referralAmount");
-
-				if (error != null)
-					return error;
-			}
 		}
 
 		return null;
 	}
 
 	// validations for RecruiterAssignmentRequest
-	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req) {
+	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req, String srId) {
 
-		ApiResponse<?> error;
+		if (req.getRecruiterInfoDtos().isEmpty())
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
 
-		if (req.getJobId() != null) {
+		for (RecruiterInfoDto dto : req.getRecruiterInfoDtos()) {
 
-			error = validateObject(req.getJobId(), "jobId");
+			if (dto.getUserId() == null) {
 
-			if (error != null)
-				return error;
-
-			if (!createJobDetailsRepository.existsById(req.getJobId())) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
-			}
-		}
-
-		if (req.getUserIds() != null) {
-
-			if (req.getUserIds().isEmpty()) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
 			}
 
-			for (Integer userId : req.getUserIds()) {
+			if (!userRepository.existsByUserId(dto.getUserId())) {
 
-				if (userId == null || userId <= 0) {
-
-					return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
-				}
-
-				if (!userRepository.existsByUserId(userId)) {
-
-					return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-							List.of("User not found for userId : " + userId));
-				}
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+						List.of("User not found for userId : " + dto.getUserId()));
 			}
-		}
-
-		return null;
-	}
-
-	// validationds for review request
-
-	public ApiResponse<?> validateJobCreationReviewRequest(JobCreationReviewRequest req) {
-
-		ApiResponse<?> error;
-
-		if (req.getJobId() != null) {
-
-			error = validateObject(req.getJobId(), "jobId");
-
-			if (error != null)
-				return error;
-
-			if (!createJobDetailsRepository.existsById(req.getJobId())) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid jobId"));
-			}
-		}
-
-		if (req.getSubmit() == null) {
-
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("submit is required"));
 		}
 
 		return null;

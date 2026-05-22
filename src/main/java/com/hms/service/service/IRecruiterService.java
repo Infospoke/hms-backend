@@ -15,8 +15,8 @@ public interface IRecruiterService {
 	
 
 
-	ApiResponse<?> getRecruiterAssignmentSummary(Integer jobId);
-	ApiResponse<?> getRecruiterAssignmentDetailsList(Integer jobId, FilterRequest request);
+	ApiResponse<?> getRecruiterAssignmentSummary(String srId);
+	ApiResponse<?> getRecruiterAssignmentDetailsList(String srId, FilterRequest request);
 
 
 }

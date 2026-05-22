@@ -1,6 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +13,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.RecruiterCardsCountDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
@@ -30,7 +28,7 @@ import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.FilterRequest;
 import com.hms.service.request.SpecificationFilterRequest;
-import com.hms.service.request.UpdateRecruitersAssignmentRequest;
+
 import com.hms.service.service.IRecruiterService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -129,7 +127,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 				Map<String, Object> map = new LinkedHashMap<>();
 
-				List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(job.getId());
+				List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findBySrId(job.getSrId());
 
 				long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus()))
 						.count();
@@ -185,13 +183,11 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		}
 	}
 
-
-	public ApiResponse<?> getRecruiterAssignmentSummary(Integer jobId) {
-
+	public ApiResponse<?> getRecruiterAssignmentSummary(String srId) {
 
 		try {
 
-			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
+			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findBySrId(srId);
 
 			long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus())).count();
 
@@ -219,7 +215,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	}
 
 	@Override
-	public ApiResponse<?> getRecruiterAssignmentDetailsList(Integer jobId, FilterRequest request) {
+	public ApiResponse<?> getRecruiterAssignmentDetailsList(String srId, FilterRequest request) {
 
 		try {
 
@@ -234,7 +230,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-			Page<RecruiterAssignmentEntity> assignmentPage = recruiterAssignmentRepository.findByJobId(jobId, pageable);
+			Page<RecruiterAssignmentEntity> assignmentPage = recruiterAssignmentRepository.findBySrId(srId, pageable);
 
 			List<Map<String, Object>> recruiterList = assignmentPage.getContent().stream().map(a -> {
 
@@ -427,10 +423,10 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			counts.put("declined",
 					allAssignments.stream().filter(a -> "Declined".equalsIgnoreCase(a.getStatus())).count());
 
-			List<Integer> jobIds = filteredAssignments.stream().map(RecruiterAssignmentEntity::getJobId).distinct()
+			List<String> srIds = filteredAssignments.stream().map(RecruiterAssignmentEntity::getSrId).distinct()
 					.toList();
 
-			if (jobIds.isEmpty()) {
+			if (srIds.isEmpty()) {
 
 				Map<String, Object> emptyResponse = new HashMap<>();
 
@@ -449,26 +445,26 @@ public class RecruiterServiceImpl implements IRecruiterService {
 				return ApiResponse.success(ResponseCode.SUCCESS, "No Data Found", emptyResponse);
 			}
 
-			Specification<CreateJobDetailsEntity> specification = request.buildMyRecruiterSpecification(jobIds);
+			Specification<CreateJobDetailsEntity> specification = request.buildMyRecruiterSpecification(srIds);
 
 			Page<CreateJobDetailsEntity> pageResult = createJobDetailsRepository.findAll(specification, pageable);
 
-			Map<Integer, RecruiterAssignmentEntity> assignmentMap = filteredAssignments.stream()
-					.collect(Collectors.toMap(RecruiterAssignmentEntity::getJobId, assignment -> assignment));
+			Map<String, RecruiterAssignmentEntity> assignmentMap = filteredAssignments.stream()
+					.collect(Collectors.toMap(RecruiterAssignmentEntity::getSrId, assignment -> assignment));
 
 			List<Map<String, Object>> responseList = pageResult.getContent().stream().map(job -> {
 
 				Map<String, Object> map = new HashMap<>();
 
-				RecruiterAssignmentEntity assignment = assignmentMap.get(job.getId());
+				RecruiterAssignmentEntity assignment = assignmentMap.get(job.getSrId());
 
 				map.put("id", job.getId());
 
 				map.put("jobTitle", job.getJobTitle());
 
-			String departmentName=departmentsRepository.findById(job.getDepartmentId()).get().getDepartmentName();
+				String departmentName = departmentsRepository.findById(job.getDepartmentId()).get().getDepartmentName();
 
-			    map.put("departmentName",departmentName);
+				map.put("departmentName", departmentName);
 				map.put("requestedBy", job.getCreatedBy());
 
 				map.put("openings", job.getOpenings());
@@ -505,5 +501,4 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		}
 	}
 
-	
 }

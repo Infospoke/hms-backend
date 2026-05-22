@@ -153,5 +153,8 @@ public class SRPositionBasicsEntity {
 
 	@Column(name="current_stage")
 	private String currentStage;
+	
+	@Column(name="job_submit")
+	private Boolean jobSubmit;
 
 }

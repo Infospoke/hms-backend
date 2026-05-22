@@ -11,8 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class JobDescriptionRequest {
 
-	private Integer jobId;
-	
 	private String description;
 	
 }

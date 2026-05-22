@@ -2,6 +2,8 @@ package com.hms.service.request;
 
 import java.util.List;
 
+import com.hms.service.dto.RecruiterInfoDto;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,8 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RecuriterAssignmentRequest {
+	private List<RecruiterInfoDto> recruiterInfoDtos;
 
-	private Integer jobId;
-	 
-    private List<Integer> userIds;
+  
 }
