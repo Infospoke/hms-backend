@@ -43,6 +43,10 @@ public class ApprovalChainEntity {
 	@Column(name = "chain_name", nullable = false,unique=true)
 
 	private String chainName;
+	
+	@Column(name="user_id")
+	
+	private Integer userId;
  
 	@Column(name = "description")
 
@@ -76,21 +80,6 @@ public class ApprovalChainEntity {
 
 	private String approval;
 
-	@Column(name="approved_comments",length=300)
-
-	private String approvedComments;
-
-	@Column(name="rejected_comments",length=300)
-
-	private String rejectedComments;
-	
-	@Column(name="deactivate_comments",length=300)
-
-	private String deactivateComments;
-	
-	@Column(name="activate_comments",length=300)
-
-	private String activateComments;
 	
 	@Column(name="functionality_name")
 

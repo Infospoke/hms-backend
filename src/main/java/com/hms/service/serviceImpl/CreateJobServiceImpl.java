@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobDescriptionEntity;
-import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -39,6 +38,7 @@ import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.ChannelRequest;
 import com.hms.service.request.CreateJobDetailsRequest;
 import com.hms.service.request.CreateJobRequest;
 import com.hms.service.request.JobCreationReviewRequest;
@@ -565,7 +565,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	}
 
 	// validations for soucingChannelRequest
-
 	public ApiResponse<?> validateSourcingChannelRequest(SourcingChannelRequest req) {
 
 		ApiResponse<?> error;
@@ -583,28 +582,36 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			}
 		}
 
-		if (req.getChannelName() != null) {
+		if (req.getChannels() == null || req.getChannels().isEmpty()) {
 
-			error = validateObject(req.getChannelName(), "channelName");
-
-			if (error != null)
-				return error;
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("channels cannot be empty"));
 		}
 
-		if (req.getPostJob() == null) {
+		for (ChannelRequest channel : req.getChannels()) {
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("postJob is required"));
+			if (channel.getChannelName() != null) {
+
+				error = validateObject(channel.getChannelName(), "channelName");
+
+				if (error != null)
+					return error;
+			}
+
+			if (channel.getPostJob() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("postJob is required"));
+			}
+
+			if (channel.getReferralAmount() != null) {
+
+				error = validateObject(channel.getReferralAmount(), "referralAmount");
+
+				if (error != null)
+					return error;
+			}
 		}
 
-		if (req.getReferralAmount() != null) {
-
-			error = validateObject(req.getReferralAmount(), "referralAmount");
-
-			if (error != null)
-				return error;
-		}
 		return null;
-
 	}
 
 	// validations for RecruiterAssignmentRequest

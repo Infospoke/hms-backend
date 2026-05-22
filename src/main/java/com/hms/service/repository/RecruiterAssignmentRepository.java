@@ -1,6 +1,11 @@
 package com.hms.service.repository;
 
+
 import org.springframework.data.domain.Sort.Order;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -74,6 +79,7 @@ public interface RecruiterAssignmentRepository
 
 
 
+
 	List<Integer> findJobIdsByUserIdAndStatus(@Param("userId") Integer userId, @Param("status") String status);
 
 	List<Integer> findJobIdsByUserId(@Param("userId") Integer userId);
@@ -92,4 +98,8 @@ public interface RecruiterAssignmentRepository
 	            String status
 	    );
 	    RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
+
+	Page<RecruiterAssignmentEntity> findByJobId(Integer jobId, Pageable pageable);
+
+
 }
