@@ -577,7 +577,12 @@ public class SpecificationFilterRequest {
 				c.equal(r.get("approved"), true)
 
 		);
-		
+		spec = spec.and(
+			    (r, q, c) -> c.or(
+			        c.isFalse(r.get("jobSubmit")),
+			        c.isNull(r.get("jobSubmit"))
+			    )
+			);
 
 		String search = getFilter("search");
 
