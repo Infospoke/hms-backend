@@ -577,7 +577,7 @@ public class SpecificationFilterRequest {
 				c.equal(r.get("approved"), true)
 
 		);
-		
+		spec = spec.and((r, q, c) -> c.or(c.isFalse(r.get("jobSubmit")), c.isNull(r.get("jobSubmit"))));
 
 		String search = getFilter("search");
 
@@ -904,9 +904,7 @@ public class SpecificationFilterRequest {
 			return predicate;
 		};
 	}
-	// =========================================
-	// RECRUITER STATUS FILTER
-	// =========================================
+
 
 	public Specification<RecruiterAssignmentEntity> buildRecruiterStatusSpecification(Long userId) {
 
@@ -930,27 +928,16 @@ public class SpecificationFilterRequest {
 		};
 	}
 
-	// =========================================
-	// SPECIFICATION METHOD
-	// =========================================
 	public Specification<CreateJobDetailsEntity> buildMyRecruiterSpecification(List<String> srIds) {
 
 		return (root, query, cb) -> {
 
 			Predicate predicate = cb.conjunction();
 
-			// =====================================
-			// JOB IDS
-			// =====================================
-
 			if (srIds != null && !srIds.isEmpty()) {
 
-				predicate = cb.and(predicate, root.get("id").in(srIds));
+				predicate = cb.and(predicate, root.get("srId").in(srIds));
 			}
-
-			// =====================================
-			// JOB TITLE
-			// =====================================
 
 			String jobTitle = getFilter("jobTitle");
 
@@ -960,20 +947,12 @@ public class SpecificationFilterRequest {
 						cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase().trim() + "%"));
 			}
 
-			// =====================================
-			// DEPARTMENT
-			// =====================================
-
 			String departmentId = getFilter("departmentId");
 
 			if (departmentId != null && !departmentId.isBlank()) {
 
 				predicate = cb.and(predicate, cb.equal(root.get("departmentId"), Integer.parseInt(departmentId)));
 			}
-
-			// =====================================
-			// REQUESTED BY
-			// =====================================
 
 			String requestedBy = getFilter("requestedBy");
 
@@ -982,10 +961,6 @@ public class SpecificationFilterRequest {
 				predicate = cb.and(predicate,
 						cb.like(cb.lower(root.get("createdBy")), "%" + requestedBy.toLowerCase().trim() + "%"));
 			}
-
-			// =====================================
-			// SEARCH
-			// =====================================
 
 			String search = getFilter("search");
 
@@ -1000,9 +975,7 @@ public class SpecificationFilterRequest {
 						cb.like(cb.lower(root.get("location")), "%" + search.toLowerCase().trim() + "%")));
 			}
 
-			// =====================================
-			// DATE FILTER
-			// =====================================
+			
 
 			LocalDate[] dates = getDateRange();
 
