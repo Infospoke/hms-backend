@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateRecruitersAssignmentRequest;
 import com.hms.service.service.IRecruiterService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -43,6 +44,12 @@ public class RecruiterController {
 	public ResponseEntity<ApiResponse<?>> getMyJobAssignmentsCounts() {
 	    ApiResponse<?> response = recruiterService.getMyJobAssignmentsCounts();
 	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping("/my-job-assignments")
+	public ResponseEntity<ApiResponse<?>> getMyJobAssignments(@RequestBody SpecificationFilterRequest request){
+		ApiResponse<?> response=recruiterService.getMyJobAssignments(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
 	

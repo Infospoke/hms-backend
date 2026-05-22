@@ -42,5 +42,7 @@ public class NotificationEvent implements Serializable {
   
     private String makerEmailBody;
     private String type;
-    //private LocalDateTime triggeredAt;
+    private LocalDateTime triggeredAt;
+    private Integer makerId;
+    private Integer checkerId;
 }

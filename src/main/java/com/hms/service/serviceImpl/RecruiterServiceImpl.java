@@ -1,11 +1,11 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.RecruiterCardsCountDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
@@ -28,11 +29,11 @@ import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateRecruitersAssignmentRequest;
 import com.hms.service.service.IRecruiterService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
-
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -100,7 +101,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 	@Override
 	public ApiResponse<?> getAllRecruiterAssignmentList(SpecificationFilterRequest request) {
-		
+
 		log.info("RecruiterDashboardServiceImpl ::Inside getAllRecruiterAssignmentList method");
 
 		try {
@@ -185,7 +186,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 	@Override
 	public ApiResponse<?> getRecruiterAssignmentDetails(Integer jobId) {
-		
+
 		log.info("RecruiterDashboardServiceImpl ::Inside getRecruiterAssignmentDetails method");
 
 		try {
@@ -326,4 +327,148 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
+
+	@Override
+	public ApiResponse<?> getMyJobAssignments(SpecificationFilterRequest request) {
+
+		try {
+
+			int page = request.getPage() != null ? request.getPage() : 0;
+
+			int size = request.getSize() != null ? request.getSize() : 10;
+
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "createdAt";
+
+			String direction = request.getDirection() != null ? request.getDirection() : "DESC";
+
+			Sort sort = direction.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+
+			Pageable pageable = PageRequest.of(page, size, sort);
+
+			String authHeader = httpServletRequest.getHeader("Authorization");
+
+			Long userId = null;
+
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+				String token = authHeader.substring(7);
+
+				userId = jwtService.extractUserId(token);
+			}
+
+			if (userId == null) {
+
+				return ApiResponse.failure("User not found");
+			}
+
+			Integer recruiterId = userId.intValue();
+
+			List<RecruiterAssignmentEntity> allAssignments = recruiterAssignmentRepository.findAllByUserId(recruiterId);
+
+			List<RecruiterAssignmentEntity> filteredAssignments;
+
+			String status = request.getStatus();
+
+			if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+
+				filteredAssignments = allAssignments.stream()
+						.filter(a -> a.getStatus() != null && a.getStatus().equalsIgnoreCase(status)).toList();
+
+			} else {
+
+				filteredAssignments = allAssignments;
+			}
+
+			Map<String, Object> counts = new HashMap<>();
+
+			counts.put("all", allAssignments.size());
+
+			counts.put("pending",
+					allAssignments.stream().filter(a -> "Pending".equalsIgnoreCase(a.getStatus())).count());
+
+			counts.put("accepted",
+					allAssignments.stream().filter(a -> "Accepted".equalsIgnoreCase(a.getStatus())).count());
+
+			counts.put("declined",
+					allAssignments.stream().filter(a -> "Declined".equalsIgnoreCase(a.getStatus())).count());
+
+			List<Integer> jobIds = filteredAssignments.stream().map(RecruiterAssignmentEntity::getJobId).distinct()
+					.toList();
+
+			if (jobIds.isEmpty()) {
+
+				Map<String, Object> emptyResponse = new HashMap<>();
+
+				emptyResponse.put("counts", counts);
+
+				emptyResponse.put("content", List.of());
+
+				emptyResponse.put("currentPage", 0);
+
+				emptyResponse.put("totalPages", 0);
+
+				emptyResponse.put("totalElements", 0);
+
+				emptyResponse.put("size", size);
+
+				return ApiResponse.success(ResponseCode.SUCCESS, "No Data Found", emptyResponse);
+			}
+
+			Specification<CreateJobDetailsEntity> specification = request.buildMyRecruiterSpecification(jobIds);
+
+			Page<CreateJobDetailsEntity> pageResult = createJobDetailsRepository.findAll(specification, pageable);
+
+			Map<Integer, RecruiterAssignmentEntity> assignmentMap = filteredAssignments.stream()
+					.collect(Collectors.toMap(RecruiterAssignmentEntity::getJobId, assignment -> assignment));
+
+			List<Map<String, Object>> responseList = pageResult.getContent().stream().map(job -> {
+
+				Map<String, Object> map = new HashMap<>();
+
+				RecruiterAssignmentEntity assignment = assignmentMap.get(job.getId());
+
+				map.put("id", job.getId());
+
+				map.put("jobTitle", job.getJobTitle());
+
+			String departmentName=departmentsRepository.findById(job.getDepartmentId()).get().getDepartmentName();
+
+			    map.put("departmentName",departmentName);
+				map.put("requestedBy", job.getCreatedBy());
+
+				map.put("openings", job.getOpenings());
+
+				map.put("createdAt", job.getCreatedAt());
+
+				map.put("status", assignment != null ? assignment.getStatus() : null);
+
+				return map;
+
+			}).toList();
+
+			Map<String, Object> response = new HashMap<>();
+
+			response.put("counts", counts);
+
+			response.put("content", responseList);
+
+			response.put("currentPage", pageResult.getNumber());
+
+			response.put("totalPages", pageResult.getTotalPages());
+
+			response.put("totalElements", pageResult.getTotalElements());
+
+			response.put("size", pageResult.getSize());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Create Job details fetched successfully", response);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return ApiResponse.failure("Failed to fetch jobs");
+		}
+	}
+
+	
 }

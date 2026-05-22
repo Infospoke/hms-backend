@@ -1,16 +1,21 @@
 package com.hms.service.repository;
 
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.util.Streamable;
 import org.springframework.stereotype.Repository;
 
+import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 
 @Repository
-public interface RecruiterAssignmentRepository extends JpaRepository<RecruiterAssignmentEntity, Integer> {
+public interface RecruiterAssignmentRepository
+		extends JpaRepository<RecruiterAssignmentEntity, Integer>, JpaSpecificationExecutor<RecruiterAssignmentEntity> {
 
 	Long countByIdIsNotNull();
 
@@ -67,4 +72,24 @@ public interface RecruiterAssignmentRepository extends JpaRepository<RecruiterAs
 			""")
 	List<Object[]> getStatusCountsByUserId(@Param("userId") Integer userId);
 
+
+
+	List<Integer> findJobIdsByUserIdAndStatus(@Param("userId") Integer userId, @Param("status") String status);
+
+	List<Integer> findJobIdsByUserId(@Param("userId") Integer userId);
+
+	  RecruiterAssignmentEntity findByJobIdAndUserId(
+	            Integer jobId,
+	            Integer userId
+	    );
+
+	    List<RecruiterAssignmentEntity> findAllByUserId(
+	            Integer userId
+	    );
+
+	    List<RecruiterAssignmentEntity> findAllByUserIdAndStatusIgnoreCase(
+	            Integer userId,
+	            String status
+	    );
+	    RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
 }
