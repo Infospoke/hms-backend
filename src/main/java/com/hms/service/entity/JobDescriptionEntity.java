@@ -24,6 +24,9 @@ public class JobDescriptionEntity {
     @Column(name = "sr_id")
     private String srId;
     
+    @Column(name = "job_id")
+    private Integer jobId;
+    
    
     @Column(name="description",columnDefinition ="TEXT")
     private String description;

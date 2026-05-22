@@ -222,6 +222,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setSubmit(request.getSubmit());
 				
 			}
+			createJobDetailsRepository.save(createJobDetailsEntity);
+			
 
 			// job description
 
@@ -299,17 +301,20 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					entity.setAssignedBy(userName);
 
 					entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					
+					entity.setJobId(createJobDetailsEntity.getId());
 
 					list.add(entity);
 				}
 
 			}
 			SRPositionBasicsEntity basicsEntity=srOptional.get();
-			basicsEntity.setJobSubmit(true);
+			basicsEntity.setJobSubmit(request.getSubmit());
 			positionBasicsRepository.save(basicsEntity);
-			createJobDetailsRepository.save(createJobDetailsEntity);
 			jobDescriptionRepository.save(descriptionEntity);
+			descriptionEntity.setJobId(createJobDetailsEntity.getId());
 			sourcingChannelRepository.save(channelEntity);
+			channelEntity.setJobId(createJobDetailsEntity.getId());
 			if (list.size() > 0) {
 				recruiterAssignmentRepository.saveAll(list);
 

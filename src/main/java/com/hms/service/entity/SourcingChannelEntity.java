@@ -29,7 +29,9 @@ public class SourcingChannelEntity {
     
     @Column(name = "sr_id")
     private String srId;
-
+    
+    @Column(name = "job_id")
+    private Integer jobId;
 
     @JdbcTypeCode(SqlTypes.JSON)
 
