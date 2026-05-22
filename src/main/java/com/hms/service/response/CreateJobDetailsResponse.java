@@ -1,10 +1,7 @@
 package com.hms.service.response;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,40 +10,21 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonInclude(Include.NON_NULL)
-public class CreateJobResponse {
+public class CreateJobDetailsResponse {
 
-    private Integer id;
-
+    private String srId;
     private String jobTitle;
-
     private Integer businessUnitId;
-
     private Integer departmentId;
-
     private String location;
-
-    private String jobCode;
-
-    private Integer openings;
-
-    private LocalDate targetStartDate;
-
     private String workMode;
-
     private String employmentType;
-
+    private Integer openings;
+    private LocalDate targetStartDate;
     private String skillsMustHave;
-
     private String niceToHaveSkills;
-
     private Integer minExperience;
-
     private Integer maxExperience;
-
-    private String additionalNotes;
-
-    private Boolean submit;
-    
-    private List<SourcingChannelResponse> channels;
+	private String jobCode;
+   
 }

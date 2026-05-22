@@ -1,5 +1,7 @@
 package com.hms.service.dto;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
@@ -19,4 +21,6 @@ public class WebSocketNotification {
     private String deptName;
     private String type;
     private Integer roleId;
+    private LocalDateTime triggeredAt;
+    private Integer notificationId;
 }

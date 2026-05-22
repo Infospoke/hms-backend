@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SourcingChannelRequest {
-	    private Integer jobId;
+public class RolesByDepartmentIdsRequest {
+	
+	List<Integer> departmentsIds;
 
-	    private List<ChannelRequest> channels;
-	}
+}

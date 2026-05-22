@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateJobDetailsRequest {
 	
-    private Integer id;
+    private Integer jobId;
     
 	private String jobTitle;
 	
@@ -43,5 +43,5 @@ public class CreateJobDetailsRequest {
 
 	private Boolean submit=false;
 
-	
+
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.CreateJobRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.ICreateJobService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -22,18 +23,25 @@ import jakarta.validation.Valid;
 public class CreateJobController {
 	@Autowired
 	private ICreateJobService iCreateJobService;
-//
-//	@PostMapping("/job/{srId}")
-//	public ResponseEntity<ApiResponse<?>> createJobFromSr(@PathVariable("srId") String srId,
-//			@Valid @RequestBody CreateJobRequest request) {
-//		ApiResponse<?> response = iCreateJobService.createJobFromSr(srId, request);
-//		return new ResponseEntity<>(response, HttpStatus.OK);
-//	}
-//
-//	@GetMapping("details/{srId}")
-//	public ResponseEntity<ApiResponse<?>> getCreateJobDetails(@PathVariable("srId") String srId) {
-//
-//		ApiResponse<?> response = iCreateJobService.getCreateJobDetails(srId);
-//		return new ResponseEntity<>(response, HttpStatus.OK);
-//	}
+
+	@PostMapping("/new-job")
+	public ResponseEntity<ApiResponse<?>> createJob(@Valid @RequestBody CreateJobRequest request) {
+		ApiResponse<?> response = iCreateJobService.createJob(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@GetMapping("details/{srId}")
+	public ResponseEntity<ApiResponse<?>> getJobDetails(@PathVariable("srId") String srId) {
+
+		ApiResponse<?> response = iCreateJobService.getJobDetails(srId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/get-recruiters")
+	public ResponseEntity<ApiResponse<?>> getRecruiters(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iCreateJobService.getRecruiters(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
+
 }

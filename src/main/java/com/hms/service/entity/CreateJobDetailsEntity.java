@@ -14,11 +14,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="tb_create_job")
+@Table(name="tb_create_job_details")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateJobEntity {
+public class CreateJobDetailsEntity {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -75,6 +75,13 @@ public class CreateJobEntity {
 	
 	@Column(name="created_at")
 	private LocalDateTime createdAt;
+
+	@Column(name="updated_by")
+	private String updatedBy;
+	
+	@Column(name="updated_at")
+	private LocalDateTime updatedAt;
+
 	
 	
 

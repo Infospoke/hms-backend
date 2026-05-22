@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,7 +24,7 @@ public class JobDescriptionEntity {
     @Column(name = "job_id")
     private Integer jobId;
     
-    @Lob
+   
     @Column(name="description",columnDefinition ="TEXT")
     private String description;
 

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -16,17 +17,25 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.WebSocketNotification;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.NotificationEngineEntity;
+import com.hms.service.entity.RolesEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.NotificationEngineRepository;
+import com.hms.service.repository.RolesRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateNotificationRequest;
 import com.hms.service.service.IMailService;
 import com.hms.service.service.INotificationService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
@@ -36,296 +45,335 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NotificationServiceImpl implements INotificationService {
 
-    @Value("${hms.kafka.notification-topic}")
-    private String notificationTopic;
+	@Value("${hms.kafka.notification-topic}")
+	private String notificationTopic;
 
-    @Value("${hms.mail.from}")
-    private String mailFrom;
+	@Value("${hms.mail.from}")
+	private String mailFrom;
 
-    @Autowired
-    private KafkaTemplate<String, NotificationEvent> kafkaTemplate;
+	@Autowired
+	private KafkaTemplate<String, NotificationEvent> kafkaTemplate;
 
-    @Autowired
-    private NotificationEngineRepository notificationEngineRepository;
+	@Autowired
+	private NotificationEngineRepository notificationEngineRepository;
 
-    @Autowired
-    private IMailService mailService;
+	@Autowired
+	private AssignRolesRepository assignRolesRepository;
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+	@Autowired
+	private IMailService mailService;
 
+	@Autowired
+	private SimpMessagingTemplate messagingTemplate;
 
-    @Override
-    public void callNotification(NotificationEvent event) {
-    	
-        log.info("Inside callNotification() for"+ event.getType()+": {}", event.getProcessId());
-        log.info("The event into the kafka : "+event);
-        publishToKafka(event);
-    }
+	@Autowired
+	private HttpServletRequest httpServletRequest;
 
-    //Publish to Kafka 
-    private void publishToKafka(NotificationEvent event) {
-        log.info("Inside publishToKafka() for"+ event.getType()+": {}", event.getProcessId());
-        kafkaTemplate.send(notificationTopic, event.getProcessId(), event);
-        log.info("NotificationServiceImpl :: Event published to Kafka for "+ event.getType()+": {}", event.getProcessId());
-    }
+	@Autowired
+	private JwtService jwtService;
 
-    // Kafka Consumer — save to DB + send emails to all roles + push WebSocket
+	@Override
+	public void callNotification(NotificationEvent event) {
+
+		log.info("Inside callNotification() for" + event.getType() + ": {}", event.getProcessId());
+		log.info("The event into the kafka : " + event);
+		publishToKafka(event);
+	}
+
+	// Publish to Kafka
+	private void publishToKafka(NotificationEvent event) {
+		log.info("Inside publishToKafka() for" + event.getType() + ": {}", event.getProcessId());
+		kafkaTemplate.send(notificationTopic, event.getProcessId(), event);
+		log.info("NotificationServiceImpl :: Event published to Kafka for " + event.getType() + ": {}",
+				event.getProcessId());
+	}
+
+	// Kafka Consumer — save to DB + send emails to all roles + push WebSocket
 	@KafkaListener(topics = "${hms.kafka.notification-topic}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "kafkaListenerContainerFactory")
-    public void consumeNotification(NotificationEvent event) {
-        log.info("NotificationServiceImpl :: consumeNotification() - received event for "+ event.getType()+": {}", event.getProcessId());
+	public void consumeNotification(NotificationEvent event, Acknowledgment acknowledgment) {
+		log.info("NotificationServiceImpl :: consumeNotification() - received event for " + event.getType() + ": {}",
+				event.getProcessId());
 
-        //Save notification to DB (one record per SR)
-        saveNotification(event);
-        
-        
-        //Push real-time WebSocket notification to all subscribers
-        pushWebSocketNotification(event);
+		// Save notification to DB (one record per SR)
+		saveNotification(event, acknowledgment);
 
-        // Send email to every user in the roleEmailMap
-        sendEmailsToAllRoles(event);
+		List<Object[]> results = notificationEngineRepository.findIdAndSentAtByProcessId(event.getProcessId());
 
+		if (event.getMakerRoleId() != null) {
 
-        log.info("NotificationServiceImpl :: Notification fully processed for "+ event.getType()+": {}", event.getProcessId());
-    }
+			Object[] makerRow = results.get(0);
+			Integer makerNotificationId = (Integer) makerRow[0];
+			LocalDateTime makerNotificationSentAt = (LocalDateTime) makerRow[1];
+			event.setTriggeredAt(makerNotificationSentAt);
+			event.setMakerId(makerNotificationId);
+		}
+		if (event.getRoleEmailMap() != null && results.size() > 1) {
 
+			Object[] checkerRow = results.get(1);
+			LocalDateTime checkerNotificationSentAt = (LocalDateTime) checkerRow[1];
 
-    private void saveNotification(NotificationEvent event) {
-    	log.info("Inside saveNotification() for "+ event.getType()+": {}", event.getProcessId());
-    	List<NotificationEngineEntity> notificationsList = new ArrayList<>();
-    	
-        try {
-            NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
-            checkerEntity.setNotificationTitle(event.getCheckerNotificationTitle());
+			event.setTriggeredAt(checkerNotificationSentAt);
 
-            checkerEntity.setMessage(event.getCheckerMessage());
+			Integer checkerNotificationId = (Integer) checkerRow[0];
+			event.setCheckerId(checkerNotificationId);
+		}
 
-            checkerEntity.setProcessId(event.getProcessId());
-            checkerEntity.setDeptName(event.getDeptName());
-            checkerEntity.setRoleName(event.getCheckerRoleName());
-            checkerEntity.setNotificationSentAt(LocalDateTime.now());
-            checkerEntity.setIsRead(false);
-            
-            NotificationEngineEntity makerEntity = new NotificationEngineEntity();
-            makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
+		// Push real-time WebSocket notification to all subscribers
+		pushWebSocketNotification(event);
 
+		// Send email to every user in the roleEmailMap
+		sendEmailsToAllRoles(event);
+		log.info("NotificationServiceImpl :: Notification fully processed for " + event.getType() + ": {}",
+				event.getProcessId());
+	}
 
-            log.info("The event message to the Checker is : "+event.getMakerMessage());
-            makerEntity.setMessage(event.getMakerMessage());
+	private void saveNotification(NotificationEvent event, Acknowledgment acknowledgment) {
+		log.info("Inside saveNotification() for " + event.getType() + ": {}", event.getProcessId());
+		List<NotificationEngineEntity> notificationsList = new ArrayList<>();
 
+		try {
+			NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
+			checkerEntity.setNotificationTitle(event.getCheckerNotificationTitle());
 
-            makerEntity.setProcessId(event.getProcessId());
-            makerEntity.setDeptName(event.getDeptName());
-            makerEntity.setRoleName(event.getMakerRoleName());
-         
-            makerEntity.setNotificationSentAt(LocalDateTime.now());
-            makerEntity.setIsRead(false);
-            
-            notificationsList.add(checkerEntity);
-            notificationsList.add(makerEntity);
-            
-            notificationEngineRepository.saveAll(notificationsList);
-            log.info("NotificationServiceImpl :: Notifications saved to DB for "+ event.getType()+": {}", event.getProcessId());
-        } catch (Exception e) {
-            log.error("NotificationServiceImpl :: Failed to save notification for "+ event.getType()+": {} - {}", event.getProcessId(), e.getMessage());
-        }
-    }
+			checkerEntity.setMessage(event.getCheckerMessage());
 
+			checkerEntity.setProcessId(event.getProcessId());
+			checkerEntity.setDeptName(event.getDeptName());
+			checkerEntity.setRoleName(event.getCheckerRoleName());
+			checkerEntity.setNotificationSentAt(LocalDateTime.now());
+			checkerEntity.setIsRead(false);
 
-    private void sendEmailsToAllRoles(NotificationEvent event) {
-    	log.info("Inside sendEmailsToAllRoles() for "+ event.getType()+": {}", event.getProcessId());
-        Map<Integer, List<String>> roleEmailMap = event.getRoleEmailMap();
+			NotificationEngineEntity makerEntity = new NotificationEngineEntity();
+			makerEntity.setNotificationTitle(event.getMakerNotificationTitle());
 
-        if (roleEmailMap == null || roleEmailMap.isEmpty()) {
-            log.warn("NotificationServiceImpl :: roleEmailMap is empty for "+ event.getType()+": {}. Skipping emails.", event.getProcessId());
-            return;
-        }
-        String checkerSubject = event.getCheckerNotificationTitle();
-        String checkerBody=event.getCheckerEmailBody(); // Email body is sent from the producer which allows for more flexibility in email formatting.
-        String makerSubject = event.getMakerNotificationTitle();
-        String makerBody=event.getMakerEmailBody();
-        
-        for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
-            Integer roleId     = entry.getKey();
-            List<String> checkerEmails = entry.getValue();
+			log.info("The event message to the Checker is : " + event.getMakerMessage());
+			makerEntity.setMessage(event.getMakerMessage());
 
-            if (checkerEmails == null || checkerEmails.isEmpty()) {
-                log.warn("NotificationServiceImpl :: No emails for roleId: {} in "+ event.getType()+": {}", roleId, event.getProcessId());
-                continue;
-            }
-           
-            //Sending email to maker
-            mailService.sendMail(mailFrom, event.getMakerEmailAddress(), null, makerSubject, makerBody, null);
-            for (String email : checkerEmails) {
-                try {
-                	//Sending email to checker
-                    mailService.sendMail(mailFrom, email, null, checkerSubject, checkerBody, null);
-                    log.info("NotificationServiceImpl :: Email sent to [{}] (roleId: {}) for "+ event.getType()+": {}", email, roleId, event.getProcessId());
-                } catch (Exception e) {
-                    log.error("NotificationServiceImpl :: Failed to send email to [{}] (roleId: {}) for "+ event.getType()+": {} - {}",
-                            email, roleId, event.getProcessId(), e.getMessage());
-                }
-            }
-        }
-    }
+			makerEntity.setProcessId(event.getProcessId());
+			makerEntity.setDeptName(event.getDeptName());
+			makerEntity.setRoleName(event.getMakerRoleName());
 
-    private void pushWebSocketNotification(NotificationEvent event) {
-        log.info("Inside pushWebSocketNotification() for {}: {}", event.getType(), event.getProcessId());
-        try {
-            if (event.getMakerRoleId() != null) {
-                WebSocketNotification makerNotification = new WebSocketNotification(
-                        event.getProcessId(),
-                        event.getMakerNotificationTitle(),
-                        event.getMakerMessage(),
-                        event.getDeptName(),
+			makerEntity.setNotificationSentAt(LocalDateTime.now());
+			makerEntity.setIsRead(false);
 
-                        event.getType(),
+			notificationsList.add(checkerEntity);
+			notificationsList.add(makerEntity);
 
-                        event.getMakerRoleId()
-                );
-                messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotification);
-                log.info("NotificationServiceImpl :: WebSocket pushed to maker roleId: {}", event.getMakerRoleId());
-            }
-            
+			notificationEngineRepository.saveAll(notificationsList);
+			log.info("NotificationServiceImpl :: Notifications saved to DB for " + event.getType() + ": {}",
+					event.getProcessId());
+
+			acknowledgment.acknowledge(); // Manually acknowledge after successful DB save
+
+		} catch (Exception e) {
+			log.error("NotificationServiceImpl :: Failed to save notification for " + event.getType() + ": {} - {}",
+					event.getProcessId(), e.getMessage());
+		}
+	}
+
+	private void sendEmailsToAllRoles(NotificationEvent event) {
+		log.info("Inside sendEmailsToAllRoles() for " + event.getType() + ": {}", event.getProcessId());
+		Map<Integer, List<String>> roleEmailMap = event.getRoleEmailMap();
+
+		if (roleEmailMap == null || roleEmailMap.isEmpty()) {
+			log.warn("NotificationServiceImpl :: roleEmailMap is empty for " + event.getType()
+					+ ": {}. Skipping emails.", event.getProcessId());
+			return;
+		}
+		String checkerSubject = event.getCheckerNotificationTitle();
+		String checkerBody = event.getCheckerEmailBody(); // Email body is sent from the producer which allows for more
+															// flexibility in email formatting.
+		String makerSubject = event.getMakerNotificationTitle();
+		String makerBody = event.getMakerEmailBody();
+
+		for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
+			Integer roleId = entry.getKey();
+			List<String> checkerEmails = entry.getValue();
+
+			if (checkerEmails == null || checkerEmails.isEmpty()) {
+				log.warn("NotificationServiceImpl :: No emails for roleId: {} in " + event.getType() + ": {}", roleId,
+						event.getProcessId());
+				continue;
+			}
+
+			// Sending email to maker
+			mailService.sendMail(mailFrom, event.getMakerEmailAddress(), null, makerSubject, makerBody, null);
+			for (String email : checkerEmails) {
+				try {
+					// Sending email to checker
+					mailService.sendMail(mailFrom, email, null, checkerSubject, checkerBody, null);
+					log.info("NotificationServiceImpl :: Email sent to [{}] (roleId: {}) for " + event.getType()
+							+ ": {}", email, roleId, event.getProcessId());
+				} catch (Exception e) {
+					log.error(
+							"NotificationServiceImpl :: Failed to send email to [{}] (roleId: {}) for "
+									+ event.getType() + ": {} - {}",
+							email, roleId, event.getProcessId(), e.getMessage());
+				}
+			}
+		}
+	}
+
+	private void pushWebSocketNotification(NotificationEvent event) {
+		log.info("Inside pushWebSocketNotification() for {}: {}", event.getType(), event.getProcessId());
+		try {
+			if (event.getMakerRoleId() != null) {
+				WebSocketNotification makerNotification = new WebSocketNotification(event.getProcessId(),
+						event.getMakerNotificationTitle(), event.getMakerMessage(), event.getDeptName(),
+
+						event.getType(),
+
+						event.getMakerRoleId(), event.getTriggeredAt(), event.getMakerId());
+				messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotification);
+				log.info("NotificationServiceImpl :: WebSocket pushed to maker roleId: {}", event.getMakerRoleId());
+			}
+
 			Integer checkerRoleId = event.getRoleEmailMap().keySet().stream().findFirst().orElse(null);
-            
-            if (event.getRoleEmailMap() != null) {
-               // for (Integer checkerRoleId : event.getRoleEmailMap().keySet()) {
-                    WebSocketNotification checkerNotification = new WebSocketNotification(
-                            event.getProcessId(),
-                            event.getCheckerNotificationTitle(),
-                            event.getCheckerMessage(),
-                            event.getDeptName(),
-                            event.getType(),
-                            checkerRoleId
-                    );
-                    messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerNotification);
-                    log.info("NotificationServiceImpl :: WebSocket pushed to checker roleId: {}", checkerRoleId);
-                //}
-            }
 
-            log.info("NotificationServiceImpl :: WebSocket notification fully pushed for {}: {}", event.getType(), event.getProcessId());
-        } catch (Exception e) {
-            log.error("NotificationServiceImpl :: Failed to push WebSocket notification for {}: {} - {}", event.getType(), event.getProcessId(), e.getMessage());
-        }
-    }
-     
-    @Override
-    public ApiResponse<?> getNotifications(SpecificationFilterRequest request) {
+			if (event.getRoleEmailMap() != null) {
+				// for (Integer checkerRoleId : event.getRoleEmailMap().keySet()) {
+				WebSocketNotification checkerNotification = new WebSocketNotification(event.getProcessId(),
+						event.getCheckerNotificationTitle(), event.getCheckerMessage(), event.getDeptName(),
+						event.getType(), checkerRoleId, event.getTriggeredAt(), event.getCheckerId());
+				messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerNotification);
+				log.info("NotificationServiceImpl :: WebSocket pushed to checker roleId: {}", checkerRoleId);
+				// }
+			}
 
-        log.info("NotificationServiceImpl:: Inside getNotifications");
+			log.info("NotificationServiceImpl :: WebSocket notification fully pushed for {}: {}", event.getType(),
+					event.getProcessId());
+		} catch (Exception e) {
+			log.error("NotificationServiceImpl :: Failed to push WebSocket notification for {}: {} - {}",
+					event.getType(), event.getProcessId(), e.getMessage());
+		}
+	}
 
-        if (request.getPage() == null || request.getSize() == null) {
+	@Override
+	public ApiResponse<?> getNotifications(SpecificationFilterRequest request) {
 
-            return ApiResponse.failure(
-                    ResponseCode.FAILURE,                    "failure",
-                    List.of("page and size must be provided")
-            );
-        }
+		String authHeader = httpServletRequest.getHeader("Authorization");
 
-        if (request.getPage() < 0 || request.getSize() <= 0) {
+		Long userId = null;
 
-            return ApiResponse.failure(
-                    ResponseCode.FAILURE,
-                    "failure",
-                    List.of("Invalid page or size values")
-            );
-        }
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-        Sort sort = Sort.by(
-                "DESC".equalsIgnoreCase(request.getDirection())
-                        ? Sort.Direction.DESC
-                        : Sort.Direction.ASC,
+			String token = authHeader.substring(7);
 
-                request.getSortBy() != null
-                        ? request.getSortBy()
-                        : "notificationSentAt"
-        );
+			userId = jwtService.extractUserId(token);
 
-        Pageable pageable = PageRequest.of(
-                request.getPage(),
-                request.getSize(),
-                sort
-        );
-     
-        Specification<NotificationEngineEntity> baseSpec =
-                request.toNotificationSpecification();
+		} else {
 
-        Page<NotificationEngineEntity> pageResult =
-                notificationEngineRepository.findAll(
-                        baseSpec,
-                        pageable
-                );
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+		}
 
-       
-        Specification<NotificationEngineEntity> countSpec =
-                request.buildNotificationCountSpec();
+		AssignRolesEntity assignRole = assignRolesRepository.findByUserId(userId.intValue())
+				.orElseThrow(() -> new RuntimeException("Role not assigned"));
 
-        long totalCount =
-                notificationEngineRepository.count(countSpec);
+		Integer roleId = assignRole.getRoleId();
 
-        long readCount =
-                notificationEngineRepository.count(
-                        countSpec.and(isReadEquals(true))
-                );
+		log.info("NotificationServiceImpl:: Inside getNotifications");
 
-        long unreadCount =
-                notificationEngineRepository.count(
-                        countSpec.and(isReadEquals(false))
-                );
+		if (request.getPage() == null || request.getSize() == null) {
 
-        Map<String, Object> counts = new LinkedHashMap<>();
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("page and size must be provided"));
+		}
 
-        counts.put("total", totalCount);
-        counts.put("read", readCount);
-        counts.put("unread", unreadCount);
+		if (request.getPage() < 0 || request.getSize() <= 0) {
 
-        Map<String, Object> response = new LinkedHashMap<>();
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", List.of("Invalid page or size values"));
+		}
 
-        response.put("notifications", pageResult.getContent());
+		Sort sort = Sort.by("DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
 
-        response.put("currentPage", pageResult.getNumber());
+				request.getSortBy() != null ? request.getSortBy() : "notificationSentAt");
 
-        response.put("totalPages", pageResult.getTotalPages());
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
-        response.put("totalElements", pageResult.getTotalElements());
+		Specification<NotificationEngineEntity> baseSpec = request.toNotificationSpecification().and(hasRoleId(roleId));
 
-        response.put("counts", counts);
+		Page<NotificationEngineEntity> pageResult = notificationEngineRepository.findAll(baseSpec, pageable);
 
-        log.info("NotificationServiceImpl:: Exit getNotifications");
+		Specification<NotificationEngineEntity> countSpec = request.buildNotificationCountSpec().and(hasRoleId(roleId));
 
-        return ApiResponse.success(
-                ResponseCode.SUCCESS,
-                "success",
-                response
-        );
-    }
+		long totalCount = notificationEngineRepository.count(countSpec);
 
-    private Specification<NotificationEngineEntity> isReadEquals(
-            Boolean value) {
+		long readCount = notificationEngineRepository.count(countSpec.and(isReadEquals(true)));
 
-        return (r, q, c) ->
-                c.equal(r.get("isRead"), value);
-    }
+		long unreadCount = notificationEngineRepository.count(countSpec.and(isReadEquals(false)));
 
-    @Override
-    public ApiResponse<?> getNotificationCounts() {
+		Map<String, Object> counts = new LinkedHashMap<>();
 
-        log.info("NotificationServiceImpl:: Inside getNotificationCounts");
+		counts.put("total", totalCount);
+		counts.put("read", readCount);
+		counts.put("unread", unreadCount);
 
-        Long total = notificationEngineRepository.count();
-        Long read = notificationEngineRepository.countByIsRead(true);
-        Long unread = notificationEngineRepository.countByIsRead(false);
+		Map<String, Object> response = new LinkedHashMap<>();
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("total", total);
-        response.put("read", read);
-        response.put("unread", unread);
+		response.put("notifications", pageResult.getContent());
 
-        log.info("NotificationServiceImpl:: Exit getNotificationCounts");
+		response.put("currentPage", pageResult.getNumber());
 
-        return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
-    }
+		response.put("totalPages", pageResult.getTotalPages());
+
+		response.put("totalElements", pageResult.getTotalElements());
+
+		response.put("counts", counts);
+
+		log.info("NotificationServiceImpl:: Exit getNotifications");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	}
+
+	private Specification<NotificationEngineEntity> hasRoleId(Integer roleId) {
+
+		return (root, query, cb) -> cb.equal(root.get("roleId"), roleId);
+	}
+
+	private Specification<NotificationEngineEntity> isReadEquals(Boolean value) {
+
+		return (r, q, c) -> c.equal(r.get("isRead"), value);
+	}
+
+	@Override
+	public ApiResponse<?> getNotificationCounts() {
+
+		log.info("NotificationServiceImpl:: Inside getNotificationCounts");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token);
+
+		} else {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+		}
+
+		AssignRolesEntity assignRole = assignRolesRepository.findByUserId(userId.intValue())
+				.orElseThrow(() -> new RuntimeException("Role not assigned"));
+
+		Integer roleId = assignRole.getRoleId();
+
+		Long total = notificationEngineRepository.countByRoleId(roleId);
+
+		Long read = notificationEngineRepository.countByRoleIdAndIsRead(roleId, true);
+
+		Long unread = notificationEngineRepository.countByRoleIdAndIsRead(roleId, false);
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("total", total);
+		response.put("read", read);
+		response.put("unread", unread);
+
+		log.info("NotificationServiceImpl:: Exit getNotificationCounts");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	}
 
 	@Override
 	public ApiResponse<?> updateNotifications(UpdateNotificationRequest request) {
@@ -338,8 +386,8 @@ public class NotificationServiceImpl implements INotificationService {
 
 		List<NotificationEngineEntity> notificationEngineEntity = notificationEngineRepository
 				.findAllById(request.getIds());
-		
-		log.info("the notification ids are:"+request.getIds());
+
+		log.info("the notification ids are:" + request.getIds());
 
 		if (notificationEngineEntity.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "No notifications found");
@@ -352,7 +400,6 @@ public class NotificationServiceImpl implements INotificationService {
 		notificationEngineRepository.saveAll(notificationEngineEntity);
 
 		return ApiResponse.success("Notifications updated successfully");
-	}    
-    
-}
+	}
 
+}

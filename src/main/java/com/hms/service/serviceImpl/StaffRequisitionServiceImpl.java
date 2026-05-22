@@ -155,8 +155,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		String srId = null;
 		Long userId = null;
-		Integer roleId=null;
-		
+		Integer roleId=null;		
 
 		ApiResponse<?> finalResponse = null;
 		if (request.getPositonBascicsRequest() != null) {
@@ -439,6 +438,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					entity.setSubmitted(true);
 					entity.setApproved(false);
+					entity.setSubmittedOn(LocalDateTime.now());
 					positionBasicsRepository.save(entity);
 
 				});
@@ -1218,6 +1218,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setPriority(srPositionBasicsEntity.getPriority());
 				positonBasicsResponse.setApproved(srPositionBasicsEntity.getApproved());
 				positonBasicsResponse.setCreatedOn(srPositionBasicsEntity.getCreatedOn());
+				positonBasicsResponse.setSubmittedOn(srPositionBasicsEntity.getSubmittedOn());
 				positonBasicsResponse.setTargetStartDate(srPositionBasicsEntity.getTargetStartDate());
 				positonBasicsResponse.setCreatedBy(srPositionBasicsEntity.getCreatedBy());
 				positonBasicsResponse.setUserId(srPositionBasicsEntity.getUserId());
