@@ -43,7 +43,7 @@ public class RecruiterController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@PostMapping("/job-assignment-details-list/{jobId}")
+	@PostMapping("/job-assignment-details-list/{srId}")
 	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetailsList(@PathVariable("srId") String srId,@RequestBody FilterRequest request) {
 		ApiResponse<?> response = recruiterService.getRecruiterAssignmentDetailsList(srId, request);
 		return new ResponseEntity<>(response, HttpStatus.OK);

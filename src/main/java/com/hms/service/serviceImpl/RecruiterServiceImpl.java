@@ -182,7 +182,9 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch job list", List.of(e.getMessage()));
 		}
 	}
-
+	
+	
+	@Override
 	public ApiResponse<?> getRecruiterAssignmentSummary(String srId) {
 
 		try {
