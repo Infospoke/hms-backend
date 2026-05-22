@@ -729,9 +729,10 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		List<Integer> userIds = assignRoles.stream().map(AssignRolesEntity::getUserId).distinct().toList();
 
-		List<UserEntity> users = userRepository.findByIdIn(userIds);
+		List<UserEntity> users = userRepository.findByUserIdIn(userIds);
 
-		Map<Integer, UserEntity> userMap = users.stream().collect(Collectors.toMap(UserEntity::getId, user -> user));
+		Map<Integer, UserEntity> userMap = users.stream()
+				.collect(Collectors.toMap(UserEntity::getUserId, user -> user));
 
 		List<RolesEntity> roles = rolesRepository.findAllById(finalRoleIds);
 
@@ -778,7 +779,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			RecruiterDetailsResponse recruiter = new RecruiterDetailsResponse();
 
-			recruiter.setUserId(user.getId());
+			recruiter.setUserId(user.getUserId());
 
 			recruiter.setRecruiterName(user.getUsername());
 
@@ -786,7 +787,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			recruiter.setRoleName(role.getRoleName());
 
-			recruiter.setTotalAssignments(countMap.getOrDefault(user.getId(), 0L));
+			recruiter.setTotalAssignments(countMap.getOrDefault(user.getUserId(), 0L));
 
 			groupedMap.computeIfAbsent(role.getDepartmentId(), k -> new LinkedHashMap<>())
 					.computeIfAbsent(role.getId(), k -> new ArrayList<>()).add(recruiter);
@@ -821,6 +822,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			departments.add(departmentMap);
 		}
+		
+		
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
