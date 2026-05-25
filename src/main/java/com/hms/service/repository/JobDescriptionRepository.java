@@ -9,6 +9,8 @@ import com.hms.service.entity.JobDescriptionEntity;
 @Repository
 public interface JobDescriptionRepository extends JpaRepository<JobDescriptionEntity, Integer>{
 
+	JobDescriptionEntity findBySrId(String srId);
+
 	//Optional<JobDescriptionEntity> findBySr(String srId);
 
 }

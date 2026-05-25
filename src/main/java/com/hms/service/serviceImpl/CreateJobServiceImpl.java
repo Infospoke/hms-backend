@@ -3,6 +3,7 @@ package com.hms.service.serviceImpl;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hms.service.dto.JobCreationDetailsResponseDto;
 import com.hms.service.dto.RecruiterInfoDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
@@ -47,8 +49,13 @@ import com.hms.service.request.JobDescriptionRequest;
 import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
+import com.hms.service.response.JobDescriptionResponse;
+import com.hms.service.response.JobOverviewResponse;
 import com.hms.service.response.RecruiterDetailsResponse;
+import com.hms.service.response.RecruitersResponse;
+import com.hms.service.response.SourcingChannelResponse;
 import com.hms.service.service.ICreateJobService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -220,7 +227,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				createJobDetailsEntity.setAdditionalNotes(req.getAdditionalNotes());
 				createJobDetailsEntity.setSubmit(request.getSubmit());
-				
+
 			}
 
 			// job description
@@ -285,13 +292,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					entity.setSrId(request.getSrId());
 
 					entity.setUserId(recruiter.getUserId());
-					
+
 					entity.setRoleId(recruiter.getRoleId());
-					
+
 					entity.setRoleName(recruiter.getRoleName());
-					
+
 					entity.setEmail(recruiter.getEmail());
-					
+
 					entity.setUserName(recruiter.getUserName());
 
 					entity.setStatus("PENDING");
@@ -304,7 +311,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				}
 
 			}
-			SRPositionBasicsEntity basicsEntity=srOptional.get();
+			SRPositionBasicsEntity basicsEntity = srOptional.get();
 			basicsEntity.setJobSubmit(true);
 			positionBasicsRepository.save(basicsEntity);
 			createJobDetailsRepository.save(createJobDetailsEntity);
@@ -670,8 +677,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			departments.add(departmentMap);
 		}
-		
-		
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
@@ -685,4 +690,144 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Recruiters fetched successfully", response);
 	}
+
+	@Override
+	public ApiResponse<?> getJobCreationDetails(String srId) {
+
+		log.info("CreateJobServiceImpl : Inside getJobCreationDetails method");
+
+		try {
+
+			if (srId == null || srId.isBlank()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE,  List.of("SR ID cannot be null or empty"));
+			}
+
+			CreateJobDetailsEntity jobEntity = createJobDetailsRepository.findBySrId(srId);
+
+			JobDescriptionEntity descriptionEntity = jobDescriptionRepository.findBySrId(srId);
+
+			SourcingChannelEntity sourcingEntity = sourcingChannelRepository.findBySrId(srId);
+
+			List<RecruiterAssignmentEntity> recruiterEntities = recruiterAssignmentRepository.findBySrId(srId);
+
+			if (jobEntity == null && descriptionEntity == null && sourcingEntity == null
+					&& recruiterEntities.isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE,List.of("Invalid SR ID : " + srId));
+			}
+
+			JobCreationDetailsResponseDto response = new JobCreationDetailsResponseDto();
+
+			// JOB OVERVIEW
+
+			if (jobEntity != null) {
+
+				JobOverviewResponse jobOverviewResponse = new JobOverviewResponse();
+
+				jobOverviewResponse.setSrId(jobEntity.getSrId());
+				jobOverviewResponse.setJobTitle(jobEntity.getJobTitle());
+				jobOverviewResponse.setJobCode(jobEntity.getJobCode());
+				jobOverviewResponse.setBusinessUnitId(jobEntity.getBusinessUnitId());
+				jobOverviewResponse.setDepartmentId(jobEntity.getDepartmentId());
+				jobOverviewResponse.setLocation(jobEntity.getLocation());
+				jobOverviewResponse.setOpenings(jobEntity.getOpenings());
+				jobOverviewResponse.setTargetStartDate(jobEntity.getTargetStartDate());
+				jobOverviewResponse.setWorkMode(jobEntity.getWorkMode());
+				jobOverviewResponse.setEmploymentType(jobEntity.getEmploymentType());
+				jobOverviewResponse.setMinExperience(jobEntity.getMinExperience());
+				jobOverviewResponse.setMaxExperience(jobEntity.getMaxExperience());
+
+				jobOverviewResponse.setSkillsMustHave(
+						jobEntity.getSkillsMustHave() != null ? Arrays.asList(jobEntity.getSkillsMustHave().split(","))
+								: Collections.emptyList());
+
+				jobOverviewResponse.setNiceToHaveSkills(jobEntity.getNiceToHaveSkills() != null
+						? Arrays.asList(jobEntity.getNiceToHaveSkills().split(","))
+						: Collections.emptyList());
+
+				jobOverviewResponse.setAdditionalNotes(jobEntity.getAdditionalNotes());
+
+				response.setJobOverview(jobOverviewResponse);
+			}
+
+			// JOB DESCRIPTION
+
+			if (descriptionEntity != null) {
+
+				JobDescriptionResponse jobDescriptionResponse = new JobDescriptionResponse();
+
+				jobDescriptionResponse.setSrId(descriptionEntity.getSrId());
+
+				jobDescriptionResponse.setDescription(descriptionEntity.getDescription());
+
+				response.setJobDescription(jobDescriptionResponse);
+			}
+
+			// SOURCING STRATEGY
+
+			if (sourcingEntity != null) {
+
+				SourcingChannelResponse sourcingChannelResponse = new SourcingChannelResponse();
+
+				sourcingChannelResponse.setSrId(sourcingEntity.getSrId());
+
+				sourcingChannelResponse.setSourcingChannels(sourcingEntity.getSourcingChannelRequest());
+
+				sourcingChannelResponse.setReferral(sourcingEntity.getReferral());
+
+				sourcingChannelResponse.setReferralAmount(sourcingEntity.getReferralAmount());
+
+				response.setSourcingStrategy(sourcingChannelResponse);
+			}
+
+			// RECRUITERS
+
+			if (!recruiterEntities.isEmpty()) {
+				if (!recruiterEntities.isEmpty()) {
+
+				    List<AssignedRecruiterResponse> recruiters =
+				            recruiterEntities.stream()
+				                    .map(entity -> {
+
+				                        AssignedRecruiterResponse recruiter =
+				                                new AssignedRecruiterResponse();
+
+				                        recruiter.setUserName(
+				                                entity.getUserName());
+
+				                        recruiter.setEmail(
+				                                entity.getEmail());
+
+				                        recruiter.setAssignedAt(
+				                                entity.getAssignedAt());
+
+				                        return recruiter;
+				                    })
+				                    .toList();
+
+				    RecruitersResponse recruitersResponse =
+				            new RecruitersResponse();
+
+				    recruitersResponse.setRecruiters(recruiters);
+
+				    response.setRecruiters(recruitersResponse);
+				}
+			}
+
+			return ApiResponse.success(ResponseCode.SUCCESS, response);
+
+		} 
+		
+		
+			catch (Exception e) {
+
+			log.error("Error fetching Job Details for srId: {}", srId, e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE,
+
+					List.of(e.getMessage()));
+		}
+	}
 }
+	
