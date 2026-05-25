@@ -90,3 +90,4 @@ public interface RecruiterAssignmentRepository
 	Page<RecruiterAssignmentEntity> findByJobId(Integer jobId, Pageable pageable);
 	RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
 }
+

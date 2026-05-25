@@ -34,6 +34,8 @@ public class PositonBascicsRequest {
 	private String priority;
 
 	private String srId;
+	
+	private String country;
 
 
 }

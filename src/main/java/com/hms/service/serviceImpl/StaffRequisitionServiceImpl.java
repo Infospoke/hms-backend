@@ -210,6 +210,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			srPositionBasicsEntity.setReportingManagerInfo(positonBasicsRequest.getReportingManagerInfo());
 			srPositionBasicsEntity.setLocation(positonBasicsRequest.getLocation());
+			srPositionBasicsEntity.setCountry(positonBasicsRequest.getCountry());
 			srPositionBasicsEntity.setSeniorityLevel(positonBasicsRequest.getSeniorityLevel());
 			srPositionBasicsEntity.setOpenings(positonBasicsRequest.getOpenings());
 			srPositionBasicsEntity.setTargetStartDate(positonBasicsRequest.getTargetStartDate());
@@ -852,6 +853,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			if (error != null)
 				return error;
 		}
+		if (req.getCountry() != null) {
+			error = validateObject(req.getCountry(), "country");
+			if (error != null)
+				return error;
+		}
 
 		if (req.getSeniorityLevel() != null) {
 			error = validateObject(req.getSeniorityLevel(), "seniorityLevel");
@@ -1196,6 +1202,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				positonBasicsResponse.setReportingManagerInfo(srPositionBasicsEntity.getReportingManagerInfo());
 				positonBasicsResponse.setLocation(srPositionBasicsEntity.getLocation());
+				positonBasicsResponse.setCountry(srPositionBasicsEntity.getCountry());
 				Integer seniorityLevelId = srPositionBasicsEntity.getSeniorityLevel();
 
 				if (seniorityLevelId != null) {

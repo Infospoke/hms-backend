@@ -561,18 +561,6 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 	@Override
 	public ApiResponse<?> updateRecruiterAssignment(UpdateRecruitersAssignmentRequest request) {
-
-		RecruiterAssignmentEntity recruiterAssignmentEntity = recruiterAssignmentRepository
-				.findRecuirtersByJobId(request.getJobId());
-		Integer departmentId = createJobDetailsRepository.findById(request.getJobId()).get().getDepartmentId();
-		String departmentName = departmentsRepository.findById(departmentId).get().getDepartmentName();
-
-		recruiterAssignmentEntity.setStatus(request.getStatus());
-
-		recruiterAssignmentEntity.setComments(request.getComments());
-		recruiterAssignmentEntity.setRespondedAt(LocalDateTime.now());
-
-		recruiterAssignmentRepository.save(recruiterAssignmentEntity);
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		// String userName = "";
 		String roleName = "";
@@ -582,8 +570,35 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			roleName = jwtService.extractRole(token);
 			userId = jwtService.extractUserId(token);
+			log.info("token userId"+userId);
 
 		}
+		List<RecruiterAssignmentEntity> recruiterAssignmentList =
+		        recruiterAssignmentRepository.findByJobId(request.getJobId());
+
+		if (recruiterAssignmentList.isEmpty()) {
+		    return ApiResponse.failure(ResponseCode.FAILURE, "No assignment found");
+		}
+
+		RecruiterAssignmentEntity recruiterAssignmentEntity =
+		        recruiterAssignmentList.get(0);
+
+		Long assignedUserId =
+		        recruiterAssignmentEntity.getUserId().longValue();
+
+		log.info("assigned userId is " + assignedUserId);
+
+		if (assignedUserId.equals(userId)) {
+
+		    recruiterAssignmentEntity.setStatus(request.getStatus());
+		    recruiterAssignmentEntity.setComments(request.getComments());
+		    recruiterAssignmentEntity.setRespondedAt(LocalDateTime.now());
+
+		    recruiterAssignmentRepository.save(recruiterAssignmentEntity);
+		}
+	    Integer departmentId = createJobDetailsRepository.findById(request.getJobId()).get().getDepartmentId();
+		String departmentName = departmentsRepository.findById(departmentId).get().getDepartmentName();
+			
 		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 		Integer roleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
@@ -618,6 +633,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		log.info("the event is " + event);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "updated successfully");
+
 	}
 
 	@Override
