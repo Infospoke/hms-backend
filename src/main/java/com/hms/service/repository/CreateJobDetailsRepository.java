@@ -27,4 +27,6 @@ public interface CreateJobDetailsRepository
 		    )
 		    """)
 		Long getTotalOpeningsByUserId(@Param("userId") Integer userId);
+
+	CreateJobDetailsEntity findBySrId(String srId);
 }
