@@ -88,7 +88,7 @@ public interface RecruiterAssignmentRepository
 
 	List<RecruiterAssignmentEntity> findByJobId(Integer jobId);
 	Page<RecruiterAssignmentEntity> findByJobId(Integer jobId, Pageable pageable);
-	RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
+	
 
 
 
