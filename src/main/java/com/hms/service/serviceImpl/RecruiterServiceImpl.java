@@ -127,7 +127,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 				Map<String, Object> map = new LinkedHashMap<>();
 
-				List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findBySrId(job.getSrId());
+				List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(job.getId());
 
 				long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus()))
 						.count();
@@ -185,11 +185,11 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	
 	
 	@Override
-	public ApiResponse<?> getRecruiterAssignmentSummary(String srId) {
+	public ApiResponse<?> getRecruiterAssignmentSummary(Integer jobId) {
 
 		try {
 
-			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findBySrId(srId);
+			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
 
 			long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus())).count();
 
@@ -217,7 +217,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	}
 
 	@Override
-	public ApiResponse<?> getRecruiterAssignmentDetailsList(String srId, FilterRequest request) {
+	public ApiResponse<?> getRecruiterAssignmentDetailsList(Integer jobId, FilterRequest request) {
 
 		try {
 
@@ -232,7 +232,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-			Page<RecruiterAssignmentEntity> assignmentPage = recruiterAssignmentRepository.findBySrId(srId, pageable);
+			Page<RecruiterAssignmentEntity> assignmentPage = recruiterAssignmentRepository.findByJobId(jobId, pageable);
 
 			List<Map<String, Object>> recruiterList = assignmentPage.getContent().stream().map(a -> {
 
