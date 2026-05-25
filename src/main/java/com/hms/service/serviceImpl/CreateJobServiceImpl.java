@@ -137,6 +137,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		response.setEmploymentType(srData.getEmploymentType());
 		response.setOpenings(srData.getOpenings());
 		response.setTargetStartDate(srData.getTargetStartDate());
+		response.setCountry(srData.getCountry());
 
 		if (rolesData != null) {
 
@@ -144,6 +145,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			response.setNiceToHaveSkills(rolesData.getNiceToHaveSkills());
 			response.setMinExperience(rolesData.getMinExperience());
 			response.setMaxExperience(rolesData.getMaxExperience());
+			response.setEducationRequirement(rolesData.getEducationRequirement());
 
 		}
 
@@ -226,7 +228,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setMaxExperience(req.getMaxExperience());
 
 				createJobDetailsEntity.setAdditionalNotes(req.getAdditionalNotes());
+				
 				createJobDetailsEntity.setSubmit(request.getSubmit());
+				
+				createJobDetailsEntity.setEducationRequirement(req.getEducationRequirement());
+				
+				createJobDetailsEntity.setCountry(req.getCountry());
+				
+				createJobDetailsEntity.setIsOpen(true);
 
 			}
 			createJobDetailsRepository.save(createJobDetailsEntity);
@@ -414,6 +423,21 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		if (req.getWorkMode() != null) {
 
 			error = validateObject(req.getWorkMode(), "workMode");
+
+			if (error != null)
+				return error;
+		}
+
+		if (req.getEducationRequirement() != null) {
+
+			error = validateObject(req.getEducationRequirement(), "educationRequirement");
+
+			if (error != null)
+				return error;
+		}
+		if (req.getCountry() != null) {
+
+			error = validateObject(req.getCountry(), "country");
 
 			if (error != null)
 				return error;
@@ -817,4 +841,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
 	}
+	
+
 }

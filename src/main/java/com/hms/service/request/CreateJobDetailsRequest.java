@@ -39,6 +39,12 @@ public class CreateJobDetailsRequest {
 	private Integer maxExperience;
 
 	private String additionalNotes;
+	
+    private String educationRequirement;
+    
+    private Boolean isOpen;
+    
+    private String country;
 
 
 }

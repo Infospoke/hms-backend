@@ -14,4 +14,5 @@ public interface ICreateJobService {
 
 	ApiResponse<?> getJobCreationDetails(Integer jobId);
 
+
 }

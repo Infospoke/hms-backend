@@ -37,6 +37,9 @@ public class CreateJobDetailsEntity {
 	@Column(name="location")
 	private String location;
 	
+	@Column(name="country")
+	private String country;
+	
 	@Column(name="job_code",unique=true)
 	private String jobCode;
 	
@@ -75,8 +78,13 @@ public class CreateJobDetailsEntity {
 	
 	@Column(name="created_at")
 	private LocalDateTime createdAt;
-
 	
+	 @Column(name="is_open")
+	 private Boolean isOpen;
+	 
+	 @Column(name="educationRequirements")
+     private String educationRequirement;
+
 	@Column(name="sr_id")
 	private String srId;
 

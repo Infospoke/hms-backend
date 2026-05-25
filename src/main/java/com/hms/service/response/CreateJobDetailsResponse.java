@@ -2,7 +2,6 @@ package com.hms.service.response;
 
 import java.time.LocalDate;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,5 +25,7 @@ public class CreateJobDetailsResponse {
     private Integer minExperience;
     private Integer maxExperience;
 	private String jobCode;
+    private String educationRequirement;
+    private String country;
    
 }
