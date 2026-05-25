@@ -158,6 +158,6 @@ public class SRPositionBasicsEntity {
 	private String currentStage;
 	
 	@Column(name="job_submit")
-	private Boolean jobSubmit;
+	private Boolean jobSubmit=false;
 
 }
