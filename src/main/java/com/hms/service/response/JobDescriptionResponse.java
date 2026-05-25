@@ -9,7 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class JobDescriptionResponse {
 
-    private String srId;
-
     private String description;
 }

@@ -76,11 +76,6 @@ public class CreateJobDetailsEntity {
 	@Column(name="created_at")
 	private LocalDateTime createdAt;
 
-	@Column(name="updated_by")
-	private String updatedBy;
-	
-	@Column(name="updated_at")
-	private LocalDateTime updatedAt;
 	
 	@Column(name="sr_id")
 	private String srId;

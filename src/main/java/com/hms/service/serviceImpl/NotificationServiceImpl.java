@@ -99,10 +99,11 @@ public class NotificationServiceImpl implements INotificationService {
 
 		List<Object[]> results = notificationEngineRepository.findIdAndSentAtByProcessId(event.getProcessId());
 
+		log.info("event contains the maker role id is"+event.getMakerRoleId());
 		if (event.getMakerRoleId() != null) {
-
-			Object[] makerRow = results.get(0);
+	     	Object[] makerRow = results.get(0);
 			Integer makerNotificationId = (Integer) makerRow[0];
+			log.info("maker notification is is"+makerNotificationId);
 			LocalDateTime makerNotificationSentAt = (LocalDateTime) makerRow[1];
 			event.setTriggeredAt(makerNotificationSentAt);
 			event.setMakerId(makerNotificationId);
@@ -113,7 +114,6 @@ public class NotificationServiceImpl implements INotificationService {
 			LocalDateTime checkerNotificationSentAt = (LocalDateTime) checkerRow[1];
 
 			event.setTriggeredAt(checkerNotificationSentAt);
-
 			Integer checkerNotificationId = (Integer) checkerRow[0];
 			event.setCheckerId(checkerNotificationId);
 		}
@@ -224,6 +224,7 @@ public class NotificationServiceImpl implements INotificationService {
 						event.getType(),
 
 						event.getMakerRoleId(), event.getTriggeredAt(), event.getMakerId());
+				log.info("maker notification is "+makerNotification);
 				messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotification);
 				log.info("NotificationServiceImpl :: WebSocket pushed to maker roleId: {}", event.getMakerRoleId());
 			}
@@ -235,6 +236,7 @@ public class NotificationServiceImpl implements INotificationService {
 				WebSocketNotification checkerNotification = new WebSocketNotification(event.getProcessId(),
 						event.getCheckerNotificationTitle(), event.getCheckerMessage(), event.getDeptName(),
 						event.getType(), checkerRoleId, event.getTriggeredAt(), event.getCheckerId());
+				log.info("checker notification is"+checkerNotification);
 				messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerNotification);
 				log.info("NotificationServiceImpl :: WebSocket pushed to checker roleId: {}", checkerRoleId);
 				// }

@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SourcingChannelResponse {
 
-    private String srId;
 
     private Map<String, Boolean> sourcingChannels;
 
