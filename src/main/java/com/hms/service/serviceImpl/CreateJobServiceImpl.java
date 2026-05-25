@@ -808,7 +808,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				response.setRecruiters(recruitersResponse);
 			}
 
-			return ApiResponse.success(ResponseCode.SUCCESS, response);
+			return ApiResponse.success(ResponseCode.SUCCESS,"Success", response);
 
 		} catch (Exception e) {
 
