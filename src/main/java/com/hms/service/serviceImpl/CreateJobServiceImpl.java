@@ -229,6 +229,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setSubmit(request.getSubmit());
 
 			}
+			createJobDetailsRepository.save(createJobDetailsEntity);
 
 			// job description
 
@@ -307,16 +308,21 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 					entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
+					entity.setJobId(createJobDetailsEntity.getId());
+
 					list.add(entity);
 				}
 
 			}
+
 			SRPositionBasicsEntity basicsEntity = srOptional.get();
-			basicsEntity.setJobSubmit(true);
+			basicsEntity.setJobSubmit(request.getSubmit());
+
 			positionBasicsRepository.save(basicsEntity);
-			createJobDetailsRepository.save(createJobDetailsEntity);
 			jobDescriptionRepository.save(descriptionEntity);
+			descriptionEntity.setJobId(createJobDetailsEntity.getId());
 			sourcingChannelRepository.save(channelEntity);
+			channelEntity.setJobId(createJobDetailsEntity.getId());
 			if (list.size() > 0) {
 				recruiterAssignmentRepository.saveAll(list);
 
@@ -692,29 +698,31 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	}
 
 	@Override
-	public ApiResponse<?> getJobCreationDetails(String srId) {
+	public ApiResponse<?> getJobCreationDetails(Integer jobId) {
 
 		log.info("CreateJobServiceImpl : Inside getJobCreationDetails method");
 
 		try {
 
-			if (srId == null || srId.isBlank()) {
+			if (jobId == null) {
 
-				return ApiResponse.failure(ResponseCode.FAILURE,  List.of("SR ID cannot be null or empty"));
+				return ApiResponse.failure(ResponseCode.FAILURE, List.of("Job ID cannot be null"));
 			}
 
-			CreateJobDetailsEntity jobEntity = createJobDetailsRepository.findBySrId(srId);
+			Optional<CreateJobDetailsEntity> jobEntity = createJobDetailsRepository.findById(jobId);
 
-			JobDescriptionEntity descriptionEntity = jobDescriptionRepository.findBySrId(srId);
+			JobDescriptionEntity descriptionEntity = jobDescriptionRepository.findByJobId(jobId);
 
-			SourcingChannelEntity sourcingEntity = sourcingChannelRepository.findBySrId(srId);
+			SourcingChannelEntity sourcingEntity = sourcingChannelRepository.findByJobId(jobId);
 
-			List<RecruiterAssignmentEntity> recruiterEntities = recruiterAssignmentRepository.findBySrId(srId);
+			List<RecruiterAssignmentEntity> recruiterEntities = recruiterAssignmentRepository.findByJobId(jobId);
 
-			if (jobEntity == null && descriptionEntity == null && sourcingEntity == null
+			CreateJobDetailsEntity createJobDetailsEntity = jobEntity.get();
+
+			if (createJobDetailsEntity == null && descriptionEntity == null && sourcingEntity == null
 					&& recruiterEntities.isEmpty()) {
 
-				return ApiResponse.failure(ResponseCode.FAILURE,List.of("Invalid SR ID : " + srId));
+				return ApiResponse.failure(ResponseCode.FAILURE, List.of("Invalid Job ID : " + jobId));
 			}
 
 			JobCreationDetailsResponseDto response = new JobCreationDetailsResponseDto();
@@ -725,28 +733,27 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				JobOverviewResponse jobOverviewResponse = new JobOverviewResponse();
 
-				jobOverviewResponse.setSrId(jobEntity.getSrId());
-				jobOverviewResponse.setJobTitle(jobEntity.getJobTitle());
-				jobOverviewResponse.setJobCode(jobEntity.getJobCode());
-				jobOverviewResponse.setBusinessUnitId(jobEntity.getBusinessUnitId());
-				jobOverviewResponse.setDepartmentId(jobEntity.getDepartmentId());
-				jobOverviewResponse.setLocation(jobEntity.getLocation());
-				jobOverviewResponse.setOpenings(jobEntity.getOpenings());
-				jobOverviewResponse.setTargetStartDate(jobEntity.getTargetStartDate());
-				jobOverviewResponse.setWorkMode(jobEntity.getWorkMode());
-				jobOverviewResponse.setEmploymentType(jobEntity.getEmploymentType());
-				jobOverviewResponse.setMinExperience(jobEntity.getMinExperience());
-				jobOverviewResponse.setMaxExperience(jobEntity.getMaxExperience());
+				jobOverviewResponse.setJobTitle(createJobDetailsEntity.getJobTitle());
+				jobOverviewResponse.setJobCode(createJobDetailsEntity.getJobCode());
+				jobOverviewResponse.setBusinessUnitId(createJobDetailsEntity.getBusinessUnitId());
+				jobOverviewResponse.setDepartmentId(createJobDetailsEntity.getDepartmentId());
+				jobOverviewResponse.setLocation(createJobDetailsEntity.getLocation());
+				jobOverviewResponse.setOpenings(createJobDetailsEntity.getOpenings());
+				jobOverviewResponse.setTargetStartDate(createJobDetailsEntity.getTargetStartDate());
+				jobOverviewResponse.setWorkMode(createJobDetailsEntity.getWorkMode());
+				jobOverviewResponse.setEmploymentType(createJobDetailsEntity.getEmploymentType());
+				jobOverviewResponse.setMinExperience(createJobDetailsEntity.getMinExperience());
+				jobOverviewResponse.setMaxExperience(createJobDetailsEntity.getMaxExperience());
 
-				jobOverviewResponse.setSkillsMustHave(
-						jobEntity.getSkillsMustHave() != null ? Arrays.asList(jobEntity.getSkillsMustHave().split(","))
-								: Collections.emptyList());
-
-				jobOverviewResponse.setNiceToHaveSkills(jobEntity.getNiceToHaveSkills() != null
-						? Arrays.asList(jobEntity.getNiceToHaveSkills().split(","))
+				jobOverviewResponse.setSkillsMustHave(createJobDetailsEntity.getSkillsMustHave() != null
+						? Arrays.asList(createJobDetailsEntity.getSkillsMustHave().split(","))
 						: Collections.emptyList());
 
-				jobOverviewResponse.setAdditionalNotes(jobEntity.getAdditionalNotes());
+				jobOverviewResponse.setNiceToHaveSkills(createJobDetailsEntity.getNiceToHaveSkills() != null
+						? Arrays.asList(createJobDetailsEntity.getNiceToHaveSkills().split(","))
+						: Collections.emptyList());
+
+				jobOverviewResponse.setAdditionalNotes(createJobDetailsEntity.getAdditionalNotes());
 
 				response.setJobOverview(jobOverviewResponse);
 			}
@@ -756,8 +763,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			if (descriptionEntity != null) {
 
 				JobDescriptionResponse jobDescriptionResponse = new JobDescriptionResponse();
-
-				jobDescriptionResponse.setSrId(descriptionEntity.getSrId());
 
 				jobDescriptionResponse.setDescription(descriptionEntity.getDescription());
 
@@ -769,8 +774,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			if (sourcingEntity != null) {
 
 				SourcingChannelResponse sourcingChannelResponse = new SourcingChannelResponse();
-
-				sourcingChannelResponse.setSrId(sourcingEntity.getSrId());
 
 				sourcingChannelResponse.setSourcingChannels(sourcingEntity.getSourcingChannelRequest());
 
@@ -784,50 +787,34 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			// RECRUITERS
 
 			if (!recruiterEntities.isEmpty()) {
-				if (!recruiterEntities.isEmpty()) {
 
-				    List<AssignedRecruiterResponse> recruiters =
-				            recruiterEntities.stream()
-				                    .map(entity -> {
+				List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
 
-				                        AssignedRecruiterResponse recruiter =
-				                                new AssignedRecruiterResponse();
+					AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
 
-				                        recruiter.setUserName(
-				                                entity.getUserName());
+					recruiter.setUserName(entity.getUserName());
 
-				                        recruiter.setEmail(
-				                                entity.getEmail());
+					recruiter.setEmail(entity.getEmail());
 
-				                        recruiter.setAssignedAt(
-				                                entity.getAssignedAt());
+					recruiter.setAssignedAt(entity.getAssignedAt());
 
-				                        return recruiter;
-				                    })
-				                    .toList();
+					return recruiter;
+				}).toList();
 
-				    RecruitersResponse recruitersResponse =
-				            new RecruitersResponse();
+				RecruitersResponse recruitersResponse = new RecruitersResponse();
 
-				    recruitersResponse.setRecruiters(recruiters);
+				recruitersResponse.setRecruiters(recruiters);
 
-				    response.setRecruiters(recruitersResponse);
-				}
+				response.setRecruiters(recruitersResponse);
 			}
 
 			return ApiResponse.success(ResponseCode.SUCCESS, response);
 
-		} 
-		
-		
-			catch (Exception e) {
+		} catch (Exception e) {
 
-			log.error("Error fetching Job Details for srId: {}", srId, e);
+			log.error("Error fetching Job Details for jobId: {}", jobId, e);
 
-			return ApiResponse.failure(ResponseCode.FAILURE,
-
-					List.of(e.getMessage()));
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
 	}
 }
-	

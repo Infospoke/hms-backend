@@ -2292,7 +2292,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Override
 	public ApiResponse<?> getAllApprovedServiceRequests(SpecificationFilterRequest request) {
-		log.info("Hello");
 
 		int page = request.getPage() != null ? request.getPage() : 0;
 
@@ -2309,8 +2308,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		Page<SRPositionBasicsEntity> pageResult = positionBasicsRepository.findAll(spec, pageable);
 
-		List<ApprovedSrResponse> responseList = pageResult.getContent().stream()
-				.filter(entity -> entity.getJobSubmit() == null || !entity.getJobSubmit()).map(this::mapToResponse)
+		List<ApprovedSrResponse> responseList = pageResult.getContent().stream().map(this::mapToResponse)
 				.collect(Collectors.toList());
 		Map<String, Object> response = new LinkedHashMap<>();
 

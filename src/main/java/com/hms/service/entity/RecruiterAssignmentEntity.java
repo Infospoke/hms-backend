@@ -58,6 +58,9 @@ public class RecruiterAssignmentEntity {
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
     
+    @Column(name = "job_id")
+    private Integer jobId;
+    
  
 }
 

@@ -12,6 +12,6 @@ public interface ICreateJobService {
 
 	ApiResponse<?> getRecruiters(SpecificationFilterRequest request);
 
-	ApiResponse<?> getJobCreationDetails(String srId);
+	ApiResponse<?> getJobCreationDetails(Integer jobId);
 
 }
