@@ -44,8 +44,15 @@ public class RecruiterController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	@GetMapping("/assigned-recruiters/{jobId}")
+	public ResponseEntity<ApiResponse<?>> getAssignedRecruiterUserIds(@PathVariable("jobId") Integer jobId) {
+		ApiResponse<?> response = recruiterService.getAssignedRecruiterUserIds(jobId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 	@PostMapping("/job-assignment-details-list/{jobId}")
-	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetailsList(@PathVariable("jobId") Integer jobId,@RequestBody FilterRequest request) {
+	public ResponseEntity<ApiResponse<?>> getRecruiterAssignmentDetailsList(@PathVariable("jobId") Integer jobId,
+			@RequestBody FilterRequest request) {
 		ApiResponse<?> response = recruiterService.getRecruiterAssignmentDetailsList(jobId, request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -56,19 +63,17 @@ public class RecruiterController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	
 	@PostMapping("/my-job-assignments")
-	public ResponseEntity<ApiResponse<?>> getMyJobAssignments(@RequestBody SpecificationFilterRequest request){
-		ApiResponse<?> response=recruiterService.getMyJobAssignments(request);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
-	
-	@PostMapping("/update-recruiter-assignment")
-	public ResponseEntity<ApiResponse<?>>updateRecruiterAssignment(@RequestBody UpdateRecruitersAssignmentRequest request){
-		ApiResponse<?> response=recruiterService.updateRecruiterAssignment(request);
+	public ResponseEntity<ApiResponse<?>> getMyJobAssignments(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = recruiterService.getMyJobAssignments(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	
-	
+	@PostMapping("/update-recruiter-assignment")
+	public ResponseEntity<ApiResponse<?>> updateRecruiterAssignment(
+			@RequestBody UpdateRecruitersAssignmentRequest request) {
+		ApiResponse<?> response = recruiterService.updateRecruiterAssignment(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 }
