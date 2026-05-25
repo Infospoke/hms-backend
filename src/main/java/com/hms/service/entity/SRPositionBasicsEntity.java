@@ -48,6 +48,9 @@ public class SRPositionBasicsEntity {
 	@Column(name="location")
 	private String location;
 	
+	@Column(name="country")
+	private String country;
+	
 	@Column(name="seniority_level")
 	private Integer seniorityLevel;
 	

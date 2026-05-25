@@ -46,7 +46,8 @@ public class SecurityConfig {
 										"/hms/staffing-requisition/**",
 										"/ws/**",                          // WebSocket STOMP handshake
 										"/hms/notifications/**" ,          // Notification test endpoint
-										"/hms/create-job/**"         
+										"/hms/create-job/**" ,      
+										"/hms/jobs/**"
 								).permitAll()
 								.anyRequest().authenticated())
 				.addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

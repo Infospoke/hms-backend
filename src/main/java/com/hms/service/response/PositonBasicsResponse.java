@@ -80,6 +80,8 @@ public class PositonBasicsResponse {
     private String approver3Role;
 
 	private LocalDateTime submittedOn;
+	
+	private String country;
     
     //private List<String>reportingManagerName;
     
