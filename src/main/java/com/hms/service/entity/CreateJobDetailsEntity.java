@@ -27,6 +27,9 @@ public class CreateJobDetailsEntity {
     
 	@Column(name="job_title")
 	private String jobTitle;
+    
+	@Column(name="role_Id")
+	private Long roleId;
 	
 	@Column(name="business_unit")
 	private Integer businessUnitId;

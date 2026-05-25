@@ -174,12 +174,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			String authHeader = httpServletRequest.getHeader("Authorization");
 
 			String userName = "";
+			Long roleId=null;
 
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 				String token = authHeader.substring(7);
 
 				userName = jwtService.extractUsernameFromClaims(token);
+				roleId=jwtService.extractRoleId(token);
 			}
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
@@ -198,6 +200,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				createJobDetailsEntity.setSrId(request.getSrId());
 				createJobDetailsEntity.setCreatedBy(userName);
+				createJobDetailsEntity.setRoleId(roleId);
 
 				createJobDetailsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
