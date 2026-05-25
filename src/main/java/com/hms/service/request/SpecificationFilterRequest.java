@@ -472,7 +472,7 @@ public class SpecificationFilterRequest {
 
 		spec = spec.and(
 
-				(r, q, c) -> r.get("srId").in(srIds)
+				(r, q, c) -> r.get("id").in(srIds)
 
 		);
 
@@ -484,7 +484,7 @@ public class SpecificationFilterRequest {
 
 					c.like(
 
-							c.lower(r.get("srId")),
+							c.lower(r.get("jobId")),
 
 							"%" + search.toLowerCase() + "%"
 
@@ -587,7 +587,7 @@ public class SpecificationFilterRequest {
 
 					c.like(
 
-							c.lower(r.get("srId")),
+							c.lower(r.get("jobId")),
 
 							"%" + search.toLowerCase() + "%"
 
@@ -855,57 +855,6 @@ public class SpecificationFilterRequest {
 
 	}
 
-	public Specification<CreateJobDetailsEntity> buildMyRecruiterSpecification(String userName) {
-
-		return (root, query, cb) -> {
-
-			Predicate predicate = cb.conjunction();
-
-			// JOB TITLE
-
-			String jobTitle = getFilter("jobTitle");
-
-			if (jobTitle != null && !jobTitle.isBlank()) {
-
-				predicate = cb.and(predicate,
-						cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase().trim() + "%"));
-			}
-
-			// DEPARTMENT
-
-			String departmentId = getFilter("departmentId");
-
-			if (departmentId != null && !departmentId.isBlank()) {
-
-				predicate = cb.and(predicate, cb.equal(root.get("departmentId"), Integer.parseInt(departmentId)));
-			}
-
-			// REQUESTED BY
-
-			String requestedBy = getFilter("requestedBy");
-
-			if (requestedBy != null && !requestedBy.isBlank()) {
-
-				predicate = cb.and(predicate,
-						cb.like(cb.lower(root.get("createdBy")), "%" + requestedBy.toLowerCase().trim() + "%"));
-			}
-
-			// DATE FILTER
-
-			Specification<CreateJobDetailsEntity> dateSpecification = dateSpec("createdAt");
-
-			if (dateSpecification != null) {
-
-				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
-
-				predicate = cb.and(predicate, datePredicate);
-			}
-
-			return predicate;
-		};
-	}
-
-
 	public Specification<RecruiterAssignmentEntity> buildRecruiterStatusSpecification(Long userId) {
 
 		return (root, query, cb) -> {
@@ -928,15 +877,15 @@ public class SpecificationFilterRequest {
 		};
 	}
 
-	public Specification<CreateJobDetailsEntity> buildMyRecruiterSpecification(List<String> srIds) {
+	public Specification<CreateJobDetailsEntity> buildMyRecruiterSpecification(List<Integer> jobIds) {
 
 		return (root, query, cb) -> {
 
 			Predicate predicate = cb.conjunction();
 
-			if (srIds != null && !srIds.isEmpty()) {
+			if (jobIds != null && !jobIds.isEmpty()) {
 
-				predicate = cb.and(predicate, root.get("srId").in(srIds));
+				predicate = cb.and(predicate, root.get("id").in(jobIds));
 			}
 
 			String jobTitle = getFilter("jobTitle");
