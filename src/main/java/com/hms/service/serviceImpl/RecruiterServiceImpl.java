@@ -1,6 +1,8 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.RecruiterCardsCountDto;
+import com.hms.service.dto.RecruiterInfoDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
@@ -33,6 +36,7 @@ import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.FilterRequest;
+import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRecruitersAssignmentRequest;
 import com.hms.service.service.INotificationService;
@@ -120,7 +124,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			int size = request.getSize() != null ? request.getSize() : 10;
 
-			String sortBy = request.getSortBy() != null ? request.getSortBy() : "id";
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "jobId";
 
 			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
 					: Sort.Direction.DESC;
@@ -235,7 +239,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			int size = request.getSize() != null ? request.getSize() : 10;
 
-			String sortBy = request.getSortBy() != null ? request.getSortBy() : "id";
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "jobId";
 
 			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
 					: Sort.Direction.DESC;
@@ -370,6 +374,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
+
 
 //	@Override
 //	public ApiResponse<?> getMyJobAssignments(SpecificationFilterRequest request) {
@@ -873,6 +878,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	    }
 	}
 
+
 	@Override
 	public ApiResponse<?> updateRecruiterAssignment(UpdateRecruitersAssignmentRequest request) {
 		String authHeader = httpServletRequest.getHeader("Authorization");
@@ -924,7 +930,9 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		event.setProcessId(recruiterAssignmentEntity.getJobId().toString());
 		event.setType("Recruiters");
 		event.setDeptName(departmentName);
+
 		Integer makerRoleId = createJobDetailsRepository.findById(request.getJobId()).get().getRoleId().intValue();
+
 		event.setMakerRoleId(makerRoleId);
 		event.setMakerRoleName(recruiterAssignmentEntity.getRoleName());
 		event.setMakerMessage("accepted");
@@ -948,9 +956,99 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	}
 
 	@Override
+	public ApiResponse<?> saveRecruiterAssignments(RecuriterAssignmentRequest request) {
+		log.info("RecruiterServiceImpl :: Inside the saveRecruiterAssignments method");
+		
+		if (request == null) {
+			return null;
+		}
+	
+
+		ApiResponse<?> error = validateRecruiterAssignmentRequest(request, request.getSrId());
+
+		if (error != null) {
+			return error;
+		}
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		String userName = "";
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userName = jwtService.extractUsernameFromClaims(token);
+		}
+
+		List<RecruiterAssignmentEntity> list = new ArrayList<>();
+
+		for (RecruiterInfoDto recruiter : request.getRecruiterInfoDtos()) {
+
+			RecruiterAssignmentEntity entity = new RecruiterAssignmentEntity();
+
+			entity.setSrId(request.getSrId());
+			entity.setJobId(request.getJobId());
+			entity.setUserId(recruiter.getUserId());
+
+			entity.setSrId(request.getSrId());
+
+			entity.setRoleId(recruiter.getRoleId());
+
+			entity.setRoleName(recruiter.getRoleName());
+
+			entity.setEmail(recruiter.getEmail());
+
+			entity.setUserName(recruiter.getUserName());
+
+			entity.setStatus("PENDING");
+
+			entity.setAssignedBy(userName);
+
+			entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+			list.add(entity);
+		}
+
+		if (!list.isEmpty()) {
+			recruiterAssignmentRepository.saveAll(list);
+		}
+		log.info("RecruiterServiceImpl :: Inside the saveRecruiterAssignments method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Recruiters assigned successfully");
+	}
+
+	// validations for RecruiterAssignmentRequest
+	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req, String srId) {
+
+		if (req.getRecruiterInfoDtos().isEmpty())
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
+
+		for (RecruiterInfoDto dto : req.getRecruiterInfoDtos()) {
+
+			if (dto.getUserId() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
+			}
+
+			if (!userRepository.existsByUserId(dto.getUserId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+						List.of("User not found for userId : " + dto.getUserId()));
+			}
+		}
+
+		return null;
+	}
+
+
+	
+
+	@Override
 	public ApiResponse<?> getAssignedRecruiterUserIds(Integer jobId) {
 
 		log.info("RecruiterDashboardServiceImpl ::Inside getAssignedRecruiterUserIds method");
+
 
 		try {
 			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
