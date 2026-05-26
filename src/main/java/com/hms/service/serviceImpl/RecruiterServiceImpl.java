@@ -887,15 +887,14 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			log.info("token userId" + userId);
 
 		}
-		List<RecruiterAssignmentEntity> recruiterAssignmentList = recruiterAssignmentRepository
-				.findByJobId(request.getJobId());
+		RecruiterAssignmentEntity recruiterAssignmentEntity = recruiterAssignmentRepository
+				.findByJobIdAndUserId(request.getJobId(),userId.intValue());
 
-		if (recruiterAssignmentList.isEmpty()) {
+		if (recruiterAssignmentEntity==null) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "No assignment found");
 		}
 
-		RecruiterAssignmentEntity recruiterAssignmentEntity = recruiterAssignmentList.get(0);
-
+		
 		Long assignedUserId = recruiterAssignmentEntity.getUserId().longValue();
 
 		log.info("assigned userId is " + assignedUserId);
