@@ -107,6 +107,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	@Autowired
 	private UserRepository userRepository;
 
+	@Autowired
+	private RecruiterServiceImpl recruiterServiceImpl;
+
 	private String generateJobCode(String srId) {
 
 		if (srId != null && srId.startsWith("SR-")) {
@@ -231,13 +234,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setMaxExperience(req.getMaxExperience());
 
 				createJobDetailsEntity.setAdditionalNotes(req.getAdditionalNotes());
-				
+
 				createJobDetailsEntity.setSubmit(request.getSubmit());
-				
+
 				createJobDetailsEntity.setEducationRequirement(req.getEducationRequirement());
-				
+
 				createJobDetailsEntity.setCountry(req.getCountry());
-				
+
 				createJobDetailsEntity.setIsOpen(true);
 
 			}
@@ -287,65 +290,33 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				channelEntity.setSrId(request.getSrId());
 
 			}
+
 			// recuriter assignment
-
-			if (request.getRecuriterAssignmentRequest() != null) {
-
-				RecuriterAssignmentRequest req = request.getRecuriterAssignmentRequest();
-				ApiResponse<?> error = validateRecruiterAssignmentRequest(req, request.getSrId());
-
-				if (error != null) {
-					return error;
-				}
-
-				for (RecruiterInfoDto recruiter : req.getRecruiterInfoDtos()) {
-
-					RecruiterAssignmentEntity entity = new RecruiterAssignmentEntity();
-
-					entity.setSrId(request.getSrId());
-
-					entity.setUserId(recruiter.getUserId());
-
-					entity.setRoleId(recruiter.getRoleId());
-
-					entity.setRoleName(recruiter.getRoleName());
-
-					entity.setEmail(recruiter.getEmail());
-
-					entity.setUserName(recruiter.getUserName());
-
-					entity.setStatus("PENDING");
-
-					entity.setAssignedBy(userName);
-
-					entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-
-					entity.setJobId(createJobDetailsEntity.getJobId());
-
-					list.add(entity);
-				}
-
-			}
 
 			SRPositionBasicsEntity basicsEntity = srOptional.get();
 			basicsEntity.setJobSubmit(request.getSubmit());
+		
 
 			positionBasicsRepository.save(basicsEntity);
 			jobDescriptionRepository.save(descriptionEntity);
 			descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
 			sourcingChannelRepository.save(channelEntity);
+
+	
+			
+			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getJobId());
+			recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
+
 			channelEntity.setJobId(createJobDetailsEntity.getJobId());
-			if (list.size() > 0) {
-				recruiterAssignmentRepository.saveAll(list);
-
-			}
-
+	
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 
 	}
+	
 
+	
 	// Validations for createJobDetailsRequest
 
 	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {
@@ -549,28 +520,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
-	// validations for RecruiterAssignmentRequest
-	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req, String srId) {
-
-		if (req.getRecruiterInfoDtos().isEmpty())
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
-
-		for (RecruiterInfoDto dto : req.getRecruiterInfoDtos()) {
-
-			if (dto.getUserId() == null) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
-			}
-
-			if (!userRepository.existsByUserId(dto.getUserId())) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-						List.of("User not found for userId : " + dto.getUserId()));
-			}
-		}
-
-		return null;
-	}
+	
 
 	@Override
 	public ApiResponse<?> getRecruiters(SpecificationFilterRequest request) {
@@ -866,6 +816,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			
 			return ApiResponse.success(ResponseCode.SUCCESS,"Success", response);
 
+
 		} catch (Exception e) {
 
 			log.error("Error fetching Job Details for jobId: {}", jobId, e);
@@ -873,6 +824,5 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
 	}
-	
 
 }

@@ -13,6 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RecuriterAssignmentRequest {
 	private List<RecruiterInfoDto> recruiterInfoDtos;
+	
+	private String srId;
+	
+	private Integer jobId;
 
   
 }

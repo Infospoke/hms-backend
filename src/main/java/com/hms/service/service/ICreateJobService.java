@@ -1,6 +1,7 @@
 package com.hms.service.service;
 
 import com.hms.service.request.CreateJobRequest;
+import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -13,6 +14,7 @@ public interface ICreateJobService {
 	ApiResponse<?> getRecruiters(SpecificationFilterRequest request);
 
 	ApiResponse<?> getJobCreationDetails(Integer jobId);
+
 
 
 }
