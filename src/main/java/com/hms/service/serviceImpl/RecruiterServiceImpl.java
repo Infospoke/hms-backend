@@ -152,7 +152,9 @@ public class RecruiterServiceImpl implements IRecruiterService {
 				long declinedCount = assignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus()))
 						.count();
 
-				map.put("id", job.getJobId());
+				map.put("jobId", job.getJobId());
+
+				map.put("srId", job.getSrId());
 
 				map.put("jobTitle", job.getJobTitle());
 
