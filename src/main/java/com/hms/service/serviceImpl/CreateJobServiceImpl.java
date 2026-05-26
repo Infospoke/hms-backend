@@ -261,7 +261,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			}
 
-			// sourcing channel
+			// Souring channel
 			if (request.getSourcingChannelRequest() != null) {
 
 				ApiResponse<?> error = validateSourcingChannelRequest(request.getSourcingChannelRequest(),
@@ -728,6 +728,21 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	public ApiResponse<?> getJobCreationDetails(Integer jobId) {
 
 		log.info("CreateJobServiceImpl : Inside getJobCreationDetails method");
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+		    String token = authHeader.substring(7);
+
+		    userId = jwtService.extractUserId(token);
+
+		} else {
+			
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized", List.of("Missing or invalid token"));
+		}
 
 		try {
 
@@ -812,29 +827,43 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			}
 
 			// RECRUITERS
-
+		
 			if (!recruiterEntities.isEmpty()) {
 
-				List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
+			    final Long loggedInUserId = userId;
 
-					AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
+			    List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
 
-					recruiter.setUserName(entity.getUserName());
+			        AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
 
-					recruiter.setEmail(entity.getEmail());
+			        // ALWAYS VISIBLE
+			        recruiter.setUserName(entity.getUserName());
 
-					recruiter.setAssignedAt(entity.getAssignedAt());
+			        recruiter.setEmail(entity.getEmail());
 
-					return recruiter;
-				}).toList();
+			        recruiter.setAssignedAt(entity.getAssignedAt());
 
-				RecruitersResponse recruitersResponse = new RecruitersResponse();
+			        // ONLY OWN COMMENTS/STATUS
+			        if (entity.getUserId()
+			                .equals(loggedInUserId.intValue())) {
 
-				recruitersResponse.setRecruiters(recruiters);
+			            recruiter.setComments(entity.getComments());
 
-				response.setRecruiters(recruitersResponse);
+			            recruiter.setStatus(entity.getStatus());
+			        }
+
+			        return recruiter;
+
+			    }).toList();
+
+			    RecruitersResponse recruitersResponse =
+			            new RecruitersResponse();
+
+			    recruitersResponse.setRecruiters(recruiters);
+
+			    response.setRecruiters(recruitersResponse);
 			}
-
+			
 			return ApiResponse.success(ResponseCode.SUCCESS,"Success", response);
 
 		} catch (Exception e) {
