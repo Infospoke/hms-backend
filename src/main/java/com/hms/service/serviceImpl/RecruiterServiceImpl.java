@@ -120,7 +120,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			int size = request.getSize() != null ? request.getSize() : 10;
 
-			String sortBy = request.getSortBy() != null ? request.getSortBy() : "id";
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "jobId";
 
 			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
 					: Sort.Direction.DESC;
@@ -235,7 +235,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			int size = request.getSize() != null ? request.getSize() : 10;
 
-			String sortBy = request.getSortBy() != null ? request.getSortBy() : "id";
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "jobId";
 
 			Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
 					: Sort.Direction.DESC;
