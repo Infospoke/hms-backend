@@ -803,15 +803,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			    recruitersResponse.setRecruiters(recruiters);
 
-			    Optional<RecruiterAssignmentEntity> loggedInRecruiter =
-			            recruiterAssignmentRepository
+			    RecruiterAssignmentEntity loggedInRecruiter = recruiterAssignmentRepository
 			                    .findByJobIdAndUserId(
 			                            jobId,
 			                            userId.intValue());
 
-			    if (loggedInRecruiter.isPresent()) {
+			    if (loggedInRecruiter != null) {
 
-			        RecruiterAssignmentEntity entity = loggedInRecruiter.get();
+			        RecruiterAssignmentEntity entity = loggedInRecruiter;
 
 			        MyRecruiterResponse myResponse = new MyRecruiterResponse();
 
