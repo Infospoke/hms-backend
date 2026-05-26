@@ -95,6 +95,5 @@ public interface RecruiterAssignmentRepository
 	RecruiterAssignmentEntity findByJobIdAndUserId(Integer jobId ,Integer userId);
 	RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
 	
-	//Optional<RecruiterAssignmentEntity>findByJobIdAndUserId(Integer jobId, Integer userId);
 }
 
