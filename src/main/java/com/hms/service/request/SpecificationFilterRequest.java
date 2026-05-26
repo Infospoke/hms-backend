@@ -472,7 +472,7 @@ public class SpecificationFilterRequest {
 
 		spec = spec.and(
 
-				(r, q, c) -> r.get("id").in(srIds)
+				(r, q, c) -> r.get("srId").in(srIds)
 
 		);
 
@@ -482,14 +482,7 @@ public class SpecificationFilterRequest {
 
 			spec = spec.and((r, q, c) -> c.or(
 
-					c.like(
-
-							c.lower(r.get("jobId")),
-
-							"%" + search.toLowerCase() + "%"
-
-					),
-
+				
 					c.like(
 
 							c.lower(r.get("jobTitle")),
