@@ -177,12 +177,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			String authHeader = httpServletRequest.getHeader("Authorization");
 
 			String userName = "";
+			Long roleId=null;
 
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 				String token = authHeader.substring(7);
 
 				userName = jwtService.extractUsernameFromClaims(token);
+				roleId=jwtService.extractRoleId(token);
 			}
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
@@ -201,6 +203,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				createJobDetailsEntity.setSrId(request.getSrId());
 				createJobDetailsEntity.setCreatedBy(userName);
+				createJobDetailsEntity.setRoleId(roleId);
 
 				createJobDetailsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
@@ -288,28 +291,30 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			}
 
+			// recuriter assignment
+
 			SRPositionBasicsEntity basicsEntity = srOptional.get();
 			basicsEntity.setJobSubmit(request.getSubmit());
 		
 
 			positionBasicsRepository.save(basicsEntity);
 			jobDescriptionRepository.save(descriptionEntity);
-			descriptionEntity.setJobId(createJobDetailsEntity.getId());
+			descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
 			sourcingChannelRepository.save(channelEntity);
-			channelEntity.setJobId(createJobDetailsEntity.getId());
+
+	
 			
-			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getId());
-			ApiResponse<?> recruiter = recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
+			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getJobId());
+			recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
 
-			if (recruiter != null) {
-				return recruiter;
-			}
-
+			channelEntity.setJobId(createJobDetailsEntity.getJobId());
+	
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 
 	}
+	
 
 	
 	// Validations for createJobDetailsRequest
