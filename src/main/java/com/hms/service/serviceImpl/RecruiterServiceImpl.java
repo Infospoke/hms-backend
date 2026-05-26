@@ -136,7 +136,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 				Map<String, Object> map = new LinkedHashMap<>();
 
-				List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(job.getId());
+				List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(job.getJobId());
 
 				long acceptedCount = assignments.stream().filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus()))
 						.count();
@@ -146,7 +146,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 				long declinedCount = assignments.stream().filter(a -> "DECLINED".equalsIgnoreCase(a.getStatus()))
 						.count();
 
-				map.put("id", job.getId());
+				map.put("id", job.getJobId());
 
 				map.put("jobTitle", job.getJobTitle());
 
@@ -439,7 +439,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			List<CreateJobDetailsEntity> filteredJobs = createJobDetailsRepository.findAll(specification);
 
 			// FILTERED JOB IDS
-			List<Integer> filteredJobIds = filteredJobs.stream().map(CreateJobDetailsEntity::getId).distinct().toList();
+			List<Integer> filteredJobIds = filteredJobs.stream().map(CreateJobDetailsEntity::getJobId).distinct().toList();
 
 			log.info("filteredJobIds : {}", filteredJobIds);
 
@@ -518,9 +518,9 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 				Map<String, Object> map = new HashMap<>();
 
-				RecruiterAssignmentEntity assignment = assignmentMap.get(job.getId());
+				RecruiterAssignmentEntity assignment = assignmentMap.get(job.getJobId());
 
-				map.put("id", job.getId());
+				map.put("id", job.getJobId());
 
 				map.put("jobTitle", job.getJobTitle());
 

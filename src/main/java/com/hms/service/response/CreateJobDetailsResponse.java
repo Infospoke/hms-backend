@@ -16,7 +16,7 @@ public class CreateJobDetailsResponse {
 
     private String srId;
     private String jobTitle;
-    private Integer id;
+    private Integer jobId;
     private Integer businessUnitId;
     private Integer departmentId;
     private String location;

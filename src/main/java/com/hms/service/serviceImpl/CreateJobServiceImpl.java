@@ -320,7 +320,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 					entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
-					entity.setJobId(createJobDetailsEntity.getId());
+					entity.setJobId(createJobDetailsEntity.getJobId());
 
 					list.add(entity);
 				}
@@ -332,9 +332,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			positionBasicsRepository.save(basicsEntity);
 			jobDescriptionRepository.save(descriptionEntity);
-			descriptionEntity.setJobId(createJobDetailsEntity.getId());
+			descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
 			sourcingChannelRepository.save(channelEntity);
-			channelEntity.setJobId(createJobDetailsEntity.getId());
+			channelEntity.setJobId(createJobDetailsEntity.getJobId());
 			if (list.size() > 0) {
 				recruiterAssignmentRepository.saveAll(list);
 

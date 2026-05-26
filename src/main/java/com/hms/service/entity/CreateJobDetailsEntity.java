@@ -22,8 +22,8 @@ public class CreateJobDetailsEntity {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
-    private Integer id;
+    @Column(name = "job_id", updatable = false, nullable = false)
+    private Integer jobId;
     
 	@Column(name="job_title")
 	private String jobTitle;
