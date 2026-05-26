@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.ActivityFeedEntity;
-import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewQuestionsEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.JobDetailsEntity;
@@ -32,7 +31,6 @@ import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.CandidateCreationRepository;
-import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewAnalysisRepository;
 import com.hms.service.repository.InterviewQuestionsRepository;
 import com.hms.service.repository.InterviewSessionRepository;
@@ -46,7 +44,6 @@ import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.SkillsRepository;
 import com.hms.service.request.JobRequest;
 import com.hms.service.request.JobSkillRequest;
-import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
 import com.hms.service.response.JobsResponse;
@@ -66,9 +63,6 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private JobsRepository jobsRepository;
-	
-	@Autowired
-	private CreateJobDetailsRepository createJobDetailsRepository;
 
 	@Autowired
 	private JwtService jwtService;
@@ -221,55 +215,56 @@ public class JobServiceImpl implements IJobService {
 
 		log.info("JobServiceImpl::Inside getAllJobs");
 
-		List<CreateJobDetailsEntity> entities = createJobDetailsRepository.findAll(Sort.by(Sort.Direction.DESC, Constants.CREATED_AT));
+		List<JobsEntity> entities = jobsRepository.findAll(Sort.by(Sort.Direction.DESC, Constants.CREATED_DATE));
 
-		List<CreateJobDetailsResponse> jobsResponse = entities.stream()
+		List<JobsResponse> jobsResponse = entities.stream()
 
 				.filter(job -> Boolean.TRUE.equals(isOpen) ? Boolean.TRUE.equals(job.getIsOpen()) : true)
 
 				.map(job -> {
+					
 
-					CreateJobDetailsResponse response = new CreateJobDetailsResponse();
+					JobsResponse response = new JobsResponse();
 					BeanUtils.copyProperties(job, response);
 
-//					response.setApplicantCount(jobApplicationRepository.countByJobId(job.getJobId()));
-//
-//					response.setInterview(interviewAnalysisRepository.countByJobId(job.getJobId()));
-//
-//					JobDetailsEntity details = jobDetailsRepository.findByJobId(job.getJobId());
-//
-//					if (details != null) {
-//						response.setQualification(details.getQualification());
-//						response.setJobRequirements(details.getJobRequirements());
-//						response.setJobDescription(details.getJobDescription());
-//					}
-//
-//					List<JobSkillWeightageEntity> skillEntities = jobSkillWeightageRepository
-//							.findByJobId(job.getJobId());
-//
-//					if (skillEntities != null && !skillEntities.isEmpty()) {
-//
-//						List<Integer> skillIds = skillEntities.stream().map(JobSkillWeightageEntity::getSkillId)
-//								.collect(Collectors.toList());
-//
-//						Map<Integer, String> skillMap = skillsRepository.findSkillNamesByIds(skillIds).stream()
-//								.collect(Collectors.toMap(obj -> (Integer) obj[0], obj -> (String) obj[1]));
-//
-//						List<JobSkillRequest> skillList = skillEntities.stream().map(skill -> {
-//
-//							JobSkillRequest skillReq = new JobSkillRequest();
-//
-//							skillReq.setSkillId(skill.getSkillId());
-//							skillReq.setCategoryId(skill.getCategoryId());
-//							skillReq.setExperienceLevel(skill.getExperienceLevel());
-//							skillReq.setWeightage(skill.getWeightage());
-//							skillReq.setSkillName(skillMap.get(skill.getSkillId()));
-//
-//							return skillReq;
-//						}).collect(Collectors.toList());
-//
-//						response.setSkills(skillList);
-//					}
+					response.setApplicantCount(jobApplicationRepository.countByJobId(job.getJobId()));
+
+					response.setInterview(interviewAnalysisRepository.countByJobId(job.getJobId()));
+
+					JobDetailsEntity details = jobDetailsRepository.findByJobId(job.getJobId());
+
+					if (details != null) {
+						response.setQualification(details.getQualification());
+						response.setJobRequirements(details.getJobRequirements());
+						response.setJobDescription(details.getJobDescription());
+					}
+
+					List<JobSkillWeightageEntity> skillEntities = jobSkillWeightageRepository
+							.findByJobId(job.getJobId());
+
+					if (skillEntities != null && !skillEntities.isEmpty()) {
+
+						List<Integer> skillIds = skillEntities.stream().map(JobSkillWeightageEntity::getSkillId)
+								.collect(Collectors.toList());
+
+						Map<Integer, String> skillMap = skillsRepository.findSkillNamesByIds(skillIds).stream()
+								.collect(Collectors.toMap(obj -> (Integer) obj[0], obj -> (String) obj[1]));
+
+						List<JobSkillRequest> skillList = skillEntities.stream().map(skill -> {
+
+							JobSkillRequest skillReq = new JobSkillRequest();
+
+							skillReq.setSkillId(skill.getSkillId());
+							skillReq.setCategoryId(skill.getCategoryId());
+							skillReq.setExperienceLevel(skill.getExperienceLevel());
+							skillReq.setWeightage(skill.getWeightage());
+							skillReq.setSkillName(skillMap.get(skill.getSkillId()));
+
+							return skillReq;
+						}).collect(Collectors.toList());
+
+						response.setSkills(skillList);
+					}
 
 					return response;
 				}).collect(Collectors.toList());
@@ -545,7 +540,7 @@ public class JobServiceImpl implements IJobService {
 
 		JobsDashboardResponse response = new JobsDashboardResponse();
 
-		long openJobs = createJobDetailsRepository.countByIsOpenTrue();
+		long openJobs = jobsRepository.countByIsOpenTrue();
 
 		long applicants = jobApplicationRepository.count();
 
