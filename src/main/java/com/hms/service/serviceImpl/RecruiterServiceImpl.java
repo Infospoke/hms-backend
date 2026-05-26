@@ -352,7 +352,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 				pending = count;
 
-			} else if ("Declined".equalsIgnoreCase(status)) {
+			} else if ("Rejected".equalsIgnoreCase(status)) {
 
 				declined = count;
 			}
