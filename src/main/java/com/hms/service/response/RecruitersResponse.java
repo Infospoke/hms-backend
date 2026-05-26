@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+
 public class RecruitersResponse {
 
     private List<AssignedRecruiterResponse> recruiters;
