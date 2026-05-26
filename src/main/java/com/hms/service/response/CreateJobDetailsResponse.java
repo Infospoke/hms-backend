@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CreateJobDetailsResponse {
 
     private String srId;
@@ -31,5 +30,7 @@ public class CreateJobDetailsResponse {
 	private String jobCode;
     private String educationRequirement;
     private String country;
+    private String departmentName;
+	private String businessName;
    
 }

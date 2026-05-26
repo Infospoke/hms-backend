@@ -22,9 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.dto.JobCreationDetailsResponseDto;
-import com.hms.service.dto.RecruiterInfoDto;
 import com.hms.service.entity.AssignRolesEntity;
+import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.JobDescriptionEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
@@ -46,7 +47,6 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.CreateJobDetailsRequest;
 import com.hms.service.request.CreateJobRequest;
 import com.hms.service.request.JobDescriptionRequest;
-import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.AssignedRecruiterResponse;
@@ -79,10 +79,10 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	private JwtService jwtService;
 
 	@Autowired
-	private HttpServletRequest httpServletRequest;
+	private DepartmentsRepository departmentsRepository;
 
 	@Autowired
-	private DepartmentsRepository departmentsRepository;
+	private HttpServletRequest httpServletRequest;
 
 	@Autowired
 	private BusinessUnitRepository businessUnitRepository;
@@ -128,6 +128,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		RolesAndRequirementsEntity rolesData = rolesAndRequirementsRepository.findBySrId(srId)
 				.orElseThrow(() -> new RuntimeException("Roles & Requirements data not found"));
+		DepartmentsEntity department = departmentsRepository.findById(srData.getDepartmentId()).orElse(null);
+		BusinessUnitEntity businessUnit = businessUnitRepository.findById(srData.getBusinessUnitId()).orElse(null);
 
 		CreateJobDetailsResponse response = new CreateJobDetailsResponse();
 
@@ -135,7 +137,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		response.setJobCode(generateJobCode(srData.getSrId()));
 		response.setJobTitle(srData.getJobTitle());
 		response.setBusinessUnitId(srData.getBusinessUnitId());
+		if (businessUnit != null) {
+			response.setBusinessName(businessUnit.getBusinessName());
+		}
 		response.setDepartmentId(srData.getDepartmentId());
+		if (department != null) {
+			response.setDepartmentName(department.getDepartmentName());
+		}
 		response.setLocation(srData.getLocation());
 		response.setWorkMode(srData.getWorkMode());
 		response.setEmploymentType(srData.getEmploymentType());
@@ -178,19 +186,18 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			String authHeader = httpServletRequest.getHeader("Authorization");
 
 			String userName = "";
-			Long roleId=null;
+			Long roleId = null;
 
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 				String token = authHeader.substring(7);
 
 				userName = jwtService.extractUsernameFromClaims(token);
-				roleId=jwtService.extractRoleId(token);
+				roleId = jwtService.extractRoleId(token);
 			}
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
 			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
-			List<RecruiterAssignmentEntity> list = new ArrayList<>();
 
 			if (request.getCreateJobDetailsRequest() != null) {
 
@@ -296,28 +303,23 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			SRPositionBasicsEntity basicsEntity = srOptional.get();
 			basicsEntity.setJobSubmit(request.getSubmit());
-		
 
 			positionBasicsRepository.save(basicsEntity);
 			jobDescriptionRepository.save(descriptionEntity);
 			descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
 			sourcingChannelRepository.save(channelEntity);
 
-	
-			
 			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getJobId());
 			recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
 
 			channelEntity.setJobId(createJobDetailsEntity.getJobId());
-	
+
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 
 	}
-	
 
-	
 	// Validations for createJobDetailsRequest
 
 	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {
@@ -520,8 +522,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		return null;
 	}
-
-	
 
 	@Override
 	public ApiResponse<?> getRecruiters(SpecificationFilterRequest request) {
