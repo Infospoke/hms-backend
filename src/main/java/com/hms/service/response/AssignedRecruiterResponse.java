@@ -20,8 +20,4 @@ public class AssignedRecruiterResponse {
 
     private LocalDateTime assignedAt;
 
-    private String status;
-    
-    private String comments;
-
 }

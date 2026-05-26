@@ -1,7 +1,5 @@
 package com.hms.service.response;
 
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,11 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+public class MyRecruiterResponse {
 
-public class RecruitersResponse {
+	private String comments;
 
-    private List<AssignedRecruiterResponse> recruiters;
-
-    private List<MyRecruiterResponse> myResponse;
+	private String status;
 
 }

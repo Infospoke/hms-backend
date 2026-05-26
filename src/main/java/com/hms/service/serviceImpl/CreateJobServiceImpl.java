@@ -53,6 +53,7 @@ import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.response.JobDescriptionResponse;
 import com.hms.service.response.JobOverviewResponse;
+import com.hms.service.response.MyRecruiterResponse;
 import com.hms.service.response.RecruiterDetailsResponse;
 import com.hms.service.response.RecruitersResponse;
 import com.hms.service.response.SourcingChannelResponse;
@@ -674,6 +675,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Recruiters fetched successfully", response);
 	}
 
+
 	@Override
 	public ApiResponse<?> getJobCreationDetails(Integer jobId) {
 
@@ -774,33 +776,23 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				sourcingChannelResponse.setReferralAmount(sourcingEntity.getReferralAmount());
 
 				response.setSourcingStrategy(sourcingChannelResponse);
-			}
-
+			}			
+			
 			// RECRUITERS
-		
+
 			if (!recruiterEntities.isEmpty()) {
 
-			    final Long loggedInUserId = userId;
+			    List<AssignedRecruiterResponse> recruiters =
+			            recruiterEntities.stream().map(entity -> {
 
-			    List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
+			        AssignedRecruiterResponse recruiter =
+			                new AssignedRecruiterResponse();
 
-			        AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
-
-			        // ALWAYS VISIBLE
 			        recruiter.setUserName(entity.getUserName());
 
 			        recruiter.setEmail(entity.getEmail());
 
 			        recruiter.setAssignedAt(entity.getAssignedAt());
-
-			        // ONLY OWN COMMENTS/STATUS
-			        if (entity.getUserId()
-			                .equals(loggedInUserId.intValue())) {
-
-			            recruiter.setComments(entity.getComments());
-
-			            recruiter.setStatus(entity.getStatus());
-			        }
 
 			        return recruiter;
 
@@ -811,13 +803,34 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			    recruitersResponse.setRecruiters(recruiters);
 
+			    Optional<RecruiterAssignmentEntity> loggedInRecruiter =
+			            recruiterAssignmentRepository
+			                    .findByJobIdAndUserId(
+			                            jobId,
+			                            userId.intValue());
+
+			    if (loggedInRecruiter.isPresent()) {
+
+			        RecruiterAssignmentEntity entity = loggedInRecruiter.get();
+
+			        MyRecruiterResponse myResponse = new MyRecruiterResponse();
+
+			        myResponse.setComments(entity.getComments());
+
+			        myResponse.setStatus(entity.getStatus());
+
+			        recruitersResponse.setMyResponse(List.of(myResponse));
+			    }
 			    response.setRecruiters(recruitersResponse);
 			}
 			
+						
 			return ApiResponse.success(ResponseCode.SUCCESS,"Success", response);
+			}
+		
 
 
-		} catch (Exception e) {
+		 catch (Exception e) {
 
 			log.error("Error fetching Job Details for jobId: {}", jobId, e);
 
