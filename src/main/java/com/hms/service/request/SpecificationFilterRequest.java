@@ -885,7 +885,7 @@ public class SpecificationFilterRequest {
 
 			if (jobIds != null && !jobIds.isEmpty()) {
 
-				predicate = cb.and(predicate, root.get("id").in(jobIds));
+				predicate = cb.and(predicate, root.get("jobId").in(jobIds));
 			}
 
 			String jobTitle = getFilter("jobTitle");
