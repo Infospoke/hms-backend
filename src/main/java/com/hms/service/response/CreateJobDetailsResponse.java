@@ -31,5 +31,7 @@ public class CreateJobDetailsResponse {
 	private String jobCode;
     private String educationRequirement;
     private String country;
+    private String departmentName;
+	private String businessName;
    
 }
