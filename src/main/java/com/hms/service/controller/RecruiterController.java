@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.FilterRequest;
+import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRecruitersAssignmentRequest;
 import com.hms.service.service.IRecruiterService;
@@ -69,6 +70,12 @@ public class RecruiterController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	@PostMapping("/assign-more-recruiters")
+	public ResponseEntity<ApiResponse<?>>AssignMoreRecruiters(@RequestBody RecuriterAssignmentRequest request) {
+		ApiResponse<?> response=recruiterService.saveRecruiterAssignments(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 	
 	
 }
