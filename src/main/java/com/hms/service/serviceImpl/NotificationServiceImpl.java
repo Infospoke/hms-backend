@@ -141,6 +141,7 @@ public class NotificationServiceImpl implements INotificationService {
 			checkerEntity.setDeptName(event.getDeptName());
 			checkerEntity.setRoleName(event.getCheckerRoleName());
 			checkerEntity.setNotificationSentAt(LocalDateTime.now());
+			checkerEntity.setRoleId(event.getMakerRoleId());
 			checkerEntity.setIsRead(false);
 
 			NotificationEngineEntity makerEntity = new NotificationEngineEntity();
@@ -152,6 +153,8 @@ public class NotificationServiceImpl implements INotificationService {
 			makerEntity.setProcessId(event.getProcessId());
 			makerEntity.setDeptName(event.getDeptName());
 			makerEntity.setRoleName(event.getMakerRoleName());
+			Integer checkerRoleId = event.getRoleEmailMap().keySet().stream().findFirst().orElse(null);
+			makerEntity.setRoleId(checkerRoleId);
 
 			makerEntity.setNotificationSentAt(LocalDateTime.now());
 			makerEntity.setIsRead(false);
