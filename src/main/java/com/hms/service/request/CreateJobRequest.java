@@ -18,6 +18,8 @@ public class CreateJobRequest {
    private RecuriterAssignmentRequest recuriterAssignmentRequest;
    
    private JobDescriptionRequest jobDescriptionRequest;
+   
+   private InterviewPlanRequest interviewPlanRequest;
   
    private String srId;
    

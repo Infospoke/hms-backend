@@ -1464,7 +1464,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					srStatus = "Pending";
 				}
-				map.put("status", status);
+				map.put("status", srStatus);
 
 				return map;
 

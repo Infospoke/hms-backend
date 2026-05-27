@@ -580,7 +580,7 @@ public class SpecificationFilterRequest {
 
 					c.like(
 
-							c.lower(r.get("jobId")),
+							c.lower(r.get("srId")),
 
 							"%" + search.toLowerCase() + "%"
 
