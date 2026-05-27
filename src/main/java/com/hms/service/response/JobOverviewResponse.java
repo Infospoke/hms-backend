@@ -17,9 +17,9 @@ public class JobOverviewResponse {
 
     private String jobCode;
 
-    private Integer businessUnitId;
+    private String businessUnit;
 
-    private Integer departmentId;
+    private String department;
 
     private String location;
 

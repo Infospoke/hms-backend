@@ -726,11 +726,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			if (jobEntity != null) {
 
 				JobOverviewResponse jobOverviewResponse = new JobOverviewResponse();
-
+				String businessUnit=businessUnitRepository.findById(createJobDetailsEntity.getBusinessUnitId()).get().getBusinessName();
+				String department=departmentsRepository.findById(createJobDetailsEntity.getDepartmentId()).get().getDepartmentName();
+              
 				jobOverviewResponse.setJobTitle(createJobDetailsEntity.getJobTitle());
 				jobOverviewResponse.setJobCode(createJobDetailsEntity.getJobCode());
-				jobOverviewResponse.setBusinessUnitId(createJobDetailsEntity.getBusinessUnitId());
-				jobOverviewResponse.setDepartmentId(createJobDetailsEntity.getDepartmentId());
+				jobOverviewResponse.setBusinessUnit(businessUnit);
+				jobOverviewResponse.setDepartment(department);
 				jobOverviewResponse.setLocation(createJobDetailsEntity.getLocation());
 				jobOverviewResponse.setOpenings(createJobDetailsEntity.getOpenings());
 				jobOverviewResponse.setTargetStartDate(createJobDetailsEntity.getTargetStartDate());
