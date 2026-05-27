@@ -2098,11 +2098,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String roleName = null;
+		String userName=null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
 			roleName = jwtService.extractRole(token);
+			userName=jwtService.extractUsernameFromClaims(token);
 		}
 
 		RolesEntity roleEntity = rolesRepository.findByRoleNameIgnoreCase(roleName);
@@ -2211,6 +2213,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		List<SrApprovalResponse> responseList = new ArrayList<>();
 
 		for (SRPositionBasicsEntity sRPositionBasicsEntity : srEntities) {
+		    if (userName != null &&
+		            (userName.equalsIgnoreCase(sRPositionBasicsEntity.getApprover1By())
+		            || userName.equalsIgnoreCase(sRPositionBasicsEntity.getApprover2By())
+		            || userName.equalsIgnoreCase(sRPositionBasicsEntity.getApprover3By()))) {
+
+		            continue;
+		        }
 
 			String srId = sRPositionBasicsEntity.getSrId();
 
