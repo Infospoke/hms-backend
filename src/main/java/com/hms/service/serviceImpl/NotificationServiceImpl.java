@@ -25,12 +25,9 @@ import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.WebSocketNotification;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.NotificationEngineEntity;
-import com.hms.service.entity.RolesEntity;
-import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.NotificationEngineRepository;
-import com.hms.service.repository.RolesRepository;
-import com.hms.service.repository.UserRepository;
+
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateNotificationRequest;
 import com.hms.service.service.IMailService;
