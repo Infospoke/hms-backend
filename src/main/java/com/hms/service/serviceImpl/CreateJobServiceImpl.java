@@ -26,7 +26,6 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
-import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.JobDescriptionEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
@@ -38,7 +37,6 @@ import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
-import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
@@ -103,9 +101,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	private RecruiterAssignmentRepository recruiterAssignmentRepository;
 
 	@Autowired
-	private InterviewPlanRepository interviewPlanRepository;
-
-	@Autowired
 	private RolesRepository rolesRepository;
 
 	@Autowired
@@ -164,7 +159,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			response.setMinExperience(rolesData.getMinExperience());
 			response.setMaxExperience(rolesData.getMaxExperience());
 			response.setEducationRequirement(rolesData.getEducationRequirement());
-
+			response.setCertificationsRequired(rolesData.getCertificationsRequired());
+			response.setLanguages(rolesData.getLanguages());
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Job Details fetched successfully", response);
@@ -204,7 +200,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
 			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
-			InterviewPlanEntity interviewPlanEntity = new InterviewPlanEntity();
+		
 
 			if (request.getCreateJobDetailsRequest() != null) {
 
@@ -255,9 +251,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setEducationRequirement(req.getEducationRequirement());
 
 				createJobDetailsEntity.setCountry(req.getCountry());
-
+				
 				createJobDetailsEntity.setIsOpen(true);
-
+				
+				createJobDetailsEntity.setCertificationsRequired(req.getCertificationsRequired());
+				
+				createJobDetailsEntity.setLanguages(req.getLanguages());
+	
 			}
 			createJobDetailsRepository.save(createJobDetailsEntity);
 
@@ -322,13 +322,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					return error;
 				}
 
-				interviewPlanEntity.setSrId(request.getSrId());
-
-				interviewPlanEntity.setPlanId(req.getPlanId());
-
-				interviewPlanRepository.save(interviewPlanEntity);
-				interviewPlanEntity.setJobId(createJobDetailsEntity.getJobId());
-				
+				createJobDetailsEntity.setPlanId(req.getPlanId());
+				createJobDetailsRepository.save(createJobDetailsEntity);
+	
 				SRPositionBasicsEntity basicsEntity = srOptional.get();
 				basicsEntity.setJobSubmit(request.getSubmit());
 				positionBasicsRepository.save(basicsEntity);
@@ -346,7 +342,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	}
 
 	// Validations for createJobDetailsRequest
-
 
 	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {
 
@@ -506,6 +501,20 @@ public class CreateJobServiceImpl implements ICreateJobService {
 						List.of("minExperience cannot be greater than maxExperience"));
 			}
 		}
+		if (req.getCertificationsRequired() != null) {
+
+			error = validateObject(req.getCertificationsRequired(), "certificationsRequired");
+
+			if (error != null)
+				return error;
+		}
+		if (req.getLanguages() != null) {
+
+			error = validateObject(req.getLanguages(), "languages");
+
+			if (error != null)
+				return error;
+		}
 
 		return null;
 	}
@@ -548,8 +557,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		return null;
 	}
-	
-	//validations for  interviewPlanRequest
+
+	// validations for interviewPlanRequest
 	private ApiResponse<?> validateInterviewPlanRequest(InterviewPlanRequest req, String srId) {
 
 		ApiResponse<?> error;
@@ -564,6 +573,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		return null;
 	}
+
 	@Override
 	public ApiResponse<?> getRecruiters(SpecificationFilterRequest request) {
 
@@ -597,6 +607,22 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			finalRoleIds.addAll(roleIds);
 		}
 
+//		List<RolesEntity> rolesFromDb =
+//		        (departmentIds != null && !departmentIds.isEmpty())
+//		                ? rolesRepository.findByDepartmentIdIn(departmentIds)
+//		                : rolesRepository.findAll();
+//
+//		List<Integer> finalRoleIds = rolesFromDb.stream()
+//		        .map(RolesEntity::getId)
+//		        .filter(id -> roleIds == null || roleIds.isEmpty() || roleIds.contains(id))
+//		        .toList();
+//
+//		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
+//				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
+
+		if (finalRoleIds == null || finalRoleIds.isEmpty()) {
+		    return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
+		}
 		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
 				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
 

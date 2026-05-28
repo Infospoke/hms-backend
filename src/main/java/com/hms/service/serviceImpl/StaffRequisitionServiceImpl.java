@@ -2288,7 +2288,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			srApprovalResponse.setJobTitle(sRPositionBasicsEntity.getJobTitle());
 
-			srApprovalResponse.setCreatedOn(sRPositionBasicsEntity.getCreatedOn());
+			srApprovalResponse.setSubmittedOn(sRPositionBasicsEntity.getSubmittedOn());
 
 			srApprovalResponse.setDepartment(departName);
 

@@ -780,14 +780,6 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		response.setFunctionalityName(entity.getFunctionalityName());
 
-//		response.setActivateComments(entity.getActivateComments());
-//
-//		response.setDeactivateComments(entity.getDeactivateComments());
-//
-//		response.setApprovedComments(entity.getApprovedComments());
-//
-//		response.setRejectedComments(entity.getRejectedComments());
-
 		response.setRequestType(entity.getRequestType());
 
 		return response;

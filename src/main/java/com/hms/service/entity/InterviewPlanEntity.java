@@ -35,12 +35,17 @@ public class InterviewPlanEntity {
 
 	@Column(name = "sr_id")
 	private String srId;
+	
+	@Column(name = "user_id")
+	private Long userId;
 
 	private String planName;
 
 	private String description;
 
 	private String status;
+	
+	private String approvalStatus;
 
 	private String createdBy;
 
@@ -64,11 +69,6 @@ public class InterviewPlanEntity {
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
 
-	@Column(name = "user_id")
-	private Integer userId;
-
-	@Column(name = "approval_status")
-	private String approvalStatus;
 
 
 
