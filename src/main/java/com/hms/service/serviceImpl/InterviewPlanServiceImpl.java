@@ -164,7 +164,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		long inactivePlans = interviewPlanRepository.countByStatus("Deactive");
 		
-		long inprogresPlans = interviewPlanRepository.countByStatus("null");
+		long inProgressPlans =
+		        interviewPlanRepository.countByStatusIsNull();
 		
 
 		Map<String, Object> response = new LinkedHashMap<>();
@@ -175,7 +176,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		response.put("inactivePlans", inactivePlans);
 		
-		response.put("inprogressPlans", inprogresPlans);
+		response.put("inProgressPlans", inProgressPlans);
 
 		log.info("InterviewPlanServiceImpl :: Exit getInterviewPlanCounts");
 

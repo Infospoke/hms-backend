@@ -11,4 +11,6 @@ public interface InterviewPlanRepository extends JpaRepository<InterviewPlanEnti
 
 	Long countByStatus(String status);
 
+	long countByStatusIsNull();
+
 }
