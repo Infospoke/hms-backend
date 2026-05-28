@@ -44,7 +44,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        InterviewPlanEntity entity = new InterviewPlanEntity();
 	        entity.setPlanName(request.getPlanName());
 	        entity.setDescription(request.getDescription());
-	        entity.setStatus("PENDING");
+	        entity.setApprovalStatus("InProgress");
+	        entity.setStatus(null);
 	        entity.setCreatedBy(username);
 	        entity.setCreatedOn(LocalDateTime.now());
 
