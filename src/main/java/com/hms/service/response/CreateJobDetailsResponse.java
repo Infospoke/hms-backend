@@ -2,7 +2,6 @@ package com.hms.service.response;
 
 import java.time.LocalDate;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,5 +30,8 @@ public class CreateJobDetailsResponse {
     private String country;
     private String departmentName;
 	private String businessName;
+	private String certificationsRequired;
+	private String languages;
+	
    
 }

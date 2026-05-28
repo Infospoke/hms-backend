@@ -45,6 +45,11 @@ public class CreateJobDetailsRequest {
     private Boolean isOpen;
     
     private String country;
+    
+	private String certificationsRequired;
+	
+	private String languages;
+	
 
 
 }
