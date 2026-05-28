@@ -47,7 +47,8 @@ public class SecurityConfig {
 										"/hms/staffing-requisition/**",
 										"/ws/**",                          // WebSocket STOMP handshake
 										"/hms/notifications/**" ,          // Notification test endpoint
-										"/hms/create-job/**" ,      
+										"/hms/create-job/**" , 
+										"/hms/interview-plan/**",
 										"/hms/jobs/**"
 								).permitAll()
 								.anyRequest().authenticated())
