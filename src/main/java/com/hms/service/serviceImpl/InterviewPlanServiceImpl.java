@@ -40,6 +40,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        String authHeader = httpRequest.getHeader("Authorization");
 	        String token = authHeader.substring(7);
 	        String username = jwtService.extractUsernameFromClaims(token);
+	        Long userId = jwtService.extractUserId(token);
 
 	        InterviewPlanEntity entity = new InterviewPlanEntity();
 	        entity.setPlanName(request.getPlanName());
@@ -47,6 +48,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        entity.setApprovalStatus("InProgress");
 	        entity.setStatus(null);
 	        entity.setCreatedBy(username);
+	        entity.setUserId(userId);
 	        entity.setCreatedOn(LocalDateTime.now());
 
 	        List<InterviewRoundEntity> roundEntities = new ArrayList<>();

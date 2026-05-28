@@ -35,6 +35,9 @@ public class InterviewPlanEntity {
 
 	@Column(name = "sr_id")
 	private String srId;
+	
+	@Column(name = "user_id")
+	private Long userId;
 
 	private String planName;
 
