@@ -544,7 +544,7 @@ public class SpecificationFilterRequest {
 
 		Specification<SRPositionBasicsEntity> dateSpec =
 
-				dateSpec("createdOn");
+				dateSpec("submittedOn");
 
 		if (dateSpec != null) {
 

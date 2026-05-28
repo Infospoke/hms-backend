@@ -25,10 +25,13 @@ public interface NotificationEngineRepository
     @Query("""
 		       SELECT n.id, n.notificationSentAt
 		       FROM NotificationEngineEntity n
-		       WHERE n.processId = :processId
-		       ORDER BY n.id
+		       WHERE n.processId = :processId And n.sent=false
 		       """)
-		List<Object[]> findIdAndSentAtByProcessId(
+		List<Object[]> findIdAndSentAtByProcessIdAndSentIsFalse(
 		        @Param("processId") String processId);
+		
+		
+		
+	List<NotificationEngineEntity> findByProcessIdAndSentIsFalse(String processId);
     
 }
