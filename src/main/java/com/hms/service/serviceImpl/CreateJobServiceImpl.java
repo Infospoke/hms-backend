@@ -164,7 +164,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			response.setMinExperience(rolesData.getMinExperience());
 			response.setMaxExperience(rolesData.getMaxExperience());
 			response.setEducationRequirement(rolesData.getEducationRequirement());
-
+			response.setCertificationsRequired(rolesData.getCertificationsRequired());
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Job Details fetched successfully", response);
@@ -255,9 +255,11 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setEducationRequirement(req.getEducationRequirement());
 
 				createJobDetailsEntity.setCountry(req.getCountry());
-
+				
 				createJobDetailsEntity.setIsOpen(true);
-
+				
+				createJobDetailsEntity.setCertificationsRequired(req.getCertificationsRequired());
+	
 			}
 			createJobDetailsRepository.save(createJobDetailsEntity);
 
@@ -346,7 +348,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	}
 
 	// Validations for createJobDetailsRequest
-
 
 	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {
 
@@ -548,8 +549,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		return null;
 	}
-	
-	//validations for  interviewPlanRequest
+
+	// validations for interviewPlanRequest
 	private ApiResponse<?> validateInterviewPlanRequest(InterviewPlanRequest req, String srId) {
 
 		ApiResponse<?> error;
@@ -564,6 +565,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 		return null;
 	}
+
 	@Override
 	public ApiResponse<?> getRecruiters(SpecificationFilterRequest request) {
 
