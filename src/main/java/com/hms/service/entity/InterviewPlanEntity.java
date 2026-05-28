@@ -53,4 +53,23 @@ public class InterviewPlanEntity {
 
 	@OneToMany(mappedBy = "interviewPlan", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<InterviewRoundEntity> rounds;
+
+	@Column(name = "request_type")
+	private String requestType;
+
+	@Column(name = "active_approval")
+	private Boolean activeApproval;
+
+	@Column(name = "deactive_approval")
+	private Boolean deactiveApproval;
+
+	@Column(name = "updated_by")
+	private String updatedBy;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
+
+
+
 }
