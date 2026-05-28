@@ -3,6 +3,7 @@ package com.hms.service.request;
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -482,7 +484,6 @@ public class SpecificationFilterRequest {
 
 			spec = spec.and((r, q, c) -> c.or(
 
-				
 					c.like(
 
 							c.lower(r.get("jobTitle")),
@@ -543,7 +544,7 @@ public class SpecificationFilterRequest {
 
 		Specification<SRPositionBasicsEntity> dateSpec =
 
-				dateSpec("createdOn");
+				dateSpec("submittedOn");
 
 		if (dateSpec != null) {
 
@@ -917,8 +918,6 @@ public class SpecificationFilterRequest {
 						cb.like(cb.lower(root.get("location")), "%" + search.toLowerCase().trim() + "%")));
 			}
 
-			
-
 			LocalDate[] dates = getDateRange();
 
 			if (dates != null) {
@@ -931,6 +930,58 @@ public class SpecificationFilterRequest {
 			}
 
 			return predicate;
+		};
+	}
+
+	public Specification<InterviewPlanEntity> buildInterviewPlanSpecification() {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			if (filters != null) {
+
+				String status = getFilter("status");
+
+				if (status != null && !status.isBlank()) {
+
+					predicates.add(
+
+							cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
+				}
+
+				String search = getFilter("search");
+
+				if (search != null && !search.isBlank()) {
+
+					search = search.toLowerCase().trim();
+
+					predicates.add(
+
+							cb.or(
+
+									cb.like(cb.lower(root.get("planName")), "%" + search + "%"),
+
+									cb.like(cb.lower(root.get("description")), "%" + search + "%"),
+
+									cb.like(cb.lower(root.get("createdBy")), "%" + search + "%"),
+
+									cb.like(cb.lower(root.get("srId")), "%" + search + "%")
+
+							));
+				}
+
+				Specification<InterviewPlanEntity> dateSpecification = dateSpec("createdOn");
+
+				if (dateSpecification != null) {
+
+					Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
 }

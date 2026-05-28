@@ -49,5 +49,8 @@ public class NotificationEngineEntity {
 	    
 	    @Column(name = "is_read")
 	    private Boolean isRead=false;
+	    
+	    @Column (name="sent")
+	    private Boolean sent=false;
 
 }
