@@ -45,19 +45,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		try {
 
-	        String authHeader = httpRequest.getHeader("Authorization");
-	        String token = authHeader.substring(7);
-	        String username = jwtService.extractUsernameFromClaims(token);
-	        Long userId = jwtService.extractUserId(token);
+			String authHeader = httpRequest.getHeader("Authorization");
+			String token = authHeader.substring(7);
+			String username = jwtService.extractUsernameFromClaims(token);
+			Long userId = jwtService.extractUserId(token);
 
-	        InterviewPlanEntity entity = new InterviewPlanEntity();
-	        entity.setPlanName(request.getPlanName());
-	        entity.setDescription(request.getDescription());
-	        entity.setApprovalStatus("InProgress");
-	        entity.setStatus(null);
-	        entity.setCreatedBy(username);
-	        entity.setUserId(userId);
-	        entity.setCreatedOn(LocalDateTime.now());
+			InterviewPlanEntity entity = new InterviewPlanEntity();
+			entity.setPlanName(request.getPlanName());
+			entity.setDescription(request.getDescription());
+			entity.setApprovalStatus("InProgress");
+			entity.setStatus("InProgress");
+			entity.setCreatedBy(username);
+			entity.setUserId(userId);
+			entity.setCreatedOn(LocalDateTime.now());
 
 			List<InterviewRoundEntity> roundEntities = new ArrayList<>();
 
@@ -127,7 +127,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			map.put("description", plan.getDescription());
 
-			map.put("status", plan.getStatus() == null ? "In_Progress" : plan.getStatus());
+			map.put("status", plan.getStatus());
 
 			map.put("createdBy", plan.getCreatedBy());
 
@@ -139,6 +139,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		}).toList();
 
+		Map<String, Long> counts = request.buildInterviewPlanCounts(interviewPlanRepository);
+
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("interviewPlans", plans);
@@ -148,6 +150,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.put("totalPages", pageResult.getTotalPages());
 
 		response.put("totalElements", pageResult.getTotalElements());
+
+		response.put("counts", counts);
 
 		log.info("InterviewPlanServiceImpl :: Exit getInterviewPlans");
 
@@ -165,7 +169,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		long inactivePlans = interviewPlanRepository.countByStatus("Deactive");
 
-		long inProgressPlans = interviewPlanRepository.countByStatusIsNull();
+		long inProgressPlans = interviewPlanRepository.countByStatus("InProgress");
 
 		Map<String, Object> response = new LinkedHashMap<>();
 

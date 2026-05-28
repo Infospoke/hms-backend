@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
+import com.hms.service.repository.InterviewPlanRepository;
 
 import jakarta.persistence.criteria.Predicate;
 import lombok.AllArgsConstructor;
@@ -962,11 +964,21 @@ public class SpecificationFilterRequest {
 
 									cb.like(cb.lower(root.get("planName")), "%" + search + "%"),
 
-									cb.like(cb.lower(root.get("description")), "%" + search + "%"),
+									cb.like(cb.lower(root.get("description")), "%" + search + "%")
 
-									cb.like(cb.lower(root.get("createdBy")), "%" + search + "%"),
+							));
+				}
+				String userId = getFilter("createdBy");
 
-									cb.like(cb.lower(root.get("srId")), "%" + search + "%")
+				if (userId != null && !userId.isBlank()) {
+
+					predicates.add(
+
+							cb.equal(
+
+									root.get("userId"),
+
+									Integer.parseInt(userId)
 
 							));
 				}
@@ -983,5 +995,66 @@ public class SpecificationFilterRequest {
 
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
+	}
+
+	public Map<String, Long> buildInterviewPlanCounts(InterviewPlanRepository interviewPlanRepository) {
+
+		Map<String, Long> counts = new LinkedHashMap<>();
+
+		Specification<InterviewPlanEntity> baseSpec = buildInterviewPlanSpecification();
+
+		long allPlans = interviewPlanRepository.count(baseSpec);
+
+		long activePlans = interviewPlanRepository.count(
+
+				baseSpec.and(
+
+						(root, query, cb) ->
+
+						cb.equal(
+
+								cb.lower(root.get("status")),
+
+								"active"
+
+						)
+
+				));
+
+		long inactivePlans = interviewPlanRepository.count(
+
+				baseSpec.and(
+
+						(root, query, cb) ->
+
+						cb.equal(
+
+								cb.lower(root.get("status")),
+
+								"deactive"
+
+						)
+
+				));
+
+		long inProgressPlans = interviewPlanRepository.count(
+
+				baseSpec.and(
+
+						(root, query, cb) ->
+
+						cb.isNull(root.get("status"))
+
+				));
+
+		counts.put("allPlans", allPlans);
+
+		counts.put("activePlans", activePlans);
+
+		counts.put("inactivePlans", inactivePlans);
+
+		counts.put("inProgressPlans", inProgressPlans);
+
+		return counts;
 	}
 }
