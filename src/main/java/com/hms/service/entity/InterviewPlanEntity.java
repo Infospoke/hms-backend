@@ -32,6 +32,8 @@ public class InterviewPlanEntity {
 	private String description;
 
 	private String status;
+	
+	private String approvalStatus;
 
 	private String createdBy;
 

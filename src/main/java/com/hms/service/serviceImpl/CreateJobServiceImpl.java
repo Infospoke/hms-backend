@@ -607,6 +607,22 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			finalRoleIds.addAll(roleIds);
 		}
 
+//		List<RolesEntity> rolesFromDb =
+//		        (departmentIds != null && !departmentIds.isEmpty())
+//		                ? rolesRepository.findByDepartmentIdIn(departmentIds)
+//		                : rolesRepository.findAll();
+//
+//		List<Integer> finalRoleIds = rolesFromDb.stream()
+//		        .map(RolesEntity::getId)
+//		        .filter(id -> roleIds == null || roleIds.isEmpty() || roleIds.contains(id))
+//		        .toList();
+//
+//		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
+//				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
+
+		if (finalRoleIds == null || finalRoleIds.isEmpty()) {
+		    return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
+		}
 		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
 				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
 
