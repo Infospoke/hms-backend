@@ -1,23 +1,30 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
+import com.hms.service.repository.ChildLinkCommentsRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
+import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -27,6 +34,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
 
+	@Autowired
+	private ChildLinkCommentsRepository childLinkCommentsRepository;
+
+	
 	@Autowired
 	private JwtService jwtService;
 
@@ -74,6 +85,530 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	        return ApiResponse.failure(ResponseCode.FAILURE,"Failed To Create Interview Plan");
 	    }
+	}
+
+
+	@Override
+	public ApiResponse<?> updateInterviewPlan(UpdateInterviewPlanRequest request,HttpServletRequest httpRequest) {
+
+	    log.info("InterviewPlanServiceImpl :: updateInterviewPlan");
+
+
+		// VALIDATIONS
+
+		if (request.getId() == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Plan Id is required");
+		}
+
+
+		if (request.getApproval() == null && request.getStatus() == null && request.getActiveApproval() == null
+				&& request.getDeactiveApproval() == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "At least one action is required");
+		}
+
+
+		if (request.getApproval() != null
+				&& (request.getComments() == null || request.getComments().trim().isEmpty())) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Comments are mandatory");
+		}
+
+
+		if (request.getStatus() != null
+				&& (request.getDescription() == null || request.getDescription().trim().isEmpty())) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Description is mandatory");
+		}
+
+
+		if (request.getDeactiveApproval() != null
+				&& (request.getComments() == null || request.getComments().trim().isEmpty())) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Comments are mandatory for deactivation approval");
+		}
+
+		if (request.getActiveApproval() != null
+				&& (request.getComments() == null || request.getComments().trim().isEmpty())) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Comments are mandatory for activation approval");
+		}
+
+		
+
+	    // FETCH ENTITY 
+
+		InterviewPlanEntity interviewPlanEntity = interviewPlanRepository.findById(request.getId())
+				.orElseThrow(() -> new RuntimeException("Interview Plan not found"));
+
+	    // CHILD COMMENTS 
+
+	   ChildLinkCommentsEntity commentsEntity = new ChildLinkCommentsEntity();
+
+	    // JWT DETAILS 
+
+		String authHeader = httpRequest.getHeader("Authorization");
+
+		String token = authHeader.substring(7);
+
+		String userName = jwtService.extractUsernameFromClaims(token);
+
+		Long userId = jwtService.extractUserId(token);
+
+		String roleName = jwtService.extractRole(token);
+
+
+	    // COMMON DETAILS 
+
+	    String planName = interviewPlanEntity.getPlanName();
+
+		String description = interviewPlanEntity.getDescription();
+
+		String createdBy = interviewPlanEntity.getCreatedBy();
+
+		Integer planId = interviewPlanEntity.getId();
+
+	    // APPROVE / REJECT 
+
+		if (request.getApproval() != null) {
+
+			if (!"Administrator".equalsIgnoreCase(roleName)) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can approve/reject");
+			}
+
+			String approval = request.getApproval().trim().toUpperCase();
+
+	        // APPROVE
+
+	        if ("APPROVED".equals(approval)) {
+
+	            interviewPlanEntity.setStatus("ACTIVE");
+
+	            interviewPlanEntity.setApprovalStatus("Approved");
+
+	            commentsEntity.setPlanId(planId);
+
+	            commentsEntity.setAction("Approve");
+
+				commentsEntity.setComments(request.getComments());
+
+				commentsEntity.setCreatedBy(userName);
+
+	            commentsEntity.setCreatedAt( LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+	            //  MAIL & NOTIFICATION
+
+//	            sendWorkflowNotification(
+//	                    interviewPlanEntity.getId().toString(),
+//	                    "INTERVIEW_PLAN_WORKFLOW",
+//	                    "Interview Plan approved successfully",
+//	                    "Interview Plan",
+//
+//	                    createdBy,
+//	                    roleName,
+//	                    1,
+//
+//	                    "Interview Plan Approved",
+//
+//	                    String.format(
+//	                            "Interview Plan %s has been approved by %s",
+//	                            planName,
+//	                            userName),
+//
+//	                    roleName,
+//	                    "Interview Plan approved",
+//
+//	                    "Interview Plan Approval Confirmation",
+//
+//	                    String.format(
+//	                            "You approved Interview Plan %s",
+//	                            planName),
+//
+//	                    new HashMap<>());
+//
+	        }
+
+	        // REJECT 
+
+	        else if ("REJECTED".equals(approval)) {
+
+	            interviewPlanEntity.setApprovalStatus("Rejected");
+
+	            commentsEntity.setPlanId(planId);
+
+	            commentsEntity.setAction("Reject");
+
+				commentsEntity.setComments(request.getComments());
+
+				commentsEntity.setCreatedBy(userName);
+
+				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+	            // MAIL & NOTIFICATION 
+
+//	            sendWorkflowNotification(
+//	                    interviewPlanEntity.getId().toString(),
+//	                    "INTERVIEW_PLAN_WORKFLOW",
+//	                    "Interview Plan rejected",
+//	                    "Interview Plan",
+//
+//	                    createdBy,
+//	                    roleName,
+//	                    1,
+//
+//	                    "Interview Plan Rejected",
+//
+//	                    String.format(
+//	                            "Interview Plan %s rejected by %s",
+//	                            planName,
+//	                            userName),
+//
+//	                    roleName,
+//	                    "Interview Plan rejected",
+//
+//	                    "Interview Plan Rejection Confirmation",
+//
+//	                    String.format(
+//	                            "You rejected Interview Plan %s",
+//	                            planName),
+//
+//	                    new HashMap<>());
+	        }
+
+			else {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid approval value");
+			}
+	    }
+
+	    // DEACTIVATION REQUEST
+
+		if (request.getStatus() != null && "DEACTIVE".equalsIgnoreCase(request.getStatus())) {
+
+			if (!interviewPlanEntity.getUserId().equals(userId.intValue())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request deactivation");
+			}
+		
+	        interviewPlanEntity.setApprovalStatus("In_Progress");
+
+	        interviewPlanEntity.setRequestType("Plan-Deactive");
+
+	        interviewPlanEntity.setDeactiveApproval(false);
+
+	        commentsEntity.setPlanId(planId);
+
+	        commentsEntity.setAction("Deactive");
+
+	       commentsEntity.setDescription(request.getDescription());
+
+			commentsEntity.setCreatedBy(userName);
+
+			commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+//	        sendWorkflowNotification(
+//	                interviewPlanEntity.getId().toString(),
+//	                "INTERVIEW_PLAN_WORKFLOW",
+//	                "Interview Plan deactivation request submitted",
+//	                "Interview Plan",
+//
+//	                createdBy,
+//	                "Administrator",
+//	                1,
+//
+//	                "Interview Plan Deactivation Request",
+//
+//	                String.format(
+//	                        "Deactivation requested for Interview Plan %s",
+//	                        planName),
+//
+//	                "Administrator",
+//	                "Approval pending",
+//
+//	                "Interview Plan Deactivation Approval",
+//
+//	                String.format(
+//	                        "Please review deactivation request for %s",
+//	                        planName),
+//
+//	                new HashMap<>());
+	    }
+
+	    //  DEACTIVATION APPROVAL 
+
+	    if (request.getDeactiveApproval() != null) {
+
+			if (!"Administrator".equalsIgnoreCase(roleName)) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process deactivation");
+			}
+
+	        //  APPROVED
+
+	        if (Boolean.TRUE.equals(request.getDeactiveApproval())) {
+
+	            interviewPlanEntity.setStatus("DEACTIVE");
+
+	            interviewPlanEntity.setApprovalStatus("Approved");
+
+	            interviewPlanEntity.setDeactiveApproval(true);
+
+	            interviewPlanEntity.setActiveApproval(false);
+
+	            commentsEntity.setPlanId(planId);
+
+	            commentsEntity.setAction("Approve");
+
+				commentsEntity.setComments(request.getComments());
+
+				commentsEntity.setCreatedBy(userName);
+
+				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+//	            sendWorkflowNotification(
+//	                    interviewPlanEntity.getId().toString(),
+//	                    "INTERVIEW_PLAN_WORKFLOW",
+//	                    "Interview Plan deactivated successfully",
+//	                    "Interview Plan",
+//
+//	                    createdBy,
+//	                    roleName,
+//	                    1,
+//
+//	                    "Interview Plan Deactivated",
+//
+//	                    String.format(
+//	                            "Interview Plan %s deactivated",
+//	                            planName),
+//
+//	                    roleName,
+//	                    "Deactivation approved",
+//
+//	                    "Interview Plan Deactivation Confirmation",
+//
+//	                    String.format(
+//	                            "You approved deactivation for %s",
+//	                            planName),
+//
+//	                    new HashMap<>());
+	        }
+
+	        //  REJECTED 
+
+	        else {
+
+	            interviewPlanEntity.setApprovalStatus("REJECTED");
+
+	            interviewPlanEntity.setDeactiveApproval(false);
+
+	            commentsEntity.setPlanId(planId);
+
+	            commentsEntity.setAction("Reject");
+
+				commentsEntity.setComments(request.getComments());
+
+				commentsEntity.setCreatedBy(userName);
+
+				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+//	            sendWorkflowNotification(
+//	                    interviewPlanEntity.getId().toString(),
+//	                    "INTERVIEW_PLAN_WORKFLOW",
+//	                    "Interview Plan deactivation rejected",
+//	                    "Interview Plan",
+//
+//	                    createdBy,
+//	                    roleName,
+//	                    1,
+//
+//	                    "Interview Plan Deactivation Rejected",
+//
+//	                    String.format(
+//	                            "Interview Plan deactivation rejected for %s",
+//	                            planName),
+//
+//	                    roleName,
+//	                    "Deactivation rejected",
+//
+//	                    "Interview Plan Deactivation Rejection",
+//
+//	                    String.format(
+//	                            "You rejected deactivation for %s",
+//	                            planName),
+//
+//	                    new HashMap<>());
+	        }
+	    }
+
+	    // ACTIVATION REQUEST 
+
+		if (request.getStatus() != null && "ACTIVE".equalsIgnoreCase(request.getStatus())) {
+
+			if (!interviewPlanEntity.getUserId().equals(userId.intValue())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request activation");
+			}
+
+	        interviewPlanEntity.setApprovalStatus("IN_PROGRESS");
+
+	        interviewPlanEntity.setRequestType("Plan-Active");
+
+	        commentsEntity.setPlanId(planId);
+
+	        commentsEntity.setAction("Active");
+
+	        commentsEntity.setDescription(request.getDescription());
+
+			commentsEntity.setCreatedBy(userName);
+
+			commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+//	        sendWorkflowNotification(
+//	                interviewPlanEntity.getId().toString(),
+//	                "INTERVIEW_PLAN_WORKFLOW",
+//	                "Interview Plan activation request submitted",
+//	                "Interview Plan",
+//
+//	                createdBy,
+//	                "Administrator",
+//	                1,
+//
+//	                "Interview Plan Activation Request",
+//
+//	                String.format(
+//	                        "Activation requested for Interview Plan %s",
+//	                        planName),
+//
+//	                "Administrator",
+//	                "Activation approval pending",
+//
+//	                "Interview Plan Activation Approval",
+//
+//	                String.format(
+//	                        "Please review activation request for %s",
+//	                        planName),
+//
+//	                new HashMap<>());
+	    }
+
+	    //  ACTIVATION APPROVAL 
+
+	    if (request.getActiveApproval() != null) {
+
+			if (!"Administrator".equalsIgnoreCase(roleName)) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process activation");
+			}
+
+	        //  APPROVED 
+
+	        if (Boolean.TRUE.equals(
+	                request.getActiveApproval())) {
+
+	            interviewPlanEntity.setStatus("ACTIVE");
+
+	            interviewPlanEntity.setApprovalStatus("Approved");
+
+	            interviewPlanEntity.setActiveApproval(true);
+
+	            interviewPlanEntity.setDeactiveApproval(false);
+
+	            commentsEntity.setPlanId(planId);
+
+	            commentsEntity.setAction("Approve");
+
+				commentsEntity.setComments(request.getComments());
+
+				commentsEntity.setCreatedBy(userName);
+
+				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+//	            sendWorkflowNotification(
+//	                    interviewPlanEntity.getId().toString(),
+//	                    "INTERVIEW_PLAN_WORKFLOW",
+//	                    "Interview Plan activated successfully",
+//	                    "Interview Plan",
+//
+//	                    createdBy,
+//	                    roleName,
+//	                    1,
+//
+//	                    "Interview Plan Activated",
+//
+//	                    String.format(
+//	                            "Interview Plan %s activated",
+//	                            planName),
+//
+//	                    roleName,
+//	                    "Activation approved",
+//
+//	                    "Interview Plan Activation Confirmation",
+//
+//	                    String.format(
+//	                            "You approved activation for %s",
+//	                            planName),
+//
+//	                    new HashMap<>());
+	        }
+
+	        // REJECTED 
+
+	        else {
+
+	            interviewPlanEntity.setApprovalStatus("Rejected");
+
+	            interviewPlanEntity.setActiveApproval(false);
+
+	            commentsEntity.setPlanId(planId);
+
+	            commentsEntity.setAction("Reject");
+
+				commentsEntity.setComments(request.getComments());
+
+				commentsEntity.setCreatedBy(userName);
+
+				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+
+//	            sendWorkflowNotification(
+//	                    interviewPlanEntity.getId().toString(),
+//	                    "INTERVIEW_PLAN_WORKFLOW",
+//	                    "Interview Plan activation rejected",
+//	                    "Interview Plan",
+//
+//	                    createdBy,
+//	                    roleName,
+//	                    1,
+//
+//	                    "Interview Plan Activation Rejected",
+//
+//	                    String.format(
+//	                            "Interview Plan activation rejected for %s",
+//	                            planName),
+//
+//	                    roleName,
+//	                    "Activation rejected",
+//
+//	                    "Interview Plan Activation Rejection",
+//
+//	                    String.format(
+//	                            "You rejected activation for %s",
+//	                            planName),
+//
+//	                    new HashMap<>());
+	        }
+	    }
+
+	    interviewPlanEntity.setUpdatedBy(userName);
+
+	    interviewPlanEntity.setUpdatedAt(LocalDateTime.now());
+
+	    interviewPlanRepository.save(interviewPlanEntity);
+
+	    childLinkCommentsRepository.save(commentsEntity);
+
+	    return ApiResponse.success("Interview Plan Updated Successfully");
 	}
 
 }
