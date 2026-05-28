@@ -106,4 +106,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
 	boolean existsByUserId(Integer userId);
 
+	boolean existsByMobileNumber(String mobileNumber);
+
+	boolean existsByAlternateContact(String alternateContact);
+
 }

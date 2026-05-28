@@ -25,12 +25,9 @@ import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.WebSocketNotification;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.NotificationEngineEntity;
-import com.hms.service.entity.RolesEntity;
-import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.NotificationEngineRepository;
-import com.hms.service.repository.RolesRepository;
-import com.hms.service.repository.UserRepository;
+
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateNotificationRequest;
 import com.hms.service.service.IMailService;
@@ -140,7 +137,11 @@ public class NotificationServiceImpl implements INotificationService {
 			checkerEntity.setProcessId(event.getProcessId());
 			checkerEntity.setDeptName(event.getDeptName());
 			checkerEntity.setRoleName(event.getCheckerRoleName());
+			
+			log.info("checker role name is"+event.getCheckerRoleName());
 			checkerEntity.setNotificationSentAt(LocalDateTime.now());
+			Integer checkerRoleId = event.getRoleEmailMap().keySet().stream().findFirst().orElse(null);
+			checkerEntity.setRoleId(checkerRoleId);
 			checkerEntity.setIsRead(false);
 
 			NotificationEngineEntity makerEntity = new NotificationEngineEntity();
@@ -152,6 +153,9 @@ public class NotificationServiceImpl implements INotificationService {
 			makerEntity.setProcessId(event.getProcessId());
 			makerEntity.setDeptName(event.getDeptName());
 			makerEntity.setRoleName(event.getMakerRoleName());
+			log.info("maker role name is "+event.getMakerRoleName());
+			
+			makerEntity.setRoleId(event.getMakerRoleId());
 
 			makerEntity.setNotificationSentAt(LocalDateTime.now());
 			makerEntity.setIsRead(false);
