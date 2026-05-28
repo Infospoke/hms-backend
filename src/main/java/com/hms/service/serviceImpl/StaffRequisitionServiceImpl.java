@@ -184,13 +184,14 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				userId = getUserIdFromToken();
 
 				String roleName = getRoleNameFromToken();
+				log.info("rolename token contains "+roleName);
 
 				roleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
 
 				srPositionBasicsEntity.setCreatedBy(username);
 				srPositionBasicsEntity.setUserId(userId);
-				srPositionBasicsEntity.setRoleName(roleName);
 				srPositionBasicsEntity.setMakerRoleId(roleId);
+				srPositionBasicsEntity.setRoleName(roleName);
 
 			}
 			srPositionBasicsEntity.setJobTitle(positonBasicsRequest.getJobTitle());
@@ -491,6 +492,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					event.setProcessId(srEntity.getSrId());
 
 					event.setMakerRoleName(srEntity.getRoleName());
+					log.info("maker role name is "+srEntity.getRoleName());
+					
 					event.setMakerRoleId(srEntity.getMakerRoleId());
 					String makerEmail = userRepository.findByUserId(userId).get().getEmail();
 					log.info("maker email is" + makerEmail);
@@ -2221,6 +2224,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		            continue;
 		        }
 
+		    if (Boolean.TRUE.equals(sRPositionBasicsEntity.getApproved())) {
+		        continue;
+		    }
+ 
 			String srId = sRPositionBasicsEntity.getSrId();
 
 			log.info("SR ID : {}", srId);
