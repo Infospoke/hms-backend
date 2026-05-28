@@ -45,9 +45,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		try {
 
-			String authHeader = httpRequest.getHeader("Authorization");
-			String token = authHeader.substring(7);
-			String username = jwtService.extractUsernameFromClaims(token);
+	        String authHeader = httpRequest.getHeader("Authorization");
+	        String token = authHeader.substring(7);
+	        String username = jwtService.extractUsernameFromClaims(token);
+	        Long userId = jwtService.extractUserId(token);
 
 	        InterviewPlanEntity entity = new InterviewPlanEntity();
 	        entity.setPlanName(request.getPlanName());
@@ -55,8 +56,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        entity.setApprovalStatus("InProgress");
 	        entity.setStatus(null);
 	        entity.setCreatedBy(username);
+	        entity.setUserId(userId);
 	        entity.setCreatedOn(LocalDateTime.now());
-
 
 			List<InterviewRoundEntity> roundEntities = new ArrayList<>();
 
@@ -126,7 +127,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			map.put("description", plan.getDescription());
 
-			map.put("status", plan.getStatus());
+			map.put("status", plan.getStatus() == null ? "In_Progress" : plan.getStatus());
 
 			map.put("createdBy", plan.getCreatedBy());
 
@@ -163,10 +164,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		long activePlans = interviewPlanRepository.countByStatus("Active");
 
 		long inactivePlans = interviewPlanRepository.countByStatus("Deactive");
-		
-		long inProgressPlans =
-		        interviewPlanRepository.countByStatusIsNull();
-		
+
+		long inProgressPlans = interviewPlanRepository.countByStatusIsNull();
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
@@ -175,7 +174,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.put("activePlans", activePlans);
 
 		response.put("inactivePlans", inactivePlans);
-		
+
 		response.put("inProgressPlans", inProgressPlans);
 
 		log.info("InterviewPlanServiceImpl :: Exit getInterviewPlanCounts");
