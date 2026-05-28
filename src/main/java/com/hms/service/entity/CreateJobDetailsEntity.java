@@ -90,6 +90,10 @@ public class CreateJobDetailsEntity {
 
 	@Column(name="sr_id")
 	private String srId;
+	
+	@Column(name="certifications_required",length=1000)
+	private String certificationsRequired;
+	
 
 	
 	
