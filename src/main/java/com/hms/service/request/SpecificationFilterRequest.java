@@ -1040,12 +1040,18 @@ public class SpecificationFilterRequest {
 		long inProgressPlans = interviewPlanRepository.count(
 
 				baseSpec.and(
-
 						(root, query, cb) ->
 
-						cb.isNull(root.get("status"))
+						cb.equal(
+
+								cb.lower(root.get("status")),
+
+								"InProgress"
+
+						)
 
 				));
+
 
 		counts.put("allPlans", allPlans);
 
