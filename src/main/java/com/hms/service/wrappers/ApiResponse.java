@@ -98,4 +98,8 @@ public class ApiResponse<T> {
 	public static <T> ApiResponse<T> failure(ResponseCode code,String message, List<String> errors) {
 		return new ApiResponse<>(code, message,errors);
 	}
+	//failure use this
+	public static <T> ApiResponse<T> failure(ResponseCode code,String message, T errors) {
+		return new ApiResponse<>(code, message,errors);
+	}
 }

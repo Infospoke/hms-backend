@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateJobDetailsRequest {
 	
-    private Integer jobId;
     
 	private String jobTitle;
 	
@@ -40,8 +39,17 @@ public class CreateJobDetailsRequest {
 	private Integer maxExperience;
 
 	private String additionalNotes;
-
-	private Boolean submit=false;
+	
+    private String educationRequirement;
+    
+    private Boolean isOpen;
+    
+    private String country;
+    
+	private String certificationsRequired;
+	
+	private String languages;
+	
 
 
 }

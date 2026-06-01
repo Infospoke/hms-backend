@@ -14,7 +14,7 @@ public class SrApprovalResponse {
 	private String jobTitle;
 	private String Department;
 	private String overAllStatus;
-	private LocalDateTime createdOn;
+	private LocalDateTime submittedOn;
 	private String CurrentStage;
 	
 	

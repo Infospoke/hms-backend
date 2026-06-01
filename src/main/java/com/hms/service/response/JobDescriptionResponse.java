@@ -1,4 +1,4 @@
-package com.hms.service.request;
+package com.hms.service.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,9 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobCreationReviewRequest {
+public class JobDescriptionResponse {
 
-	private Integer jobId;
-	
-	private Boolean submit;
+    private String description;
 }

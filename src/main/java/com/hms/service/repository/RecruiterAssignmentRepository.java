@@ -1,8 +1,5 @@
 package com.hms.service.repository;
 
-
-import org.springframework.data.domain.Sort.Order;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,12 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.util.Streamable;
+
 import org.springframework.stereotype.Repository;
 
-import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 
 @Repository
@@ -55,7 +52,7 @@ public interface RecruiterAssignmentRepository
 			""")
 	Object getStatusCounts();
 
-	List<RecruiterAssignmentEntity> findByJobId(Integer id);
+	List<RecruiterAssignmentEntity> findBySrId(String srId);
 
 	Long countByUserId(Integer userId);
 
@@ -77,29 +74,25 @@ public interface RecruiterAssignmentRepository
 			""")
 	List<Object[]> getStatusCountsByUserId(@Param("userId") Integer userId);
 
-
-
-
 	List<Integer> findJobIdsByUserIdAndStatus(@Param("userId") Integer userId, @Param("status") String status);
 
 	List<Integer> findJobIdsByUserId(@Param("userId") Integer userId);
 
-	  RecruiterAssignmentEntity findByJobIdAndUserId(
-	            Integer jobId,
-	            Integer userId
-	    );
+	RecruiterAssignmentEntity findBySrIdAndUserId(String srId, Integer userId);
 
-	    List<RecruiterAssignmentEntity> findAllByUserId(
-	            Integer userId
-	    );
+	List<RecruiterAssignmentEntity> findAllByUserId(Integer userId);
 
-	    List<RecruiterAssignmentEntity> findAllByUserIdAndStatusIgnoreCase(
-	            Integer userId,
-	            String status
-	    );
-	    RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
+	List<RecruiterAssignmentEntity> findAllByUserIdAndStatusIgnoreCase(Integer userId, String status);
 
+	RecruiterAssignmentEntity findRecuirtersBySrId(String srId);
+
+
+	List<RecruiterAssignmentEntity> findByJobId(Integer jobId);
 	Page<RecruiterAssignmentEntity> findByJobId(Integer jobId, Pageable pageable);
-
-
+	
+	
+	RecruiterAssignmentEntity findByJobIdAndUserId(Integer jobId ,Integer userId);
+	RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
+	
 }
+

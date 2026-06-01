@@ -1,6 +1,6 @@
 package com.hms.service.request;
 
-import java.util.List;
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SourcingChannelRequest {
-	    private Integer jobId;
-
-	    private List<ChannelRequest> channels;
+	 
+	    private Map<String , Boolean> channels;
+	    private Boolean referral;
+	    private double referralAmount;
 	}

@@ -48,6 +48,9 @@ public class SRPositionBasicsEntity {
 	@Column(name="location")
 	private String location;
 	
+	@Column(name="country")
+	private String country;
+	
 	@Column(name="seniority_level")
 	private Integer seniorityLevel;
 	
@@ -67,10 +70,10 @@ public class SRPositionBasicsEntity {
 	private String priority;
 	
 	@Column(name="submitted")
-	private Boolean submitted;
+	private Boolean submitted=false;
 	
 	@Column(name="approved")
-	private Boolean approved;
+	private Boolean approved=false;
 	
 	@Column(name = "sr_id", unique = true)
 	private String srId;
@@ -153,5 +156,8 @@ public class SRPositionBasicsEntity {
 
 	@Column(name="current_stage")
 	private String currentStage;
+	
+	@Column(name="job_submit")
+	private Boolean jobSubmit=false;
 
 }

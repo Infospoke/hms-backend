@@ -222,6 +222,7 @@ public class JobServiceImpl implements IJobService {
 				.filter(job -> Boolean.TRUE.equals(isOpen) ? Boolean.TRUE.equals(job.getIsOpen()) : true)
 
 				.map(job -> {
+					
 
 					JobsResponse response = new JobsResponse();
 					BeanUtils.copyProperties(job, response);

@@ -22,11 +22,14 @@ public class CreateJobDetailsEntity {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
-    private Integer id;
+    @Column(name = "job_id", updatable = false, nullable = false)
+    private Integer jobId;
     
 	@Column(name="job_title")
 	private String jobTitle;
+    
+	@Column(name="role_Id")
+	private Long roleId;
 	
 	@Column(name="business_unit")
 	private Integer businessUnitId;
@@ -36,6 +39,9 @@ public class CreateJobDetailsEntity {
 	
 	@Column(name="location")
 	private String location;
+	
+	@Column(name="country")
+	private String country;
 	
 	@Column(name="job_code",unique=true)
 	private String jobCode;
@@ -75,14 +81,24 @@ public class CreateJobDetailsEntity {
 	
 	@Column(name="created_at")
 	private LocalDateTime createdAt;
-
-	@Column(name="updated_by")
-	private String updatedBy;
 	
-	@Column(name="updated_at")
-	private LocalDateTime updatedAt;
+	 @Column(name="is_open")
+	 private Boolean isOpen;
+	 
+	 @Column(name="educationRequirements")
+     private String educationRequirement;
 
+	@Column(name="sr_id")
+	private String srId;
 	
+	@Column(name="certifications_required",length=1000)
+	private String certificationsRequired;
+	
+	@Column(name="languages")
+	private String languages;
+
+	@Column(name="plan_id")
+	private Integer planId;
 	
 
 }

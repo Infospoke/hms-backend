@@ -42,4 +42,9 @@ public class ChildLinkCommentsEntity {
 	  @Column(name="created_at")
 	  private LocalDateTime createdAt;
 
+	  @Column(name = "plan_id")
+	  private Integer planId;
+
+
+
 }
