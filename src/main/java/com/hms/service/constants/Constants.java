@@ -999,4 +999,163 @@ public class Constants {
 
 	public static final String FUNCTIONALITY_FETCHED_SUCCESSFULLY = "Functionality fetched successfully";
 	public static final String CREATED_AT = "createdAt";
+	
+	//Approval
+	public static final String INTERVIEW_PLAN_APPROVED_MAIL_SUBJECT =
+	        "Interview Plan Approved";
+
+	public static final String INTERVIEW_PLAN_APPROVED_MAKER_BODY =
+			"Your Interview Plan has been approved.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Approval Confirmation (Checker)
+	public static final String INTERVIEW_PLAN_APPROVER_CONFIRMATION_SUBJECT =
+	        "Interview Plan Approval Confirmation";
+
+	public static final String INTERVIEW_PLAN_APPROVED_CHECKER_BODY =
+			"You have approved the Interview Plan.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Rejected
+	public static final String INTERVIEW_PLAN_REJECTED_MAIL_SUBJECT =
+	        "Interview Plan Rejected";
+
+	public static final String INTERVIEW_PLAN_REJECTED_MAKER_BODY =
+			"Your Interview Plan has been rejected.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	//Rejected Confirmation
+	public static final String INTERVIEW_PLAN_REJECTION_CONFIRMATION_SUBJECT =
+	        "Interview Plan Rejection Confirmation";
+
+	public static final String INTERVIEW_PLAN_REJECTED_CHECKER_BODY =
+			"You have rejected the Interview Plan.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	//Activation Request
+	public static final String INTERVIEW_PLAN_ACTIVATION_REQUEST_MAIL_SUBJECT =
+	        "Interview Plan Activation Request";
+
+	public static final String INTERVIEW_PLAN_ACTIVATION_REQUEST_MAKER_BODY =
+			"Your activation request has been submitted successfully.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Raised By : %s\n"
+			+ "Raised On : %s";
+	
+	public static final String INTERVIEW_PLAN_ACTIVATION_REQUEST_CHECKER_BODY =
+			"An activation request is pending for your approval.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Requested By : %s\n"
+			+ "Requested On : %s";
+	
+	//Activation Approved
+	public static final String INTERVIEW_PLAN_ACTIVATED_MAIL_SUBJECT =
+	        "Interview Plan Activated";
+
+	public static final String INTERVIEW_PLAN_ACTIVATED_MAKER_BODY =
+			"Your activation request has been approved.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	public static final String INTERVIEW_PLAN_ACTIVATED_CHECKER_BODY =
+			"You have successfully approved the activation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Activation Rejected
+	public static final String INTERVIEW_PLAN_ACTIVATION_REJECTED_MAIL_SUBJECT =
+	        "Interview Plan Activation Rejected";
+
+	public static final String INTERVIEW_PLAN_ACTIVATION_REJECTED_MAKER_BODY =
+			"Your activation request has been rejected.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	public static final String INTERVIEW_PLAN_ACTIVATION_REJECTED_CHECKER_BODY =
+			"You have rejected the activation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	//Deactivation Request
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REQUEST_MAIL_SUBJECT =
+	        "Interview Plan Deactivation Request";
+
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REQUEST_MAKER_BODY =
+			"Your deactivation request has been submitted successfully.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Raised By : %s\n"
+			+ "Raised On : %s";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REQUEST_CHECKER_BODY =
+			"A deactivation request is pending for your approval.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Requested By : %s\n"
+			+ "Requested On : %s";
+	
+	//Deactivated
+	public static final String INTERVIEW_PLAN_DEACTIVATED_MAIL_SUBJECT =
+	        "Interview Plan Deactivated";
+
+	public static final String INTERVIEW_PLAN_DEACTIVATED_MAKER_BODY =
+			"Your deactivation request has been approved.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATED_CHECKER_BODY =
+			"You have successfully approved the deactivation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Deactivation Rejected
+	
+
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAIL_SUBJECT =
+        "Interview Plan Deactivation Request Rejected";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAKER_BODY =
+			"Your deactivation request has been rejected.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REJECTED_CHECKER_BODY =
+			"You have rejected the deactivation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+
 }

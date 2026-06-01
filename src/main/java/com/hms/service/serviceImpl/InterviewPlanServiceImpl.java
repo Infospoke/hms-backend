@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,16 +18,24 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.constants.Constants;
+import com.hms.service.dto.NotificationEvent;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
 import com.hms.service.repository.InterviewPlanRepository;
+import com.hms.service.repository.RolesRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IInterviewPlanService;
+import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -45,6 +54,17 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Autowired
 	private ChildLinkCommentsRepository childLinkCommentsRepository;
 
+	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired
+	private AssignRolesRepository assignRolesRepository;
+
+	@Autowired
+	private RolesRepository rolesRepository;
+	
+	@Autowired
+	private INotificationService notificationService;
 	
 	@Autowired
 	private JwtService jwtService;
@@ -98,6 +118,47 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 	}
 
+	
+	private void sendWorkflowNotification(String srId, String type, String makerMessage, String department,
+
+			String makerEmail, String makerRole, Integer makerRoleId, String makerTitle, String makerBody,
+
+			String checkerRole, String checkerMessage, String checkerTitle, String checkerBody,
+
+			Map<Integer, List<String>> roleEmailMap) {
+
+		NotificationEvent event = new NotificationEvent();
+
+		event.setProcessId(srId);
+		event.setType(type);
+
+		// MAKER
+
+		event.setMakerEmailAddress(makerEmail);
+		event.setMakerRoleName(makerRole);
+		event.setMakerNotificationTitle(makerTitle);
+		event.setMakerEmailBody(makerBody);
+		event.setMakerRoleId(makerRoleId);
+
+		// CHECKER
+
+		event.setCheckerRoleName(checkerRole);
+		event.setCheckerNotificationTitle(checkerTitle);
+		event.setCheckerEmailBody(checkerBody);
+
+		event.setDeptName(department);
+
+		event.setMakerMessage(makerMessage);
+		event.setCheckerMessage(checkerMessage);
+
+		event.setRoleEmailMap(roleEmailMap);
+
+		log.info("Maker Email : {}", makerEmail);
+		log.info("Role Email Map : {}", roleEmailMap);
+
+		notificationService.callNotification(event);
+	}
+		
 
 	@Override
 	public ApiResponse<?> updateInterviewPlan(UpdateInterviewPlanRequest request,HttpServletRequest httpRequest) {
@@ -155,7 +216,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	    // CHILD COMMENTS 
 
-	   ChildLinkCommentsEntity commentsEntity = new ChildLinkCommentsEntity();
+	   ChildLinkCommentsEntity childLinkCommentsEntity = new ChildLinkCommentsEntity();
 
 	    // JWT DETAILS 
 
@@ -166,6 +227,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String userName = jwtService.extractUsernameFromClaims(token);
 
 		Long userId = jwtService.extractUserId(token);
+		
+		String approverEmail = userRepository.findByUserId(userId).map(UserEntity::getEmail).orElse(null);
 
 		String roleName = jwtService.extractRole(token);
 
@@ -179,12 +242,22 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String createdBy = interviewPlanEntity.getCreatedBy();
 
 		Integer planId = interviewPlanEntity.getId();
+		
+		Integer makerUserId = interviewPlanEntity.getUserId().intValue();
+		
+		Integer makerRoleId = assignRolesRepository.findByUserId(makerUserId).get().getRoleId();
+
+		String makerRoleName = rolesRepository.findByRoleId(makerRoleId).get().getRoleName();
+		
+		UserEntity creator = userRepository.findByUsername(createdBy);
+
+		String creatorEmail = creator.getEmail();
 
 	    // APPROVE / REJECT 
 
 		if (request.getApproval() != null) {
 
-			if (!"Administrator".equalsIgnoreCase(roleName)) {
+			if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can approve/reject");
 			}
@@ -196,49 +269,53 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        if ("APPROVED".equals(approval)) {
 
 	            interviewPlanEntity.setStatus("ACTIVE");
-
 	            interviewPlanEntity.setApprovalStatus("Approved");
-
-	            commentsEntity.setPlanId(planId);
-
-	            commentsEntity.setAction("Approve");
-
-				commentsEntity.setComments(request.getComments());
-
-				commentsEntity.setCreatedBy(userName);
-
-	            commentsEntity.setCreatedAt( LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+	            childLinkCommentsEntity.setPlanId(planId);
+	            childLinkCommentsEntity.setAction("Approve");
+	            childLinkCommentsEntity.setComments(request.getComments());
+	            childLinkCommentsEntity.setCreatedBy(userName);
+	            childLinkCommentsEntity.setCreatedAt( LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 	            //  MAIL & NOTIFICATION
+	            
+	            Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-//	            sendWorkflowNotification(
-//	                    interviewPlanEntity.getId().toString(),
-//	                    "INTERVIEW_PLAN_WORKFLOW",
-//	                    "Interview Plan approved successfully",
-//	                    "Interview Plan",
-//
-//	                    createdBy,
-//	                    roleName,
-//	                    1,
-//
-//	                    "Interview Plan Approved",
-//
-//	                    String.format(
-//	                            "Interview Plan %s has been approved by %s",
-//	                            planName,
-//	                            userName),
-//
-//	                    roleName,
-//	                    "Interview Plan approved",
-//
-//	                    "Interview Plan Approval Confirmation",
-//
-//	                    String.format(
-//	                            "You approved Interview Plan %s",
-//	                            planName),
-//
-//	                    new HashMap<>());
-//
+				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(checkerRoleId, List.of(approverEmail));
+	            
+
+				sendWorkflowNotification(
+
+						interviewPlanEntity.getId().toString(),
+
+						"INTERVIEW_PLAN_WORKFLOW",
+
+						"Your Interview Plan has been approved by the Hiring Manager.",
+
+						"Interview Plan",
+
+						creatorEmail,
+
+						makerRoleName,
+
+						makerRoleId,
+
+						Constants.INTERVIEW_PLAN_APPROVED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_APPROVED_MAKER_BODY, createdBy, planId, planName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleName,
+
+						"You have successfully approved the Interview Plan.",
+
+						Constants.INTERVIEW_PLAN_APPROVER_CONFIRMATION_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_APPROVED_CHECKER_BODY, userName, planId, planName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleEmailMap);
 	        }
 
 	        // REJECT 
@@ -246,47 +323,52 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        else if ("REJECTED".equals(approval)) {
 
 	            interviewPlanEntity.setApprovalStatus("Rejected");
-
-	            commentsEntity.setPlanId(planId);
-
-	            commentsEntity.setAction("Reject");
-
-				commentsEntity.setComments(request.getComments());
-
-				commentsEntity.setCreatedBy(userName);
-
-				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+	            childLinkCommentsEntity.setPlanId(planId);
+	            childLinkCommentsEntity.setAction("Reject");
+	            childLinkCommentsEntity.setComments(request.getComments());
+	            childLinkCommentsEntity.setCreatedBy(userName);
+	            childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 	            // MAIL & NOTIFICATION 
+	            
+	            Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-//	            sendWorkflowNotification(
-//	                    interviewPlanEntity.getId().toString(),
-//	                    "INTERVIEW_PLAN_WORKFLOW",
-//	                    "Interview Plan rejected",
-//	                    "Interview Plan",
-//
-//	                    createdBy,
-//	                    roleName,
-//	                    1,
-//
-//	                    "Interview Plan Rejected",
-//
-//	                    String.format(
-//	                            "Interview Plan %s rejected by %s",
-//	                            planName,
-//	                            userName),
-//
-//	                    roleName,
-//	                    "Interview Plan rejected",
-//
-//	                    "Interview Plan Rejection Confirmation",
-//
-//	                    String.format(
-//	                            "You rejected Interview Plan %s",
-//	                            planName),
-//
-//	                    new HashMap<>());
-	        }
+				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+
+				roleEmailMap.put(checkerRoleId, List.of(approverEmail));
+
+				sendWorkflowNotification(
+
+						interviewPlanEntity.getId().toString(),
+
+						"INTERVIEW_PLAN_WORKFLOW",
+
+						"Your Interview Plan has been rejected by the Hiring Manager.",
+
+						"Interview Plan",
+
+						creatorEmail,
+
+						makerRoleName,
+
+						makerRoleId,
+
+						Constants.INTERVIEW_PLAN_REJECTED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_REJECTED_MAKER_BODY, createdBy, planId, planName,
+								description, request.getComments(), LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleName,
+
+						"You have successfully rejected the Interview Plan.",
+
+						Constants.INTERVIEW_PLAN_REJECTION_CONFIRMATION_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_REJECTED_CHECKER_BODY, userName, planId, planName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata")), request.getComments()),
+
+						roleEmailMap);
+			}
 
 			else {
 
@@ -297,61 +379,99 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	    // DEACTIVATION REQUEST
 
 		if (request.getStatus() != null && "DEACTIVE".equalsIgnoreCase(request.getStatus())) {
+			
+			log.info("userId that entity contains"+interviewPlanEntity.getUserId());
+			
+			log.info("token userId"+jwtService.extractUserId(token));
 
-			if (!interviewPlanEntity.getUserId().equals(userId.intValue())) {
+				if (!interviewPlanEntity.getUserId().equals(userId)){
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request deactivation");
 			}
+			
 		
 	        interviewPlanEntity.setApprovalStatus("In_Progress");
-
 	        interviewPlanEntity.setRequestType("Plan-Deactive");
-
 	        interviewPlanEntity.setDeactiveApproval(false);
+	        childLinkCommentsEntity.setPlanId(planId);
+	        childLinkCommentsEntity.setAction("Deactive");
+	        childLinkCommentsEntity.setDescription(request.getDescription());
+	        childLinkCommentsEntity.setCreatedBy(userName);
+	        childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+	        
+	        // MAIL & NOTIFICATION
+	        
+	        Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+	        
+			Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase("Hiring Manager").getRoleId();
+			
+			List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
+					.map(AssignRolesEntity::getUserId).toList();
 
-	        commentsEntity.setPlanId(planId);
+			List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+					.filter(Objects::nonNull).distinct().toList();
 
-	        commentsEntity.setAction("Deactive");
+			roleEmailMap.put(checkerRoleId, checkerEmails);
+			
+			log.info("Checker Role Id : {}", checkerRoleId);
+			
+			log.info("Checker Emails : {}", checkerEmails);
 
-	       commentsEntity.setDescription(request.getDescription());
+			sendWorkflowNotification(
 
-			commentsEntity.setCreatedBy(userName);
+					interviewPlanEntity.getId().toString(),
 
-			commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					"INTERVIEW_PLAN_WORKFLOW",
 
-//	        sendWorkflowNotification(
-//	                interviewPlanEntity.getId().toString(),
-//	                "INTERVIEW_PLAN_WORKFLOW",
-//	                "Interview Plan deactivation request submitted",
-//	                "Interview Plan",
-//
-//	                createdBy,
-//	                "Administrator",
-//	                1,
-//
-//	                "Interview Plan Deactivation Request",
-//
-//	                String.format(
-//	                        "Deactivation requested for Interview Plan %s",
-//	                        planName),
-//
-//	                "Administrator",
-//	                "Approval pending",
-//
-//	                "Interview Plan Deactivation Approval",
-//
-//	                String.format(
-//	                        "Please review deactivation request for %s",
-//	                        planName),
-//
-//	                new HashMap<>());
+					"Interview Plan deactivation request submitted",
+
+					"Interview Plan",
+
+					creatorEmail,
+
+					makerRoleName,
+
+					makerRoleId,
+
+					Constants.INTERVIEW_PLAN_DEACTIVATION_REQUEST_MAIL_SUBJECT,
+
+					String.format(Constants.INTERVIEW_PLAN_DEACTIVATION_REQUEST_MAKER_BODY, planId, planName,
+							request.getDescription(), createdBy, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+					"Hiring Manager",
+
+					"Interview Plan deactivation approval pending",
+
+					Constants.INTERVIEW_PLAN_DEACTIVATION_REQUEST_MAIL_SUBJECT,
+
+					String.format(Constants.INTERVIEW_PLAN_DEACTIVATION_REQUEST_CHECKER_BODY , planId, planName,
+							request.getDescription(), createdBy, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+					roleEmailMap
+			);
 	    }
 
 	    //  DEACTIVATION APPROVAL 
 
+		
 	    if (request.getDeactiveApproval() != null) {
+	    	
+	    	if (!"Plan-Deactive".equalsIgnoreCase(interviewPlanEntity.getRequestType())) {
 
-			if (!"Administrator".equalsIgnoreCase(roleName)) {
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "No deactivation request pending");
+			}
+
+			if ("Approved".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())
+			        || "Rejected".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())) {
+
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Deactivation request already processed");
+			}
+
+	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process deactivation");
 			}
@@ -359,51 +479,62 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        //  APPROVED
 
 	        if (Boolean.TRUE.equals(request.getDeactiveApproval())) {
-
+	        	
 	            interviewPlanEntity.setStatus("DEACTIVE");
-
 	            interviewPlanEntity.setApprovalStatus("Approved");
-
 	            interviewPlanEntity.setDeactiveApproval(true);
-
 	            interviewPlanEntity.setActiveApproval(false);
+	            childLinkCommentsEntity.setPlanId(planId);
+	            childLinkCommentsEntity.setAction("Approve");
+	            childLinkCommentsEntity.setComments(request.getComments());
+	            childLinkCommentsEntity.setCreatedBy(userName);
+	            childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+	            
+	          //MAIL&NOTIFICATION
+	            
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-	            commentsEntity.setPlanId(planId);
+				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
 
-	            commentsEntity.setAction("Approve");
+				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
+						.map(AssignRolesEntity::getUserId).toList();
 
-				commentsEntity.setComments(request.getComments());
+				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+						.filter(Objects::nonNull).distinct().toList();
 
-				commentsEntity.setCreatedBy(userName);
+				roleEmailMap.put(checkerRoleId, checkerEmails);
+				
+				sendWorkflowNotification(
 
-				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+						interviewPlanEntity.getId().toString(),
 
-//	            sendWorkflowNotification(
-//	                    interviewPlanEntity.getId().toString(),
-//	                    "INTERVIEW_PLAN_WORKFLOW",
-//	                    "Interview Plan deactivated successfully",
-//	                    "Interview Plan",
-//
-//	                    createdBy,
-//	                    roleName,
-//	                    1,
-//
-//	                    "Interview Plan Deactivated",
-//
-//	                    String.format(
-//	                            "Interview Plan %s deactivated",
-//	                            planName),
-//
-//	                    roleName,
-//	                    "Deactivation approved",
-//
-//	                    "Interview Plan Deactivation Confirmation",
-//
-//	                    String.format(
-//	                            "You approved deactivation for %s",
-//	                            planName),
-//
-//	                    new HashMap<>());
+						"INTERVIEW_PLAN_WORKFLOW",
+
+						"Your Interview Plan has been deactivated.",
+
+						"Interview Plan",
+
+						creatorEmail,
+
+						makerRoleName,
+
+						makerRoleId,
+
+						Constants.INTERVIEW_PLAN_DEACTIVATED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_DEACTIVATED_MAKER_BODY, createdBy, planId, planName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleName,
+
+						"You approved deactivation.",
+
+						Constants.INTERVIEW_PLAN_DEACTIVATED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_DEACTIVATED_CHECKER_BODY, userName, planId, planName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleEmailMap);
 	        }
 
 	        //  REJECTED 
@@ -411,45 +542,58 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        else {
 
 	            interviewPlanEntity.setApprovalStatus("REJECTED");
-
 	            interviewPlanEntity.setDeactiveApproval(false);
+	            childLinkCommentsEntity.setPlanId(planId);
+	            childLinkCommentsEntity.setAction("Reject");
+	            childLinkCommentsEntity.setComments(request.getComments());
+	            childLinkCommentsEntity.setCreatedBy(userName);
+	            childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+	            
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-	            commentsEntity.setPlanId(planId);
+				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
 
-	            commentsEntity.setAction("Reject");
+				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
+						.map(AssignRolesEntity::getUserId).toList();
 
-				commentsEntity.setComments(request.getComments());
+				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+						.filter(Objects::nonNull).distinct().toList();
 
-				commentsEntity.setCreatedBy(userName);
+				roleEmailMap.put(checkerRoleId, checkerEmails);
 
-				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+				sendWorkflowNotification(
 
-//	            sendWorkflowNotification(
-//	                    interviewPlanEntity.getId().toString(),
-//	                    "INTERVIEW_PLAN_WORKFLOW",
-//	                    "Interview Plan deactivation rejected",
-//	                    "Interview Plan",
-//
-//	                    createdBy,
-//	                    roleName,
-//	                    1,
-//
-//	                    "Interview Plan Deactivation Rejected",
-//
-//	                    String.format(
-//	                            "Interview Plan deactivation rejected for %s",
-//	                            planName),
-//
-//	                    roleName,
-//	                    "Deactivation rejected",
-//
-//	                    "Interview Plan Deactivation Rejection",
-//
-//	                    String.format(
-//	                            "You rejected deactivation for %s",
-//	                            planName),
-//
-//	                    new HashMap<>());
+						interviewPlanEntity.getId().toString(),
+
+						"INTERVIEW_PLAN_WORKFLOW",
+
+						"Your Interview Plan deactivation request has been rejected.",
+
+						"Interview Plan",
+
+						creatorEmail,
+
+						makerRoleName,
+
+						makerRoleId,
+
+						Constants.INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAKER_BODY, createdBy, planId,
+								planName, description, request.getComments(),
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleName,
+
+						"You rejected deactivation.",
+
+						Constants.INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_DEACTIVATION_REJECTED_CHECKER_BODY, userName, planId,
+								planName, description, request.getComments(),
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleEmailMap);
 	        }
 	    }
 
@@ -463,52 +607,80 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 	        interviewPlanEntity.setApprovalStatus("IN_PROGRESS");
-
 	        interviewPlanEntity.setRequestType("Plan-Active");
+	        childLinkCommentsEntity.setPlanId(planId);
+	        childLinkCommentsEntity.setAction("Active");
+	        childLinkCommentsEntity.setDescription(request.getDescription());
+	        childLinkCommentsEntity.setCreatedBy(userName);
+	        childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
-	        commentsEntity.setPlanId(planId);
+	        // MAIL&NOTIFICATION
+	        
+			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+			
+			Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase("Hiring Manager").getRoleId();
+			
+			List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
+					.map(AssignRolesEntity::getUserId).toList();
 
-	        commentsEntity.setAction("Active");
+			List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+					.filter(Objects::nonNull).distinct().toList();
 
-	        commentsEntity.setDescription(request.getDescription());
+			roleEmailMap.put(checkerRoleId, checkerEmails);
+	        
+			sendWorkflowNotification(
 
-			commentsEntity.setCreatedBy(userName);
+					interviewPlanEntity.getId().toString(),
 
-			commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+					"INTERVIEW_PLAN_WORKFLOW",
 
-//	        sendWorkflowNotification(
-//	                interviewPlanEntity.getId().toString(),
-//	                "INTERVIEW_PLAN_WORKFLOW",
-//	                "Interview Plan activation request submitted",
-//	                "Interview Plan",
-//
-//	                createdBy,
-//	                "Administrator",
-//	                1,
-//
-//	                "Interview Plan Activation Request",
-//
-//	                String.format(
-//	                        "Activation requested for Interview Plan %s",
-//	                        planName),
-//
-//	                "Administrator",
-//	                "Activation approval pending",
-//
-//	                "Interview Plan Activation Approval",
-//
-//	                String.format(
-//	                        "Please review activation request for %s",
-//	                        planName),
-//
-//	                new HashMap<>());
+					"Interview Plan activation request submitted",
+
+					"Interview Plan",
+
+					creatorEmail,
+
+					makerRoleName,
+
+					makerRoleId,
+
+					Constants.INTERVIEW_PLAN_ACTIVATION_REQUEST_MAIL_SUBJECT,
+
+					String.format(Constants.INTERVIEW_PLAN_ACTIVATION_REQUEST_MAKER_BODY, planId, planName,
+							request.getDescription(), createdBy, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+					"Hiring Manager",
+
+					"Interview Plan activation approval pending",
+
+					Constants.INTERVIEW_PLAN_ACTIVATION_REQUEST_MAIL_SUBJECT,
+
+					String.format(Constants.INTERVIEW_PLAN_ACTIVATION_REQUEST_CHECKER_BODY, planId, planName,
+							request.getDescription(), createdBy, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+					roleEmailMap);
 	    }
 
 	    //  ACTIVATION APPROVAL 
 
 	    if (request.getActiveApproval() != null) {
+	    	
+	    	if (!"Plan-Active".equalsIgnoreCase(interviewPlanEntity.getRequestType())) {
 
-			if (!"Administrator".equalsIgnoreCase(roleName)) {
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "No activation request pending");
+			}
+
+			if ("Approved".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())
+			        || "Rejected".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())) {
+
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Activation request already processed");
+			}
+
+	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process activation");
 			}
@@ -519,49 +691,60 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	                request.getActiveApproval())) {
 
 	            interviewPlanEntity.setStatus("ACTIVE");
-
 	            interviewPlanEntity.setApprovalStatus("Approved");
-
 	            interviewPlanEntity.setActiveApproval(true);
-
 	            interviewPlanEntity.setDeactiveApproval(false);
+	            childLinkCommentsEntity.setPlanId(planId);
+	            childLinkCommentsEntity.setAction("Approve");
+	            childLinkCommentsEntity.setComments(request.getComments());
+	            childLinkCommentsEntity.setCreatedBy(userName);
+	            childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+	            
+	          //MAIL&NOTIFICATION
+	            
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-	            commentsEntity.setPlanId(planId);
+				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
+				
+				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
+						.map(AssignRolesEntity::getUserId).toList();
 
-	            commentsEntity.setAction("Approve");
+				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+						.filter(Objects::nonNull).distinct().toList();
 
-				commentsEntity.setComments(request.getComments());
+				roleEmailMap.put(checkerRoleId, checkerEmails);
+				
+				sendWorkflowNotification(
 
-				commentsEntity.setCreatedBy(userName);
+						interviewPlanEntity.getId().toString(),
 
-				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+						"INTERVIEW_PLAN_WORKFLOW",
 
-//	            sendWorkflowNotification(
-//	                    interviewPlanEntity.getId().toString(),
-//	                    "INTERVIEW_PLAN_WORKFLOW",
-//	                    "Interview Plan activated successfully",
-//	                    "Interview Plan",
-//
-//	                    createdBy,
-//	                    roleName,
-//	                    1,
-//
-//	                    "Interview Plan Activated",
-//
-//	                    String.format(
-//	                            "Interview Plan %s activated",
-//	                            planName),
-//
-//	                    roleName,
-//	                    "Activation approved",
-//
-//	                    "Interview Plan Activation Confirmation",
-//
-//	                    String.format(
-//	                            "You approved activation for %s",
-//	                            planName),
-//
-//	                    new HashMap<>());
+						"Your Interview Plan has been activated.",
+
+						"Interview Plan",
+
+						creatorEmail,
+
+						makerRoleName,
+
+						makerRoleId,
+
+						Constants.INTERVIEW_PLAN_ACTIVATED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_ACTIVATED_MAKER_BODY, createdBy, planId, planName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleName,
+
+						"You approved activation.",
+
+						Constants.INTERVIEW_PLAN_ACTIVATED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_ACTIVATED_CHECKER_BODY, userName, planId, planName,
+								description, LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleEmailMap);
 	        }
 
 	        // REJECTED 
@@ -569,55 +752,66 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        else {
 
 	            interviewPlanEntity.setApprovalStatus("Rejected");
-
 	            interviewPlanEntity.setActiveApproval(false);
+	            childLinkCommentsEntity.setPlanId(planId);
+	            childLinkCommentsEntity.setAction("Reject");
+	            childLinkCommentsEntity.setComments(request.getComments());
+	            childLinkCommentsEntity.setCreatedBy(userName);
+	            childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));         
+	            
+				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-	            commentsEntity.setPlanId(planId);
+				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
 
-	            commentsEntity.setAction("Reject");
+				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
+						.map(AssignRolesEntity::getUserId).toList();
 
-				commentsEntity.setComments(request.getComments());
+				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
+						.filter(Objects::nonNull).distinct().toList();
 
-				commentsEntity.setCreatedBy(userName);
+				roleEmailMap.put(checkerRoleId, checkerEmails);
+	            
 
-				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+				sendWorkflowNotification(
 
-//	            sendWorkflowNotification(
-//	                    interviewPlanEntity.getId().toString(),
-//	                    "INTERVIEW_PLAN_WORKFLOW",
-//	                    "Interview Plan activation rejected",
-//	                    "Interview Plan",
-//
-//	                    createdBy,
-//	                    roleName,
-//	                    1,
-//
-//	                    "Interview Plan Activation Rejected",
-//
-//	                    String.format(
-//	                            "Interview Plan activation rejected for %s",
-//	                            planName),
-//
-//	                    roleName,
-//	                    "Activation rejected",
-//
-//	                    "Interview Plan Activation Rejection",
-//
-//	                    String.format(
-//	                            "You rejected activation for %s",
-//	                            planName),
-//
-//	                    new HashMap<>());
-	        }
-	    }
+						interviewPlanEntity.getId().toString(),
+
+						"INTERVIEW_PLAN_WORKFLOW",
+
+						"Your Interview Plan activation request has been rejected.",
+
+						"Interview Plan",
+
+						creatorEmail,
+
+						makerRoleName,
+
+						makerRoleId,
+
+						Constants.INTERVIEW_PLAN_ACTIVATION_REJECTED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_ACTIVATION_REJECTED_MAKER_BODY, createdBy, planId,
+								planName, description, request.getComments(),
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleName,
+
+						"You rejected activation.",
+
+						Constants.INTERVIEW_PLAN_ACTIVATION_REJECTED_MAIL_SUBJECT,
+
+						String.format(Constants.INTERVIEW_PLAN_ACTIVATION_REJECTED_CHECKER_BODY, userName, planId,
+								planName, description, request.getComments(),
+								LocalDateTime.now(ZoneId.of("Asia/Kolkata"))),
+
+						roleEmailMap);
+			}
+		}
 
 	    interviewPlanEntity.setUpdatedBy(userName);
-
 	    interviewPlanEntity.setUpdatedAt(LocalDateTime.now());
-
 	    interviewPlanRepository.save(interviewPlanEntity);
-
-	    childLinkCommentsRepository.save(commentsEntity);
+	    childLinkCommentsRepository.save(childLinkCommentsEntity);
 
 	    return ApiResponse.success("Interview Plan Updated Successfully");
 	}
