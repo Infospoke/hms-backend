@@ -92,9 +92,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			String authHeader = httpRequest.getHeader("Authorization");
 			String token = authHeader.substring(7);
 			String username = jwtService.extractUsernameFromClaims(token);
-
+			String roleName = jwtService.extractRole(token);
 			Long userId = jwtService.extractUserId(token);
-
+			
 
 			InterviewPlanEntity entity = new InterviewPlanEntity();
 			entity.setPlanName(request.getPlanName());
@@ -107,6 +107,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			entity.setStatus("InProgress");
 			entity.setCreatedBy(username);
 			entity.setUserId(userId);
+			entity.setRoleName(roleName);
 
 			entity.setCreatedOn(LocalDateTime.now());
 
