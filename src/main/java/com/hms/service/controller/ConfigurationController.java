@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.RolesByDepartmentIdsRequest;
-import com.hms.service.response.DropDownResponse;
 import com.hms.service.service.IConfigurationService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -27,51 +26,49 @@ public class ConfigurationController {
 	}
 
 	@GetMapping("/business-units")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getBusinessUnits() {
+	public ResponseEntity<ApiResponse<List<?>>> getBusinessUnits() {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getAllBusinessUnits();
+		ApiResponse<List<?>> response = iConfigurationService.getAllBusinessUnits();
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/departments")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getDepartments() {
+	public ResponseEntity<ApiResponse<List<?>>> getDepartments() {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getAllDepartments();
+		ApiResponse<List<?>> response = iConfigurationService.getAllDepartments();
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/departments/{businessUnitId}")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getDepartments(
-			@PathVariable("businessUnitId") Integer businessUnitId) {
+	public ResponseEntity<ApiResponse<List<?>>> getDepartments(@PathVariable("businessUnitId") Integer businessUnitId) {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService
+		ApiResponse<List<?>> response = iConfigurationService
 				.getDepartmentsByBusinessUnit(businessUnitId);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/roles/{departmentId}")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getRoles(
-			@PathVariable("departmentId") Integer departmentId) {
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getRolesByDepartment(departmentId);
+	public ResponseEntity<ApiResponse<List<?>>> getRoles(@PathVariable("departmentId") Integer departmentId) {
+		ApiResponse<List<?>> response = iConfigurationService.getRolesByDepartment(departmentId);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/employment-types")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getEmploymentTypes() {
+	public ResponseEntity<ApiResponse<List<?>>> getEmploymentTypes() {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getEmploymentTypes();
+		ApiResponse<List<?>> response = iConfigurationService.getEmploymentTypes();
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/user-types")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getUserTypes() {
+	public ResponseEntity<ApiResponse<List<?>>> getUserTypes() {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getUserTypes();
+		ApiResponse<List<?>> response = iConfigurationService.getUserTypes();
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -94,15 +91,15 @@ public class ConfigurationController {
 	}
 
 	@GetMapping("/position-basic-seniority-levels")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getSeniorityLevels() {
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getSeniorityLevels();
+	public ResponseEntity<ApiResponse<List<?>>> getSeniorityLevels() {
+		ApiResponse<List<?>> response = iConfigurationService.getSeniorityLevels();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/travel-requirements")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getTravelRequirements() {
+	public ResponseEntity<ApiResponse<List<?>>> getTravelRequirements() {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getTravelRequirements();
+		ApiResponse<List<?>> response = iConfigurationService.getTravelRequirements();
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -115,30 +112,37 @@ public class ConfigurationController {
 	}
 
 	@GetMapping("/functionality")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getFunctionality() {
+	public ResponseEntity<ApiResponse<List<?>>> getFunctionality() {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getAllFunctionality();
+		ApiResponse<List<?>> response = iConfigurationService.getAllFunctionality();
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/role-users")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getUsersByRole() {
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getUsersByRole();
+	public ResponseEntity<ApiResponse<List<?>>> getUsersByRole() {
+		ApiResponse<List<?>> response = iConfigurationService.getUsersByRole();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@GetMapping("/get-ai-options")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getAiOtions() {
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getAiOptions();
+	public ResponseEntity<ApiResponse<List<?>>> getAiOtions() {
+		ApiResponse<List<?>> response = iConfigurationService.getAiOptions();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/roles/by-departments")
-	public ResponseEntity<ApiResponse<List<DropDownResponse>>> getRolesByDepartments(
+	public ResponseEntity<ApiResponse<List<?>>> getRolesByDepartments(
 			@RequestBody RolesByDepartmentIdsRequest request) {
 
-		ApiResponse<List<DropDownResponse>> response = iConfigurationService.getRolesByDepartments(request);
+		ApiResponse<List<?>> response = iConfigurationService.getRolesByDepartments(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@GetMapping("/create-permission-users")
+	public ResponseEntity<ApiResponse<List<?>>> getUsersWithCreatePermission() {
+
+		ApiResponse<List<?>> response = iConfigurationService.getUsersWithCreatePermission();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

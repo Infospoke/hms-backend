@@ -94,8 +94,11 @@ public class CreateJobDetailsEntity {
 	@Column(name="certifications_required",length=1000)
 	private String certificationsRequired;
 	
+	@Column(name="languages")
+	private String languages;
 
-	
+	@Column(name="plan_id")
+	private Integer planId;
 	
 
 }

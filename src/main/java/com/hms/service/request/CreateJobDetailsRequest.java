@@ -2,7 +2,6 @@ package com.hms.service.request;
 
 import java.time.LocalDate;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,6 +47,8 @@ public class CreateJobDetailsRequest {
     private String country;
     
 	private String certificationsRequired;
+	
+	private String languages;
 	
 
 

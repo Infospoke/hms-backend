@@ -15,22 +15,22 @@ import com.hms.service.entity.AssignRolesEntity;
 
 @Repository
 public interface AssignRolesRepository extends JpaRepository<AssignRolesEntity, Integer> {
-	
+
 	Optional<AssignRolesEntity> findByUserId(Integer userId);
 
 	List<AssignRolesEntity> findByRoleId(Integer roleId);
-	
+
 	@Query("""
-		    SELECT ar.roleId, COUNT(DISTINCT ar.userId)
-		    FROM AssignRolesEntity ar
-		    WHERE ar.roleId IN :roleIds
-		    GROUP BY ar.roleId
-		""")
-		List<Object[]> countUsersByRoleIds(@Param("roleIds") List<Integer> roleIds);
+			    SELECT ar.roleId, COUNT(DISTINCT ar.userId)
+			    FROM AssignRolesEntity ar
+			    WHERE ar.roleId IN :roleIds
+			    GROUP BY ar.roleId
+			""")
+	List<Object[]> countUsersByRoleIds(@Param("roleIds") List<Integer> roleIds);
 
 	Page<AssignRolesEntity> findAll(Specification<AssignRolesEntity> recruiterSpecification, Pageable pageable);
 
 //	Integer findByUserId(Long userId);
-
+	List<AssignRolesEntity> findByRoleIdIn(List<Integer> roleIds);
 
 }

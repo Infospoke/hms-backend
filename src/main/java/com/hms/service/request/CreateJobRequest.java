@@ -24,5 +24,6 @@ public class CreateJobRequest {
    private String srId;
    
    private Boolean submit;
-   
+
+
 }
