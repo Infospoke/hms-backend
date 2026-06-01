@@ -280,7 +280,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
-				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can approve/reject");
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Hiring Manager can approve/reject");
+			}
+			
+			if ("Approved".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())
+			        || "Rejected".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())) {
+
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Request already processed");
 			}
 
 			String approval = request.getApproval().trim().toUpperCase();
@@ -494,7 +502,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
-				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process deactivation");
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Hiring Manager can process deactivation");
 			}
 
 	        //  APPROVED
@@ -622,7 +630,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		if (request.getStatus() != null && "ACTIVE".equalsIgnoreCase(request.getStatus())) {
 
-			if (!interviewPlanEntity.getUserId().equals(userId.intValue())) {
+			if (!interviewPlanEntity.getUserId().equals(userId)){
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request activation");
 			}
@@ -703,7 +711,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
-				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process activation");
+				return ApiResponse.failure(ResponseCode.FAILURE, "Only Hiring Manager can process activation");
 			}
 
 	        //  APPROVED 
