@@ -67,4 +67,14 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
+	
+	
+	@PostMapping("/interview-plan-approvals")
+	public ResponseEntity<ApiResponse<?>> getInterviewPlanApprovals(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = interviewPlanService.getInterviewPlanApprovals(request);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	
 }

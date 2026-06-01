@@ -22,6 +22,8 @@ public interface IInterviewPlanService {
 	
 	ApiResponse<?> getInterviewPlanCounts();
 
+	ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request);
+
 
 
 }
