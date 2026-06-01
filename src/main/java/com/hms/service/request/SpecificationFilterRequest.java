@@ -1001,64 +1001,59 @@ public class SpecificationFilterRequest {
 
 		Map<String, Long> counts = new LinkedHashMap<>();
 
-		Specification<InterviewPlanEntity> baseSpec = buildInterviewPlanSpecification();
+		Specification<InterviewPlanEntity> countSpec = (root, query, cb) -> {
 
-		long allPlans = interviewPlanRepository.count(baseSpec);
+			List<Predicate> predicates = new ArrayList<>();
 
-		long activePlans = interviewPlanRepository.count(
+			if (filters != null) {
 
-				baseSpec.and(
+				String search = getFilter("search");
 
-						(root, query, cb) ->
+				if (search != null && !search.isBlank()) {
 
-						cb.equal(
+					search = search.toLowerCase().trim();
 
-								cb.lower(root.get("status")),
+					predicates.add(cb.or(cb.like(cb.lower(root.get("planName")), "%" + search + "%"),
+							cb.like(cb.lower(root.get("description")), "%" + search + "%")));
+				}
 
-								"active"
+				String userId = getFilter("createdBy");
 
-						)
+				if (userId != null && !userId.isBlank()) {
 
-				));
+					predicates.add(cb.equal(root.get("userId"), Integer.parseInt(userId)));
+				}
 
-		long inactivePlans = interviewPlanRepository.count(
+				Specification<InterviewPlanEntity> dateSpecification = dateSpec("createdOn");
 
-				baseSpec.and(
+				if (dateSpecification != null) {
 
-						(root, query, cb) ->
+					Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
 
-						cb.equal(
+					if (datePredicate != null) {
+						predicates.add(datePredicate);
+					}
+				}
 
-								cb.lower(root.get("status")),
+			}
 
-								"deactive"
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 
-						)
+		long allPlans = interviewPlanRepository.count(countSpec);
 
-				));
+		long activePlans = interviewPlanRepository
+				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "active")));
 
-		long inProgressPlans = interviewPlanRepository.count(
+		long inactivePlans = interviewPlanRepository
+				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "deactive")));
 
-				baseSpec.and(
-						(root, query, cb) ->
-
-						cb.equal(
-
-								cb.lower(root.get("status")),
-
-								"InProgress"
-
-						)
-
-				));
-
+		long inProgressPlans = interviewPlanRepository
+				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "inprogress")));
 
 		counts.put("allPlans", allPlans);
-
 		counts.put("activePlans", activePlans);
-
 		counts.put("inactivePlans", inactivePlans);
-
 		counts.put("inProgressPlans", inProgressPlans);
 
 		return counts;
