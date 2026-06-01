@@ -10,4 +10,6 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> createInterviewPlan(@Valid InterviewPlanRequest request, HttpServletRequest httpRequest);
 
+	ApiResponse<?> getInterviewPlanDetailsById(Integer id);
+
 }
