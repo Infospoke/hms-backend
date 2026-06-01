@@ -4,10 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,13 +19,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
+import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
+import com.hms.service.repository.ApprovalChainRepository;
+import com.hms.service.repository.ApprovalsChildRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
+import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
+import com.hms.service.request.LevelConfig;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IInterviewPlanService;
@@ -45,7 +53,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Autowired
 	private ChildLinkCommentsRepository childLinkCommentsRepository;
 
-	
+	@Autowired
+	private FunctionalityRepository functionalityRepository;
+
+	@Autowired
+	private ApprovalChainRepository approvalChainRepository;
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+
 	@Autowired
 	private JwtService jwtService;
 
@@ -98,12 +114,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 	}
 
-
 	@Override
-	public ApiResponse<?> updateInterviewPlan(UpdateInterviewPlanRequest request,HttpServletRequest httpRequest) {
+	public ApiResponse<?> updateInterviewPlan(UpdateInterviewPlanRequest request, HttpServletRequest httpRequest) {
 
-	    log.info("InterviewPlanServiceImpl :: updateInterviewPlan");
-
+		log.info("InterviewPlanServiceImpl :: updateInterviewPlan");
 
 		// VALIDATIONS
 
@@ -112,13 +126,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Plan Id is required");
 		}
 
-
 		if (request.getApproval() == null && request.getStatus() == null && request.getActiveApproval() == null
 				&& request.getDeactiveApproval() == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "At least one action is required");
 		}
-
 
 		if (request.getApproval() != null
 				&& (request.getComments() == null || request.getComments().trim().isEmpty())) {
@@ -126,13 +138,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Comments are mandatory");
 		}
 
-
 		if (request.getStatus() != null
 				&& (request.getDescription() == null || request.getDescription().trim().isEmpty())) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Description is mandatory");
 		}
-
 
 		if (request.getDeactiveApproval() != null
 				&& (request.getComments() == null || request.getComments().trim().isEmpty())) {
@@ -146,18 +156,16 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Comments are mandatory for activation approval");
 		}
 
-		
-
-	    // FETCH ENTITY 
+		// FETCH ENTITY
 
 		InterviewPlanEntity interviewPlanEntity = interviewPlanRepository.findById(request.getId())
 				.orElseThrow(() -> new RuntimeException("Interview Plan not found"));
 
-	    // CHILD COMMENTS 
+		// CHILD COMMENTS
 
-	   ChildLinkCommentsEntity commentsEntity = new ChildLinkCommentsEntity();
+		ChildLinkCommentsEntity commentsEntity = new ChildLinkCommentsEntity();
 
-	    // JWT DETAILS 
+		// JWT DETAILS
 
 		String authHeader = httpRequest.getHeader("Authorization");
 
@@ -169,10 +177,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		String roleName = jwtService.extractRole(token);
 
+		// COMMON DETAILS
 
-	    // COMMON DETAILS 
-
-	    String planName = interviewPlanEntity.getPlanName();
+		String planName = interviewPlanEntity.getPlanName();
 
 		String description = interviewPlanEntity.getDescription();
 
@@ -180,7 +187,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		Integer planId = interviewPlanEntity.getId();
 
-	    // APPROVE / REJECT 
+		// APPROVE / REJECT
 
 		if (request.getApproval() != null) {
 
@@ -191,25 +198,25 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			String approval = request.getApproval().trim().toUpperCase();
 
-	        // APPROVE
+			// APPROVE
 
-	        if ("APPROVED".equals(approval)) {
+			if ("APPROVED".equals(approval)) {
 
-	            interviewPlanEntity.setStatus("ACTIVE");
+				interviewPlanEntity.setStatus("ACTIVE");
 
-	            interviewPlanEntity.setApprovalStatus("Approved");
+				interviewPlanEntity.setApprovalStatus("Approved");
 
-	            commentsEntity.setPlanId(planId);
+				commentsEntity.setPlanId(planId);
 
-	            commentsEntity.setAction("Approve");
+				commentsEntity.setAction("Approve");
 
 				commentsEntity.setComments(request.getComments());
 
 				commentsEntity.setCreatedBy(userName);
 
-	            commentsEntity.setCreatedAt( LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
-	            //  MAIL & NOTIFICATION
+				// MAIL & NOTIFICATION
 
 //	            sendWorkflowNotification(
 //	                    interviewPlanEntity.getId().toString(),
@@ -239,17 +246,17 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //
 //	                    new HashMap<>());
 //
-	        }
+			}
 
-	        // REJECT 
+			// REJECT
 
-	        else if ("REJECTED".equals(approval)) {
+			else if ("REJECTED".equals(approval)) {
 
-	            interviewPlanEntity.setApprovalStatus("Rejected");
+				interviewPlanEntity.setApprovalStatus("Rejected");
 
-	            commentsEntity.setPlanId(planId);
+				commentsEntity.setPlanId(planId);
 
-	            commentsEntity.setAction("Reject");
+				commentsEntity.setAction("Reject");
 
 				commentsEntity.setComments(request.getComments());
 
@@ -257,7 +264,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				commentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
-	            // MAIL & NOTIFICATION 
+				// MAIL & NOTIFICATION
 
 //	            sendWorkflowNotification(
 //	                    interviewPlanEntity.getId().toString(),
@@ -286,15 +293,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //	                            planName),
 //
 //	                    new HashMap<>());
-	        }
+			}
 
 			else {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid approval value");
 			}
-	    }
+		}
 
-	    // DEACTIVATION REQUEST
+		// DEACTIVATION REQUEST
 
 		if (request.getStatus() != null && "DEACTIVE".equalsIgnoreCase(request.getStatus())) {
 
@@ -302,18 +309,18 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request deactivation");
 			}
-		
-	        interviewPlanEntity.setApprovalStatus("In_Progress");
 
-	        interviewPlanEntity.setRequestType("Plan-Deactive");
+			interviewPlanEntity.setApprovalStatus("In_Progress");
 
-	        interviewPlanEntity.setDeactiveApproval(false);
+			interviewPlanEntity.setRequestType("Plan-Deactive");
 
-	        commentsEntity.setPlanId(planId);
+			interviewPlanEntity.setDeactiveApproval(false);
 
-	        commentsEntity.setAction("Deactive");
+			commentsEntity.setPlanId(planId);
 
-	       commentsEntity.setDescription(request.getDescription());
+			commentsEntity.setAction("Deactive");
+
+			commentsEntity.setDescription(request.getDescription());
 
 			commentsEntity.setCreatedBy(userName);
 
@@ -345,32 +352,32 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //	                        planName),
 //
 //	                new HashMap<>());
-	    }
+		}
 
-	    //  DEACTIVATION APPROVAL 
+		// DEACTIVATION APPROVAL
 
-	    if (request.getDeactiveApproval() != null) {
+		if (request.getDeactiveApproval() != null) {
 
 			if (!"Administrator".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process deactivation");
 			}
 
-	        //  APPROVED
+			// APPROVED
 
-	        if (Boolean.TRUE.equals(request.getDeactiveApproval())) {
+			if (Boolean.TRUE.equals(request.getDeactiveApproval())) {
 
-	            interviewPlanEntity.setStatus("DEACTIVE");
+				interviewPlanEntity.setStatus("DEACTIVE");
 
-	            interviewPlanEntity.setApprovalStatus("Approved");
+				interviewPlanEntity.setApprovalStatus("Approved");
 
-	            interviewPlanEntity.setDeactiveApproval(true);
+				interviewPlanEntity.setDeactiveApproval(true);
 
-	            interviewPlanEntity.setActiveApproval(false);
+				interviewPlanEntity.setActiveApproval(false);
 
-	            commentsEntity.setPlanId(planId);
+				commentsEntity.setPlanId(planId);
 
-	            commentsEntity.setAction("Approve");
+				commentsEntity.setAction("Approve");
 
 				commentsEntity.setComments(request.getComments());
 
@@ -404,19 +411,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //	                            planName),
 //
 //	                    new HashMap<>());
-	        }
+			}
 
-	        //  REJECTED 
+			// REJECTED
 
-	        else {
+			else {
 
-	            interviewPlanEntity.setApprovalStatus("REJECTED");
+				interviewPlanEntity.setApprovalStatus("REJECTED");
 
-	            interviewPlanEntity.setDeactiveApproval(false);
+				interviewPlanEntity.setDeactiveApproval(false);
 
-	            commentsEntity.setPlanId(planId);
+				commentsEntity.setPlanId(planId);
 
-	            commentsEntity.setAction("Reject");
+				commentsEntity.setAction("Reject");
 
 				commentsEntity.setComments(request.getComments());
 
@@ -450,10 +457,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //	                            planName),
 //
 //	                    new HashMap<>());
-	        }
-	    }
+			}
+		}
 
-	    // ACTIVATION REQUEST 
+		// ACTIVATION REQUEST
 
 		if (request.getStatus() != null && "ACTIVE".equalsIgnoreCase(request.getStatus())) {
 
@@ -462,15 +469,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request activation");
 			}
 
-	        interviewPlanEntity.setApprovalStatus("IN_PROGRESS");
+			interviewPlanEntity.setApprovalStatus("IN_PROGRESS");
 
-	        interviewPlanEntity.setRequestType("Plan-Active");
+			interviewPlanEntity.setRequestType("Plan-Active");
 
-	        commentsEntity.setPlanId(planId);
+			commentsEntity.setPlanId(planId);
 
-	        commentsEntity.setAction("Active");
+			commentsEntity.setAction("Active");
 
-	        commentsEntity.setDescription(request.getDescription());
+			commentsEntity.setDescription(request.getDescription());
 
 			commentsEntity.setCreatedBy(userName);
 
@@ -502,33 +509,32 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //	                        planName),
 //
 //	                new HashMap<>());
-	    }
+		}
 
-	    //  ACTIVATION APPROVAL 
+		// ACTIVATION APPROVAL
 
-	    if (request.getActiveApproval() != null) {
+		if (request.getActiveApproval() != null) {
 
 			if (!"Administrator".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Administrator can process activation");
 			}
 
-	        //  APPROVED 
+			// APPROVED
 
-	        if (Boolean.TRUE.equals(
-	                request.getActiveApproval())) {
+			if (Boolean.TRUE.equals(request.getActiveApproval())) {
 
-	            interviewPlanEntity.setStatus("ACTIVE");
+				interviewPlanEntity.setStatus("ACTIVE");
 
-	            interviewPlanEntity.setApprovalStatus("Approved");
+				interviewPlanEntity.setApprovalStatus("Approved");
 
-	            interviewPlanEntity.setActiveApproval(true);
+				interviewPlanEntity.setActiveApproval(true);
 
-	            interviewPlanEntity.setDeactiveApproval(false);
+				interviewPlanEntity.setDeactiveApproval(false);
 
-	            commentsEntity.setPlanId(planId);
+				commentsEntity.setPlanId(planId);
 
-	            commentsEntity.setAction("Approve");
+				commentsEntity.setAction("Approve");
 
 				commentsEntity.setComments(request.getComments());
 
@@ -562,19 +568,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //	                            planName),
 //
 //	                    new HashMap<>());
-	        }
+			}
 
-	        // REJECTED 
+			// REJECTED
 
-	        else {
+			else {
 
-	            interviewPlanEntity.setApprovalStatus("Rejected");
+				interviewPlanEntity.setApprovalStatus("Rejected");
 
-	            interviewPlanEntity.setActiveApproval(false);
+				interviewPlanEntity.setActiveApproval(false);
 
-	            commentsEntity.setPlanId(planId);
+				commentsEntity.setPlanId(planId);
 
-	            commentsEntity.setAction("Reject");
+				commentsEntity.setAction("Reject");
 
 				commentsEntity.setComments(request.getComments());
 
@@ -608,18 +614,18 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 //	                            planName),
 //
 //	                    new HashMap<>());
-	        }
-	    }
+			}
+		}
 
-	    interviewPlanEntity.setUpdatedBy(userName);
+		interviewPlanEntity.setUpdatedBy(userName);
 
-	    interviewPlanEntity.setUpdatedAt(LocalDateTime.now());
+		interviewPlanEntity.setUpdatedAt(LocalDateTime.now());
 
-	    interviewPlanRepository.save(interviewPlanEntity);
+		interviewPlanRepository.save(interviewPlanEntity);
 
-	    childLinkCommentsRepository.save(commentsEntity);
+		childLinkCommentsRepository.save(commentsEntity);
 
-	    return ApiResponse.success("Interview Plan Updated Successfully");
+		return ApiResponse.success("Interview Plan Updated Successfully");
 	}
 
 	@Override
@@ -719,5 +725,137 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("InterviewPlanServiceImpl :: Exit getInterviewPlanCounts");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview plan counts fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request) {
+
+		try {
+
+			String authHeader = httpServletRequest.getHeader("Authorization");
+
+			String userName = "";
+			Long roleId = null;
+
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			    String token = authHeader.substring(7);
+
+			    userName = jwtService.extractUsernameFromClaims(token);
+			    roleId = jwtService.extractRoleId(token);
+			}
+
+			if (roleId == null) {
+
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Role not found in token");
+			}
+
+			Integer  functionalityId=
+			        functionalityRepository
+			                .findByFunctionalityName("Interview Plan").get().getId();
+			
+
+			if (functionalityId == null) {
+
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Interview Plan functionality not configured");
+			}
+
+			ApprovalChainEntity approvalChain =
+			        approvalChainRepository
+			                .findByFunctionality(functionalityId);
+		
+
+			if (approvalChain == null) {
+
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Approval chain not found");
+			}
+
+			boolean roleExists = false;
+
+			for (LevelConfig level : approvalChain.getLevelConfig()) {
+
+			    if (level.getRoleId() != null
+			            && level.getRoleId().longValue() == roleId.longValue()) {
+
+			        roleExists = true;
+			        break;
+			    }
+			}
+
+			if (!roleExists) {
+
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "You are not authorized");
+			}
+
+			Pageable pageable =
+			        PageRequest.of(
+			                request.getPage(),
+			                request.getSize(),
+			                Sort.by(
+			                        Sort.Direction.fromString(request.getDirection()),
+			                        request.getSortBy()
+			                )
+			        );
+
+			Page<InterviewPlanEntity> page =
+			        interviewPlanRepository.findAll(
+			                request.buildInterviewPlanApprovalSpecification(),
+			                pageable);
+
+			List<Map<String, Object>> content =
+			        page.getContent()
+			                .stream()
+			                .map(plan -> {
+
+			                    Map<String, Object> map =
+			                            new LinkedHashMap<>();
+
+			                    map.put("id", plan.getId());
+			                    map.put("planName", plan.getPlanName());
+			                    map.put("requestedBy", plan.getCreatedBy());
+			                    map.put("requestedOn", plan.getCreatedOn());
+			                    map.put("status", plan.getApprovalStatus());
+
+			                    map.put(
+			                            "rounds",
+			                            plan.getRounds() == null
+			                                    ? 0
+			                                    : plan.getRounds().size());
+
+			                    return map;
+			                })
+			                .toList();
+
+			Map<String, Object> response =
+			        new LinkedHashMap<>();
+
+			response.put("currentPage", page.getNumber());
+			response.put("totalPages", page.getTotalPages());
+			response.put("size", page.getSize());
+			response.put("totalElements", page.getTotalElements());
+			response.put("content", content);
+
+			return ApiResponse.success(
+			        ResponseCode.SUCCESS,
+			        "Interview Plans fetched successfully",
+			        response);
+		}
+		catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        return ApiResponse.failure(
+	                ResponseCode.FAILURE,
+	                e.getMessage());
+	    }
+	
 	}
 }

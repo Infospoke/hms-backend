@@ -1063,4 +1063,49 @@ public class SpecificationFilterRequest {
 
 		return counts;
 	}
+	
+	public Specification<InterviewPlanEntity> buildInterviewPlanApprovalSpecification() {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        String search = getFilter("search");
+
+	        if (search != null && !search.isBlank()) {
+
+	            search = search.toLowerCase().trim();
+
+	            predicates.add(
+	                    cb.or(
+	                            cb.like(
+	                                    cb.lower(root.get("planName")),
+	                                    "%" + search + "%"
+	                            )
+
+	                         
+	                    )
+	            );
+	        }
+
+	        Specification<InterviewPlanEntity> dateSpecification =
+	                dateSpec("createdOn");
+
+	        if (dateSpecification != null) {
+
+	            predicates.add(
+	                    dateSpecification.toPredicate(root, query, cb)
+	            );
+	        }
+
+	        predicates.add(
+	                cb.equal(
+	                        cb.lower(root.get("status")),
+	                        "inprogress"
+	                )
+	        );
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
 }
