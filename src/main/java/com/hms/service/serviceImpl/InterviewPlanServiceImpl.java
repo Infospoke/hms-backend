@@ -1,18 +1,16 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import java.util.Optional;
 
 import java.util.Map;
-import java.util.Optional;
+
 
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +23,10 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
-import com.hms.service.entity.FunctionalityEntity;
+
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.repository.ApprovalChainRepository;
-import com.hms.service.repository.ApprovalsChildRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewPlanRepository;
@@ -895,6 +892,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			                    map.put("requestedBy", plan.getCreatedBy());
 			                    map.put("requestedOn", plan.getCreatedOn());
 			                    map.put("status", plan.getApprovalStatus());
+			                    map.put("requestedRoleBy",plan.getRoleName());
 
 			                    map.put(
 			                            "rounds",
