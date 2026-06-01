@@ -12,4 +12,6 @@ public interface ChildLinkCommentsRepository extends JpaRepository<ChildLinkComm
 
 	List<ChildLinkCommentsEntity> findByChainId(Integer id);
 
+	List<ChildLinkCommentsEntity> findByPlanIdOrderByCreatedAtAsc(Integer id);
+
 }

@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,19 +21,27 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
+import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
+import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewPlanRepository;
+import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
+import com.hms.service.request.LevelConfig;
 import com.hms.service.request.UpdateInterviewPlanRequest;
+import com.hms.service.response.CommentTimelineResponse;
+import com.hms.service.response.InterviewPlanResponse;
+import com.hms.service.response.InterviewRoundsResponse;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.service.INotificationService;
@@ -68,6 +77,18 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	
 	@Autowired
 	private JwtService jwtService;
+	
+	@Autowired
+	private FunctionalityRepository functionalityRepository;
+	 
+	@Autowired
+	private ApprovalChainRepository approvalChainRepository;
+	 
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+	
+	@Autowired
+	private InterviewRoundRepository interviewRoundRepository;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -910,4 +931,180 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview plan counts fetched successfully", response);
 	}
+
+
+	@Override
+	 
+	public ApiResponse<?> getInterviewPlanDetailsById(Integer id) {
+ 
+		log.info("InterviewPlanServiceImpl :: getInterviewPlanDetailsById");
+ 
+		Optional<InterviewPlanEntity> optionalPlan = interviewPlanRepository.findById(id);
+ 
+		if (optionalPlan.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed To fetch details");
+		}
+ 
+		InterviewPlanEntity interviewPlan = optionalPlan.get();
+ 
+		List<InterviewRoundEntity> rounds = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(id);
+ 
+		List<InterviewRoundsResponse> roundsResponse = rounds.stream()
+				.map(round -> new InterviewRoundsResponse(round.getRoundOrder(),
+						round.getStageName(),
+						round.getStageType(),
+						round.getInterviewMode(),
+						round.getMandatory()))
+				.toList();
+ 
+		List<ChildLinkCommentsEntity> comments = childLinkCommentsRepository.findByPlanIdOrderByCreatedAtAsc(id);
+ 
+		List<CommentTimelineResponse> timelineResponse = comments.stream()
+				.map(comment -> new CommentTimelineResponse(comment.getAction(),
+						comment.getComments(),
+						comment.getDescription(),
+						comment.getCreatedBy(),
+						comment.getCreatedAt()))
+				.toList();
+ 
+		// final response
+		InterviewPlanResponse response = new InterviewPlanResponse(interviewPlan.getPlanName(),
+				interviewPlan.getDescription(),
+				interviewPlan.getStatus(),
+				interviewPlan.getCreatedBy(),
+				interviewPlan.getCreatedOn(),
+				roundsResponse, timelineResponse);
+ 
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
+	}
+
+
+	@Override
+	public ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request) {
+ 
+		try {
+ 
+			String authHeader = httpServletRequest.getHeader("Authorization");
+ 
+			Long roleId = null;
+ 
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+ 
+			    String token = authHeader.substring(7);
+			    
+			    roleId = jwtService.extractRoleId(token);
+			}
+ 
+			if (roleId == null) {
+ 
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Role not found in token");
+			}
+ 
+			Integer  functionalityId= functionalityRepository.findByFunctionalityName("Interview Plan").get().getId();
+			
+ 
+			if (functionalityId == null) {
+ 
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Interview Plan functionality not configured");
+			}
+ 
+			ApprovalChainEntity approvalChain =
+			        approvalChainRepository
+			                .findByFunctionality(functionalityId);
+		
+ 
+			if (approvalChain == null) {
+ 
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "Approval chain not found");
+			}
+ 
+			boolean roleExists = false;
+ 
+			for (LevelConfig level : approvalChain.getLevelConfig()) {
+ 
+			    if (level.getRoleId() != null
+			            && level.getRoleId().longValue() == roleId.longValue()) {
+ 
+			        roleExists = true;
+			        break;
+			    }
+			}
+ 
+			if (!roleExists) {
+ 
+			    return ApiResponse.failure(
+			            ResponseCode.FAILURE,
+			            "You are not authorized");
+			}
+ 
+			Pageable pageable =
+			        PageRequest.of(
+			                request.getPage(),
+			                request.getSize(),
+			                Sort.by(
+			                        Sort.Direction.fromString(request.getDirection()),
+			                        request.getSortBy()
+			                )
+			        );
+ 
+			Page<InterviewPlanEntity> page =
+			        interviewPlanRepository.findAll(
+			                request.buildInterviewPlanApprovalSpecification(),
+			                pageable);
+ 
+			List<Map<String, Object>> content =
+			        page.getContent()
+			                .stream()
+			                .map(plan -> {
+ 
+			                    Map<String, Object> map =
+			                            new LinkedHashMap<>();
+ 
+			                    map.put("id", plan.getId());
+			                    map.put("planName", plan.getPlanName());
+			                    map.put("requestedBy", plan.getCreatedBy());
+			                    map.put("requestedOn", plan.getCreatedOn());
+			                    map.put("status", plan.getApprovalStatus());
+			                    map.put("requestedRoleBy",plan.getRoleName());
+			                    map.put(
+			                            "rounds",
+			                            plan.getRounds() == null
+			                                    ? 0
+			                                    : plan.getRounds().size());
+ 
+			                    return map;
+			                })
+			                .toList();
+ 
+			Map<String, Object> response =
+			        new LinkedHashMap<>();
+ 
+			response.put("currentPage", page.getNumber());
+			response.put("totalPages", page.getTotalPages());
+			response.put("size", page.getSize());
+			response.put("totalElements", page.getTotalElements());
+			response.put("content", content);
+ 
+			return ApiResponse.success(
+			        ResponseCode.SUCCESS,
+			        "Interview Plans fetched successfully",
+			        response);
+		}
+		catch (Exception e) {
+ 
+	        e.printStackTrace();
+ 
+	        return ApiResponse.failure(
+	                ResponseCode.FAILURE,
+	                e.getMessage());
+	    }
+	
+	}
+
 }

@@ -4,6 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import org.springframework.web.bind.annotation.PathVariable;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +37,13 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 
+	
+	@GetMapping("/interview-plan-details-by-id/{id}")
+	public ResponseEntity<ApiResponse<?>> getInterviewPlanDetailsById(@PathVariable("id")Integer id){
+		ApiResponse<?> response =interviewPlanService.getInterviewPlanDetailsById(id);
+		return new ResponseEntity<>(response,HttpStatus.OK);
+	}
+
 	@PutMapping("/update")
 	public ResponseEntity<ApiResponse<?>> updateInterviewPlan(@Valid @RequestBody UpdateInterviewPlanRequest request,
 			HttpServletRequest httpRequest) {
@@ -55,5 +65,16 @@ public class InterviewPlanController {
 	public ResponseEntity<ApiResponse<?>> getInterviewPlanCounts() {
 		ApiResponse<?> response = interviewPlanService.getInterviewPlanCounts();
 		return new ResponseEntity<>(response, HttpStatus.OK);
+
 	}
+	
+	
+	@PostMapping("/interview-plan-approvals")
+	public ResponseEntity<ApiResponse<?>> getInterviewPlanApprovals(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = interviewPlanService.getInterviewPlanApprovals(request);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	
 }

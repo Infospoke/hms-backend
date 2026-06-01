@@ -38,6 +38,8 @@ public class InterviewPlanEntity {
 	
 	@Column(name = "user_id")
 	private Long userId;
+	
+	private String roleName;
 
 	private String planName;
 

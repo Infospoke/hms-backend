@@ -11,10 +11,15 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> createInterviewPlan(@Valid InterviewPlanRequest request, HttpServletRequest httpRequest);
 
+
+	ApiResponse<?> getInterviewPlanDetailsById(Integer id);
+
 	ApiResponse<?> updateInterviewPlan(@Valid UpdateInterviewPlanRequest request, HttpServletRequest httpRequest);
 
 	ApiResponse<?> getInterviewPlans(SpecificationFilterRequest request);
 	
 	ApiResponse<?> getInterviewPlanCounts();
+
+	ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request);
 
 }

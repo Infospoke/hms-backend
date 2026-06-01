@@ -8,35 +8,37 @@ import com.hms.service.wrappers.ApiResponse;
 
 public interface IConfigurationService {
 	
-	ApiResponse<List<DropDownResponse>> getAllBusinessUnits();
+	ApiResponse<List<?>> getAllBusinessUnits();
 
-    ApiResponse<List<DropDownResponse>> getDepartmentsByBusinessUnit(Integer businessUnitId);
+    ApiResponse<List<?>> getDepartmentsByBusinessUnit(Integer businessUnitId);
 
-    ApiResponse<List<DropDownResponse>> getRolesByDepartment(Integer departmentId);
+    ApiResponse<List<?>> getRolesByDepartment(Integer departmentId);
     
-    ApiResponse<List<DropDownResponse>> getEmploymentTypes();
+    ApiResponse<List<?>> getEmploymentTypes();
     
-    ApiResponse<List<DropDownResponse>> getUserTypes();
+    ApiResponse<List<?>> getUserTypes();
 
 	ApiResponse<?> getAllModules();
 	
-	ApiResponse<List<DropDownResponse>> getSeniorityLevels();
+	ApiResponse<List<?>> getSeniorityLevels();
 
-	ApiResponse<List<DropDownResponse>> getTravelRequirements();
+	ApiResponse<List<?>> getTravelRequirements();
 
 	ApiResponse<?> getJr();
 
 	ApiResponse<?> getAllFunctionalities();
 
-	ApiResponse<List<DropDownResponse>> getAllDepartments();
+	ApiResponse<List<?>> getAllDepartments();
 
-	ApiResponse<List<DropDownResponse>> getAllFunctionality();
+	ApiResponse<List<?>> getAllFunctionality();
 	
-	ApiResponse<List<DropDownResponse>> getUsersByRole();
+	ApiResponse<List<?>> getUsersByRole();
 
-	ApiResponse<List<DropDownResponse>> getAiOptions();
+	ApiResponse<List<?>> getAiOptions();
 
-	ApiResponse<List<DropDownResponse>> getRolesByDepartments(RolesByDepartmentIdsRequest request);
+	ApiResponse<List<?>> getRolesByDepartments(RolesByDepartmentIdsRequest request);
+
+	ApiResponse<List<?>> getUsersWithCreatePermission();
 	
 	
 
