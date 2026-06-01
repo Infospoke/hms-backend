@@ -28,8 +28,20 @@ public class RecruiterAssignmentEntity {
 	@Column(name="user_id")
 	private Integer userId;
 	
-	@Column(name="job_id")
-	private Integer jobId;
+	@Column(name="sr_id")
+	private String srId;
+	
+	@Column(name="user_name")
+	private String userName;
+	
+	@Column(name="email")
+	private String email;
+	
+	@Column(name="role_name")
+	private String roleName;
+	
+	@Column(name="role_id")
+	private Integer roleId;
 	
 	@Column(name="status")
 	private String status;
@@ -45,6 +57,9 @@ public class RecruiterAssignmentEntity {
     
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
+    
+    @Column(name = "job_id")
+    private Integer jobId;
     
  
 }

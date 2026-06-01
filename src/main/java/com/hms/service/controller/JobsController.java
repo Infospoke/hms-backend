@@ -41,21 +41,16 @@ public class JobsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
  
 	}
- 
-	
+ 	
 	@DeleteMapping("/delete-job-by-id/{id}")
 	public ResponseEntity<ApiResponse<?>> deleteJob(@PathVariable("id") Integer id) {
- 
 		ApiResponse<?> response = iJobService.deleteJob(id);
- 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
  
 		@GetMapping("/get-job-details-by-id/{id}")
 	public ResponseEntity<ApiResponse<?>> getJobDetailsById(@PathVariable("id") Integer id) {
- 
 		ApiResponse<?> response = iJobService.getJobDetailsById(id);
- 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
  
@@ -73,7 +68,6 @@ public class JobsController {
 		ApiResponse<?> response = iJobService.getAllJobApplicants();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
- 
 	
 	@GetMapping("/get-all-jobs-applicant")
 	public ResponseEntity<ApiResponse<?>> getAllJobApplicants(@RequestParam("jobId") Integer jobId,

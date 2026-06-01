@@ -43,5 +43,16 @@ public class CreateJobController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
+	
+	@GetMapping("/get-job-details/{jobId}")
+	public ResponseEntity<ApiResponse<?>> getJobCreationDetails(@PathVariable("jobId") Integer jobId) {
 
-}
+		ApiResponse<?> response = iCreateJobService.getJobCreationDetails(jobId);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	
+	}
+
+

@@ -17,16 +17,18 @@ public interface CreateJobDetailsRepository
 	Optional<CreateJobDetailsEntity> findByJobCode(String jobCode);
 
 	Long countBySubmitTrue();
-	
 	@Query("""
-			SELECT COALESCE(SUM(c.openings),0)
-			FROM CreateJobDetailsEntity c
-			WHERE c.id IN (
-			     SELECT r.jobId
-			     FROM RecruiterAssignmentEntity r
-			     WHERE r.userId = :userId
-			)
-			""")
-	Long getTotalOpeningsByUserId(@Param("userId") Integer userId);
+		    SELECT COALESCE(SUM(c.openings), 0)
+		    FROM CreateJobDetailsEntity c
+		    WHERE c.srId IN (
+		         SELECT r.srId
+		         FROM RecruiterAssignmentEntity r
+		         WHERE r.userId = :userId
+		    )
+		    """)
+		Long getTotalOpeningsByUserId(@Param("userId") Integer userId);
 
+	CreateJobDetailsEntity findBySrId(String srId);
+
+	long countByIsOpenTrue();
 }

@@ -98,10 +98,9 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private JwtService jwtService;
-	
-    @Autowired
+
+	@Autowired
 	private HttpServletRequest httpServletRequest;
- 
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
@@ -116,6 +115,16 @@ public class UserServiceImpl implements IUserService {
 
 		if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
 			return ApiResponse.failure(ResponseCode.FAILURE, Constants.EMPLOYEE_ID_ALREADY_EXISTS);
+		}
+		if (userRepository.existsByMobileNumber(request.getMobileNumber())) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Mobile number already exists");
+		}
+
+		if (request.getAlternateContact() != null
+				&& userRepository.existsByAlternateContact(request.getAlternateContact())) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Alternate contact already exists");
 		}
 
 		if (userRepository.existsByEmail(request.getEmail())) {
@@ -175,7 +184,7 @@ public class UserServiceImpl implements IUserService {
 			String token = authHeader.substring(7);
 			updatedBy = jwtService.extractUsernameFromClaims(token);
 		}
- 
+
 		user.setUpdatedBy(updatedBy);
 		user.setUpdatedAt(LocalDate.now());
 
@@ -195,7 +204,7 @@ public class UserServiceImpl implements IUserService {
 			String token = authHeader.substring(7);
 			assignedBy = jwtService.extractUsernameFromClaims(token);
 		}
- 
+
 		role.setAssignedBy(assignedBy);
 		role.setAssignedAt(LocalDate.now());
 
@@ -329,7 +338,7 @@ public class UserServiceImpl implements IUserService {
 				String token = authHeader.substring(7);
 				assignedBy = jwtService.extractUsernameFromClaims(token);
 			}
-	 
+
 			roleEntity.setAssignedBy(assignedBy);
 			roleEntity.setAssignedAt(LocalDate.now());
 
@@ -368,7 +377,7 @@ public class UserServiceImpl implements IUserService {
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "User deactivated successfully", null);
 		}
-		
+
 		else if (Boolean.TRUE.equals(request.getActivate())) {
 
 			user.setActive(true);
@@ -386,18 +395,16 @@ public class UserServiceImpl implements IUserService {
 
 			log.info("UserServiceImpl::User activated successfully");
 
-			return ApiResponse.success(ResponseCode.SUCCESS,"User activated successfully",null
-			);
+			return ApiResponse.success(ResponseCode.SUCCESS, "User activated successfully", null);
 		}
-		
-		
+
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String updatedBy = "";
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			String token = authHeader.substring(7);
 			updatedBy = jwtService.extractUsernameFromClaims(token);
 		}
-		
+
 		user.setUpdatedBy(updatedBy);
 		user.setUpdatedAt(LocalDate.now());
 
@@ -446,13 +453,13 @@ public class UserServiceImpl implements IUserService {
 				return validationResponse;
 
 			UserEntity user = userRepository.findByEmail(request.getEmail());
-			
-			if (user == null)  {
+
+			if (user == null) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid credentials");
 			}
-	
+
 			if (Boolean.FALSE.equals(user.getActive())) {
-			    return ApiResponse.failure(ResponseCode.FAILURE, "User is deactivated");
+				return ApiResponse.failure(ResponseCode.FAILURE, "User is deactivated");
 			}
 
 			log.info("User fetched");
@@ -594,8 +601,9 @@ public class UserServiceImpl implements IUserService {
 
 			log.info("Generating token");
 
-			String token = jwtService.generateToken(user.getUserId(),role.getRoleId(),user.getEmail(), user.getUsername(), role.getRoleName(),
-					permissionsList, user.getFirstTimeWebLogin(), user.getFirstTimeMobileLogin());
+			String token = jwtService.generateToken(user.getUserId(), role.getRoleId(), user.getEmail(),
+					user.getUsername(), role.getRoleName(), permissionsList, user.getFirstTimeWebLogin(),
+					user.getFirstTimeMobileLogin());
 
 			LoginResponse response = new LoginResponse();
 			response.setToken(token);
@@ -804,8 +812,8 @@ public class UserServiceImpl implements IUserService {
 		for (PasswordHistoryEntity history : historyList) {
 
 			if (passwordEncoder.matches(newValue, history.getCredential())) {
-				return ApiResponse.failure(ResponseCode.FAILURE,
-						"New " + type.name().toLowerCase() + "must be different from your last 5" +type.name().toLowerCase());
+				return ApiResponse.failure(ResponseCode.FAILURE, "New " + type.name().toLowerCase()
+						+ "must be different from your last 5" + type.name().toLowerCase());
 			}
 		}
 

@@ -21,6 +21,9 @@ public class JobDescriptionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     
+    @Column(name = "sr_id")
+    private String srId;
+    
     @Column(name = "job_id")
     private Integer jobId;
     

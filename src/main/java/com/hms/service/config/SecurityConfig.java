@@ -40,13 +40,16 @@ public class SecurityConfig {
 				.authorizeHttpRequests(
 						auth -> auth.requestMatchers(
 										"/hms/login/user-login",
+										"/hms/user/**",
 										"/hms/configurations/**",
 										"/hms/approval-chains/**",
 										"/hms/login/forgot-password",
 										"/hms/staffing-requisition/**",
 										"/ws/**",                          // WebSocket STOMP handshake
 										"/hms/notifications/**" ,          // Notification test endpoint
-										"/hms/create-job/**"         
+										"/hms/create-job/**" , 
+										"/hms/interview-plan/**",
+										"/hms/jobs/**"
 								).permitAll()
 								.anyRequest().authenticated())
 				.addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
