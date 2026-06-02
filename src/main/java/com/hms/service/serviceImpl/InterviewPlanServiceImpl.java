@@ -306,6 +306,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	            interviewPlanEntity.setStatus("ACTIVE");
 	            interviewPlanEntity.setApprovalStatus("APPROVED");
+	            interviewPlanEntity.setPlanId(planId);         
 	            childLinkCommentsEntity.setPlanId(planId);
 	            childLinkCommentsEntity.setAction("APPROVE");
 	            childLinkCommentsEntity.setComments(request.getComments());
@@ -425,11 +426,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		if (request.getStatus() != null && "DEACTIVE".equalsIgnoreCase(request.getStatus())) {
 
-			if (!"Recruiter Operations".equalsIgnoreCase(roleName)) {
+			if (!"Recruiting Operations".equalsIgnoreCase(roleName)) {
 
 			    return ApiResponse.failure(
 			            ResponseCode.FAILURE,
-			            "Only Recruiter Operations can request deactivation");
+			            "Only Recruiting Operations can request deactivation");
 			}			
 		
 	        interviewPlanEntity.setApprovalStatus("INPROGRESS");
