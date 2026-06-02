@@ -100,14 +100,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			String username = jwtService.extractUsernameFromClaims(token);
 			Long userId = jwtService.extractUserId(token);
 
-			InterviewPlanEntity entity = new InterviewPlanEntity();
-			entity.setPlanName(request.getPlanName());
-			entity.setDescription(request.getDescription());
-			entity.setApprovalStatus("InProgress");
-			entity.setStatus(request.getStatus());
-			entity.setCreatedBy(username);
-			entity.setUserId(userId);
-			entity.setCreatedOn(LocalDateTime.now());
+	        InterviewPlanEntity entity = new InterviewPlanEntity();
+	        entity.setPlanName(request.getPlanName());
+	        entity.setDescription(request.getDescription());
+	        entity.setApprovalStatus("InProgress");
+	        entity.setRequestType("Plan-Created");
+	        entity.setStatus(request.getStatus());
+	        entity.setCreatedBy(username);
+	        entity.setUserId(userId);
+	        entity.setCreatedOn(LocalDateTime.now());
 
 			List<InterviewRoundEntity> roundEntities = new ArrayList<>();
 
