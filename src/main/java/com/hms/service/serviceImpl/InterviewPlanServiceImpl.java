@@ -1080,6 +1080,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			                    map.put("requestedOn", plan.getCreatedOn());
 			                    map.put("status", plan.getApprovalStatus());
 			                    map.put("requestedRoleBy",plan.getRoleName());
+			                    map.put("requestType",plan.getRequestType());
 			                    map.put(
 			                            "rounds",
 			                            plan.getRounds() == null
