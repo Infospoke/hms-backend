@@ -951,6 +951,15 @@ public class SpecificationFilterRequest {
 
 							cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
 				}
+				String approvalStatus = getFilter("approvalStatus");
+
+				if (approvalStatus != null && !approvalStatus.isBlank()) {
+
+					predicates.add(
+
+							cb.equal(cb.lower(root.get("approvalStatus")), approvalStatus.toLowerCase()));
+				}
+
 
 				String search = getFilter("search");
 
@@ -1043,21 +1052,22 @@ public class SpecificationFilterRequest {
 		long allPlans = interviewPlanRepository.count(countSpec);
 
 		long activePlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "active")));
+				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "ACTIVE")));
 
-		long inactivePlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "deactive")));
+		long deactivePlans = interviewPlanRepository
+				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "DEACTIVE")));
 
 		long inProgressPlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "inprogress")));
+				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "INPROGRESS")));
 
 		counts.put("allPlans", allPlans);
 		counts.put("activePlans", activePlans);
-		counts.put("inactivePlans", inactivePlans);
+		counts.put("deactivePlans", deactivePlans);
 		counts.put("inProgressPlans", inProgressPlans);
 
 		return counts;
 	}
+	
 	
 	public Specification<InterviewPlanEntity> buildInterviewPlanApprovalSpecification() {
 
@@ -1095,8 +1105,8 @@ public class SpecificationFilterRequest {
 
 	        predicates.add(
 	                cb.equal(
-	                        cb.lower(root.get("status")),
-	                        "inprogress"
+	                        cb.lower(root.get("approvalStatus")),
+	                        "in_progress"
 	                )
 	        );
 
