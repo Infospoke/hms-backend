@@ -1095,7 +1095,7 @@ public class SpecificationFilterRequest {
 
 	        predicates.add(
 	                cb.equal(
-	                        cb.lower(root.get("status")),
+	                        cb.lower(root.get("approvalStatus")),
 	                        "inprogress"
 	                )
 	        );
