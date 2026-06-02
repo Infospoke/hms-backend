@@ -188,7 +188,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Override
 	public ApiResponse<?> updateInterviewPlan(UpdateInterviewPlanRequest request,HttpServletRequest httpRequest) {
 
-	    log.info("InterviewPlanServiceImpl :: updateInterviewPlan");
+	    log.info("InterviewPlanServiceImpl :: Inside updateInterviewPlan");
 
 
 		// VALIDATIONS
@@ -288,14 +288,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Hiring Manager can approve/reject");
-			}
-			
-			if ("Approved".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())
-			        || "Rejected".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())) {
-
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "Request already processed");
 			}
 
 			String approval = request.getApproval().trim().toUpperCase();
@@ -503,14 +495,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			            "No deactivation request pending");
 			}
 
-			if ("Approved".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())
-			        || "Rejected".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())) {
-
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "Deactivation request already processed");
-			}
-
 	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Hiring Manager can process deactivation");
@@ -535,12 +519,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
-
-				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
-						.map(AssignRolesEntity::getUserId).toList();
-
-				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
-						.filter(Objects::nonNull).distinct().toList();
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 				
@@ -592,12 +570,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
-
-				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
-						.map(AssignRolesEntity::getUserId).toList();
-
-				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
-						.filter(Objects::nonNull).distinct().toList();
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 
@@ -713,14 +685,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			            "No activation request pending");
 			}
 
-			if ("Approved".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())
-			        || "Rejected".equalsIgnoreCase(interviewPlanEntity.getApprovalStatus())) {
-
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "Activation request already processed");
-			}
-
 	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only Hiring Manager can process activation");
@@ -746,12 +710,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
-				
-				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
-						.map(AssignRolesEntity::getUserId).toList();
-
-				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
-						.filter(Objects::nonNull).distinct().toList();
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 				
@@ -803,12 +761,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 				Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
-
-				List<Integer> userIds = assignRolesRepository.findByRoleId(checkerRoleId).stream()
-						.map(AssignRolesEntity::getUserId).toList();
-
-				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
-						.filter(Objects::nonNull).distinct().toList();
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 	            
