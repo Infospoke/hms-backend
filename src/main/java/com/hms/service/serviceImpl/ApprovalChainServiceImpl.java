@@ -213,7 +213,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		approvalChainEntity.setUserId(userId.intValue());
 		approvalChainEntity.setLevelConfig(request.getLevelConfig());
 		approvalChainEntity.setApproval("In_Progress");
-		approvalChainEntity.setRequestType("Chain Created");
+		approvalChainEntity.setRequestType("Chain-Created");
 
 		approvalChainEntity.setCreatedAt(LocalDate.now());
 
