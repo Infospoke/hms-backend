@@ -1,6 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -50,7 +49,6 @@ import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -1021,6 +1019,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				map.put("requestedOn", plan.getCreatedOn());
 				map.put("status", plan.getApprovalStatus());
 				map.put("requestedRoleBy", plan.getRoleName());
+				map.put("requestType", plan.getRequestType());
 				map.put("rounds", plan.getRounds() == null ? 0 : plan.getRounds().size());
 
 				return map;
