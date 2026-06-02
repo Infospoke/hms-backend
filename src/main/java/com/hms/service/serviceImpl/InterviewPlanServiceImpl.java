@@ -895,11 +895,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		long allPlans = interviewPlanRepository.count();
 
-		long activePlans = interviewPlanRepository.countByStatus("Active");
+		long activePlans = interviewPlanRepository.countByStatus("ACTIVE");
 
-		long deactivePlans = interviewPlanRepository.countByStatus("Deactive");
+		long deactivePlans = interviewPlanRepository.countByStatus("DEACTIVE");
 
-		long inProgressPlans = interviewPlanRepository.countByStatusIsNull();
+		long inProgressPlans = interviewPlanRepository.countByStatus("INPROGRESS");
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
