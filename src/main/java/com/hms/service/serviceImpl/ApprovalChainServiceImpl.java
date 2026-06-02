@@ -573,7 +573,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Only creator can request activation");
 			}
 
-			approvalChainEntity.setApproval("IN_PROGRESS");
+			approvalChainEntity.setApproval("In_Progress");
 			approvalChainEntity.setRequestType("Chain-Active");
 
 			// child table details
