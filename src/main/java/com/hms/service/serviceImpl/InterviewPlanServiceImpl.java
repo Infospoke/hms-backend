@@ -1,6 +1,5 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -50,7 +49,6 @@ import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -71,22 +69,22 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private RolesRepository rolesRepository;
-	
+
 	@Autowired
 	private INotificationService notificationService;
-	
+
 	@Autowired
 	private JwtService jwtService;
-	
+
 	@Autowired
 	private FunctionalityRepository functionalityRepository;
-	 
+
 	@Autowired
 	private ApprovalChainRepository approvalChainRepository;
-	 
+
 	@Autowired
 	private HttpServletRequest httpServletRequest;
-	
+
 	@Autowired
 	private InterviewRoundRepository interviewRoundRepository;
 
@@ -97,16 +95,17 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		try {
 
-	        String authHeader = httpRequest.getHeader("Authorization");
-	        String token = authHeader.substring(7);
-	        String username = jwtService.extractUsernameFromClaims(token);
-	        Long userId = jwtService.extractUserId(token);
+			String authHeader = httpRequest.getHeader("Authorization");
+			String token = authHeader.substring(7);
+			String username = jwtService.extractUsernameFromClaims(token);
+			Long userId = jwtService.extractUserId(token);
 
 	        InterviewPlanEntity entity = new InterviewPlanEntity();
 	        entity.setPlanName(request.getPlanName());
 	        entity.setDescription(request.getDescription());
-	        entity.setApprovalStatus("INPROGRESS");
-	        entity.setStatus(null);
+	        entity.setApprovalStatus("InProgress");
+	        entity.setRequestType("Plan-Created");
+	        entity.setStatus(request.getStatus());
 	        entity.setCreatedBy(username);
 	        entity.setUserId(userId);
 	        entity.setCreatedOn(LocalDateTime.now());
@@ -139,7 +138,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 	}
 
-	
 	private void sendWorkflowNotification(String srId, String type, String makerMessage, String department,
 
 			String makerEmail, String makerRole, Integer makerRoleId, String makerTitle, String makerBody,
@@ -174,7 +172,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		event.setRoleEmailMap(roleEmailMap);
 
-		log.info("===== INTERVIEW PLAN NOTIFICATION =====");
 		log.info("Maker Email = {}", makerEmail);
 		log.info("Maker Role = {}", makerRole);
 		log.info("Maker Role Id = {}", makerRoleId);
@@ -185,11 +182,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		roleEmailMap.forEach((roleId, emails) ->
 		    log.info("RoleId {} -> Emails {}", roleId, emails));
 
-		log.info("======================================");
-
 		notificationService.callNotification(event);
 	}
-		
 
 	@Override
 	public ApiResponse<?> updateInterviewPlan(UpdateInterviewPlanRequest request,HttpServletRequest httpRequest) {
@@ -545,8 +539,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
 						.filter(Objects::nonNull).distinct().toList();
-
-				//roleEmailMap.put(checkerRoleId, checkerEmails);
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 				
@@ -604,8 +596,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
 						.filter(Objects::nonNull).distinct().toList();
-
-				//roleEmailMap.put(checkerRoleId, checkerEmails);
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 
@@ -759,8 +749,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
 						.filter(Objects::nonNull).distinct().toList();
-
-//				roleEmailMap.put(checkerRoleId, checkerEmails);
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 				
@@ -818,8 +806,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				List<String> checkerEmails = userRepository.findByUserIdIn(userIds).stream().map(UserEntity::getEmail)
 						.filter(Objects::nonNull).distinct().toList();
-
-//				roleEmailMap.put(checkerRoleId, checkerEmails);
 				
 				roleEmailMap.put(checkerRoleId, List.of(email));
 	            
@@ -864,7 +850,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	    interviewPlanRepository.save(interviewPlanEntity);
 	    childLinkCommentsRepository.save(childLinkCommentsEntity);
 
-	    log.info("InterviewPlanServiceImpl :: Exit from update InterviewPlans");
+	    log.info("InterviewPlanServiceImpl :: Exit from updateInterviewPlans");
 	    return ApiResponse.success("Interview Plan Updated Successfully");
 	}
 
@@ -903,26 +889,24 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			Map<String, Object> map = new LinkedHashMap<>();
 
 			map.put("id", plan.getId());
-
 			map.put("planName", plan.getPlanName());
-
 			map.put("description", plan.getDescription());
-
-			map.put("status", plan.getStatus() == null ? "In_Progress" : plan.getStatus());
-
+			map.put("status", plan.getStatus());
+			map.put("approvalStatus", plan.getApprovalStatus());
 			map.put("createdBy", plan.getCreatedBy());
-
 			map.put("createdOn", plan.getCreatedOn());
-
 			map.put("rounds", plan.getRounds() != null ? plan.getRounds().size() : 0);
 
 			return map;
 
 		}).toList();
+		Map<String, Long> counts = request.buildInterviewPlanCounts(interviewPlanRepository);
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("interviewPlans", plans);
+
+		response.put("counts", counts);
 
 		response.put("currentPage", pageResult.getNumber());
 
@@ -942,11 +926,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		long allPlans = interviewPlanRepository.count();
 
-		long activePlans = interviewPlanRepository.countByStatus("Active");
+		long activePlans = interviewPlanRepository.countByStatus("ACTIVE");
 
-		long inactivePlans = interviewPlanRepository.countByStatus("Deactive");
-
-		long inProgressPlans = interviewPlanRepository.countByStatusIsNull();
+		long deactivePlans = interviewPlanRepository.countByStatus("DEACTIVE");
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
@@ -954,188 +936,138 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		response.put("activePlans", activePlans);
 
-		response.put("inactivePlans", inactivePlans);
-
-		response.put("inProgressPlans", inProgressPlans);
+		response.put("deactivePlans", deactivePlans);
 
 		log.info("InterviewPlanServiceImpl :: Exit getInterviewPlanCounts");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview plan counts fetched successfully", response);
 	}
 
-
 	@Override
-	 
+
 	public ApiResponse<?> getInterviewPlanDetailsById(Integer id) {
- 
+
 		log.info("InterviewPlanServiceImpl :: getInterviewPlanDetailsById");
- 
+
 		Optional<InterviewPlanEntity> optionalPlan = interviewPlanRepository.findById(id);
- 
+
 		if (optionalPlan.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failed To fetch details");
 		}
- 
+
 		InterviewPlanEntity interviewPlan = optionalPlan.get();
- 
+
 		List<InterviewRoundEntity> rounds = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(id);
- 
+
 		List<InterviewRoundsResponse> roundsResponse = rounds.stream()
-				.map(round -> new InterviewRoundsResponse(round.getRoundOrder(),
-						round.getStageName(),
-						round.getStageType(),
-						round.getInterviewMode(),
-						round.getMandatory()))
+				.map(round -> new InterviewRoundsResponse(round.getRoundOrder(), round.getStageName(),
+						round.getStageType(), round.getInterviewMode(), round.getMandatory()))
 				.toList();
- 
+
 		List<ChildLinkCommentsEntity> comments = childLinkCommentsRepository.findByPlanIdOrderByCreatedAtAsc(id);
- 
+
 		List<CommentTimelineResponse> timelineResponse = comments.stream()
-				.map(comment -> new CommentTimelineResponse(comment.getAction(),
-						comment.getComments(),
-						comment.getDescription(),
-						comment.getCreatedBy(),
-						comment.getCreatedAt()))
+				.map(comment -> new CommentTimelineResponse(comment.getAction(), comment.getComments(),
+						comment.getDescription(), comment.getCreatedBy(), comment.getCreatedAt()))
 				.toList();
- 
+
 		// final response
 		InterviewPlanResponse response = new InterviewPlanResponse(interviewPlan.getPlanName(),
-				interviewPlan.getDescription(),
-				interviewPlan.getStatus(),
-				interviewPlan.getCreatedBy(),
-				interviewPlan.getCreatedOn(),
-				roundsResponse, timelineResponse);
- 
+				interviewPlan.getDescription(), interviewPlan.getStatus(), interviewPlan.getCreatedBy(),
+				interviewPlan.getCreatedOn(), roundsResponse, timelineResponse);
+
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 
-
 	@Override
 	public ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request) {
- 
+
 		try {
- 
+
 			String authHeader = httpServletRequest.getHeader("Authorization");
- 
+
 			Long roleId = null;
- 
+
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
- 
-			    String token = authHeader.substring(7);
-			    
-			    roleId = jwtService.extractRoleId(token);
+
+				String token = authHeader.substring(7);
+
+				roleId = jwtService.extractRoleId(token);
 			}
- 
+
 			if (roleId == null) {
- 
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "Role not found in token");
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Role not found in token");
 			}
- 
-			Integer  functionalityId= functionalityRepository.findByFunctionalityName("Interview Plan").get().getId();
-			
- 
+
+			Integer functionalityId = functionalityRepository.findByFunctionalityName("Interview Plan").get().getId();
+
 			if (functionalityId == null) {
- 
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "Interview Plan functionality not configured");
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Interview Plan functionality not configured");
 			}
- 
-			ApprovalChainEntity approvalChain =
-			        approvalChainRepository
-			                .findByFunctionality(functionalityId);
-		
- 
+
+			ApprovalChainEntity approvalChain = approvalChainRepository.findByFunctionality(functionalityId);
+
 			if (approvalChain == null) {
- 
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "Approval chain not found");
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Approval chain not found");
 			}
- 
+
 			boolean roleExists = false;
- 
+
 			for (LevelConfig level : approvalChain.getLevelConfig()) {
- 
-			    if (level.getRoleId() != null
-			            && level.getRoleId().longValue() == roleId.longValue()) {
- 
-			        roleExists = true;
-			        break;
-			    }
+
+				if (level.getRoleId() != null && level.getRoleId().longValue() == roleId.longValue()) {
+
+					roleExists = true;
+					break;
+				}
 			}
- 
+
 			if (!roleExists) {
- 
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "You are not authorized");
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "You are not authorized");
 			}
- 
-			Pageable pageable =
-			        PageRequest.of(
-			                request.getPage(),
-			                request.getSize(),
-			                Sort.by(
-			                        Sort.Direction.fromString(request.getDirection()),
-			                        request.getSortBy()
-			                )
-			        );
- 
-			Page<InterviewPlanEntity> page =
-			        interviewPlanRepository.findAll(
-			                request.buildInterviewPlanApprovalSpecification(),
-			                pageable);
- 
-			List<Map<String, Object>> content =
-			        page.getContent()
-			                .stream()
-			                .map(plan -> {
- 
-			                    Map<String, Object> map =
-			                            new LinkedHashMap<>();
- 
-			                    map.put("id", plan.getId());
-			                    map.put("planName", plan.getPlanName());
-			                    map.put("requestedBy", plan.getCreatedBy());
-			                    map.put("requestedOn", plan.getCreatedOn());
-			                    map.put("status", plan.getApprovalStatus());
-			                    map.put("requestedRoleBy",plan.getRoleName());
-			                    map.put(
-			                            "rounds",
-			                            plan.getRounds() == null
-			                                    ? 0
-			                                    : plan.getRounds().size());
- 
-			                    return map;
-			                })
-			                .toList();
- 
-			Map<String, Object> response =
-			        new LinkedHashMap<>();
- 
+
+			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+			Page<InterviewPlanEntity> page = interviewPlanRepository
+					.findAll(request.buildInterviewPlanApprovalSpecification(), pageable);
+
+			List<Map<String, Object>> content = page.getContent().stream().map(plan -> {
+
+				Map<String, Object> map = new LinkedHashMap<>();
+
+				map.put("id", plan.getId());
+				map.put("planName", plan.getPlanName());
+				map.put("requestedBy", plan.getCreatedBy());
+				map.put("requestedOn", plan.getCreatedOn());
+				map.put("status", plan.getApprovalStatus());
+				map.put("requestedRoleBy", plan.getRoleName());
+				map.put("requestType", plan.getRequestType());
+				map.put("rounds", plan.getRounds() == null ? 0 : plan.getRounds().size());
+
+				return map;
+			}).toList();
+
+			Map<String, Object> response = new LinkedHashMap<>();
+
 			response.put("currentPage", page.getNumber());
 			response.put("totalPages", page.getTotalPages());
 			response.put("size", page.getSize());
 			response.put("totalElements", page.getTotalElements());
 			response.put("content", content);
- 
-			return ApiResponse.success(
-			        ResponseCode.SUCCESS,
-			        "Interview Plans fetched successfully",
-			        response);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Plans fetched successfully", response);
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
-		catch (Exception e) {
- 
-	        e.printStackTrace();
- 
-	        return ApiResponse.failure(
-	                ResponseCode.FAILURE,
-	                e.getMessage());
-	    }
-	
+
 	}
 
 }

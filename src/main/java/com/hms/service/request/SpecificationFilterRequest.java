@@ -951,6 +951,14 @@ public class SpecificationFilterRequest {
 
 							cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
 				}
+				String approvalStatus = getFilter("approvalStatus");
+
+				if (approvalStatus != null && !approvalStatus.isBlank()) {
+
+					predicates.add(
+
+							cb.equal(cb.lower(root.get("approvalStatus")), approvalStatus.toLowerCase()));
+				}
 
 				String search = getFilter("search");
 
@@ -1041,66 +1049,45 @@ public class SpecificationFilterRequest {
 		};
 
 		long allPlans = interviewPlanRepository.count(countSpec);
-
 		long activePlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "active")));
+				.count(countSpec.and((root, query, cb) -> cb.equal(root.get("status"), "ACTIVE")));
 
-		long inactivePlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "deactive")));
-
-		long inProgressPlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "inprogress")));
-
+		long deactivePlans = interviewPlanRepository
+				.count(countSpec.and((root, query, cb) -> cb.equal(root.get("status"), "DEACTIVE")));
 		counts.put("allPlans", allPlans);
 		counts.put("activePlans", activePlans);
-		counts.put("inactivePlans", inactivePlans);
-		counts.put("inProgressPlans", inProgressPlans);
+		counts.put("deactivePlans", deactivePlans);
 
 		return counts;
 	}
-	
+
 	public Specification<InterviewPlanEntity> buildInterviewPlanApprovalSpecification() {
 
-	    return (root, query, cb) -> {
+		return (root, query, cb) -> {
 
-	        List<Predicate> predicates = new ArrayList<>();
+			List<Predicate> predicates = new ArrayList<>();
 
-	        String search = getFilter("search");
+			String search = getFilter("search");
 
-	        if (search != null && !search.isBlank()) {
+			if (search != null && !search.isBlank()) {
 
-	            search = search.toLowerCase().trim();
+				search = search.toLowerCase().trim();
 
-	            predicates.add(
-	                    cb.or(
-	                            cb.like(
-	                                    cb.lower(root.get("planName")),
-	                                    "%" + search + "%"
-	                            )
+				predicates.add(cb.or(cb.like(cb.lower(root.get("planName")), "%" + search + "%")
 
-	                         
-	                    )
-	            );
-	        }
+				));
+			}
 
-	        Specification<InterviewPlanEntity> dateSpecification =
-	                dateSpec("createdOn");
+			Specification<InterviewPlanEntity> dateSpecification = dateSpec("createdOn");
 
-	        if (dateSpecification != null) {
+			if (dateSpecification != null) {
 
-	            predicates.add(
-	                    dateSpecification.toPredicate(root, query, cb)
-	            );
-	        }
+				predicates.add(dateSpecification.toPredicate(root, query, cb));
+			}
 
-	        predicates.add(
-	                cb.equal(
-	                        cb.lower(root.get("status")),
-	                        "inprogress"
-	                )
-	        );
+			predicates.add(cb.equal(cb.lower(root.get("approvalStatus")), "inprogress"));
 
-	        return cb.and(predicates.toArray(new Predicate[0]));
-	    };
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
 }

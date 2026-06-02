@@ -1,7 +1,6 @@
 package com.hms.service.service;
 
 import com.hms.service.request.CreateJobRequest;
-import com.hms.service.request.RecuriterAssignmentRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.wrappers.ApiResponse;
 
