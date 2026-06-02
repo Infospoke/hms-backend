@@ -104,7 +104,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        entity.setPlanName(request.getPlanName());
 	        entity.setDescription(request.getDescription());
 	        entity.setApprovalStatus("INPROGRESS");
-	        entity.setRequestType("Plan-Created");
+	        entity.setRequestType("PLAN CREATED");
 	        entity.setStatus(request.getStatus());
 	        entity.setCreatedBy(username);
 	        entity.setUserId(userId);
@@ -434,7 +434,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}			
 		
 	        interviewPlanEntity.setApprovalStatus("INPROGRESS");
-	        interviewPlanEntity.setRequestType("PLAN-DEACTIVE");
+	        interviewPlanEntity.setRequestType("PLAN DEACTIVE");
 	        interviewPlanEntity.setDeactiveApproval(false);
 	        childLinkCommentsEntity.setPlanId(planId);
 	        childLinkCommentsEntity.setAction("DEACTIVE");
@@ -443,6 +443,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 	        
 	        // MAIL & NOTIFICATION
+	        // mail sent to all hiring manager
 	        
 	        Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 	        
@@ -646,7 +647,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 	        interviewPlanEntity.setApprovalStatus("INPROGRESS");
-	        interviewPlanEntity.setRequestType("PLAN-ACTIVE");
+	        interviewPlanEntity.setRequestType("PLAN ACTIVE");
 	        childLinkCommentsEntity.setPlanId(planId);
 	        childLinkCommentsEntity.setAction("ACTIVE");
 	        childLinkCommentsEntity.setDescription(request.getDescription());
@@ -654,6 +655,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 	        // MAIL&NOTIFICATION
+	        // mail sent to all hiring manager
 	        
 			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 			
