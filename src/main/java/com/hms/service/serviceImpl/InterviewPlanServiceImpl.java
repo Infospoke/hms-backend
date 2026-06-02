@@ -487,13 +487,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		
 	    if (request.getDeactiveApproval() != null) {
-	    	
-	    	if (!"Plan-Deactive".equalsIgnoreCase(interviewPlanEntity.getRequestType())) {
-
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "No deactivation request pending");
-			}
 
 	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
@@ -677,13 +670,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	    //  ACTIVATION APPROVAL 
 
 	    if (request.getActiveApproval() != null) {
-	    	
-	    	if (!"Plan-Active".equalsIgnoreCase(interviewPlanEntity.getRequestType())) {
-
-			    return ApiResponse.failure(
-			            ResponseCode.FAILURE,
-			            "No activation request pending");
-			}
 
 	    	if (!"Hiring Manager".equalsIgnoreCase(roleName)) {
 
