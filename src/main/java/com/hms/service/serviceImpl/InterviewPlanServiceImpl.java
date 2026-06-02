@@ -852,23 +852,17 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			Map<String, Object> map = new LinkedHashMap<>();
 
 			map.put("id", plan.getId());
-
 			map.put("planName", plan.getPlanName());
-
 			map.put("description", plan.getDescription());
-
 			map.put("status", plan.getStatus());
-
+			map.put("approvalStatus", plan.getApprovalStatus());
 			map.put("createdBy", plan.getCreatedBy());
-
 			map.put("createdOn", plan.getCreatedOn());
-
 			map.put("rounds", plan.getRounds() != null ? plan.getRounds().size() : 0);
 
 			return map;
 
 		}).toList();
-
 		Map<String, Long> counts = request.buildInterviewPlanCounts(interviewPlanRepository);
 
 		Map<String, Object> response = new LinkedHashMap<>();
@@ -899,8 +893,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		long deactivePlans = interviewPlanRepository.countByStatus("DEACTIVE");
 
-		long inProgressPlans = interviewPlanRepository.countByStatus("INPROGRESS");
-
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("allPlans", allPlans);
@@ -908,8 +900,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.put("activePlans", activePlans);
 
 		response.put("deactivePlans", deactivePlans);
-
-		response.put("inProgressPlans", inProgressPlans);
 
 		log.info("InterviewPlanServiceImpl :: Exit getInterviewPlanCounts");
 
