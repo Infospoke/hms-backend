@@ -897,7 +897,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		long activePlans = interviewPlanRepository.countByStatus("Active");
 
-		long inactivePlans = interviewPlanRepository.countByStatus("Deactive");
+		long deactivePlans = interviewPlanRepository.countByStatus("Deactive");
 
 		long inProgressPlans = interviewPlanRepository.countByStatusIsNull();
 
@@ -907,7 +907,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		response.put("activePlans", activePlans);
 
-		response.put("inactivePlans", inactivePlans);
+		response.put("deactivePlans", deactivePlans);
 
 		response.put("inProgressPlans", inProgressPlans);
 

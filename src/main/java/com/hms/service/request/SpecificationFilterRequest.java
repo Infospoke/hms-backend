@@ -951,6 +951,15 @@ public class SpecificationFilterRequest {
 
 							cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
 				}
+				String approvalStatus = getFilter("approvalStatus");
+
+				if (approvalStatus != null && !approvalStatus.isBlank()) {
+
+					predicates.add(
+
+							cb.equal(cb.lower(root.get("approvalStatus")), approvalStatus.toLowerCase()));
+				}
+
 
 				String search = getFilter("search");
 
@@ -1045,7 +1054,7 @@ public class SpecificationFilterRequest {
 		long activePlans = interviewPlanRepository
 				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "active")));
 
-		long inactivePlans = interviewPlanRepository
+		long deactivePlans = interviewPlanRepository
 				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "deactive")));
 
 		long inProgressPlans = interviewPlanRepository
@@ -1053,7 +1062,7 @@ public class SpecificationFilterRequest {
 
 		counts.put("allPlans", allPlans);
 		counts.put("activePlans", activePlans);
-		counts.put("inactivePlans", inactivePlans);
+		counts.put("deactivePlans", deactivePlans);
 		counts.put("inProgressPlans", inProgressPlans);
 
 		return counts;
