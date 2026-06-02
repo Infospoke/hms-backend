@@ -20,6 +20,8 @@ public class InterviewPlanRequest {
     private String planName;
 
     private String description;
+    
+    private String status;
 
     @Valid
     @NotEmpty(message = "At least one round is required")
