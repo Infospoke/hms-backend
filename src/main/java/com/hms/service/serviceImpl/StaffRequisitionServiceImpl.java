@@ -2270,6 +2270,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				currentStageRoleId = approvalChainEntity.getLevelConfig().get(2).getRoleId();
 			}
+			
+			if (currentStageRoleId != roleId) {
+			    continue;
+			}
+
 
 			if (currentStageRoleId != 0) {
 
