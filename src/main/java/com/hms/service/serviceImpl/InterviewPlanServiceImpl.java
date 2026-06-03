@@ -297,8 +297,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	        if ("APPROVED".equals(approval)) {
 
 	            interviewPlanEntity.setStatus("ACTIVE");
-	            interviewPlanEntity.setApprovalStatus("APPROVED");
-	            interviewPlanEntity.setPlanId(planId);         
+	            interviewPlanEntity.setApprovalStatus("APPROVED");        
 	            childLinkCommentsEntity.setPlanId(planId);
 	            childLinkCommentsEntity.setAction("APPROVE");
 	            childLinkCommentsEntity.setComments(request.getComments());
@@ -317,11 +316,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						interviewPlanEntity.getId().toString(),
 
-						"INTERVIEW_PLAN_WORKFLOW",
+						"INTERVIEW PLAN WORKFLOW",
 
 						"Your Interview Plan has been approved by the Hiring Manager.",
 
-						"Interview Plan",
+						planName,
 
 						creatorEmail,
 
@@ -379,11 +378,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						interviewPlanEntity.getId().toString(),
 
-						"INTERVIEW_PLAN_WORKFLOW",
+						"INTERVIEW PLAN WORKFLOW",
 
 						"Your Interview Plan has been rejected by the Hiring Manager.",
 
-						"Interview Plan",
+						planName,
 
 						creatorEmail,
 
@@ -453,11 +452,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 					interviewPlanEntity.getId().toString(),
 
-					"INTERVIEW_PLAN_WORKFLOW",
+					"INTERVIEW PLAN WORKFLOW",
 
 					"Interview Plan deactivation request submitted",
 
-					"Interview Plan",
+					planName,
 
 					creatorEmail,
 
@@ -519,11 +518,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						interviewPlanEntity.getId().toString(),
 
-						"INTERVIEW_PLAN_WORKFLOW",
+						"INTERVIEW PLAN WORKFLOW",
 
 						"Your Interview Plan has been deactivated.",
 
-						"Interview Plan",
+						planName,
 
 						creatorEmail,
 
@@ -570,11 +569,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						interviewPlanEntity.getId().toString(),
 
-						"INTERVIEW_PLAN_WORKFLOW",
+						"INTERVIEW PLAN WORKFLOW",
 
 						"Your Interview Plan deactivation request has been rejected.",
 
-						"Interview Plan",
+						planName,
 
 						creatorEmail,
 
@@ -638,11 +637,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 					interviewPlanEntity.getId().toString(),
 
-					"INTERVIEW_PLAN_WORKFLOW",
+					"INTERVIEW PLAN WORKFLOW",
 
 					"Interview Plan activation request submitted",
 
-					"Interview Plan",
+					planName,
 
 					creatorEmail,
 
@@ -703,11 +702,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						interviewPlanEntity.getId().toString(),
 
-						"INTERVIEW_PLAN_WORKFLOW",
+						"INTERVIEW PLAN WORKFLOW",
 
 						"Your Interview Plan has been activated.",
 
-						"Interview Plan",
+						planName,
 
 						creatorEmail,
 
@@ -754,11 +753,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						interviewPlanEntity.getId().toString(),
 
-						"INTERVIEW_PLAN_WORKFLOW",
+						"INTERVIEW PLAN WORKFLOW",
 
 						"Your Interview Plan activation request has been rejected.",
 
-						"Interview Plan",
+						planName,
 
 						creatorEmail,
 
