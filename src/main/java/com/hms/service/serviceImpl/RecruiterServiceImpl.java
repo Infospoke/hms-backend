@@ -599,6 +599,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	                statusFilteredAssignments.subList(start, end);
 
 	        // RESPONSE LIST
+	        LocalDateTime now=LocalDateTime.now();
 	        List<Map<String, Object>> responseList =
 	                IntStream.range(0, pagedJobs.size())
 	                        .mapToObj(i -> {
@@ -629,13 +630,13 @@ public class RecruiterServiceImpl implements IRecruiterService {
 	                                    departmentName);
 
 	                            map.put("requestedBy",
-	                                    job.getCreatedBy());
+	                                   assignment.getAssignedBy());
 
 	                            map.put("openings",
 	                                    job.getOpenings());
 
 	                            map.put("createdAt",
-	                                    job.getCreatedAt());
+	                                    assignment.getAssignedAt());
 
 	                            map.put("status",
 	                                    assignment.getStatus());
@@ -697,6 +698,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			log.info("token userId" + userId);
 
 		}
+		Integer tokenUserId=userId.intValue();
 		RecruiterAssignmentEntity recruiterAssignmentEntity = recruiterAssignmentRepository
 				.findByJobIdAndUserId(request.getJobId(),userId.intValue());
 
@@ -735,14 +737,18 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		event.setType("Recruiters");
 		event.setDeptName(departmentName);
 
-		Integer makerRoleId = createJobDetailsRepository.findById(request.getJobId()).get().getRoleId().intValue();
+		String assignedBy =recruiterAssignmentRepository.findByJobIdAndUserId(request.getJobId(),tokenUserId).getAssignedBy();
+		
+		Integer assigerUserId=userRepository.findByUsername(assignedBy).getUserId();
+		
+		Integer makerRoleId=assignRolesRepository.findByUserId(assigerUserId).get().getRoleId();
 
 		event.setMakerRoleId(makerRoleId);
 		event.setMakerRoleName(recruiterAssignmentEntity.getRoleName());
 		event.setMakerMessage("accepted");
-		Integer usersId = assignRolesRepository.findByRoleId(makerRoleId).get(0).getUserId();
+		
 
-		String makerEmail = userRepository.findByUserId(usersId).get().getEmail();
+		String makerEmail = userRepository.findByUsername(assignedBy).getEmail();
 		log.info("maker email is" + makerEmail);
 		event.setMakerEmailAddress(makerEmail);
 		event.setMakerEmailBody("accepted");
