@@ -745,7 +745,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 		event.setMakerRoleId(makerRoleId);
 		event.setMakerRoleName(recruiterAssignmentEntity.getRoleName());
-		event.setMakerMessage("accepted");
+		event.setMakerMessage("This is maker message");
 		
 
 		String makerEmail = userRepository.findByUsername(assignedBy).getEmail();
@@ -754,7 +754,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		event.setMakerEmailBody("accepted");
 		event.setMakerNotificationTitle("assignment accepted");
 		event.setCheckerNotificationTitle("assignment");
-		event.setCheckerMessage("accepted");
+		event.setCheckerMessage("This is checker message");
 		event.setCheckerEmailBody("accepted");
 		event.setRoleEmailMap(roleEmailMap);
 		event.setCheckerRoleName(roleName);
