@@ -188,13 +188,13 @@ public class NotificationServiceImpl implements INotificationService {
 		
 		List<NotificationEngineEntity> notifications= notificationEngineRepository.findByProcessIdAndSentIsFalse(event.getProcessId());
 		List<NotificationEngineEntity> notificationsList = new ArrayList<>();
-		for(int i=0;i<notificationsList.size();i++)
+		for(int i=0;i<notifications.size();i++)
 		{
 			NotificationEngineEntity checkerEntity = notifications.get(i);
 			checkerEntity.setSent(true);
 			notificationsList.add(checkerEntity);
 		}
-		notificationEngineRepository.saveAll(notifications);
+		notificationEngineRepository.saveAll(notificationsList);
 		
 		
 		log.info("Successfully updated Notifications for " + event.getType() + ": {}", event.getProcessId());
