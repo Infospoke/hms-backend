@@ -1,6 +1,8 @@
 package com.hms.service.response;
 
-import java.time.LocalDateTime;
+import java.util.List;
+
+import com.hms.service.dto.RoundAssignmentDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,25 +13,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class InterviewerAssignmentResponse {
 
-    private Long id;
+	private Integer jobId;
 
-    private Integer jobId;
+	private String jobTitle;
 
-    private Integer planId;
+	private String deptName;
 
-    private Long roundId;
+	private String planName;
 
-    private String stageName;
-
-    private Long interviewerUserId;
-
-    private String interviewerName;
-
-    private String roleName;
-
-    private String status;
-
-    private String comments;
-
-    private LocalDateTime respondedAt;
+	private List<RoundAssignmentDto> rounds;
 }

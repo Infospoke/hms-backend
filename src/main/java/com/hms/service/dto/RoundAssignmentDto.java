@@ -1,5 +1,7 @@
 package com.hms.service.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,11 +11,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RoundAssignmentDto {
 
-    private Integer roundId;
+	 private Long roundId;
 
-    private Integer interviewerUserId;
+	    private String stageName;
 
-    private String interviewerName;
+	    private String stageType;
 
-    private String roleName;
+	    private Long interviewerUserId;
+
+	    private String interviewerName;
+
+	    private String status;
+	    
+	    private String comments;
+
+	    private LocalDateTime respondedAt;
+	    
+	    private String roleName;
 }

@@ -1140,6 +1140,14 @@ public class SpecificationFilterRequest {
 			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("planName")), planName.toLowerCase()));
 		}
 
+		String jobTitle = getFilter("jobTitle");
+
+		if (jobTitle != null) {
+
+			spec = spec.and(
+					(root, query, cb) -> cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase() + "%"));
+		}
+
 		String search = getFilter("search");
 
 		if (search != null) {
@@ -1155,41 +1163,10 @@ public class SpecificationFilterRequest {
 					cb.like(cb.lower(root.get("planName")), value)));
 		}
 
-		return spec;
-	}
+		Specification<InterviewerAssignmentEntity> dateSpec = dateSpec("createdAt");
 
-	public Specification<InterviewerAssignmentEntity> buildMyAssignmentSpecification(Long userId) {
-
-		Specification<InterviewerAssignmentEntity> spec = Specification.allOf();
-
-		spec = spec.and((root, query, cb) -> cb.equal(root.get("interviewerUserId"), userId));
-
-		String status = getFilter("status");
-
-		if (status != null) {
-
-			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
-		}
-
-		String stageName = getFilter("stageName");
-
-		if (stageName != null) {
-
-			spec = spec.and(
-					(root, query, cb) -> cb.like(cb.lower(root.get("stageName")), "%" + stageName.toLowerCase() + "%"));
-		}
-
-		String search = getFilter("search");
-
-		if (search != null) {
-
-			spec = spec.and((root, query, cb) -> cb.or(
-
-					cb.like(cb.lower(root.get("stageName")), "%" + search.toLowerCase() + "%"),
-
-					cb.like(cb.lower(root.get("roleName")), "%" + search.toLowerCase() + "%"),
-
-					cb.like(cb.lower(root.get("interviewerName")), "%" + search.toLowerCase() + "%")));
+		if (dateSpec != null) {
+			spec = spec.and(dateSpec);
 		}
 
 		return spec;

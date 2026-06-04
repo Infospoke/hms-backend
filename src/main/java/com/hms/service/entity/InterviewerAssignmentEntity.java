@@ -36,7 +36,7 @@ public class InterviewerAssignmentEntity {
 	private String stageName;
 
 	@Column(name = "interviewer_user_id")
-	private Integer interviewerUserId;
+	private Long interviewerUserId;
 
 	@Column(name = "interviewer_name")
 	private String interviewerName;
@@ -58,6 +58,18 @@ public class InterviewerAssignmentEntity {
 
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
+	
+	@Column(name = "job_title")
+	private String jobTitle;
+	
+	@Column(name = "dept_name")
+	private String deptName;
+	
+	@Column(name = "plan_name")
+	private String planName;
+	
+	@Column(name="user_id")
+	private Long userId;
 
 	
 }

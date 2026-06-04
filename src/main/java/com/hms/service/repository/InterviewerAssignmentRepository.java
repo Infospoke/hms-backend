@@ -10,12 +10,12 @@ import org.springframework.stereotype.Repository;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 
 @Repository
-public interface InterviewerAssignmentRepository extends JpaRepository<InterviewerAssignmentEntity, Long>,
+public interface InterviewerAssignmentRepository extends JpaRepository<InterviewerAssignmentEntity, Integer>,
 		JpaSpecificationExecutor<InterviewerAssignmentEntity> {
 
 	List<InterviewerAssignmentEntity> findByInterviewerUserId(Long userId);
 
-	boolean existsByJobIdAndRoundId(Integer jobId, Long roundId);
-
 	Optional<InterviewerAssignmentEntity> findById(Integer planId);
+
+	List<InterviewerAssignmentEntity> findByPlanId(Integer planId);
 }
