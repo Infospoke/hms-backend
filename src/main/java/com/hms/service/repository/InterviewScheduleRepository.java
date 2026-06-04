@@ -7,5 +7,8 @@ import com.hms.service.entity.InterviewScheduleEntity;
 
 @Repository
 public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity,Integer> {
+	
+	 long countByUserId(Integer userId);
+
 
 }

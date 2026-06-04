@@ -11,6 +11,8 @@ public interface IInterviewerAssignmentService {
 
 	ApiResponse<?> getAssignments(SpecificationFilterRequest request);
 
+	ApiResponse<?> getInterviewerCounts();
+
 	ApiResponse<?> getAssignmentDetails(Integer planId);
 
 	

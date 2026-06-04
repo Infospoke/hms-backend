@@ -1,6 +1,7 @@
 package com.hms.service.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +38,12 @@ public class InterviewAssignmentController {
 
 		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignments(request));
 	}
-
+	
+	@GetMapping("/counts")
+	public ResponseEntity<ApiResponse<?>> getInterviewerDashboardCounts() {
+		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewerCounts();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 	@GetMapping("/details/{planId}")
 	public ResponseEntity<ApiResponse<?>> getAssignmentDetails(
 

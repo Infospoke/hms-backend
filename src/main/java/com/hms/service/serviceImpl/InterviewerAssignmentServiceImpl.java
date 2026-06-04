@@ -1,8 +1,10 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -19,10 +21,15 @@ import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
+
+import com.hms.service.repository.InterviewFeedbackRepository;
+
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
+import com.hms.service.repository.InterviewScheduleRepository;
+import com.hms.service.repository.InterviewUpcomingRepository;
 import com.hms.service.repository.InterviewerAssignmentRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
@@ -47,6 +54,15 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
+	
+	@Autowired
+	private InterviewScheduleRepository interviewScheduleRepository;
+	
+	@Autowired
+	private InterviewUpcomingRepository interviewUpcomingRepository;
+	
+	@Autowired
+	private InterviewFeedbackRepository interviewFeedbackRepository;
 
 	@Autowired
 	private JwtService jwtService;
@@ -240,6 +256,45 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		response.put("totalElements", content.size());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Assignments fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewerCounts() {
+
+		log.info("DashboardServiceImpl :: Inside getDashboardCounts");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Integer userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token).intValue();
+		}
+
+		long assignedInterviews = interviewerAssignmentRepository.countByInterviewerUserId(userId);
+		
+		long toSchedule = interviewScheduleRepository.countByUserId(userId);
+		
+		long upcomingInterview = interviewUpcomingRepository.countByUserId(userId);
+		
+		long feedbackInterview = interviewFeedbackRepository.countByUserId(userId);
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("assignedInterviewRequests", assignedInterviews);
+		
+		response.put("toSchedule",toSchedule);
+		
+		response.put("upcoming",upcomingInterview);
+		
+		response.put("Feedback",feedbackInterview);
+
+		log.info("DashboardServiceImpl :: Exit getDashboardCounts");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard counts fetched successfully", response);
 	}
 
 	private Map<String, Object> buildAssignmentResponse(List<InterviewerAssignmentEntity> assignments,
