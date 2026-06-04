@@ -26,6 +26,7 @@ import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
+import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
@@ -34,17 +35,19 @@ import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
+import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
+import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.CommentTimelineResponse;
 import com.hms.service.response.InterviewPlanResponse;
 import com.hms.service.response.InterviewRoundsResponse;
-import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
@@ -93,6 +96,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	
 	@Autowired
 	private InterviewFeedbackRepository interviewFeedbackRepository;
+
+	@Autowired
+	private InterviewScheduleRepository interviewScheduleRepository;
+
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1021,6 +1028,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	@Override
+
 	public ApiResponse<?> interviewFeedback(InterviewFeedbackRequest request) {
 		log.info("InterviewPlanServiceImpl :: Inside interviewFeedback");
 		String authHeader = httpServletRequest.getHeader("Authorization");
@@ -1051,6 +1059,38 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackRepository.save(interviewFeedbackEntity);
 		
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview Feedback Submitted successfully");
+	}
+	public ApiResponse<?> scheduleInterview(InterviewScheduleRequest request) {
+        log.info("InterviewPlanServiceImpl:Inside the scheduleInterview method");
+        InterviewScheduleEntity entity = new InterviewScheduleEntity();
+        
+        String authHeader = httpServletRequest.getHeader("Authorization");
+		String token = authHeader.substring(7);
+		String userName = jwtService.extractUsernameFromClaims(token);
+		Long userId = jwtService.extractUserId(token);
+		
+		entity.setApplicantId(request.getApplicantId());
+		entity.setRoundType(request.getRoundType());
+		entity.setInterviewDate(request.getInterviewDate());
+		entity.setStartTime(request.getStartTime());
+		entity.setEndTime(request.getEndTime());
+		entity.setInterviewType(request.getInterviewType());
+		entity.setUserId(userId.intValue());
+		if(request.getInterviewType().equalsIgnoreCase("Online Interview")) {
+			entity.setMeetingLink(request.getMeetingLink());
+		}
+		else if(request.getInterviewType().equalsIgnoreCase("Offline Interview")) {
+			entity.setVenueDetails(request.getVenueDetails());
+		}
+		entity.setCreatedBy(userName);
+		entity.setCreatedOn(LocalDateTime.now());
+		
+		interviewScheduleRepository.save(entity);
+	
+		 log.info("InterviewPlanServiceImpl:Exit from  the scheduleInterview method");
+        
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success","Interview Scheduled Sucessfully");
+		
 	}
 
 }
