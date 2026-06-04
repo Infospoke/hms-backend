@@ -16,6 +16,7 @@ import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -1089,5 +1090,108 @@ public class SpecificationFilterRequest {
 
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
+	}
+
+	public Specification<InterviewerAssignmentEntity> buildInterviewAssignmentSpecification() {
+
+		Specification<InterviewerAssignmentEntity> spec = Specification.allOf();
+
+		String jobId = getFilter("jobId");
+
+		if (jobId != null) {
+
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("jobId"), Integer.valueOf(jobId)));
+		}
+
+		String interviewerName = getFilter("interviewerName");
+
+		if (interviewerName != null) {
+
+			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("interviewerName")),
+					"%" + interviewerName.toLowerCase() + "%"));
+		}
+
+		String stageName = getFilter("stageName");
+
+		if (stageName != null) {
+
+			spec = spec.and(
+					(root, query, cb) -> cb.like(cb.lower(root.get("stageName")), "%" + stageName.toLowerCase() + "%"));
+		}
+
+		String status = getFilter("status");
+
+		if (status != null) {
+
+			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
+		}
+
+		String deptName = getFilter("deptName");
+
+		if (deptName != null) {
+
+			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("deptName")), deptName.toLowerCase()));
+		}
+
+		String planName = getFilter("planName");
+
+		if (planName != null) {
+
+			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("planName")), planName.toLowerCase()));
+		}
+
+		String search = getFilter("search");
+
+		if (search != null) {
+
+			String value = "%" + search.toLowerCase() + "%";
+
+			spec = spec.and((root, query, cb) -> cb.or(
+
+					cb.like(cb.lower(root.get("jobTitle")), value),
+
+					cb.like(cb.lower(root.get("deptName")), value),
+
+					cb.like(cb.lower(root.get("planName")), value)));
+		}
+
+		return spec;
+	}
+
+	public Specification<InterviewerAssignmentEntity> buildMyAssignmentSpecification(Long userId) {
+
+		Specification<InterviewerAssignmentEntity> spec = Specification.allOf();
+
+		spec = spec.and((root, query, cb) -> cb.equal(root.get("interviewerUserId"), userId));
+
+		String status = getFilter("status");
+
+		if (status != null) {
+
+			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
+		}
+
+		String stageName = getFilter("stageName");
+
+		if (stageName != null) {
+
+			spec = spec.and(
+					(root, query, cb) -> cb.like(cb.lower(root.get("stageName")), "%" + stageName.toLowerCase() + "%"));
+		}
+
+		String search = getFilter("search");
+
+		if (search != null) {
+
+			spec = spec.and((root, query, cb) -> cb.or(
+
+					cb.like(cb.lower(root.get("stageName")), "%" + search.toLowerCase() + "%"),
+
+					cb.like(cb.lower(root.get("roleName")), "%" + search.toLowerCase() + "%"),
+
+					cb.like(cb.lower(root.get("interviewerName")), "%" + search.toLowerCase() + "%")));
+		}
+
+		return spec;
 	}
 }
