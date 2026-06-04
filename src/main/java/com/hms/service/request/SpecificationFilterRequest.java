@@ -1092,53 +1092,9 @@ public class SpecificationFilterRequest {
 		};
 	}
 
-	public Specification<InterviewerAssignmentEntity> buildInterviewAssignmentSpecification() {
+	public Specification<CreateJobDetailsEntity> buildJobAssignmentSpecification() {
 
-		Specification<InterviewerAssignmentEntity> spec = Specification.allOf();
-
-		String jobId = getFilter("jobId");
-
-		if (jobId != null) {
-
-			spec = spec.and((root, query, cb) -> cb.equal(root.get("jobId"), Integer.valueOf(jobId)));
-		}
-
-		String interviewerName = getFilter("interviewerName");
-
-		if (interviewerName != null) {
-
-			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("interviewerName")),
-					"%" + interviewerName.toLowerCase() + "%"));
-		}
-
-		String stageName = getFilter("stageName");
-
-		if (stageName != null) {
-
-			spec = spec.and(
-					(root, query, cb) -> cb.like(cb.lower(root.get("stageName")), "%" + stageName.toLowerCase() + "%"));
-		}
-
-		String status = getFilter("status");
-
-		if (status != null) {
-
-			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
-		}
-
-		String deptName = getFilter("deptName");
-
-		if (deptName != null) {
-
-			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("deptName")), deptName.toLowerCase()));
-		}
-
-		String planName = getFilter("planName");
-
-		if (planName != null) {
-
-			spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("planName")), planName.toLowerCase()));
-		}
+		Specification<CreateJobDetailsEntity> spec = Specification.allOf();
 
 		String jobTitle = getFilter("jobTitle");
 
@@ -1148,24 +1104,10 @@ public class SpecificationFilterRequest {
 					(root, query, cb) -> cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase() + "%"));
 		}
 
-		String search = getFilter("search");
-
-		if (search != null) {
-
-			String value = "%" + search.toLowerCase() + "%";
-
-			spec = spec.and((root, query, cb) -> cb.or(
-
-					cb.like(cb.lower(root.get("jobTitle")), value),
-
-					cb.like(cb.lower(root.get("deptName")), value),
-
-					cb.like(cb.lower(root.get("planName")), value)));
-		}
-
-		Specification<InterviewerAssignmentEntity> dateSpec = dateSpec("createdAt");
+		Specification<CreateJobDetailsEntity> dateSpec = dateSpec("createdAt");
 
 		if (dateSpec != null) {
+
 			spec = spec.and(dateSpec);
 		}
 

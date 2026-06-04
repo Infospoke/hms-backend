@@ -5,14 +5,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.RoundAssignmentDto;
@@ -149,18 +147,86 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
-		Specification<InterviewerAssignmentEntity> spec = request.buildInterviewAssignmentSpecification();
-
-		Page<InterviewerAssignmentEntity> page = interviewerAssignmentRepository.findAll(spec, pageable);
-
-		Map<String, List<InterviewerAssignmentEntity>> grouped = page.getContent().stream()
-				.collect(Collectors.groupingBy(e -> e.getJobId() + "_" + e.getPlanId()));
+		Page<CreateJobDetailsEntity> page = createJobDetailsRepository
+				.findAll(request.buildJobAssignmentSpecification(), pageable);
 
 		List<Map<String, Object>> content = new ArrayList<>();
 
-		for (List<InterviewerAssignmentEntity> assignments : grouped.values()) {
+		String search = request.getFilter("search");
 
-			content.add(buildAssignmentResponse(assignments, false));
+		String deptFilter = request.getFilter("deptName");
+
+		String planFilter = request.getFilter("planName");
+
+		for (CreateJobDetailsEntity job : page.getContent()) {
+
+			InterviewPlanEntity plan = interviewPlanRepository.findById(job.getPlanId()).orElse(null);
+
+			if (plan == null) {
+				continue;
+			}
+
+			String deptName = departmentsRepository.findById(job.getDepartmentId())
+					.map(DepartmentsEntity::getDepartmentName).orElse("");
+
+			if (deptFilter != null && !deptFilter.equalsIgnoreCase(deptName)) {
+
+				continue;
+			}
+
+			if (planFilter != null && !planFilter.equalsIgnoreCase(plan.getPlanName())) {
+
+				continue;
+			}
+
+			if (search != null) {
+
+				String value = search.toLowerCase();
+
+				boolean matches = job.getJobTitle().toLowerCase().contains(value)
+						|| deptName.toLowerCase().contains(value) || plan.getPlanName().toLowerCase().contains(value);
+
+				if (!matches) {
+					continue;
+				}
+			}
+
+			List<InterviewRoundEntity> rounds = interviewRoundRepository
+					.findByInterviewPlan_IdOrderByRoundOrderAsc(plan.getId());
+
+			List<Map<String, Object>> assignmentStatus = new ArrayList<>();
+
+			for (InterviewRoundEntity round : rounds) {
+
+				InterviewerAssignmentEntity assignment = interviewerAssignmentRepository
+						.findByJobIdAndRoundId(job.getJobId(), round.getId()).orElse(null);
+
+				Map<String, Object> roundMap = new LinkedHashMap<>();
+
+				roundMap.put("roundId", round.getId());
+
+				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
+
+				assignmentStatus.add(roundMap);
+			}
+
+			Map<String, Object> row = new LinkedHashMap<>();
+
+			row.put("jobId", job.getJobId());
+
+			row.put("jobTitle", job.getJobTitle());
+
+			row.put("deptName", deptName);
+
+			row.put("planId", job.getPlanId());
+
+			row.put("planName", plan.getPlanName());
+
+			row.put("rounds", rounds.size());
+
+			row.put("assignmentStatus", assignmentStatus);
+
+			content.add(row);
 		}
 
 		Map<String, Object> response = new LinkedHashMap<>();
@@ -225,5 +291,4 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		return response;
 	}
-
 }
