@@ -1,5 +1,6 @@
 package com.hms.service.service;
 
+import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
@@ -21,5 +22,8 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getInterviewPlanCounts();
 
 	ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request);
+
+
+	ApiResponse<?> interviewFeedback(InterviewFeedbackRequest request);
 
 }

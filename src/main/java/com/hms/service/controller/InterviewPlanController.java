@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
@@ -72,6 +73,13 @@ public class InterviewPlanController {
 	@PostMapping("/interview-plan-approvals")
 	public ResponseEntity<ApiResponse<?>> getInterviewPlanApprovals(@RequestBody SpecificationFilterRequest request) {
 		ApiResponse<?> response = interviewPlanService.getInterviewPlanApprovals(request);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping("/interview-feedback")
+	public ResponseEntity<ApiResponse<?>>interviewFeedback(@RequestBody InterviewFeedbackRequest request) {
+		ApiResponse<?> response = interviewPlanService.interviewFeedback(request);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

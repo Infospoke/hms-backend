@@ -23,6 +23,7 @@ import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
+import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.UserEntity;
@@ -30,10 +31,12 @@ import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
+import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
 import com.hms.service.request.LevelConfig;
@@ -87,6 +90,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewRoundRepository interviewRoundRepository;
+	
+	@Autowired
+	private InterviewFeedbackRepository interviewFeedbackRepository;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -922,6 +928,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Override
 	public ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request) {
 
+		log.info("InterviewPlanServiceImpl :: Inside getInterviewPlanApprovals");
+
+
 		try {
 
 			String authHeader = httpServletRequest.getHeader("Authorization");
@@ -999,7 +1008,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			response.put("size", page.getSize());
 			response.put("totalElements", page.getTotalElements());
 			response.put("content", content);
-
+			log.info("InterviewPlanServiceImpl :: Exit getInterviewPlanApprovals");
+	
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Plans fetched successfully", response);
 		} catch (Exception e) {
 
@@ -1008,6 +1018,39 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
 
+	}
+
+	@Override
+	public ApiResponse<?> interviewFeedback(InterviewFeedbackRequest request) {
+		log.info("InterviewPlanServiceImpl :: Inside interviewFeedback");
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId=null;
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId=jwtService.extractUserId(token);
+		}
+		
+		InterviewFeedbackEntity interviewFeedbackEntity=new InterviewFeedbackEntity();
+		interviewFeedbackEntity.setApplicantId(request.getApplicantId());
+		interviewFeedbackEntity.setOverallRating(request.getOverallRating());
+		interviewFeedbackEntity.setTechnicalKnowledge(request.getTechnicalKnowledge());
+		interviewFeedbackEntity.setAnalyticalThinking(request.getAnalyticalThinking());
+		interviewFeedbackEntity.setCommunication(request.getCommunication());
+		interviewFeedbackEntity.setAreasOfImprovemnets(request.getAreasOfImprovemnets());
+		interviewFeedbackEntity.setCulturalFit(request.getCulturalFit());
+		interviewFeedbackEntity.setProblemSolving(request.getProblemSolving());
+		interviewFeedbackEntity.setStrengths(request.getStrengths());
+		interviewFeedbackEntity.setAdditionalComments(request.getAdditionalComments());
+		interviewFeedbackEntity.setDecision(request.getDecision());
+		interviewFeedbackEntity.setSubmittedOn(LocalDateTime.now());
+		interviewFeedbackEntity.setSubmittedBy(userId.intValue());
+		
+		interviewFeedbackRepository.save(interviewFeedbackEntity);
+		
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview Feedback Submitted successfully");
 	}
 
 }
