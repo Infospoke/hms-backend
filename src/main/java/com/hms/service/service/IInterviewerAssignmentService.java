@@ -9,5 +9,7 @@ public interface IInterviewerAssignmentService {
 	ApiResponse<?> assignInterviewers(AssignInterviewerRequest request);
 
 	ApiResponse<?> getAssignments(SpecificationFilterRequest request);
+
+	ApiResponse<?> getInterviewerCounts();
 	
 }

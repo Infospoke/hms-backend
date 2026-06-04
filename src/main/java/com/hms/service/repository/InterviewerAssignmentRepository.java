@@ -18,4 +18,6 @@ public interface InterviewerAssignmentRepository extends JpaRepository<Interview
 	boolean existsByJobIdAndRoundId(Integer jobId, Long roundId);
 
 	Optional<InterviewerAssignmentEntity> findById(Integer planId);
+	
+	 long countByInterviewerUserId(Integer interviewerUserId);
 }
