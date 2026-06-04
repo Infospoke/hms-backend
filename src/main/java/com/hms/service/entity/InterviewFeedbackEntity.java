@@ -67,6 +67,9 @@ public class InterviewFeedbackEntity {
 	private LocalDateTime submittedOn;
 	
 	@Column(name="submitted_by")
-	private Integer submittedBy;
+	private String submittedBy;
+	
+	@Column(name="user_id")
+	private Integer userId;
 
 }

@@ -1034,11 +1034,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		Long userId=null;
+		String username=null;
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
 
 			userId=jwtService.extractUserId(token);
+			username=jwtService.extractUsernameFromClaims(token);
 		}
 		
 		InterviewFeedbackEntity interviewFeedbackEntity=new InterviewFeedbackEntity();
@@ -1054,7 +1056,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackEntity.setAdditionalComments(request.getAdditionalComments());
 		interviewFeedbackEntity.setDecision(request.getDecision());
 		interviewFeedbackEntity.setSubmittedOn(LocalDateTime.now());
-		interviewFeedbackEntity.setSubmittedBy(userId.intValue());
+		interviewFeedbackEntity.setSubmittedBy(username);
+		interviewFeedbackEntity.setUserId(userId.intValue());
 		
 		interviewFeedbackRepository.save(interviewFeedbackEntity);
 		
