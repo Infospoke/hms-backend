@@ -49,6 +49,7 @@ public class SecurityConfig {
 										"/hms/notifications/**" ,          // Notification test endpoint
 										"/hms/create-job/**" , 
 										"/hms/interview-plan/**",
+										"/hms/interviewer-assignment/**",
 										"/hms/jobs/**"
 								).permitAll()
 								.anyRequest().authenticated())
