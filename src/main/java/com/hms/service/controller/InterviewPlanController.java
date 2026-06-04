@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.InterviewPlanRequest;
+import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IInterviewPlanService;
@@ -74,6 +75,13 @@ public class InterviewPlanController {
 		ApiResponse<?> response = interviewPlanService.getInterviewPlanApprovals(request);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping("/interview-schedule")
+	public ResponseEntity<ApiResponse<?>> scheduleInterview(@RequestBody InterviewScheduleRequest request){
+		ApiResponse<?> response=interviewPlanService.scheduleInterview(request);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		
 	}
 	
 	

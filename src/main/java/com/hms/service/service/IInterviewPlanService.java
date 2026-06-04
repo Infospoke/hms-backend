@@ -1,6 +1,7 @@
 package com.hms.service.service;
 
 import com.hms.service.request.InterviewPlanRequest;
+import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.wrappers.ApiResponse;
@@ -21,5 +22,8 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getInterviewPlanCounts();
 
 	ApiResponse<?> getInterviewPlanApprovals(SpecificationFilterRequest request);
+
+
+	ApiResponse<?> scheduleInterview(InterviewScheduleRequest request);
 
 }
