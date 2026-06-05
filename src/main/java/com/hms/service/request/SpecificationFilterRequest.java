@@ -1096,12 +1096,21 @@ public class SpecificationFilterRequest {
 
 		Specification<CreateJobDetailsEntity> spec = Specification.allOf();
 
+		spec = spec.and((root, query, cb) -> cb.isTrue(root.get("isOpen")));
+
 		String jobTitle = getFilter("jobTitle");
 
 		if (jobTitle != null) {
 
 			spec = spec.and(
 					(root, query, cb) -> cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase() + "%"));
+		}
+
+		String jobId = getFilter("jobId");
+
+		if (jobId != null) {
+
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("jobId"), Integer.valueOf(jobId)));
 		}
 
 		Specification<CreateJobDetailsEntity> dateSpec = dateSpec("createdAt");

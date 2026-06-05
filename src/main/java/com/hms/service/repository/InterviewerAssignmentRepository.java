@@ -19,7 +19,9 @@ public interface InterviewerAssignmentRepository extends JpaRepository<Interview
 	
 	 long countByInterviewerUserId(Integer interviewerUserId);
 
-	List<InterviewerAssignmentEntity> findByPlanId(Integer planId);
+	List<InterviewerAssignmentEntity> findByJobId(Integer jobId);
 
+	List<InterviewerAssignmentEntity> findByJobIdAndRoundIdOrderByIdDesc(Integer jobId, Long id);
+	
 	Optional<InterviewerAssignmentEntity> findByJobIdAndRoundId(Integer jobId, Long id);
 }

@@ -38,19 +38,20 @@ public class InterviewAssignmentController {
 
 		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignments(request));
 	}
-	
+
 	@GetMapping("/counts")
 	public ResponseEntity<ApiResponse<?>> getInterviewerDashboardCounts() {
 		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewerCounts();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	@GetMapping("/details/{planId}")
+
+	@GetMapping("/details/{jobId}")
 	public ResponseEntity<ApiResponse<?>> getAssignmentDetails(
 
-			@PathVariable("planId") Integer planId) {
+			@PathVariable("jobId") Integer jobId) {
 
 		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignmentDetails(
 
-				planId));
+				jobId));
 	}
 }
