@@ -15,5 +15,7 @@ public interface IInterviewerAssignmentService {
 
 	ApiResponse<?> getAssignmentDetails(Integer jobId);
 
+	ApiResponse<?> getInterviewAssignmentDetails(Integer assignmentId);
+
 	
 }

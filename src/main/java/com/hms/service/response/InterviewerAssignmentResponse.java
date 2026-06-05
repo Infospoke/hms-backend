@@ -22,4 +22,5 @@ public class InterviewerAssignmentResponse {
 	private String planName;
 
 	private List<RoundAssignmentDto> rounds;
+	
 }
