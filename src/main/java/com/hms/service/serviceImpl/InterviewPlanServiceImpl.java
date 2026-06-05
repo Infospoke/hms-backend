@@ -23,6 +23,7 @@ import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
+import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
@@ -32,6 +33,7 @@ import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
+import com.hms.service.repository.InterviewCandidateDetailsRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
@@ -99,6 +101,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewScheduleRepository interviewScheduleRepository;
+	
+	@Autowired
+	private InterviewCandidateDetailsRepository interviewCandidateDetailsRepository;
 
 
 	@Override
@@ -1094,6 +1099,44 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
         
 		return ApiResponse.success(ResponseCode.SUCCESS, "Success","Interview Scheduled Sucessfully");
 		
+	}
+
+	@Override
+	public ApiResponse<?> getTodayInterviews(SpecificationFilterRequest request) {
+
+        String authHeader = httpServletRequest.getHeader("Authorization");
+		String token = authHeader.substring(7);
+		
+		Long userId = jwtService.extractUserId(token);
+		
+		Integer userIdFromToken=userId.intValue();
+		
+
+	   
+	    Pageable pageable = PageRequest.of(
+	            request.getPage(),
+	            request.getSize(),
+	            Sort.by(
+	                    Sort.Direction.fromString(request.getDirection()),
+	                    request.getSortBy()
+	            )
+	    );
+
+	    Page<InterviewCandidateDetailsEntity> interviews =
+	            interviewCandidateDetailsRepository.findAll(
+	                    request.buildTodayInterviewSpecification(userIdFromToken),
+	                    pageable
+	            );
+
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("content", interviews.getContent());
+	    response.put("currentPage", interviews.getNumber());
+	    response.put("totalPages", interviews.getTotalPages());
+	    response.put("totalElements", interviews.getTotalElements());
+	    response.put("size", interviews.getSize());
+	    return ApiResponse.success(ResponseCode.SUCCESS, "Success",response);
+
+	    
 	}
 
 }

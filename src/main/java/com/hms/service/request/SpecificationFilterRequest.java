@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.NotificationEngineEntity;
@@ -1121,5 +1122,72 @@ public class SpecificationFilterRequest {
 		}
 
 		return spec;
+	}
+	
+	public Specification<InterviewCandidateDetailsEntity> buildTodayInterviewSpecification(Integer userId) {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        // Logged-in user filter
+	        predicates.add(
+	                cb.equal(root.get("userId"), userId)
+	        );
+
+	        String search = getFilter("search");
+
+	        if (search != null && !search.isBlank()) {
+
+	            String searchText = "%" + search.toLowerCase().trim() + "%";
+
+	            predicates.add(
+	                    cb.or(
+	                            cb.like(cb.lower(root.get("canidateName")), searchText),
+	                            cb.like(cb.lower(root.get("jobTitle")), searchText)
+	                           
+	                    )
+	            );
+	        }
+
+	        String interviewType = getFilter("interviewType");
+
+	        if (interviewType != null && !interviewType.isBlank()) {
+
+	            predicates.add(
+	                    cb.equal(
+	                            cb.lower(root.get("interviewType")),
+	                            interviewType.toLowerCase()
+	                    )
+	            );
+	        }
+
+	        String round = getFilter("round");
+
+	        if (round != null && !round.isBlank()) {
+
+	            predicates.add(
+	                    cb.equal(
+	                            cb.lower(root.get("round")),
+	                            round.toLowerCase()
+	                    )
+	            );
+	        }
+
+	        Specification<InterviewCandidateDetailsEntity> dateSpecification =
+	                dateSpec("createdOn");
+
+	        if (dateSpecification != null) {
+
+	            Predicate datePredicate =
+	                    dateSpecification.toPredicate(root, query, cb);
+
+	            if (datePredicate != null) {
+	                predicates.add(datePredicate);
+	            }
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
 	}
 }

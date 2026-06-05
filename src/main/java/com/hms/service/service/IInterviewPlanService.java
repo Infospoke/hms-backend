@@ -29,4 +29,7 @@ public interface IInterviewPlanService {
 	ApiResponse<?> scheduleInterview(InterviewScheduleRequest request);
 
 
+	ApiResponse<?> getTodayInterviews(SpecificationFilterRequest request);
+
+
 }

@@ -91,5 +91,13 @@ public class InterviewPlanController {
 		
 	}
 	
+	@PostMapping("/get-today-interviews")
+	public ResponseEntity<ApiResponse<?>> getTodayInterviews(@RequestBody SpecificationFilterRequest request){
+		ApiResponse<?> response=interviewPlanService.getTodayInterviews(request);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		
+	}
+	
+	
 	
 }
