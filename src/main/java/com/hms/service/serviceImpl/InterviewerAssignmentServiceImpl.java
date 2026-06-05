@@ -1,7 +1,8 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,7 @@ import com.hms.service.repository.InterviewUpcomingRepository;
 import com.hms.service.repository.InterviewerAssignmentRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.response.InterviewAssignmentDetailsResponse;
 import com.hms.service.service.IInterviewerAssignmentService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -192,10 +195,12 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		return ApiResponse.success(ResponseCode.SUCCESS, "Assignments fetched successfully", response);
 	}
 
+	
+	
 	@Override
 	public ApiResponse<?> getInterviewerCounts() {
 
-		log.info("DashboardServiceImpl :: Inside getDashboardCounts");
+		log.info("DashboardServiceImpl :: Inside getInterviewerCounts");
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
@@ -226,11 +231,13 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		
 		response.put("Feedback",feedbackInterview);
 
-		log.info("DashboardServiceImpl :: Exit getDashboardCounts");
+		log.info("DashboardServiceImpl :: Exit getInterviewerCounts");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard counts fetched successfully", response);
 	}
 
+	
+	
 	private Map<String, Object> buildAssignmentResponse(List<InterviewerAssignmentEntity> assignments,
 			boolean detailed) {
 
@@ -279,5 +286,45 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		response.put("rounds", rounds);
 
 		return response;
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewAssignmentDetails(Integer id) {
+
+		log.info("InterviewerAssignmentServiceImpl :: Inside getInterviewAssignmentDetails");
+
+		InterviewerAssignmentEntity assignment = interviewerAssignmentRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Interview Assignment Not Found"));
+
+		InterviewRoundEntity round = interviewRoundRepository.findById(assignment.getRoundId())
+				.orElseThrow(() -> new ResourceNotFoundException("Interview Round Not Found"));
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("jobTitle", assignment.getJobTitle());
+		response.put("deptName", assignment.getDeptName());
+		response.put("interviewType", round.getStageType());
+		response.put("interviewType", assignment.getStageName());
+		response.put("interviewMode", round.getInterviewMode());
+		response.put("assignedOn", assignment.getCreatedAt());
+		response.put("assignedBy", assignment.getCreatedBy());
+		response.put("roleName", assignment.getRoleName());
+
+		if ("PENDING".equalsIgnoreCase(assignment.getStatus())) {
+
+			long daysPending =
+					java.time.temporal.ChronoUnit.DAYS.between(
+							assignment.getCreatedAt().toLocalDate(),
+							java.time.LocalDate.now());
+
+			response.put("responseDue", daysPending + " days pending");
+		}
+
+		log.info("InterviewerAssignmentServiceImpl :: Exit getInterviewAssignmentDetails");
+
+		return ApiResponse.success(
+				ResponseCode.SUCCESS,
+				"Interview assignment details fetched successfully",
+				response);
 	}
 }

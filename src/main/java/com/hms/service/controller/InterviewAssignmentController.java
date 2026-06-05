@@ -40,10 +40,17 @@ public class InterviewAssignmentController {
 	}
 	
 	@GetMapping("/counts")
-	public ResponseEntity<ApiResponse<?>> getInterviewerDashboardCounts() {
+	public ResponseEntity<ApiResponse<?>> getInterviewerCounts() {
 		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewerCounts();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/assign-interview-by-id/{id}")
+	public ResponseEntity<ApiResponse<?>> getInterviewAssignmentDetails(@PathVariable("id")Integer id) {
+		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewAssignmentDetails(id);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 	@GetMapping("/details/{planId}")
 	public ResponseEntity<ApiResponse<?>> getAssignmentDetails(
 
