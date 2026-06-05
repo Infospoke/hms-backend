@@ -24,40 +24,31 @@ public class InterviewAssignmentController {
 	private IInterviewerAssignmentService iInterviewerAssignmentService;
 
 	@PostMapping("/assign")
-	public ResponseEntity<ApiResponse<?>> assignInterviewers(
-
-			@RequestBody AssignInterviewerRequest request) {
+	public ResponseEntity<ApiResponse<?>> assignInterviewers(@RequestBody AssignInterviewerRequest request) {
 
 		return ResponseEntity.ok(iInterviewerAssignmentService.assignInterviewers(request));
 	}
 
 	@PostMapping("/list")
-	public ResponseEntity<ApiResponse<?>> getAssignments(
-
-			@RequestBody SpecificationFilterRequest request) {
+	public ResponseEntity<ApiResponse<?>> getAssignments(@RequestBody SpecificationFilterRequest request) {
 
 		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignments(request));
 	}
-	
+
 	@GetMapping("/counts")
 	public ResponseEntity<ApiResponse<?>> getInterviewerCounts() {
 		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewerCounts();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/assign-interview-by-id/{id}")
-	public ResponseEntity<ApiResponse<?>> getInterviewAssignmentDetails(@PathVariable("id")Integer id) {
+	public ResponseEntity<ApiResponse<?>> getInterviewAssignmentDetails(@PathVariable("id") Integer id) {
 		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewAssignmentDetails(id);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
-	@GetMapping("/details/{planId}")
-	public ResponseEntity<ApiResponse<?>> getAssignmentDetails(
 
-			@PathVariable("planId") Integer planId) {
-
-		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignmentDetails(
-
-				planId));
+	@GetMapping("/details/{jobId}")
+	public ResponseEntity<ApiResponse<?>> getAssignmentDetails(@PathVariable("jobId") Integer jobId) {
+		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignmentDetails(jobId));
 	}
 }
