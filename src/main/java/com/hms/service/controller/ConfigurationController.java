@@ -145,5 +145,14 @@ public class ConfigurationController {
 		ApiResponse<List<?>> response = iConfigurationService.getUsersWithCreatePermission();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/interview-plans")
+	public ResponseEntity<ApiResponse<List<?>>> getInterviewPlans() {
+
+		ApiResponse<List<?>> response = iConfigurationService.getInterviewPlans();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 
 }

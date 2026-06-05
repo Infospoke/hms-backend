@@ -38,6 +38,8 @@ public interface IConfigurationService {
 	ApiResponse<List<?>> getRolesByDepartments(RolesByDepartmentIdsRequest request);
 
 	ApiResponse<List<?>> getUsersWithCreatePermission();
+
+	ApiResponse<List<?>> getInterviewPlans();
 	
 	
 

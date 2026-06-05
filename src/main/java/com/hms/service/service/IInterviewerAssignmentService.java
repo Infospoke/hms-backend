@@ -13,7 +13,7 @@ public interface IInterviewerAssignmentService {
 
 	ApiResponse<?> getInterviewerCounts();
 
-	ApiResponse<?> getAssignmentDetails(Integer planId);
+	ApiResponse<?> getAssignmentDetails(Integer jobId);
 
 	
 }

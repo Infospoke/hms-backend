@@ -23,6 +23,7 @@ import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
 import com.hms.service.repository.FunctionalityRepository;
+import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
@@ -53,6 +54,9 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 	@Autowired
 	private RolesRepository rolesRepository;
+	
+	@Autowired
+	private InterviewPlanRepository interviewPlanRepository;
 
 	@Autowired
 	private EmployementTypeRepository employementTypeRepository;
@@ -352,4 +356,17 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	            "Users fetched successfully",
 	            response);
 	}
+	
+	@Override
+	public ApiResponse<List<?>> getInterviewPlans() {
+		log.info("ConfigurationServiceImpl::Inside the getInterviewPlans method");
+
+		List<DropDownResponse> response = interviewPlanRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(ipr -> new DropDownResponse(ipr.getId(), ipr.getPlanName())).toList();
+
+		log.info("ConfigurationServiceImpl::Exit from the getInterviewPlans method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview plans fetched successfully", response);
+	}
+
 }
