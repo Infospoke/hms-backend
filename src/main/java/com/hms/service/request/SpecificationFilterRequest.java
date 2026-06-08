@@ -17,7 +17,6 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
-import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -1114,80 +1113,63 @@ public class SpecificationFilterRequest {
 			spec = spec.and((root, query, cb) -> cb.equal(root.get("jobId"), Integer.valueOf(jobId)));
 		}
 
-		Specification<CreateJobDetailsEntity> dateSpec = dateSpec("createdAt");
+		Specification<CreateJobDetailsEntity> createdDateSpec = dateSpec("createdAt");
 
-		if (dateSpec != null) {
+		if (createdDateSpec != null) {
 
-			spec = spec.and(dateSpec);
+			spec = spec.and(createdDateSpec);
 		}
 
 		return spec;
 	}
-	
+
 	public Specification<InterviewCandidateDetailsEntity> buildTodayInterviewSpecification(Integer userId) {
 
-	    return (root, query, cb) -> {
+		return (root, query, cb) -> {
 
-	        List<Predicate> predicates = new ArrayList<>();
+			List<Predicate> predicates = new ArrayList<>();
 
-	        // Logged-in user filter
-	        predicates.add(
-	                cb.equal(root.get("userId"), userId)
-	        );
+			// Logged-in user filter
+			predicates.add(cb.equal(root.get("userId"), userId));
 
-	        String search = getFilter("search");
+			String search = getFilter("search");
 
-	        if (search != null && !search.isBlank()) {
+			if (search != null && !search.isBlank()) {
 
-	            String searchText = "%" + search.toLowerCase().trim() + "%";
+				String searchText = "%" + search.toLowerCase().trim() + "%";
 
-	            predicates.add(
-	                    cb.or(
-	                            cb.like(cb.lower(root.get("canidateName")), searchText),
-	                            cb.like(cb.lower(root.get("jobTitle")), searchText)
-	                           
-	                    )
-	            );
-	        }
+				predicates.add(cb.or(cb.like(cb.lower(root.get("canidateName")), searchText),
+						cb.like(cb.lower(root.get("jobTitle")), searchText)
 
-	        String interviewType = getFilter("interviewType");
+				));
+			}
 
-	        if (interviewType != null && !interviewType.isBlank()) {
+			String interviewType = getFilter("interviewType");
 
-	            predicates.add(
-	                    cb.equal(
-	                            cb.lower(root.get("interviewType")),
-	                            interviewType.toLowerCase()
-	                    )
-	            );
-	        }
+			if (interviewType != null && !interviewType.isBlank()) {
 
-	        String round = getFilter("round");
+				predicates.add(cb.equal(cb.lower(root.get("interviewType")), interviewType.toLowerCase()));
+			}
 
-	        if (round != null && !round.isBlank()) {
+			String round = getFilter("round");
 
-	            predicates.add(
-	                    cb.equal(
-	                            cb.lower(root.get("round")),
-	                            round.toLowerCase()
-	                    )
-	            );
-	        }
+			if (round != null && !round.isBlank()) {
 
-	        Specification<InterviewCandidateDetailsEntity> dateSpecification =
-	                dateSpec("createdOn");
+				predicates.add(cb.equal(cb.lower(root.get("round")), round.toLowerCase()));
+			}
 
-	        if (dateSpecification != null) {
+			Specification<InterviewCandidateDetailsEntity> dateSpecification = dateSpec("createdOn");
 
-	            Predicate datePredicate =
-	                    dateSpecification.toPredicate(root, query, cb);
+			if (dateSpecification != null) {
 
-	            if (datePredicate != null) {
-	                predicates.add(datePredicate);
-	            }
-	        }
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
 
-	        return cb.and(predicates.toArray(new Predicate[0]));
-	    };
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
 }
