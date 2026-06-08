@@ -98,6 +98,16 @@ public class InterviewPlanController {
 		
 	}
 	
+	@PostMapping("/get-interview-details/{applicationId}")
+	public ResponseEntity<ApiResponse<?>> getInterviewDetails(
+	        @PathVariable("applicationId") Integer applicationId) {
+
+	    ApiResponse<?> response =
+	            interviewPlanService.getInterviewDetails(applicationId);
+
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 	
 	
 }

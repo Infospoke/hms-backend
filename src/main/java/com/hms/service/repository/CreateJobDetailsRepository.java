@@ -37,4 +37,6 @@ public interface CreateJobDetailsRepository
 	long countByIsOpenTrue();
 
 	Page<CreateJobDetailsEntity> findAll(Specification<CreateJobDetailsEntity> spec, Pageable pageable);
+
+	CreateJobDetailsEntity findByJobCode(Integer jobId);
 }

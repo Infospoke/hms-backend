@@ -32,4 +32,7 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getTodayInterviews(SpecificationFilterRequest request);
 
 
+	ApiResponse<?> getInterviewDetails(Integer applicationId);
+
+
 }

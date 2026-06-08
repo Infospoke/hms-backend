@@ -23,21 +23,27 @@ import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
+import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
+import com.hms.service.entity.ResumeAnalysisUpdateEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
+import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewCandidateDetailsRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
+import com.hms.service.repository.ResumeAnalysisUpdateRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.InterviewFeedbackRequest;
@@ -48,7 +54,10 @@ import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.CommentTimelineResponse;
+import com.hms.service.response.InterviewDetailsResponse;
+import com.hms.service.response.InterviewExperienceResponse;
 import com.hms.service.response.InterviewPlanResponse;
+import com.hms.service.response.InterviewProjectResponse;
 import com.hms.service.response.InterviewRoundsResponse;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.service.INotificationService;
@@ -104,7 +113,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	
 	@Autowired
 	private InterviewCandidateDetailsRepository interviewCandidateDetailsRepository;
-
+	
+	@Autowired
+	private CreateJobDetailsRepository createJobDetailsRepository;
+	
+	@Autowired
+	private ResumeAnalysisUpdateRepository resumeAnalysisUpdateRepository;
+	
+	@Autowired
+	private DepartmentsRepository departmentsRepository;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1137,6 +1154,106 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	    return ApiResponse.success(ResponseCode.SUCCESS, "Success",response);
 
 	    
+	}
+	
+	@Override
+	public ApiResponse<?> getInterviewDetails(Integer applicationId) {
+
+	    log.info("InterviewPlanServiceImpl :: getInterviewDetails");
+
+	    Optional<ResumeAnalysisUpdateEntity> optional =
+	            resumeAnalysisUpdateRepository.findByApplicationId(applicationId);
+
+	    if (optional.isEmpty()) {
+	        return ApiResponse.failure(
+	                ResponseCode.FAILURE,
+	                "Interview details not found");
+	    }
+	    
+
+	    ResumeAnalysisUpdateEntity entity = optional.get();
+	    
+	    Integer jobId=entity.getJobId();
+	    
+	    Optional<CreateJobDetailsEntity> jobDetailsEnity=createJobDetailsRepository.findById(jobId);
+	    CreateJobDetailsEntity createJobDetailsEntity=jobDetailsEnity.get();
+	    Integer deptId=createJobDetailsEntity.getDepartmentId();
+	    
+	    InterviewDetailsResponse response = new InterviewDetailsResponse();
+        String department=departmentsRepository.findById(deptId).get().getDepartmentName();
+        
+	    response.setCandidateName(entity.getName());
+	    response.setJobTitle(createJobDetailsEntity.getJobTitle());
+	    response.setDepartment(department);
+	    response.setInterviewMode(null);
+	    response.setInterviewRound(null);
+	    response.setInterviewType(null);
+	    response.setInterviewFlatform(null);
+	    response.setScheduleTime(null);
+	    response.setDuration(null);
+	    response.setDesignation(entity.getDesignation());
+	    response.setTotalExperience(entity.getTotalExperience());
+	    response.setCurrentCompany(entity.getCurrentCompany());
+
+	    // Experience Details
+	    List<InterviewExperienceResponse> experienceResponses =
+	            new ArrayList<>();
+
+	    if (entity.getExperienceDetails() != null) {
+
+	        for (Map<String, Object> exp : entity.getExperienceDetails()) {
+
+	            InterviewExperienceResponse experience =
+	                    new InterviewExperienceResponse();
+
+	            experience.setCompany(
+	                    String.valueOf(exp.get("company")));
+
+	            experience.setRole(
+	                    String.valueOf(exp.get("job_title")));
+
+	            experience.setStartDate(
+	                    String.valueOf(exp.get("start_date")));
+
+	            experience.setEndDate(
+	                    String.valueOf(exp.get("end_date")));
+
+	            experienceResponses.add(experience);
+	        }
+	    }
+
+	    response.setExperienceDetails(experienceResponses);
+
+	    // Project Details
+	    List<InterviewProjectResponse> projectResponses =
+	            new ArrayList<>();
+
+	    if (entity.getProjects() != null) {
+
+	        for (Map<String, Object> project : entity.getProjects()) {
+
+	            InterviewProjectResponse projectResponse =
+	                    new InterviewProjectResponse();
+
+	            projectResponse.setProjectTitle(
+	                    String.valueOf(project.get("project_title")));
+
+	            projectResponse.setTechStack(
+	                    (List<String>) project.get("tech_stack"));
+
+	            projectResponse.setDescription(
+	                    (List<String>) project.get("description"));
+
+	            projectResponses.add(projectResponse);
+	        }
+	    }
+
+	    response.setProjectDetails(projectResponses);
+
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "Interview details fetched successfully",
+	            response);
 	}
 
 }
