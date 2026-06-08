@@ -264,6 +264,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			row.put("planName", plan.getPlanName());
 
 			row.put("rounds", rounds.size());
+			
+			row.put("createdAt", job.getCreatedAt());
 
 			row.put("assignmentStatus", assignmentStatus);
 
@@ -337,6 +339,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		response.put("planId", first.getPlanId());
 
 		response.put("planName", first.getPlanName());
+		
+		response.put("createdAt" , first.getCreatedAt());
 
 		Map<Long, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
 				.groupingBy(InterviewerAssignmentEntity::getRoundId, LinkedHashMap::new, Collectors.toList()));
