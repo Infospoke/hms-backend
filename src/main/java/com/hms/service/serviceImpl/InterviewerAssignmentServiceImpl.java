@@ -239,9 +239,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			List<Map<String, Object>> assignmentStatus = new ArrayList<>();
 
 			for (InterviewRoundEntity round : rounds) {
-
 				InterviewerAssignmentEntity assignment = interviewerAssignmentRepository
-						.findByJobIdAndRoundId(job.getJobId(), round.getId()).orElse(null);
+						.findTopByJobIdAndRoundIdOrderByIdDesc(job.getJobId(), round.getId()).orElse(null);
 
 				Map<String, Object> roundMap = new LinkedHashMap<>();
 
