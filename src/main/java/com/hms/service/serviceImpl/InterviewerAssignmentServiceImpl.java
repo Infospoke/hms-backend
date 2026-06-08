@@ -245,7 +245,11 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				Map<String, Object> roundMap = new LinkedHashMap<>();
 
 				roundMap.put("roundId", round.getId());
-
+				
+				roundMap.put("roundName", round.getStageName());
+				
+				roundMap.put("roundType", round.getStageType());
+				
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
 
 				assignmentStatus.add(roundMap);
