@@ -46,6 +46,12 @@ public class InterviewAssignmentController {
 		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewAssignmentDetails(id);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@PostMapping("/get-all-assigned-interviews")
+	public ResponseEntity<ApiResponse<?>> getAssignedInterviewRequests(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iInterviewerAssignmentService.getAllAssignedInterviewRequests(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 	@GetMapping("/details/{jobId}")
 	public ResponseEntity<ApiResponse<?>> getAssignmentDetails(@PathVariable("jobId") Integer jobId) {

@@ -17,5 +17,7 @@ public interface IInterviewerAssignmentService {
 
 	ApiResponse<?> getInterviewAssignmentDetails(Integer assignmentId);
 
+	ApiResponse<?> getAllAssignedInterviewRequests(SpecificationFilterRequest request);
+
 	
 }

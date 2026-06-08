@@ -1190,4 +1190,46 @@ public class SpecificationFilterRequest {
 	        return cb.and(predicates.toArray(new Predicate[0]));
 	    };
 	}
+	
+	public Specification<InterviewerAssignmentEntity> buildInterviewAssignmentSpecification(Integer userId) {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.equal(root.get("interviewerUserId"), userId.longValue()));
+
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				predicates.add(cb.like(cb.lower(root.get("jobTitle")), "%" + search.toLowerCase().trim() + "%"));
+			}
+			
+			String priority = getFilter("priority");
+
+			if (priority != null && !priority.isBlank()) {
+
+			    predicates.add(
+			        cb.equal(
+			            cb.lower(root.get("priority")),
+			            priority.toLowerCase().trim()
+			        )
+			    );
+			}
+
+			Specification<InterviewerAssignmentEntity> dateSpecification = dateSpec("createdAt");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
 }
