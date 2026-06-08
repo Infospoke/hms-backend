@@ -16,5 +16,6 @@ public class UserResponse {
     private Integer roleId;
     private String roleName;
     private Boolean active;
+    private Integer userId;
    
 }

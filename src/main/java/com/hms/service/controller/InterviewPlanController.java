@@ -98,6 +98,25 @@ public class InterviewPlanController {
 		
 	}
 	
+
+	@GetMapping("/get-interview-details/{applicationId}")
+	public ResponseEntity<ApiResponse<?>> getInterviewDetails(@PathVariable("applicationId") Integer applicationId) {
+
+		ApiResponse<?> response = interviewPlanService.getInterviewDetails(applicationId);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+
+	@PostMapping("/feedback-list")
+	public ResponseEntity<ApiResponse<?>> getFeedbackList(@RequestBody SpecificationFilterRequest request){
+		ApiResponse<?> response=interviewPlanService.getFeedbackList(request);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		
+	}
+	
+	
+
 	
 	
 }

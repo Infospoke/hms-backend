@@ -57,4 +57,6 @@ public class InterviewAssignmentController {
 	public ResponseEntity<ApiResponse<?>> getAssignmentDetails(@PathVariable("jobId") Integer jobId) {
 		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignmentDetails(jobId));
 	}
+	
+
 }

@@ -246,14 +246,17 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			List<Map<String, Object>> assignmentStatus = new ArrayList<>();
 
 			for (InterviewRoundEntity round : rounds) {
-
 				InterviewerAssignmentEntity assignment = interviewerAssignmentRepository
-						.findByJobIdAndRoundId(job.getJobId(), round.getId()).orElse(null);
+						.findTopByJobIdAndRoundIdOrderByIdDesc(job.getJobId(), round.getId()).orElse(null);
 
 				Map<String, Object> roundMap = new LinkedHashMap<>();
 
 				roundMap.put("roundId", round.getId());
-
+				
+				roundMap.put("roundName", round.getStageName());
+				
+				roundMap.put("roundType", round.getStageType());
+				
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
 
 				assignmentStatus.add(roundMap);
@@ -272,6 +275,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			row.put("planName", plan.getPlanName());
 
 			row.put("rounds", rounds.size());
+
+			row.put("createdAt", job.getCreatedAt());
 
 			row.put("assignmentStatus", assignmentStatus);
 
@@ -293,22 +298,13 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 	private Map<String, Object> buildAssignmentDetailsResponse(List<InterviewerAssignmentEntity> assignments) {
 
-		InterviewerAssignmentEntity first = assignments.get(0);
-
-		Map<String, Object> response = new LinkedHashMap<>();
-
-		response.put("jobId", first.getJobId());
-
-		response.put("jobTitle", first.getJobTitle());
-
-		response.put("deptName", first.getDeptName());
-
-		response.put("planId", first.getPlanId());
-
-		response.put("planName", first.getPlanName());
-
 		Map<Long, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
 				.groupingBy(InterviewerAssignmentEntity::getRoundId, LinkedHashMap::new, Collectors.toList()));
+
+		List<Integer> roundIds = roundWise.keySet().stream().map(Long::intValue).toList();
+
+		Map<Long, InterviewRoundEntity> roundMap = interviewRoundRepository.findByIdIn(roundIds).stream()
+				.collect(Collectors.toMap(r -> Long.valueOf(r.getId()), r -> r));
 
 		List<Map<String, Object>> rounds = new ArrayList<>();
 
@@ -318,19 +314,19 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			List<InterviewerAssignmentEntity> history = entry.getValue();
 
+			InterviewRoundEntity round = roundMap.get(roundId);
+
 			InterviewerAssignmentEntity latest = history.get(history.size() - 1);
 
-			InterviewRoundEntity round = interviewRoundRepository.findById(roundId).orElse(null);
+			Map<String, Object> roundResponse = new LinkedHashMap<>();
 
-			Map<String, Object> roundMap = new LinkedHashMap<>();
+			roundResponse.put("roundId", roundId);
 
-			roundMap.put("roundId", roundId);
+			roundResponse.put("stageName", round != null ? round.getStageName() : null);
 
-			roundMap.put("stageName", latest.getStageName());
+			roundResponse.put("stageType", round != null ? round.getStageType() : null);
 
-			roundMap.put("stageType", round != null ? round.getStageType() : null);
-
-			roundMap.put("currentStatus", latest.getStatus());
+			roundResponse.put("currentStatus", latest.getStatus());
 
 			List<Map<String, Object>> assignmentHistory = new ArrayList<>();
 
@@ -355,10 +351,12 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				assignmentHistory.add(historyMap);
 			}
 
-			roundMap.put("assignmentHistory", assignmentHistory);
+			roundResponse.put("assignmentHistory", assignmentHistory);
 
-			rounds.add(roundMap);
+			rounds.add(roundResponse);
 		}
+
+		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("rounds", rounds);
 
