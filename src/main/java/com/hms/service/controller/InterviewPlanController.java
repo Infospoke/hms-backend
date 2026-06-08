@@ -98,6 +98,15 @@ public class InterviewPlanController {
 		
 	}
 	
+	@PostMapping("/feedback-list")
+	public ResponseEntity<ApiResponse<?>> getFeedbackList(@RequestBody SpecificationFilterRequest request){
+		ApiResponse<?> response=interviewPlanService.getFeedbackList(request);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		
+	}
+	
+	
+	
 	
 	
 }
