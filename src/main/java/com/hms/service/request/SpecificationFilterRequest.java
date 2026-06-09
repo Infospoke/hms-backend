@@ -17,6 +17,7 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
@@ -1159,6 +1160,41 @@ public class SpecificationFilterRequest {
 			}
 
 			Specification<InterviewCandidateDetailsEntity> dateSpecification = dateSpec("createdOn");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+	
+	public Specification<InterviewerAssignmentEntity> buildInterviewAssignmentSpecification(Integer userId) {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.equal(root.get("interviewerUserId"), userId.longValue()));
+
+			String priority = getFilter("priority");
+
+			if (priority != null && !priority.isBlank()) {
+
+			    predicates.add(
+			        cb.equal(
+			            cb.lower(root.get("priority")),
+			            priority.toLowerCase().trim()
+			        )
+			    );
+			}
+			
+			Specification<InterviewerAssignmentEntity> dateSpecification = dateSpec("createdAt");
 
 			if (dateSpecification != null) {
 

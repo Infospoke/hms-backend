@@ -28,6 +28,12 @@ public class InterviewCandidateDetailsEntity {
 	@Column(name="candidate_name")
 	private String canidateName;
 	
+	@Column(name = "job_id")
+	private Integer jobId;
+	
+	@Column(name = "assignment_id")
+	private Integer assignmentId;
+	
 	@Column(name="job_title")
 	private String jobTitle;
 	

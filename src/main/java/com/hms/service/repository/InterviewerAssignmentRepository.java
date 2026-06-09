@@ -21,6 +21,8 @@ public interface InterviewerAssignmentRepository extends JpaRepository<Interview
 
 	List<InterviewerAssignmentEntity> findByJobId(Integer jobId);
 
+	Optional<InterviewerAssignmentEntity> findByJobIdAndRoundId(Integer jobId, Long id);
+	
 	List<InterviewerAssignmentEntity> findByJobIdAndRoundIdOrderByIdDesc(Integer jobId, Long roundId);
 
 	Optional<InterviewerAssignmentEntity> findTopByJobIdAndRoundIdOrderByIdDesc(Integer jobId, Long roundId);
