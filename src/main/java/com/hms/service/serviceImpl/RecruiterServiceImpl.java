@@ -772,9 +772,11 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		if (request == null) {
 			return null;
 		}
+		log.info("he requwst body is:"+request);
 	
 
 		ApiResponse<?> error = validateRecruiterAssignmentRequest(request, request.getSrId());
+	
 
 		if (error != null) {
 			return error;
@@ -790,10 +792,13 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			userName = jwtService.extractUsernameFromClaims(token);
 		}
+	
+
 
 		List<RecruiterAssignmentEntity> list = new ArrayList<>();
 
 		for (RecruiterInfoDto recruiter : request.getRecruiterInfoDtos()) {
+			
 
 			RecruiterAssignmentEntity entity = new RecruiterAssignmentEntity();
 
@@ -818,12 +823,13 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			entity.setAssignedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
 			list.add(entity);
-		}
+			
+			log.info("the list of recruiters are"+list);		}
 
 		if (!list.isEmpty()) {
 			recruiterAssignmentRepository.saveAll(list);
 		}
-		log.info("RecruiterServiceImpl :: Inside the saveRecruiterAssignments method");
+		log.info("RecruiterServiceImpl :: Exit from the  the saveRecruiterAssignments method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Recruiters assigned successfully");
 	}

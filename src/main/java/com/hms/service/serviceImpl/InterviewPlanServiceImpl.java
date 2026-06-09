@@ -1286,5 +1286,71 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	            "Interview details fetched successfully",
 	            response);
 	}
+	
+	@Override
+	public ApiResponse<?> getScheduleList(SpecificationFilterRequest request) {
+
+		try {
+
+			String authHeader = httpServletRequest.getHeader("Authorization");
+
+			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing");
+			}
+
+			String token = authHeader.substring(7);
+
+			Long userId = jwtService.extractUserId(token);
+
+			Integer userIdFromToken = userId.intValue();
+
+			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+			Specification<InterviewCandidateDetailsEntity> specification = request
+					.buildTodayInterviewSpecification(userIdFromToken);
+
+			Page<InterviewCandidateDetailsEntity> page = interviewCandidateDetailsRepository.findAll(specification,
+					pageable);
+
+			List<Map<String, Object>> content = page.getContent().stream()
+					.filter(candidate -> Objects.equals(candidate.getUserId(), userIdFromToken)).map(candidate -> {
+
+						Map<String, Object> map = new LinkedHashMap<>();
+
+						map.put("candidateName", candidate.getCanidateName());
+
+						map.put("jobTitle", candidate.getJobTitle());
+
+						map.put("interviewDate", null);
+
+						map.put("round", candidate.getRound());
+
+						map.put("priority", null);
+
+						return map;
+					}).toList();
+
+			Map<String, Object> response = new LinkedHashMap<>();
+
+			response.put("content", content);
+
+			response.put("currentPage", page.getNumber());
+
+			response.put("totalPages", page.getTotalPages());
+
+			response.put("totalElements", page.getTotalElements());
+
+			response.put("size", page.getSize());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Feedback list fetched successfully", response);
+
+		} catch (Exception e) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+	
 
 }

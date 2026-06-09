@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hms.service.dto.JobCreationDetailsResponseDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
@@ -52,6 +54,7 @@ import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
+import com.hms.service.response.JobDescriptionDetailResponse;
 import com.hms.service.response.JobDescriptionResponse;
 import com.hms.service.response.JobOverviewResponse;
 import com.hms.service.response.MyRecruiterResponse;
@@ -200,7 +203,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
 			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
-		
 
 			if (request.getCreateJobDetailsRequest() != null) {
 
@@ -251,15 +253,21 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setEducationRequirement(req.getEducationRequirement());
 
 				createJobDetailsEntity.setCountry(req.getCountry());
-				
+
 				createJobDetailsEntity.setIsOpen(true);
-				
+
 				createJobDetailsEntity.setCertificationsRequired(req.getCertificationsRequired());
-				
+
 				createJobDetailsEntity.setLanguages(req.getLanguages());
-	
+
 			}
 			createJobDetailsRepository.save(createJobDetailsEntity);
+			
+			
+			int[] array=new int[10];
+			System.out.println(array[20]);
+			
+			
 
 			// job description
 
@@ -309,14 +317,16 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			// recuriter assignment
 
 			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getJobId());
-			recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
+			ApiResponse<?> error  =recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
+			if(error!=null)
+				return error;
 
 			// Interview plan
 			if (request.getInterviewPlanRequest() != null) {
 
 				InterviewPlanRequest req = request.getInterviewPlanRequest();
 
-				ApiResponse<?> error = validateInterviewPlanRequest(req, request.getSrId());
+				error = validateInterviewPlanRequest(req, request.getSrId());
 
 				if (error != null) {
 					return error;
@@ -324,14 +334,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				createJobDetailsEntity.setPlanId(req.getPlanId());
 				createJobDetailsRepository.save(createJobDetailsEntity);
-	
+
 				SRPositionBasicsEntity basicsEntity = srOptional.get();
 				basicsEntity.setJobSubmit(request.getSubmit());
 				positionBasicsRepository.save(basicsEntity);
-				
+
 				jobDescriptionRepository.save(descriptionEntity);
 				descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
-				
+
 				sourcingChannelRepository.save(channelEntity);
 				channelEntity.setJobId(createJobDetailsEntity.getJobId());
 
@@ -621,7 +631,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 //				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
 
 		if (finalRoleIds == null || finalRoleIds.isEmpty()) {
-		    return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
+			return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
 		}
 		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
 				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
@@ -823,16 +833,22 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			}
 
 			// JOB DESCRIPTION
-
 			if (descriptionEntity != null) {
 
-				JobDescriptionResponse jobDescriptionResponse = new JobDescriptionResponse();
+			    JobDescriptionResponse jobDescriptionResponse = new JobDescriptionResponse();
 
-				jobDescriptionResponse.setDescription(descriptionEntity.getDescription());
+			    List<JobDescriptionDetailResponse> details = descriptionEntity.getDescription()
+			            .stream()
+			            .map(desc -> {
+			                JobDescriptionDetailResponse detail = new JobDescriptionDetailResponse();
+			                BeanUtils.copyProperties(desc, detail);
+			                return detail;
+			            })
+			            .toList();
 
-				response.setJobDescription(jobDescriptionResponse);
-			}
+			    jobDescriptionResponse.setDescription(details);
 
+			    response.setJobDescription(jobDescriptionResponse);
 			// SOURCING STRATEGY
 
 			if (sourcingEntity != null) {
@@ -890,6 +906,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
 		}
+		}
 
 		catch (Exception e) {
 
@@ -897,6 +914,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
+		return null;
 	}
-
 }
+
+

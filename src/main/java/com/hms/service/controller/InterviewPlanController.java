@@ -115,6 +115,13 @@ public class InterviewPlanController {
 		
 	}
 	
+	@PostMapping("/schedule-list")
+	public ResponseEntity<ApiResponse<?>> getScheduleList(@RequestBody SpecificationFilterRequest request){
+		ApiResponse<?> response=interviewPlanService.getScheduleList(request);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		
+	}
+	
 	
 
 	
