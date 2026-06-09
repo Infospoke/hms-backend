@@ -37,6 +37,7 @@ import com.hms.service.repository.InterviewUpcomingRepository;
 import com.hms.service.repository.InterviewerAssignmentRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewAssignmentRequest;
 import com.hms.service.service.IInterviewerAssignmentService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -542,4 +543,42 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Assigned Interview Requests fetched successfully", response);
 	}
+	
+	@Override
+	public ApiResponse<?> updateInterviewAssignment(UpdateInterviewAssignmentRequest request) {
+
+		log.info("InterviewerAssignmentServiceImpl :: Inside respondToAssignment");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Integer userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token).intValue();
+		}
+
+		InterviewerAssignmentEntity assignment = interviewerAssignmentRepository.findById(request.getId())
+				.orElseThrow(() -> new RuntimeException("Interview Assignment Not Found"));
+
+		if (!assignment.getInterviewerUserId().equals(userId.longValue())) {
+
+			throw new RuntimeException("You are not authorized to update this assignment");
+		}
+
+		assignment.setStatus(request.getStatus());
+
+		assignment.setComments(request.getComments());
+
+		assignment.setRespondedAt(LocalDateTime.now());
+
+		interviewerAssignmentRepository.save(assignment);
+
+		log.info("InterviewerAssignmentServiceImpl :: Exit respondToAssignment");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment updated successfully", null);
+	}
+
 }
