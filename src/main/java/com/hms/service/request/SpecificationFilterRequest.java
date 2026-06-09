@@ -1182,13 +1182,6 @@ public class SpecificationFilterRequest {
 
 			predicates.add(cb.equal(root.get("interviewerUserId"), userId.longValue()));
 
-			String search = getFilter("search");
-
-			if (search != null && !search.isBlank()) {
-
-				predicates.add(cb.like(cb.lower(root.get("jobTitle")), "%" + search.toLowerCase().trim() + "%"));
-			}
-			
 			String priority = getFilter("priority");
 
 			if (priority != null && !priority.isBlank()) {
@@ -1200,7 +1193,7 @@ public class SpecificationFilterRequest {
 			        )
 			    );
 			}
-
+			
 			Specification<InterviewerAssignmentEntity> dateSpecification = dateSpec("createdAt");
 
 			if (dateSpecification != null) {

@@ -497,6 +497,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		for (InterviewerAssignmentEntity assignment : assignmentPage.getContent()) {
 			
 			  log.info("Assignment Id = {}", assignment.getId());
+			  
+			  String search =  request.getFilter("search");
 
 			List<InterviewCandidateDetailsEntity> candidates = interviewCandidateDetailsRepository
 					.findAllByAssignmentIdAndUserId(assignment.getId(), userId);
@@ -504,6 +506,20 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			log.info("Candidates Count = {}", candidates.size());
 
 			for (InterviewCandidateDetailsEntity candidate : candidates) {
+				
+				// Search by Candidate Name OR Job Title
+				if (search != null && !search.isBlank()) {
+
+					boolean candidateMatch = candidate.getCanidateName() != null
+							&& candidate.getCanidateName().toLowerCase().contains(search.toLowerCase().trim());
+
+					boolean jobTitleMatch = assignment.getJobTitle() != null
+							&& assignment.getJobTitle().toLowerCase().contains(search.toLowerCase().trim());
+
+					if (!candidateMatch && !jobTitleMatch) {
+						continue;
+					}
+				}
 
 				Map<String, Object> map = new LinkedHashMap<>();
 
