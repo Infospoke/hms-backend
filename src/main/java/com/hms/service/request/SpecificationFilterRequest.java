@@ -1181,6 +1181,8 @@ public class SpecificationFilterRequest {
 			List<Predicate> predicates = new ArrayList<>();
 
 			predicates.add(cb.equal(root.get("interviewerUserId"), userId.longValue()));
+			
+			predicates.add(cb.isNull(root.get("respondedAt")));
 
 			String priority = getFilter("priority");
 

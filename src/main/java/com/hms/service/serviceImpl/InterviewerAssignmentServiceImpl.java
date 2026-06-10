@@ -2,6 +2,8 @@ package com.hms.service.serviceImpl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -437,8 +439,6 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		
 		response.put("interviewType", round.getStageType());
 		
-		response.put("interviewType", assignment.getStageName());
-		
 		response.put("interviewMode", round.getInterviewMode());
 		
 		response.put("assignedOn", assignment.getCreatedAt());
@@ -448,11 +448,14 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		response.put("roleName", assignment.getRoleName());
 
 		if ("PENDING".equalsIgnoreCase(assignment.getStatus())) {
+			
+			LocalDate responseDueDate = assignment.getCreatedAt().toLocalDate().plusDays(6);
 
-			long daysPending = java.time.temporal.ChronoUnit.DAYS.between(assignment.getCreatedAt().toLocalDate(),
-					java.time.LocalDate.now());
+			long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), responseDueDate);
 
-			response.put("responseDue", daysPending + " days pending");
+			response.put("responseDue", responseDueDate.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) + " ("
+					+ remainingDays + " days left)");
+			
 		}
 
 		log.info("InterviewerAssignmentServiceImpl :: Exit getInterviewAssignmentDetails");
@@ -460,6 +463,22 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment details fetched successfully", response);
 	}
 
+	
+	private String calculatePriority(LocalDateTime createdAt) {
+
+		LocalDate dueDate = createdAt.toLocalDate().plusDays(6);
+
+		long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
+
+		if (remainingDays <= 1) {
+			return "HIGH";
+		} else if (remainingDays <= 3) {
+			return "MEDIUM";
+		} else {
+			return "LOW";
+		}
+	}
+		
 	@Override
 	public ApiResponse<?> getAllAssignedInterviewRequests(SpecificationFilterRequest request) {
 
@@ -507,7 +526,6 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			for (InterviewCandidateDetailsEntity candidate : candidates) {
 				
-				// Search by Candidate Name OR Job Title
 				if (search != null && !search.isBlank()) {
 
 					boolean candidateMatch = candidate.getCanidateName() != null
@@ -537,7 +555,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 				map.put("status", assignment.getStatus());
 				
-				map.put("priority", assignment.getPriority());
+				map.put("priority", calculatePriority(assignment.getCreatedAt()));
 
 				responseList.add(map);
 			}
