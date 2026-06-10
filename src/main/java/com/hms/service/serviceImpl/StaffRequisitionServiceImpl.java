@@ -2294,6 +2294,24 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			responseList.add(srApprovalResponse);
 		}
+		
+		 if ("ASC".equalsIgnoreCase(request.getDirection())) {
+
+		        responseList.sort(
+		                Comparator.comparing(
+		                        SrApprovalResponse::getSubmittedOn,
+		                        Comparator.nullsLast(
+		                                Comparator.naturalOrder())));
+
+		    } else {
+
+		        responseList.sort(
+		                Comparator.comparing(
+		                        SrApprovalResponse::getSubmittedOn,
+		                        Comparator.nullsLast(
+		                                Comparator.reverseOrder())));
+		    }
+
 		int page = request.getPage();
 		int size = request.getSize();
 
