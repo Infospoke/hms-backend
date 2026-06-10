@@ -1184,7 +1184,8 @@ public class SpecificationFilterRequest {
 
 			String priority = getFilter("priority");
 
-			if (priority != null && !priority.isBlank()) {
+			if (priority != null && !priority.isBlank()
+					 && !"ALL".equalsIgnoreCase(priority)) {
 
 			    predicates.add(
 			        cb.equal(
@@ -1193,7 +1194,6 @@ public class SpecificationFilterRequest {
 			        )
 			    );
 			}
-			
 			Specification<InterviewerAssignmentEntity> dateSpecification = dateSpec("createdAt");
 
 			if (dateSpecification != null) {
