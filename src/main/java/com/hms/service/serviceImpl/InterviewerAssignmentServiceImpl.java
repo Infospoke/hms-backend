@@ -541,6 +541,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 				Map<String, Object> map = new LinkedHashMap<>();
 
+				// Response 
+				
 				map.put("assignmentId", assignment.getId());
 
 				map.put("candidateName", candidate.getCanidateName());
@@ -554,6 +556,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				map.put("requestedOn", assignment.getCreatedAt());
 
 				map.put("status", assignment.getStatus());
+				
+				map.put("jobId", assignment.getJobId());
 				
 				map.put("priority", calculatePriority(assignment.getCreatedAt()));
 
