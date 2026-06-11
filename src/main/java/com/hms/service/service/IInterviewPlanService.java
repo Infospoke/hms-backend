@@ -28,8 +28,15 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> scheduleInterview(InterviewScheduleRequest request);
 
-
 	ApiResponse<?> getTodayInterviews(SpecificationFilterRequest request);
+	
+	ApiResponse<?> getFeedbackList(SpecificationFilterRequest request);
+
+
+	ApiResponse<?> getInterviewDetails(Integer applicationId);
+
+
+	ApiResponse<?> getScheduleList(SpecificationFilterRequest request);
 
 
 }

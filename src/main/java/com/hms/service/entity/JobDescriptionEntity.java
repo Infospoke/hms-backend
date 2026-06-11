@@ -1,5 +1,12 @@
 package com.hms.service.entity;
 
+import java.util.List;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.hms.service.request.Description;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,7 +35,10 @@ public class JobDescriptionEntity {
     private Integer jobId;
     
    
-    @Column(name="description",columnDefinition ="TEXT")
-    private String description;
+    @JdbcTypeCode(SqlTypes.JSON)
+
+   	@Column(name = "description", columnDefinition = "json")
+
+   	private List<Description> description;
 
 }

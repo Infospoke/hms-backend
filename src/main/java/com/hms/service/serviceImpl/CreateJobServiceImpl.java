@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,7 @@ import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
+import com.hms.service.response.JobDescriptionDetailResponse;
 import com.hms.service.response.JobDescriptionResponse;
 import com.hms.service.response.JobOverviewResponse;
 import com.hms.service.response.MyRecruiterResponse;
@@ -200,7 +202,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
 			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
-		
 
 			if (request.getCreateJobDetailsRequest() != null) {
 
@@ -251,15 +252,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setEducationRequirement(req.getEducationRequirement());
 
 				createJobDetailsEntity.setCountry(req.getCountry());
-				
+
 				createJobDetailsEntity.setIsOpen(true);
-				
+
 				createJobDetailsEntity.setCertificationsRequired(req.getCertificationsRequired());
-				
+
 				createJobDetailsEntity.setLanguages(req.getLanguages());
-	
+
 			}
-			createJobDetailsRepository.save(createJobDetailsEntity);
 
 			// job description
 
@@ -309,7 +309,11 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			// recuriter assignment
 
 			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getJobId());
-			recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
+			ApiResponse<?> recruitersList = recruiterServiceImpl
+					.assignRecruiter(request.getRecuriterAssignmentRequest());
+
+			if (recruitersList.getResponsecode().equals("01"))
+				return recruitersList;
 
 			// Interview plan
 			if (request.getInterviewPlanRequest() != null) {
@@ -324,14 +328,20 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				createJobDetailsEntity.setPlanId(req.getPlanId());
 				createJobDetailsRepository.save(createJobDetailsEntity);
-	
+
+				List<RecruiterAssignmentEntity> list = (List<RecruiterAssignmentEntity>) recruitersList.getData();
+				for (int i = 0; i < list.size(); i++) {
+					list.get(i).setJobId(createJobDetailsEntity.getJobId());
+				}
+				recruiterAssignmentRepository.saveAll(list);
+
 				SRPositionBasicsEntity basicsEntity = srOptional.get();
 				basicsEntity.setJobSubmit(request.getSubmit());
 				positionBasicsRepository.save(basicsEntity);
-				
+
 				jobDescriptionRepository.save(descriptionEntity);
 				descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
-				
+
 				sourcingChannelRepository.save(channelEntity);
 				channelEntity.setJobId(createJobDetailsEntity.getJobId());
 
@@ -621,7 +631,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 //				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
 
 		if (finalRoleIds == null || finalRoleIds.isEmpty()) {
-		    return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
+			return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
 		}
 		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
 				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
@@ -823,72 +833,76 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			}
 
 			// JOB DESCRIPTION
-
 			if (descriptionEntity != null) {
 
 				JobDescriptionResponse jobDescriptionResponse = new JobDescriptionResponse();
 
-				jobDescriptionResponse.setDescription(descriptionEntity.getDescription());
-
-				response.setJobDescription(jobDescriptionResponse);
-			}
-
-			// SOURCING STRATEGY
-
-			if (sourcingEntity != null) {
-
-				SourcingChannelResponse sourcingChannelResponse = new SourcingChannelResponse();
-
-				sourcingChannelResponse.setSourcingChannels(sourcingEntity.getSourcingChannelRequest());
-
-				sourcingChannelResponse.setReferral(sourcingEntity.getReferral());
-
-				sourcingChannelResponse.setReferralAmount(sourcingEntity.getReferralAmount());
-
-				response.setSourcingStrategy(sourcingChannelResponse);
-			}
-
-			// RECRUITERS
-
-			if (!recruiterEntities.isEmpty()) {
-
-				List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
-
-					AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
-
-					recruiter.setUserName(entity.getUserName());
-
-					recruiter.setEmail(entity.getEmail());
-
-					recruiter.setAssignedAt(entity.getAssignedAt());
-
-					return recruiter;
-
+				List<JobDescriptionDetailResponse> details = descriptionEntity.getDescription().stream().map(desc -> {
+					JobDescriptionDetailResponse detail = new JobDescriptionDetailResponse();
+					BeanUtils.copyProperties(desc, detail);
+					return detail;
 				}).toList();
 
-				RecruitersResponse recruitersResponse = new RecruitersResponse();
+				jobDescriptionResponse.setDescription(details);
 
-				recruitersResponse.setRecruiters(recruiters);
+				response.setJobDescription(jobDescriptionResponse);
+				// SOURCING STRATEGY
 
-				RecruiterAssignmentEntity loggedInRecruiter = recruiterAssignmentRepository.findByJobIdAndUserId(jobId,
-						userId.intValue());
+				if (sourcingEntity != null) {
 
-				if (loggedInRecruiter != null) {
+					SourcingChannelResponse sourcingChannelResponse = new SourcingChannelResponse();
 
-					RecruiterAssignmentEntity entity = loggedInRecruiter;
+					sourcingChannelResponse.setSourcingChannels(sourcingEntity.getSourcingChannelRequest());
 
-					MyRecruiterResponse myResponse = new MyRecruiterResponse();
+					sourcingChannelResponse.setReferral(sourcingEntity.getReferral());
 
-					myResponse.setComments(entity.getComments());
+					sourcingChannelResponse.setReferralAmount(sourcingEntity.getReferralAmount());
 
-					myResponse.setStatus(entity.getStatus());
-
-					recruitersResponse.setMyResponse(List.of(myResponse));
+					response.setSourcingStrategy(sourcingChannelResponse);
 				}
-				response.setRecruiters(recruitersResponse);
-			}
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+				// RECRUITERS
+
+				if (!recruiterEntities.isEmpty()) {
+
+					List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
+
+						AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
+
+						recruiter.setUserName(entity.getUserName());
+
+						recruiter.setEmail(entity.getEmail());
+
+						recruiter.setAssignedAt(entity.getAssignedAt());
+
+						return recruiter;
+
+					}).toList();
+
+					RecruitersResponse recruitersResponse = new RecruitersResponse();
+
+					recruitersResponse.setRecruiters(recruiters);
+
+					RecruiterAssignmentEntity loggedInRecruiter = recruiterAssignmentRepository
+							.findByJobIdAndUserId(jobId, userId.intValue());
+
+					if (loggedInRecruiter != null) {
+
+						RecruiterAssignmentEntity entity = loggedInRecruiter;
+
+						MyRecruiterResponse myResponse = new MyRecruiterResponse();
+
+						myResponse.setComments(entity.getComments());
+
+						myResponse.setStatus(entity.getStatus());
+
+						recruitersResponse.setMyResponse(List.of(myResponse));
+					}
+					response.setRecruiters(recruitersResponse);
+				}
+
+				return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+			}
 		}
 
 		catch (Exception e) {
@@ -897,6 +911,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
+		return null;
 	}
-
 }

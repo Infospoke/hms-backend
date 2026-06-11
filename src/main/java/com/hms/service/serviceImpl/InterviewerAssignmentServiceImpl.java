@@ -1,6 +1,9 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +16,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.RoundAssignmentDto;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
+import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
@@ -26,6 +31,7 @@ import com.hms.service.repository.InterviewFeedbackRepository;
 
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.InterviewCandidateDetailsRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
@@ -33,6 +39,7 @@ import com.hms.service.repository.InterviewUpcomingRepository;
 import com.hms.service.repository.InterviewerAssignmentRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewAssignmentRequest;
 import com.hms.service.service.IInterviewerAssignmentService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -54,6 +61,9 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
+
+	@Autowired
+	private InterviewCandidateDetailsRepository interviewCandidateDetailsRepository;
 
 	@Autowired
 	private InterviewScheduleRepository interviewScheduleRepository;
@@ -169,10 +179,9 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 	@Override
 	public ApiResponse<?> getAssignmentDetails(Integer jobId) {
 
-		List<InterviewerAssignmentEntity> assignments = interviewerAssignmentRepository.findByJobId(jobId);
+		List<InterviewerAssignmentEntity> assignments = interviewerAssignmentRepository.findByJobIdOrderByIdAsc(jobId);
 
 		if (assignments.isEmpty()) {
-
 			throw new RuntimeException("Assignments not found");
 		}
 
@@ -239,13 +248,16 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			List<Map<String, Object>> assignmentStatus = new ArrayList<>();
 
 			for (InterviewRoundEntity round : rounds) {
-
 				InterviewerAssignmentEntity assignment = interviewerAssignmentRepository
-						.findByJobIdAndRoundId(job.getJobId(), round.getId()).orElse(null);
+						.findTopByJobIdAndRoundIdOrderByIdDesc(job.getJobId(), round.getId()).orElse(null);
 
 				Map<String, Object> roundMap = new LinkedHashMap<>();
 
 				roundMap.put("roundId", round.getId());
+
+				roundMap.put("roundName", round.getStageName());
+
+				roundMap.put("roundType", round.getStageType());
 
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
 
@@ -266,6 +278,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			row.put("rounds", rounds.size());
 
+			row.put("createdAt", job.getCreatedAt());
+
 			row.put("assignmentStatus", assignmentStatus);
 
 			content.add(row);
@@ -284,6 +298,61 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		return ApiResponse.success(ResponseCode.SUCCESS, "Assignments fetched successfully", response);
 	}
 
+	private Map<String, Object> buildAssignmentDetailsResponse(List<InterviewerAssignmentEntity> assignments) {
+
+		Map<Long, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
+				.groupingBy(InterviewerAssignmentEntity::getRoundId, LinkedHashMap::new, Collectors.toList()));
+
+		List<Integer> roundIds = roundWise.keySet().stream().map(Long::intValue).toList();
+
+		Map<Long, InterviewRoundEntity> roundMap = interviewRoundRepository.findByIdIn(roundIds).stream()
+				.collect(Collectors.toMap(r -> Long.valueOf(r.getId()), r -> r));
+
+		List<Map<String, Object>> rounds = new ArrayList<>();
+
+		for (Map.Entry<Long, List<InterviewerAssignmentEntity>> entry : roundWise.entrySet()) {
+
+			Long roundId = entry.getKey();
+			List<InterviewerAssignmentEntity> history = entry.getValue();
+
+			InterviewRoundEntity round = roundMap.get(roundId);
+
+			// Since repository returns records ordered by id ASC,
+			// last record is the latest assignment.
+			InterviewerAssignmentEntity latest = history.get(history.size() - 1);
+
+			Map<String, Object> roundResponse = new LinkedHashMap<>();
+			roundResponse.put("roundId", roundId);
+			roundResponse.put("stageName", round != null ? round.getStageName() : null);
+			roundResponse.put("stageType", round != null ? round.getStageType() : null);
+			roundResponse.put("currentStatus", latest.getStatus());
+
+			List<Map<String, Object>> assignmentHistory = new ArrayList<>();
+
+			for (InterviewerAssignmentEntity assignment : history) {
+
+				Map<String, Object> historyMap = new LinkedHashMap<>();
+				historyMap.put("assignmentId", assignment.getId());
+				historyMap.put("interviewerUserId", assignment.getInterviewerUserId());
+				historyMap.put("interviewerName", assignment.getInterviewerName());
+				historyMap.put("roleName", assignment.getRoleName());
+				historyMap.put("status", assignment.getStatus());
+				historyMap.put("comments", assignment.getComments());
+				historyMap.put("respondedAt", assignment.getRespondedAt());
+
+				assignmentHistory.add(historyMap);
+			}
+
+			roundResponse.put("assignmentHistory", assignmentHistory);
+			rounds.add(roundResponse);
+		}
+
+		Map<String, Object> response = new LinkedHashMap<>();
+		response.put("rounds", rounds);
+
+		return response;
+	}
+
 	@Override
 	public ApiResponse<?> getInterviewerCounts() {
 
@@ -300,6 +369,15 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			userId = jwtService.extractUserId(token).intValue();
 		}
 
+		LocalDate today = LocalDate.now();
+
+		LocalDateTime startOfDay = today.atStartOfDay();
+
+		LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+
+		long todaysInterviews = interviewCandidateDetailsRepository.countByUserIdAndCreatedOnBetween(userId, startOfDay,
+				endOfDay);
+
 		long assignedInterviews = interviewerAssignmentRepository.countByInterviewerUserId(userId);
 
 		long toSchedule = interviewScheduleRepository.countByUserId(userId);
@@ -309,6 +387,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		long feedbackInterview = interviewFeedbackRepository.countByUserId(userId);
 
 		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("todaysInterviews", todaysInterviews);
 
 		response.put("assignedInterviewRequests", assignedInterviews);
 
@@ -321,80 +401,6 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		log.info("DashboardServiceImpl :: Exit getInterviewerCounts");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard counts fetched successfully", response);
-	}
-
-	private Map<String, Object> buildAssignmentDetailsResponse(List<InterviewerAssignmentEntity> assignments) {
-
-		InterviewerAssignmentEntity first = assignments.get(0);
-
-		Map<String, Object> response = new LinkedHashMap<>();
-
-		response.put("jobId", first.getJobId());
-
-		response.put("jobTitle", first.getJobTitle());
-
-		response.put("deptName", first.getDeptName());
-
-		response.put("planId", first.getPlanId());
-
-		response.put("planName", first.getPlanName());
-
-		Map<Long, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
-				.groupingBy(InterviewerAssignmentEntity::getRoundId, LinkedHashMap::new, Collectors.toList()));
-
-		List<Map<String, Object>> rounds = new ArrayList<>();
-
-		for (Map.Entry<Long, List<InterviewerAssignmentEntity>> entry : roundWise.entrySet()) {
-
-			Long roundId = entry.getKey();
-
-			List<InterviewerAssignmentEntity> history = entry.getValue();
-
-			InterviewerAssignmentEntity latest = history.get(history.size() - 1);
-
-			InterviewRoundEntity round = interviewRoundRepository.findById(roundId).orElse(null);
-
-			Map<String, Object> roundMap = new LinkedHashMap<>();
-
-			roundMap.put("roundId", roundId);
-
-			roundMap.put("stageName", latest.getStageName());
-
-			roundMap.put("stageType", round != null ? round.getStageType() : null);
-
-			roundMap.put("currentStatus", latest.getStatus());
-
-			List<Map<String, Object>> assignmentHistory = new ArrayList<>();
-
-			for (InterviewerAssignmentEntity assignment : history) {
-
-				Map<String, Object> historyMap = new LinkedHashMap<>();
-
-				historyMap.put("assignmentId", assignment.getId());
-
-				historyMap.put("interviewerUserId", assignment.getInterviewerUserId());
-
-				historyMap.put("interviewerName", assignment.getInterviewerName());
-
-				historyMap.put("roleName", assignment.getRoleName());
-
-				historyMap.put("status", assignment.getStatus());
-
-				historyMap.put("comments", assignment.getComments());
-
-				historyMap.put("respondedAt", assignment.getRespondedAt());
-
-				assignmentHistory.add(historyMap);
-			}
-
-			roundMap.put("assignmentHistory", assignmentHistory);
-
-			rounds.add(roundMap);
-		}
-
-		response.put("rounds", rounds);
-
-		return response;
 	}
 
 	@Override
@@ -411,24 +417,183 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("jobTitle", assignment.getJobTitle());
+
 		response.put("deptName", assignment.getDeptName());
+
 		response.put("interviewType", round.getStageType());
-		response.put("interviewType", assignment.getStageName());
+
 		response.put("interviewMode", round.getInterviewMode());
+
 		response.put("assignedOn", assignment.getCreatedAt());
+
 		response.put("assignedBy", assignment.getCreatedBy());
+
 		response.put("roleName", assignment.getRoleName());
 
 		if ("PENDING".equalsIgnoreCase(assignment.getStatus())) {
 
-			long daysPending = java.time.temporal.ChronoUnit.DAYS.between(assignment.getCreatedAt().toLocalDate(),
-					java.time.LocalDate.now());
+			LocalDate responseDueDate = assignment.getCreatedAt().toLocalDate().plusDays(6);
 
-			response.put("responseDue", daysPending + " days pending");
+			long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), responseDueDate);
+
+			response.put("responseDue", responseDueDate.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")) + " ("
+					+ remainingDays + " days left)");
+
 		}
 
 		log.info("InterviewerAssignmentServiceImpl :: Exit getInterviewAssignmentDetails");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment details fetched successfully", response);
 	}
+
+	private String calculatePriority(LocalDateTime createdAt) {
+
+		LocalDate dueDate = createdAt.toLocalDate().plusDays(6);
+
+		long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
+
+		if (remainingDays <= 1) {
+			return "HIGH";
+		} else if (remainingDays <= 3) {
+			return "MEDIUM";
+		} else {
+			return "LOW";
+		}
+	}
+
+	@Override
+	public ApiResponse<?> getAllAssignedInterviewRequests(SpecificationFilterRequest request) {
+
+		log.info("InterviewerAssignmentServiceImpl :: Inside getAssignedInterviewRequests");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Integer userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token).intValue();
+
+			log.info("Logged In UserId : {}", userId);
+		}
+
+		Specification<InterviewerAssignmentEntity> spec = request.buildInterviewAssignmentSpecification(userId);
+
+		Sort sort = Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy());
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Page<InterviewerAssignmentEntity> assignmentPage = interviewerAssignmentRepository.findAll(spec, pageable);
+
+		log.info("Total Assignments Found : {}", assignmentPage.getContent().size());
+
+		assignmentPage.getContent()
+				.forEach(a -> log.info("DB Assignment -> Id={}, InterviewerUserId={}, JobId={}, JobTitle={}", a.getId(),
+						a.getInterviewerUserId(), a.getJobId(), a.getJobTitle()));
+
+		List<Map<String, Object>> responseList = new ArrayList<>();
+
+		for (InterviewerAssignmentEntity assignment : assignmentPage.getContent()) {
+
+			log.info("Assignment Id = {}", assignment.getId());
+
+			String search = request.getFilter("search");
+
+			List<InterviewCandidateDetailsEntity> candidates = interviewCandidateDetailsRepository
+					.findAllByAssignmentIdAndUserId(assignment.getId(), userId);
+
+			log.info("Candidates Count = {}", candidates.size());
+
+			for (InterviewCandidateDetailsEntity candidate : candidates) {
+				if (search != null && !search.isBlank()) {
+
+					boolean candidateMatch = candidate.getCanidateName() != null
+							&& candidate.getCanidateName().toLowerCase().contains(search.toLowerCase().trim());
+
+					boolean jobTitleMatch = assignment.getJobTitle() != null
+							&& assignment.getJobTitle().toLowerCase().contains(search.toLowerCase().trim());
+
+					if (!candidateMatch && !jobTitleMatch) {
+						continue;
+					}
+				}
+
+				Map<String, Object> map = new LinkedHashMap<>();
+
+				map.put("assignmentId", assignment.getId());
+
+				map.put("candidateName", candidate.getCanidateName());
+
+				map.put("jobTitle", assignment.getJobTitle());
+
+				map.put("department", assignment.getDeptName());
+
+				map.put("round", assignment.getStageName());
+
+				map.put("requestedOn", assignment.getCreatedAt());
+
+				map.put("status", assignment.getStatus());
+
+				map.put("priority", calculatePriority(assignment.getCreatedAt()));
+
+				responseList.add(map);
+			}
+		}
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("content", responseList);
+
+		response.put("currentPage", assignmentPage.getNumber());
+
+		response.put("totalPages", assignmentPage.getTotalPages());
+
+		response.put("totalElements", responseList.size());
+
+		response.put("pageSize", assignmentPage.getSize());
+
+		log.info("InterviewerAssignmentServiceImpl :: Exit getAssignedInterviewRequests");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Assigned Interview Requests fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> updateInterviewAssignment(UpdateInterviewAssignmentRequest request) {
+
+		log.info("InterviewerAssignmentServiceImpl :: Inside respondToAssignment");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Integer userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token).intValue();
+		}
+
+		InterviewerAssignmentEntity assignment = interviewerAssignmentRepository.findById(request.getId())
+				.orElseThrow(() -> new RuntimeException("Interview Assignment Not Found"));
+
+		if (!assignment.getInterviewerUserId().equals(userId.longValue())) {
+
+			throw new RuntimeException("You are not authorized to update this assignment");
+		}
+
+		assignment.setStatus(request.getStatus());
+
+		assignment.setComments(request.getComments());
+
+		assignment.setRespondedAt(LocalDateTime.now());
+
+		interviewerAssignmentRepository.save(assignment);
+
+		log.info("InterviewerAssignmentServiceImpl :: Exit respondToAssignment");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment updated successfully", null);
+	}
+
 }

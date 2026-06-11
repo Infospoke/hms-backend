@@ -153,6 +153,15 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/jobs")
+	public ResponseEntity<ApiResponse<List<?>>> getJobs() {
+
+		ApiResponse<List<?>> response = iConfigurationService.getJobs();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 
 
 }
