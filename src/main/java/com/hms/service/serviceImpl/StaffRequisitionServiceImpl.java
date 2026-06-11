@@ -2171,13 +2171,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				? Sort.by(request.getSortBy()).ascending()
 				: Sort.by(request.getSortBy()).descending();
 
-		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-
-		Page<SRPositionBasicsEntity> srPage = positionBasicsRepository.findAll(request.toSrApprovalSpecification(srIds),
-				pageable);
-
-		List<SRPositionBasicsEntity> srEntities = srPage.getContent();
-
+		List<SRPositionBasicsEntity> srEntities = positionBasicsRepository
+				.findAll(request.toSrApprovalSpecification(srIds), sort);
 		Map<String, Object> countFilters = new HashMap<>();
 
 		if (request.getFilters() != null) {
@@ -2299,12 +2294,51 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			responseList.add(srApprovalResponse);
 		}
+		
+		 if ("ASC".equalsIgnoreCase(request.getDirection())) {
+
+		        responseList.sort(
+		                Comparator.comparing(
+		                        SrApprovalResponse::getSubmittedOn,
+		                        Comparator.nullsLast(
+		                                Comparator.naturalOrder())));
+
+		    } else {
+
+		        responseList.sort(
+		                Comparator.comparing(
+		                        SrApprovalResponse::getSubmittedOn,
+		                        Comparator.nullsLast(
+		                                Comparator.reverseOrder())));
+		    }
+
+		int page = request.getPage();
+		int size = request.getSize();
+
+		int start = page * size;
+		int end = Math.min(start + size, responseList.size());
+
+		List<SrApprovalResponse> paginatedContent;
+
+		if (start >= responseList.size()) {
+		    paginatedContent = Collections.emptyList();
+		} else {
+		    paginatedContent = responseList.subList(start, end);
+		}
 
 		Map<String, Object> response = new HashMap<>();
+		response.put("content", paginatedContent);
 
-		response.put("content", responseList);
+		response.put("totalItems", responseList.size());
 
-		response.put("totalItems", srPage.getTotalElements());
+		response.put("currentPage", page);
+
+		response.put("pageSize", size);
+
+		response.put(
+		        "totalPages",
+		        (int) Math.ceil((double) responseList.size() / size)
+		);
 
 		Map<String, Object> counts = new HashMap<>();
 
