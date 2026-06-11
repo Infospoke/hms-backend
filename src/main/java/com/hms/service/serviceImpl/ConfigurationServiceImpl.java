@@ -20,6 +20,7 @@ import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AiOptionsRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
 import com.hms.service.repository.FunctionalityRepository;
@@ -90,6 +91,10 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	
 	@Autowired
 	private PermissionRepository permissionRepository;
+	
+	@Autowired
+	private CreateJobDetailsRepository createJobDetailsRepository;
+
 
 	@Override
 	public ApiResponse<List<?>> getAllBusinessUnits() {
@@ -367,6 +372,18 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		log.info("ConfigurationServiceImpl::Exit from the getInterviewPlans method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview plans fetched successfully", response);
+	}
+	
+	@Override
+	public ApiResponse<List<?>> getJobs() {
+		log.info("ConfigurationServiceImpl::Inside the getJobs method");
+
+		List<DropDownResponse> response = createJobDetailsRepository.findAll(Sort.by(Sort.Direction.ASC, "jobId")).stream()
+				.map(job -> new DropDownResponse(job.getJobId(), job.getJobTitle())).toList();
+
+		log.info("ConfigurationServiceImpl::Exit from the getJobs method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Jobs fetched successfully", response);
 	}
 
 }

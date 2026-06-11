@@ -6,7 +6,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import com.hms.service.request.Description;
-import com.hms.service.request.LevelConfig;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
