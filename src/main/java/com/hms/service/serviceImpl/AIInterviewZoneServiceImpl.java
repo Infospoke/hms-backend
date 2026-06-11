@@ -74,7 +74,8 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 
 					session.getJob() != null ? session.getJob().getJobTitle() : null,
 
-					numberOfQuestions, questionStatus, updatedDate);
+					numberOfQuestions, questionStatus, updatedDate,
+					session.getApplicant() != null ? session.getApplicant().getEmail() : null);
 
 		}).toList();
 

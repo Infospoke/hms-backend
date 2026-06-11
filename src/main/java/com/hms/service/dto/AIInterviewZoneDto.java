@@ -17,4 +17,5 @@ public class AIInterviewZoneDto {
     private Integer numberOfQuestions;
     private Boolean questionStatus;
     private LocalDateTime updatedDate;
+    private String email;
 }
