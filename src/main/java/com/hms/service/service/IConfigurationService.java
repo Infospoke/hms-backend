@@ -40,6 +40,8 @@ public interface IConfigurationService {
 	ApiResponse<List<?>> getUsersWithCreatePermission();
 
 	ApiResponse<List<?>> getInterviewPlans();
+
+	ApiResponse<List<?>> getJobs();
 	
 	
 
