@@ -55,7 +55,7 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 	@Autowired
 	private RolesRepository rolesRepository;
-	
+
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
 
@@ -88,13 +88,12 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 	@Autowired
 	private AiOptionsRepository aiOptionsRepository;
-	
+
 	@Autowired
 	private PermissionRepository permissionRepository;
-	
+
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
-
 
 	@Override
 	public ApiResponse<List<?>> getAllBusinessUnits() {
@@ -311,57 +310,44 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 		return new ApiResponse<>(ResponseCode.SUCCESS, "Roles fetched successfully", response);
 	}
-	
+
 	@Override
 	public ApiResponse<List<?>> getUsersWithCreatePermission() {
 
-	    List<Integer> roleIds =
-	            permissionRepository
-	                    .findRoleIdsWithCreatePermission();
+		List<Integer> roleIds = permissionRepository.findRoleIdsWithCreatePermission();
 
-	    if (roleIds.isEmpty()) {
+		if (roleIds.isEmpty()) {
 
-	        return ApiResponse.success(
-	                ResponseCode.SUCCESS,
-	                "No users found",
-	                List.of());
-	    }
+			return ApiResponse.success(ResponseCode.SUCCESS, "No users found", List.of());
+		}
 
-	    List<AssignRolesEntity> assignedRoles =
-	            assignRolesRepository
-	                    .findByRoleIdIn(roleIds);
+		List<AssignRolesEntity> assignedRoles = assignRolesRepository.findByRoleIdIn(roleIds);
 
-	    List<Integer> userIds =
-	            assignedRoles.stream()
+		List<Integer> userIds = assignedRoles.stream()
 
-	                    .map(AssignRolesEntity::getUserId)
+				.map(AssignRolesEntity::getUserId)
 
-	                    .distinct()
+				.distinct()
 
-	                    .toList();
+				.toList();
 
-	    List<UserEntity> users =
-	            userRepository.findByUserIdIn(userIds);
+		List<UserEntity> users = userRepository.findByUserIdIn(userIds);
 
-	    List<DropDownResponse> response =
-	            users.stream()
+		List<DropDownResponse> response = users.stream()
 
-	                    .map(user -> new DropDownResponse(
+				.map(user -> new DropDownResponse(
 
-	                            user.getUserId(),
+						user.getUserId(),
 
-	                            user.getUsername()
+						user.getUsername()
 
-	                    ))
+				))
 
-	                    .toList();
+				.toList();
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "Users fetched successfully",
-	            response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Users fetched successfully", response);
 	}
-	
+
 	@Override
 	public ApiResponse<List<?>> getInterviewPlans() {
 		log.info("ConfigurationServiceImpl::Inside the getInterviewPlans method");
@@ -373,14 +359,14 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview plans fetched successfully", response);
 	}
-	
+
 	@Override
 	public ApiResponse<List<?>> getJobs() {
 		log.info("ConfigurationServiceImpl::Inside the getJobs method");
 
-		List<DropDownResponse> response = createJobDetailsRepository.findAll(Sort.by(Sort.Direction.ASC, "jobId")).stream()
+		List<DropDownResponse> response = createJobDetailsRepository
+				.findByIsOpenTrue(Sort.by(Sort.Direction.ASC, "jobId")).stream()
 				.map(job -> new DropDownResponse(job.getJobId(), job.getJobTitle())).toList();
-
 		log.info("ConfigurationServiceImpl::Exit from the getJobs method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Jobs fetched successfully", response);

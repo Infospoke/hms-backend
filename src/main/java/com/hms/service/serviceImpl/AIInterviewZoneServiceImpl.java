@@ -37,6 +37,8 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 
 	@Override
 	public ApiResponse<?> getAiInterviewZoneList(SpecificationFilterRequest request) {
+		
+		log.info("AIInterviewZoneServiceImpl::Inside the getAiInterviewZoneList method");
 
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 				"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.by(request.getSortBy()).descending()
@@ -86,7 +88,9 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 		response.put("size", page.getSize());
 		response.put("totalElements", page.getTotalElements());
 		response.put("totalPages", page.getTotalPages());
-
+		
+		log.info("AIInterviewZoneServiceImpl::Exit from the getAiInterviewZoneList method");
+		
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidates fetched successfully", response);
 	}
 }
