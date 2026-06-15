@@ -24,5 +24,10 @@ public class AIInterviewZoneController {
 	public ApiResponse<?> getAiInterviewZoneList(@RequestBody SpecificationFilterRequest request) {
 	    return iAIInterviewZoneService.getAiInterviewZoneList(request);
 	}
+	
+	@PostMapping("/get-all-interviews-in-progress")
+	public ApiResponse<?> getInterviewsInProgress(@RequestBody SpecificationFilterRequest request) {
+		return iAIInterviewZoneService.getAllInterviewsInProgress(request);
+	}
 
 }
