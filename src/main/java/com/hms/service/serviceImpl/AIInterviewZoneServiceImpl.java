@@ -96,7 +96,7 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 	}
 
 	@Override
-	public ApiResponse<?> getAllInterviewsInProgress(SpecificationFilterRequest request) {
+	public ApiResponse<?> getAllScheduledInterviews(SpecificationFilterRequest request) {
 
 		log.info("AIInterviewZoneServiceImpl : Inside get all interviews scheduled method");
 		
