@@ -1270,6 +1270,7 @@ public class SpecificationFilterRequest {
 	        List<Predicate> predicates = new ArrayList<>();
 
 	        predicates.add(cb.isTrue(root.get("isScheduled")));
+	        predicates.add(cb.isNotNull(root.get("scheduledTime")));
 
 	        predicates.add(
 	        	    cb.or(
@@ -1316,7 +1317,7 @@ public class SpecificationFilterRequest {
 	        }
 
 	        Specification<InterviewSessionEntity> dateSpecification =
-	                dateSpec("scheduledTime");
+	                dateSpec("createdDate");
 
 	        if (dateSpecification != null) {
 
