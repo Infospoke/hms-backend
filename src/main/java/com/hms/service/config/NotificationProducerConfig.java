@@ -1,9 +1,6 @@
 package com.hms.service.config;
 
 
-import com.hms.service.dto.NotificationEvent;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service

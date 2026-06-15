@@ -70,6 +70,9 @@ public class InterviewSessionEntity {
 	
 	@Column(name = "questions_status")
 	private Boolean questionsStatus;
+	
+	@Column(name="move_to_schedule")
+	private Boolean moveToSchedule=false;
 
 
 }
