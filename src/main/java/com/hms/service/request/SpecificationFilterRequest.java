@@ -1221,7 +1221,7 @@ public class SpecificationFilterRequest {
 
 			Join<InterviewSessionEntity, CreateJobDetailsEntity> jobJoin = root.join("job", JoinType.LEFT);
 
-			predicates.add(cb.or(cb.isFalse(root.get("moveToInterview")), cb.isNull(root.get("moveToInterview"))));
+			predicates.add(cb.or(cb.isFalse(root.get("moveToSchedule")), cb.isNull(root.get("moveToSchedule"))));
 
 			predicates.add(cb.equal(cb.lower(applicantJoin.get("status")), "shortlisted"));
 
