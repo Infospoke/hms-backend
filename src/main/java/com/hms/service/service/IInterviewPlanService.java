@@ -41,4 +41,9 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getInterviewProgressDetailsById(Integer applicationId);
 
 
+	ApiResponse<?> getAllAIInterviews(SpecificationFilterRequest request);
+
+
+
+
 }

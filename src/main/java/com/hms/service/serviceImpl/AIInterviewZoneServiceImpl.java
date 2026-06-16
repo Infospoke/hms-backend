@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.dto.AIInterviewDashboardDto;
 import com.hms.service.dto.AIInterviewZoneDto;
 import com.hms.service.entity.AIInterviewQuestionsEntity;
 import com.hms.service.entity.InterviewSessionEntity;
@@ -83,7 +84,6 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 		}).toList();
 
 		Map<String, Object> response = new LinkedHashMap<>();
-		response.put("candidateCount", page.getTotalElements());
 		response.put("content", content);
 		response.put("page", page.getNumber());
 		response.put("size", page.getSize());
@@ -96,9 +96,9 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 	}
 
 	@Override
-	public ApiResponse<?> getAllScheduledInterviews(SpecificationFilterRequest request) {
+	public ApiResponse<?> getAllInterviewsInProgress(SpecificationFilterRequest request) {
 
-		log.info("AIInterviewZoneServiceImpl : Inside get all interviews scheduled method");
+		log.info("AIInterviewZoneServiceImpl : Inside get all interviews in progress method");
 		
 		Specification<InterviewSessionEntity> spec = request.buildInterviewInProgressSpecification();
 
@@ -147,8 +147,32 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 		
 		response.put("pageSize", interviewSessionEntity.getSize());
 		
-		log.info("AIInterviewZoneServiceImpl : Exit from get all interviews scheduled method");
+		log.info("AIInterviewZoneServiceImpl : Exit from get all interviews in progress method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview sessions fetched successfully", response);
+	}
+	
+	@Override
+	public ApiResponse<?> getDashboardCounts() {
+
+	    Long generateAIQuestionsCount =
+	            aInterviewQuestionsRepository.countGenerateAIQuestions();
+
+	    Long scheduleAIInterviewCount =
+	            aInterviewQuestionsRepository.countScheduleAIInterview();
+
+	    Long upcomingAIInterviewCount =
+	            aInterviewQuestionsRepository.countUpcomingAIInterview();
+
+	    AIInterviewDashboardDto dashboardDTO = new AIInterviewDashboardDto(
+	            generateAIQuestionsCount,
+	            scheduleAIInterviewCount,
+	            upcomingAIInterviewCount
+	    );
+
+	    return ApiResponse.success(ResponseCode.SUCCESS,
+	            "Dashboard counts fetched successfully",
+	            dashboardDTO
+	    );
 	}
 }

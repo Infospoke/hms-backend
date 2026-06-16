@@ -113,11 +113,20 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 		
 	}
+
     @GetMapping("/interview-progress-details/{applicationId}")
     public ResponseEntity<ApiResponse<?>> getInterviewProgressDetailsById(@PathVariable("applicationId") Integer applicationId) {
 		ApiResponse<?> response = interviewPlanService.getInterviewProgressDetailsById(applicationId);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-    
+
+	@PostMapping("/get-all-ai-interviews")
+	public ResponseEntity<ApiResponse<?>> getAllAIInterviews(@RequestBody SpecificationFilterRequest request) {
+
+		ApiResponse<?> response = interviewPlanService.getAllAIInterviews(request);
+
+		return ResponseEntity.ok(response);
+	}
+
 }
