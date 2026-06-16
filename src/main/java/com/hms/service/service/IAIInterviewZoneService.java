@@ -9,4 +9,6 @@ public interface IAIInterviewZoneService {
 
 	ApiResponse<?> getAllInterviewsInProgress(SpecificationFilterRequest request);
 
+	ApiResponse<?> getDashboardCounts();
+
 }
