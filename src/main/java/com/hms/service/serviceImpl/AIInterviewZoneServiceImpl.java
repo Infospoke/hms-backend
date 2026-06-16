@@ -1,6 +1,7 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,5 +93,62 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 		log.info("AIInterviewZoneServiceImpl::Exit from the getAiInterviewZoneList method");
 		
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidates fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> getAllScheduledInterviews(SpecificationFilterRequest request) {
+
+		log.info("AIInterviewZoneServiceImpl : Inside get all interviews scheduled method");
+		
+		Specification<InterviewSessionEntity> spec = request.buildInterviewInProgressSpecification();
+
+		Sort sort = Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy());
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Page<InterviewSessionEntity> interviewSessionEntity = interviewSessionRepository.findAll(spec, pageable);
+		
+		log.info("Total Sessions Found : {}", interviewSessionEntity.getTotalElements());
+
+		List<Map<String, Object>> content = new ArrayList<>();
+
+		for (InterviewSessionEntity session : interviewSessionEntity.getContent()) {
+
+			Map<String, Object> map = new LinkedHashMap<>();
+
+			map.put("sessionId", session.getId());
+			
+			map.put("jobId", session.getJobId());
+
+			map.put("candidateName", session.getApplicant() != null ? session.getApplicant().getCandidateName() : null);
+
+			map.put("email", session.getApplicant() != null ? session.getApplicant().getEmail() : null);
+
+			map.put("jobTitle", session.getJob() != null ? session.getJob().getJobTitle() : null);
+
+			map.put("scheduledAt", session.getScheduledTime());
+
+			map.put("status", session.getStatus());
+			
+			map.put("scheduledBy", session.getScheduledBy());
+
+			content.add(map);
+		}
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("content", content);
+		
+		response.put("currentPage", interviewSessionEntity.getNumber());
+		
+		response.put("totalPages", interviewSessionEntity.getTotalPages());
+		
+		response.put("totalElements", interviewSessionEntity.getTotalElements());
+		
+		response.put("pageSize", interviewSessionEntity.getSize());
+		
+		log.info("AIInterviewZoneServiceImpl : Exit from get all interviews scheduled method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview sessions fetched successfully", response);
 	}
 }

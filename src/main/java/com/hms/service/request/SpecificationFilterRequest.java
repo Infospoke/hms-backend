@@ -1221,7 +1221,7 @@ public class SpecificationFilterRequest {
 
 			Join<InterviewSessionEntity, CreateJobDetailsEntity> jobJoin = root.join("job", JoinType.LEFT);
 
-			predicates.add(cb.or(cb.isFalse(root.get("moveToInterview")), cb.isNull(root.get("moveToInterview"))));
+			predicates.add(cb.or(cb.isFalse(root.get("moveToSchedule")), cb.isNull(root.get("moveToSchedule"))));
 
 			predicates.add(cb.equal(cb.lower(applicantJoin.get("status")), "shortlisted"));
 
@@ -1262,4 +1262,75 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
+	
+	public Specification<InterviewSessionEntity> buildInterviewInProgressSpecification() {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        predicates.add(cb.isTrue(root.get("isScheduled")));
+	        predicates.add(cb.isNotNull(root.get("scheduledTime")));
+
+	        predicates.add(
+	        	    cb.or(
+	        	        cb.isFalse(root.get("isDeleted")),
+	        	        cb.isNull(root.get("isDeleted"))
+	        	    )
+	        	);
+
+	        String search = getFilter("search");
+	        
+	        String jobTitle = getFilter("jobTitle");
+
+	        if (jobTitle != null
+	                && !jobTitle.isBlank()
+	                && !"ALL".equalsIgnoreCase(jobTitle)) {
+
+	            Join<InterviewSessionEntity, CreateJobDetailsEntity> job =
+	                    root.join("job", JoinType.LEFT);
+
+	            predicates.add(
+	            	    cb.like(
+	            	        cb.lower(job.get("jobTitle")),
+	            	        "%" + jobTitle.toLowerCase().trim() + "%"
+	            	    )
+	            	);
+	            }
+
+	        if (search != null && !search.isBlank()) {
+
+	            Join<InterviewSessionEntity, ResumeAnalysisEntity> applicant =
+	                    root.join("applicant", JoinType.LEFT);
+
+	            Predicate candidateName =
+	                    cb.like(
+	                            cb.lower(applicant.get("candidateName")),
+	                            "%" + search.toLowerCase().trim() + "%");
+
+	            Predicate email =
+	                    cb.like(
+	                            cb.lower(applicant.get("email")),
+	                            "%" + search.toLowerCase().trim() + "%");
+
+	            predicates.add(cb.or(candidateName, email));
+	        }
+
+	        Specification<InterviewSessionEntity> dateSpecification =
+	                dateSpec("createdDate");
+
+	        if (dateSpecification != null) {
+
+	            Predicate datePredicate =
+	                    dateSpecification.toPredicate(root, query, cb);
+
+	            if (datePredicate != null) {
+	                predicates.add(datePredicate);
+	            }
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
+	
 }

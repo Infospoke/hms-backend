@@ -7,4 +7,6 @@ public interface IAIInterviewZoneService {
 
 	ApiResponse<?> getAiInterviewZoneList(SpecificationFilterRequest request);
 
+	ApiResponse<?> getAllScheduledInterviews(SpecificationFilterRequest request);
+
 }

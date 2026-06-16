@@ -24,5 +24,10 @@ public class AIInterviewZoneController {
 	public ApiResponse<?> getAiInterviewZoneList(@RequestBody SpecificationFilterRequest request) {
 	    return iAIInterviewZoneService.getAiInterviewZoneList(request);
 	}
+	
+	@PostMapping("/get-all-scheduled-interviews")
+	public ApiResponse<?> getAllScheduledInterviews(@RequestBody SpecificationFilterRequest request) {
+		return iAIInterviewZoneService.getAllScheduledInterviews(request);
+	}
 
 }
