@@ -17,4 +17,6 @@ public interface InterviewSessionRepository
 	@Query("SELECT i.applicationId, i.status FROM InterviewSessionEntity i WHERE i.applicationId IN :applicationIds AND (i.isDeleted = false OR i.isDeleted IS NULL)")
 	List<Object[]> findApplicationIdAndStatus(@Param("applicationIds") List<Integer> applicationIds);
 
+	List<InterviewSessionEntity> findByJobId(Integer jobId);
+
 }

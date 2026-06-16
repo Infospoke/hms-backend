@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
+import com.hms.service.entity.AIInterviewQuestionsEntity;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
@@ -27,10 +28,14 @@ import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewQuestionsEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
+import com.hms.service.entity.InterviewSessionEntity;
+import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.ResumeAnalysisUpdateEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
@@ -42,6 +47,8 @@ import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
+import com.hms.service.repository.InterviewSessionRepository;
+import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisUpdateRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
@@ -53,6 +60,7 @@ import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.CommentTimelineResponse;
+import com.hms.service.response.InterviewApplicantDetailsResponse;
 import com.hms.service.response.InterviewDetailsResponse;
 import com.hms.service.response.InterviewExperienceResponse;
 import com.hms.service.response.InterviewPlanResponse;
@@ -123,6 +131,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
 
+	@Autowired
+	private JobApplicationRepository jobApplicationRepository;
+	
+	@Autowired
+	private InterviewSessionRepository interviewSessionRepository;
+	
+	@Autowired
+	private AInterviewQuestionsRepository aiInterviewQuestionsRepository;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1349,6 +1365,66 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewProgressDetailsById(Integer applicationId) {
+		log.info("InterviewPlanServiceImpl:Inside the getInterviewProgressDetailsById method");
+		Optional<JobApplicationEntity> jobApplicationEntity=jobApplicationRepository.findById(applicationId);
+		
+		
+		JobApplicationEntity entity=jobApplicationEntity.get();
+		String applicantName=entity.getFirstName();
+		String applicantEmail=entity.getEmail();
+		String applicantMobileNumber=entity.getPhNo();
+		Integer jobId=entity.getJobId();
+		
+		InterviewApplicantDetailsResponse response=new InterviewApplicantDetailsResponse();
+		response.setApplicantName(applicantName);
+		response.setApplicantEmail(applicantEmail);
+		response.setApplicantPhoneNumber(applicantMobileNumber);
+		
+		Optional<CreateJobDetailsEntity> jobDetailsEntity=createJobDetailsRepository.findById(jobId);
+		CreateJobDetailsEntity jobEntity=jobDetailsEntity.get();
+		String jobTitile=jobEntity.getJobTitle();
+		String jobCode=jobEntity.getJobCode();
+		Integer deptId=jobEntity.getDepartmentId();
+		String departmentName=departmentsRepository.findById(deptId).get().getDepartmentName();
+		Integer maxExperience=jobEntity.getMaxExperience();
+		Integer minExperience=jobEntity.getMinExperience();
+		response.setJobTitle(jobTitile);
+		response.setJobCode(jobCode);
+		response.setDepartment(departmentName);
+		response.setMaxExperience(maxExperience);
+		response.setMinExperience(minExperience);
+		
+		List<InterviewSessionEntity> sessionEntities = interviewSessionRepository.findByJobId(jobId);
+
+		if (sessionEntities != null && !sessionEntities.isEmpty()) {
+
+		    // Latest session
+		    InterviewSessionEntity sessionEntity = sessionEntities.get(sessionEntities.size() - 1);
+
+		    response.setInterviewMailSentAt(sessionEntity.getScheduledTime());
+		    response.setInterviewScheduledAt(sessionEntity.getInterviewScheduledDateTime());
+		    response.setScheduledBy(sessionEntity.getScheduledBy());
+		}
+		
+		Optional<AIInterviewQuestionsEntity> questionsEntity=aiInterviewQuestionsRepository.findByApplicationId(applicationId);
+		AIInterviewQuestionsEntity interviewQuestionsEntity=questionsEntity.get();
+		Integer noOfQuestions=interviewQuestionsEntity.getNumberOfQuestions();
+		List<Object> questions=interviewQuestionsEntity.getQuestions();
+		List<String> questionType=interviewQuestionsEntity.getQuestionType();
+		String questionDifficulty=interviewQuestionsEntity.getDifficultyLevel();
+		response.setNoOfQuestions(noOfQuestions);
+		response.setQuestionType(questionType);
+		response.setQuestions(questions);
+		response.setQuestionDifficulty(questionDifficulty);
+		
+		
+		log.info("InterviewPlanServiceImpl:Exit from the getInterviewProgressDetailsById method");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview progress details fetched successfully", response);
+	
 	}
 	
 

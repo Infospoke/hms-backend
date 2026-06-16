@@ -33,12 +33,9 @@ public class InterviewPlanController {
 	@PostMapping("/create")
 	public ResponseEntity<ApiResponse<?>> createInterviewPlan(@Valid @RequestBody InterviewPlanRequest request,
 			HttpServletRequest httpRequest) {
-
 		ApiResponse<?> response = interviewPlanService.createInterviewPlan(request, httpRequest);
-
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
-
 	
 	@GetMapping("/interview-plan-details-by-id/{id}")
 	public ResponseEntity<ApiResponse<?>> getInterviewPlanDetailsById(@PathVariable("id")Integer id){
@@ -87,23 +84,18 @@ public class InterviewPlanController {
 	@PostMapping("/interview-schedule")
 	public ResponseEntity<ApiResponse<?>> scheduleInterview(@RequestBody InterviewScheduleRequest request){
 		ApiResponse<?> response=interviewPlanService.scheduleInterview(request);
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
-		
+		return new ResponseEntity<>(response, HttpStatus.CREATED);	
 	}
-	
 	@PostMapping("/get-today-interviews")
 	public ResponseEntity<ApiResponse<?>> getTodayInterviews(@RequestBody SpecificationFilterRequest request){
 		ApiResponse<?> response=interviewPlanService.getTodayInterviews(request);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
-		
+	
 	}
 	
-
 	@GetMapping("/get-interview-details/{applicationId}")
 	public ResponseEntity<ApiResponse<?>> getInterviewDetails(@PathVariable("applicationId") Integer applicationId) {
-
 		ApiResponse<?> response = interviewPlanService.getInterviewDetails(applicationId);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
@@ -121,9 +113,11 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 		
 	}
+    @GetMapping("/interview-progress-details/{applicationId}")
+    public ResponseEntity<ApiResponse<?>> getInterviewProgressDetailsById(@PathVariable("applicationId") Integer applicationId) {
+		ApiResponse<?> response = interviewPlanService.getInterviewProgressDetailsById(applicationId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 	
-	
-
-	
-	
+    
 }
