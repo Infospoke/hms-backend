@@ -47,6 +47,9 @@ public class InterviewSessionEntity {
 
 	@Column(name = "is_scheduled")
 	private Boolean isScheduled = false;
+	
+	@Column(name = "scheduled_by", length = 50)
+	private String scheduledBy;
 
 	@Column(name = "schedule_email_sent")
 	private Boolean scheduleEmailSent = false;
