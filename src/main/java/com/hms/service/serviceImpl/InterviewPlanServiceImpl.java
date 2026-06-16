@@ -1,7 +1,9 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,6 +31,7 @@ import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
+import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.ResumeAnalysisUpdateEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
@@ -42,6 +45,7 @@ import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
+import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.ResumeAnalysisUpdateRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
@@ -52,6 +56,7 @@ import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
+import com.hms.service.response.AIInterviewScheduleResponse;
 import com.hms.service.response.CommentTimelineResponse;
 import com.hms.service.response.InterviewDetailsResponse;
 import com.hms.service.response.InterviewExperienceResponse;
@@ -112,7 +117,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewCandidateDetailsRepository interviewCandidateDetailsRepository;
-
 	
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
@@ -122,6 +126,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
+	
+	
+	@Autowired
+	private InterviewSessionRepository interviewSessionRepository;
 
 
 	@Override
@@ -1351,5 +1359,89 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 	}
 	
+	@Override
+	public ApiResponse<?> getAllAIInterviews(SpecificationFilterRequest request) {
 
+		log.info("InterviewSessionServiceImpl :: getAllAIInterviews");
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+		Page<InterviewSessionEntity> sessionPage = interviewSessionRepository
+				.findAll(request.buildAIScheduleInterviewSpecification(interviewPlanRepository), pageable);
+
+		List<AIInterviewScheduleResponse> responseList = new ArrayList<>();
+
+		for (InterviewSessionEntity session : sessionPage.getContent()) {
+
+			if (Boolean.FALSE.equals(session.getIsScheduled())) {
+
+				AIInterviewScheduleResponse response = new AIInterviewScheduleResponse();
+
+				response.setApplicationId(session.getApplicationId());
+
+				if (session.getApplicant() != null) {
+
+					response.setCandidateName(session.getApplicant().getCandidateName());
+
+					response.setEmail(session.getApplicant().getEmail());
+				}
+
+				Integer planId = null;
+
+				if (session.getJob() != null) {
+
+					response.setJobTitle(session.getJob().getJobTitle());
+
+					planId = session.getJob().getPlanId();
+				}
+
+				if (planId != null) {
+
+					Optional<InterviewPlanEntity> planOptional = interviewPlanRepository.findById(planId);
+
+					if (planOptional.isPresent()) {
+
+						response.setInterviewPlan(planOptional.get().getPlanName());
+					}
+				}
+
+				if (session.getMoveToScheduleDateTime() != null) {
+
+					LocalDate dueDate = session.getMoveToScheduleDateTime().plusDays(7).toLocalDate();
+
+					response.setDueDate(dueDate);
+
+					LocalDate createdDate = session.getMoveToScheduleDateTime().toLocalDate();
+
+					long days = ChronoUnit.DAYS.between(createdDate, LocalDate.now());
+					
+
+					if (days <= 2) {
+
+						response.setPriority("Low");
+
+					} else if (days <= 3) {
+
+						response.setPriority("Medium");
+
+					} else {
+
+						response.setPriority("High");
+					}
+				}
+
+				responseList.add(response);
+			}
+		}
+
+		Map<String, Object> result = new HashMap<>();
+
+		result.put("content", responseList);
+		result.put("currentPage", sessionPage.getNumber());
+		result.put("totalElements", sessionPage.getTotalElements());
+		result.put("totalPages", sessionPage.getTotalPages());
+
+		return ApiResponse.success(ResponseCode.SUCCESS, result);
+	}
 }

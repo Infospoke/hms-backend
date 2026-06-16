@@ -3,6 +3,7 @@ package com.hms.service.request;
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1317,6 +1318,126 @@ public class SpecificationFilterRequest {
 
 	        Specification<InterviewSessionEntity> dateSpecification =
 	                dateSpec("scheduledTime");
+
+	        if (dateSpecification != null) {
+
+	            Predicate datePredicate =
+	                    dateSpecification.toPredicate(root, query, cb);
+
+	            if (datePredicate != null) {
+	                predicates.add(datePredicate);
+	            }
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
+	
+	public Specification<InterviewSessionEntity> buildAIScheduleInterviewSpecification(InterviewPlanRepository interviewPlanRepository) {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        predicates.add(cb.isFalse(root.get("isScheduled")));
+
+	        // Search
+	        String search = getFilter("search");
+
+	        if (search != null && !search.isBlank()) {
+
+	            String keyword = "%" + search.toLowerCase().trim() + "%";
+
+	            predicates.add(
+	                cb.or(
+	                    cb.like(
+	                        cb.lower(root.get("applicant").get("candidateName")),
+	                        keyword
+	                    ),
+	                    cb.like(
+	                        cb.lower(root.get("applicant").get("email")),
+	                        keyword
+	                    ),
+	                    cb.like(
+	                        cb.lower(root.get("job").get("jobTitle")),
+	                        keyword
+	                    )
+	                )
+	            );
+	        }
+
+	        // Job Title Filter
+	        String jobTitle = getFilter("jobTitle");
+
+	        if (jobTitle != null && !jobTitle.isBlank()) {
+
+	            predicates.add(
+	                cb.like(
+	                    cb.lower(root.get("job").get("jobTitle")),
+	                    "%" + jobTitle.toLowerCase().trim() + "%"
+	                )
+	            );
+	        }
+
+	        // Interview Plan Filter
+	        String interviewPlan = getFilter("interviewPlan");
+
+	        if (interviewPlan != null && !interviewPlan.isBlank()) {
+
+	            List<Integer> planIds = interviewPlanRepository
+	                    .findByPlanNameContainingIgnoreCase(interviewPlan)
+	                    .stream()
+	                    .map(InterviewPlanEntity::getPlanId)
+	                    .toList();
+
+	            if (!planIds.isEmpty()) {
+
+	                predicates.add(
+	                    root.get("job").get("planId").in(planIds)
+	                );
+	            }
+	        }
+
+	        // Priority Filter
+	        String priority = getFilter("priority");
+
+	        if (priority != null && !priority.isBlank()) {
+
+	            LocalDateTime now = LocalDateTime.now();
+
+	            if ("Low".equalsIgnoreCase(priority)) {
+
+	                predicates.add(
+	                    cb.between(
+	                        root.get("moveToScheduleDateTime"),
+	                        now.minusDays(2),
+	                        now
+	                    )
+	                );
+
+	            } else if ("Medium".equalsIgnoreCase(priority)) {
+
+	                predicates.add(
+	                    cb.between(
+	                        root.get("moveToScheduleDateTime"),
+	                        now.minusDays(3),
+	                        now.minusDays(2)
+	                    )
+	                );
+
+	            } else if ("High".equalsIgnoreCase(priority)) {
+
+	                predicates.add(
+	                    cb.lessThan(
+	                        root.get("moveToScheduleDateTime"),
+	                        now.minusDays(3)
+	                    )
+	                );
+	            }
+	        }
+
+	        Specification<InterviewSessionEntity> dateSpecification =
+	                dateSpec("moveToScheduleDateTime");
 
 	        if (dateSpecification != null) {
 

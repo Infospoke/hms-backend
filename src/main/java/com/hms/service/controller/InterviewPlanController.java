@@ -121,8 +121,14 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 		
 	}
-	
-	
+
+	@PostMapping("/get-all-ai-interviews")
+	public ResponseEntity<ApiResponse<?>> getAllAIInterviews(@RequestBody SpecificationFilterRequest request) {
+
+		ApiResponse<?> response = interviewPlanService.getAllAIInterviews(request);
+
+		return ResponseEntity.ok(response);
+	}
 
 	
 	

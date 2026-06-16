@@ -39,4 +39,9 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getScheduleList(SpecificationFilterRequest request);
 
 
+	ApiResponse<?> getAllAIInterviews(SpecificationFilterRequest request);
+
+
+
+
 }

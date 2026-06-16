@@ -73,6 +73,8 @@ public class InterviewSessionEntity {
 	
 	@Column(name="move_to_schedule")
 	private Boolean moveToSchedule=false;
-
+	
+	@Column(name="move_to_schedule_date_time")
+	private LocalDateTime moveToScheduleDateTime;
 
 }
