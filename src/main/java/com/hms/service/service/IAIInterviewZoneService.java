@@ -7,8 +7,8 @@ public interface IAIInterviewZoneService {
 
 	ApiResponse<?> getAiInterviewZoneList(SpecificationFilterRequest request);
 
-	ApiResponse<?> getAllInterviewsInProgress(SpecificationFilterRequest request);
-
 	ApiResponse<?> getDashboardCounts();
+
+	ApiResponse<?> getAllInterviewsInProgress(SpecificationFilterRequest request);
 
 }

@@ -29,6 +29,7 @@ public class AIInterviewZoneController {
 	@PostMapping("/get-all-interviews-in-progress")
 	public ApiResponse<?> getInterviewsInProgress(@RequestBody SpecificationFilterRequest request) {
 		return iAIInterviewZoneService.getAllInterviewsInProgress(request);
+
 	}
 
 	@GetMapping("/dashboard-counts")
