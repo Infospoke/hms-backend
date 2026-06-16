@@ -1317,7 +1317,7 @@ public class SpecificationFilterRequest {
 	        }
 
 	        Specification<InterviewSessionEntity> dateSpecification =
-	                dateSpec("createdDate");
+	                dateSpec("scheduledTime");
 
 	        if (dateSpecification != null) {
 

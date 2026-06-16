@@ -21,9 +21,11 @@ import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IAIInterviewZoneService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -35,6 +37,12 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 
 	@Autowired
 	private AInterviewQuestionsRepository aInterviewQuestionsRepository;
+	
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+	
+	@Autowired
+	private JwtService jwtService;
 
 	@Override
 	public ApiResponse<?> getAiInterviewZoneList(SpecificationFilterRequest request) {
@@ -96,9 +104,17 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 	}
 
 	@Override
-	public ApiResponse<?> getAllScheduledInterviews(SpecificationFilterRequest request) {
+	public ApiResponse<?> getAllInterviewsInProgress(SpecificationFilterRequest request) {
 
-		log.info("AIInterviewZoneServiceImpl : Inside get all interviews scheduled method");
+		log.info("AIInterviewZoneServiceImpl : Inside get all interviews in progress method");
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		String token = authHeader.substring(7);
+
+		String roleName = jwtService.extractRole(token);
+
+		log.info("Logged In Role : {}", roleName);
 		
 		Specification<InterviewSessionEntity> spec = request.buildInterviewInProgressSpecification();
 
@@ -147,7 +163,7 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 		
 		response.put("pageSize", interviewSessionEntity.getSize());
 		
-		log.info("AIInterviewZoneServiceImpl : Exit from get all interviews scheduled method");
+		log.info("AIInterviewZoneServiceImpl : Exit from get all interviews in progress method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview sessions fetched successfully", response);
 	}
