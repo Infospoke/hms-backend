@@ -1157,5 +1157,10 @@ public class Constants {
 			+ "Plan Name : %s\n"
 			+ "Comments : %s\n"
 			+ "Rejected On : %s";
+	public static final String APPLICATION_NOT_FOUND = "Application not found";
+	public static final String FILE_NOT_UPLOADED = "File not uploaded";
+	public static final String RESUME = "Resume";
+	public static final String ADDITIONAL = "Additional";
+	public static final String BUCKETNAME = "infospokejobapplicationsbucket";
 
 }

@@ -1,5 +1,9 @@
 package com.hms.service.serviceImpl;
 
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -13,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,11 +27,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hms.service.constants.Constants;
 import com.hms.service.dto.JobCreationDetailsResponseDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
+import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.JobDescriptionEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
@@ -38,6 +45,7 @@ import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
@@ -65,7 +73,10 @@ import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -113,6 +124,12 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private RecruiterServiceImpl recruiterServiceImpl;
+	
+	@Autowired
+	private JobApplicationRepository jobApplicationRepository;
+	
+	@Autowired
+	private MinioClient minioClient;
 
 	private String generateJobCode(String srId) {
 
@@ -912,5 +929,53 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
 		return null;
+	}
+	
+	@Override
+	public void downloadFile(Integer appId, String type, String action, HttpServletResponse response) {
+		log.info("JobsServiceImpl:Inside downloadFile method");
+
+		JobApplicationEntity app = jobApplicationRepository.findById(appId)
+				.orElseThrow(() -> new RuntimeException(Constants.APPLICATION_NOT_FOUND));
+
+		String objectKey;
+
+		if (Constants.RESUME.equalsIgnoreCase(type)) {
+			objectKey = app.getResume();
+		} else if (Constants.ADDITIONAL.equalsIgnoreCase(type)) {
+			objectKey = app.getAdditionalFile();
+		} else {
+			throw new RuntimeException(Constants.INVALID_FILE_TYPE);
+		}
+
+		if (objectKey == null) {
+			throw new RuntimeException(Constants.FILE_NOT_UPLOADED);
+		}
+
+		String fileName = Paths.get(objectKey).getFileName().toString();
+
+		try {
+
+			InputStream minioStream = minioClient
+					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
+
+			String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+
+			response.setContentType("application/octet-stream");
+			response.setCharacterEncoding("UTF-8");
+
+			response.setHeader("Content-Disposition",
+					(Constants.VIEW.equalsIgnoreCase(action) ? "inline" : "attachment") + "; filename*=UTF-8''"
+							+ encodedFileName);
+
+			IOUtils.copy(minioStream, response.getOutputStream());
+			response.flushBuffer();
+
+			minioStream.close();
+
+		} catch (Exception e) {
+			log.info("JobsServiceImpl::exception occured in downloadFile method"+e.getMessage());
+			throw new RuntimeException("Error downloading file from MinIO", e);
+		}
 	}
 }
