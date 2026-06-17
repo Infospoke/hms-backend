@@ -41,6 +41,9 @@ public class JobApplicantsResponse {
 	private Map<String, Long> report = new LinkedHashMap<>();
 	private String slaColor;
 	private String currentStage;
+	private String planName;
+	private Integer noOfRounds;
+	
 	
 
 }

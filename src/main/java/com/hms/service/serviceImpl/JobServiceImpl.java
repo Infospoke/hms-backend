@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.ActivityFeedEntity;
+import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewQuestionsEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.JobDetailsEntity;
@@ -31,7 +33,9 @@ import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.CandidateCreationRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewAnalysisRepository;
+import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewQuestionsRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
@@ -63,6 +67,12 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private JobsRepository jobsRepository;
+
+	@Autowired
+	private CreateJobDetailsRepository createJobDetailsRepository;
+
+	@Autowired
+	private InterviewPlanRepository interviewPlanRepository;
 
 	@Autowired
 	private JwtService jwtService;
@@ -222,7 +232,6 @@ public class JobServiceImpl implements IJobService {
 				.filter(job -> Boolean.TRUE.equals(isOpen) ? Boolean.TRUE.equals(job.getIsOpen()) : true)
 
 				.map(job -> {
-					
 
 					JobsResponse response = new JobsResponse();
 					BeanUtils.copyProperties(job, response);
@@ -506,14 +515,18 @@ public class JobServiceImpl implements IJobService {
 		JobApplicationEntity entity = jobApplicationRepository.findById(id)
 				.orElseThrow(() -> new CustomSystemErrorException(Constants.NO_APPLICANTS_FOUND));
 
-		JobsEntity job = jobsRepository.findById(entity.getJobId())
-				.orElseThrow(() -> new CustomSystemErrorException(Constants.JOB_MAPPED_TO_APPLICANT_NOT_FOUND));
+		CreateJobDetailsEntity jobs = createJobDetailsRepository.findById(entity.getJobId())
+				.orElseThrow(() -> new CustomSystemErrorException("job not found"));
+		InterviewPlanEntity interview = interviewPlanRepository.findById(jobs.getPlanId())
+				.orElseThrow(() -> new CustomSystemErrorException("plan not found"));
 
 		JobApplicantsResponse jobApplicantsResponse = new JobApplicantsResponse();
 		BeanUtils.copyProperties(entity, jobApplicantsResponse);
 
-		jobApplicantsResponse.setJobTitle(job.getJobTitle());
-		jobApplicantsResponse.setJobCode(job.getJobCode());
+		jobApplicantsResponse.setJobTitle(jobs.getJobTitle());
+		jobApplicantsResponse.setJobCode(jobs.getJobCode());
+		jobApplicantsResponse.setPlanName(interview.getPlanName());
+		jobApplicantsResponse.setNoOfRounds(interview.getRounds() != null ? interview.getRounds().size() : 0);
 
 		log.info("JobServiceImpl: Exit from getApplicantDetailsById method");
 
@@ -630,8 +643,8 @@ public class JobServiceImpl implements IJobService {
 					break;
 
 				case INTERVIEW:
-				    response.setStatus(interviewStatus.get(appId));
-				    break;
+					response.setStatus(interviewStatus.get(appId));
+					break;
 
 				case OFFER:
 					response.setStatus(Constants.OFFER);
@@ -640,7 +653,7 @@ public class JobServiceImpl implements IJobService {
 				case HIRED:
 					response.setStatus(Constants.HIRED);
 					break;
-				
+
 				case APPLIED:
 					response.setStatus(getStatus(appId, screenedSet, interviewStatus, candidateStatusMap));
 					response.setScreenedStatus(screenedSubStatus);
