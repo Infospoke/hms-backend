@@ -131,6 +131,8 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 			map.put("status", session.getStatus());
 			
 			map.put("scheduledBy", session.getScheduledBy());
+			
+			map.put("applicationId", session.getApplicationId());
 
 			content.add(map);
 		}
