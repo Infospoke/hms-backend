@@ -17,7 +17,6 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
-import com.hms.service.repository.AiOptionsRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
@@ -85,9 +84,6 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
-
-	@Autowired
-	private AiOptionsRepository aiOptionsRepository;
 
 	@Autowired
 	private PermissionRepository permissionRepository;
@@ -286,17 +282,6 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		return new ApiResponse<>(ResponseCode.SUCCESS, "Users fetched successfully", response);
 	}
 
-	@Override
-	public ApiResponse<List<?>> getAiOptions() {
-
-		List<DropDownResponse> response = aiOptionsRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
-				.map(ai -> new DropDownResponse(ai.getId(), ai.getAiOptions())).toList();
-
-		log.info("ConfigurationServiceImpl::Exit from the getAllFunctionality method");
-
-		return ApiResponse.success(ResponseCode.SUCCESS, Constants.FUNCTIONALITY_FETCHED_SUCCESSFULLY, response);
-
-	}
 
 	@Override
 	public ApiResponse<List<?>> getRolesByDepartments(RolesByDepartmentIdsRequest request) {

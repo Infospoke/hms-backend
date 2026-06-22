@@ -125,11 +125,6 @@ public class ConfigurationController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@GetMapping("/get-ai-options")
-	public ResponseEntity<ApiResponse<List<?>>> getAiOtions() {
-		ApiResponse<List<?>> response = iConfigurationService.getAiOptions();
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
 
 	@PostMapping("/roles/by-departments")
 	public ResponseEntity<ApiResponse<List<?>>> getRolesByDepartments(

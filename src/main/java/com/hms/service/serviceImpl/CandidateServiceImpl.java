@@ -30,12 +30,12 @@ import com.hms.service.constants.Constants;
 import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.BGVEntity;
 import com.hms.service.entity.CandidateInfoEntity;
-import com.hms.service.entity.JobsEntity;
+import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.OfferEntity;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.BGVRepository;
 import com.hms.service.repository.CandidateCreationRepository;
-import com.hms.service.repository.JobsRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.OfferRepository;
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.CandidateUpdateRequest;
@@ -61,8 +61,7 @@ public class CandidateServiceImpl implements CandidateService {
 	@Autowired
 	private CandidateCreationRepository candidateRepository;
 
-	@Autowired
-	private JobsRepository jobRepository;
+
 
 	@Autowired
 	private BGVRepository bgvrepository;
@@ -82,6 +81,8 @@ public class CandidateServiceImpl implements CandidateService {
 	@Autowired
 	private MailServiceImpl mailService;
 
+	@Autowired
+	private CreateJobDetailsRepository createJobDetailsRepository;
 	
 	@Override
 	public ApiResponse<?> addCandidate(CandidateCreationRequest candidateCreationRequest, MultipartFile offerLetter) {
@@ -113,7 +114,7 @@ public class CandidateServiceImpl implements CandidateService {
 		candidateInfoEntity.setLinkedinURL(candidateCreationRequest.getLinkedinURL());
 		candidateInfoEntity.setApplicationId(candidateCreationRequest.getApplicationId());
  
-		JobsEntity data = jobRepository.findByJobTitle(candidateCreationRequest.getJobTitle()).orElse(null);
+		CreateJobDetailsEntity data = createJobDetailsRepository.findByJobTitle(candidateCreationRequest.getJobTitle()).orElse(null);
  
 		if (candidateCreationRequest.getStatus().equals(Constants.OFFER_SENT)) {
 			candidateRepository.save(candidateInfoEntity);
@@ -241,7 +242,7 @@ public class CandidateServiceImpl implements CandidateService {
 				candidateRepository.save(candidateEntity);
 			}
  
-			JobsEntity jobsEntity = jobRepository.findByJobTitle(candidateUpdateRequest.getJobTitle()).orElse(null);
+			CreateJobDetailsEntity jobsEntity = createJobDetailsRepository.findByJobTitle(candidateUpdateRequest.getJobTitle()).orElse(null);
  
 			if (candidateUpdateRequest.getStatus().equals(Constants.OFFER_SENT)) {
 				candidateRepository.save(candidateInfoEntity);
@@ -468,10 +469,10 @@ public class CandidateServiceImpl implements CandidateService {
 	public ApiResponse<JobTitleResponse> jobsByCountry(String country) {
 		log.info("CandidateServiceImpl::Inside the jobsByCountry method");
  
-		List<JobsEntity> entities = jobRepository.findByJobCountry(country);
+		List<CreateJobDetailsEntity> entities = createJobDetailsRepository.findByCountry(country);
  
 		List<String> jobTitles = entities.stream()
-				.map(JobsEntity::getJobTitle)
+				.map(CreateJobDetailsEntity::getJobTitle)
 				.collect(Collectors.toList());
  
 		log.info("CandidateServiceImpl::Exit from the jobsByCountry method");

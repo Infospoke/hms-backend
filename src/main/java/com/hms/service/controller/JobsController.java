@@ -27,41 +27,7 @@ import jakarta.validation.Valid;
 public class JobsController {
 	@Autowired
 	private IJobService iJobService;
-	@PostMapping("/add-new-job")
-	public ResponseEntity<ApiResponse<?>> addNewJob(@Valid @RequestBody JobRequest jobRequest) {
-		ApiResponse<?> response = iJobService.addJob(jobRequest);
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
-	}
- 
-	
-	@GetMapping("/get-all-jobs/{isOpen}")
- 
-	public ResponseEntity<ApiResponse<?>> getAllJobs(@PathVariable(name = "isOpen") Boolean isOpen) {
-		ApiResponse<?> response = iJobService.getAllJobs(isOpen);
-		return new ResponseEntity<>(response, HttpStatus.OK);
- 
-	}
- 	
-	@DeleteMapping("/delete-job-by-id/{id}")
-	public ResponseEntity<ApiResponse<?>> deleteJob(@PathVariable("id") Integer id) {
-		ApiResponse<?> response = iJobService.deleteJob(id);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
- 
-		@GetMapping("/get-job-details-by-id/{id}")
-	public ResponseEntity<ApiResponse<?>> getJobDetailsById(@PathVariable("id") Integer id) {
-		ApiResponse<?> response = iJobService.getJobDetailsById(id);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
- 
-	
-	@PutMapping("/update-job-details")
-	public ResponseEntity<ApiResponse<?>> updateJobDetailsById(@Valid @RequestBody JobRequest request) {
- 
-		ApiResponse<?> response = iJobService.updateJobDetailsById(request);
- 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+
  
 	@GetMapping("/get-all-jobs-applicants")
 	public ResponseEntity<ApiResponse<?>> getAllJobApplicants() {
@@ -87,13 +53,6 @@ public class JobsController {
 	}
  
 	
-	@GetMapping("/get-all-skills")
-	public ResponseEntity<ApiResponse<?>> getAllSkills() {
- 
-		ApiResponse<?> response = iJobService.getAllSkills();
- 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
  
 	
 	@GetMapping("/get-all-jobs-dashboard-counts")

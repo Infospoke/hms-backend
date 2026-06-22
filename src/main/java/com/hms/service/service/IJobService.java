@@ -9,17 +9,7 @@ import com.hms.service.wrappers.ApiResponse;
 
 public interface IJobService {
 	
-	ApiResponse<?> addJob(JobRequest request);
-	
-	ApiResponse<?> deleteJob(Integer jobId);
-	
-	ApiResponse<?> getJobDetailsById(Integer id);
-	
-	ApiResponse<?> updateJobDetailsById(JobRequest request);
-	
-	ApiResponse<?> getAllSkills();
 
-	ApiResponse<?> getAllJobs(Boolean isOpen);
 
     ApiResponse<?> getAllJobsDashboardCounts();
 

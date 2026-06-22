@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.hms.service.entity.CandidateInfoEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 
 @Repository
@@ -43,4 +44,8 @@ public interface CreateJobDetailsRepository
 	CreateJobDetailsEntity findByJobCode(Integer jobId);
 
 	List<CreateJobDetailsEntity> findByIsOpenTrue(Sort sort);
+
+	Optional<CreateJobDetailsEntity> findByJobTitle(String jobTitle);
+
+	List<CreateJobDetailsEntity> findByCountry(String country);
 }

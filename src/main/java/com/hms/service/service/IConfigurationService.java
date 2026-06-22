@@ -33,7 +33,6 @@ public interface IConfigurationService {
 	
 	ApiResponse<List<?>> getUsersByRole();
 
-	ApiResponse<List<?>> getAiOptions();
 
 	ApiResponse<List<?>> getRolesByDepartments(RolesByDepartmentIdsRequest request);
 
