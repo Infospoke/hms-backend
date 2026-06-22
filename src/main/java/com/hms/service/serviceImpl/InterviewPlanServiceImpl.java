@@ -35,7 +35,7 @@ import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 
 import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.ResumeAnalysisUpdateEntity;
+import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.ApprovalChainRepository;
@@ -1212,7 +1212,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	    log.info("InterviewPlanServiceImpl :: getInterviewDetails");
 
-	    Optional<ResumeAnalysisUpdateEntity> optional =
+	    Optional<ApplicanDetailsEntity> optional =
 	            resumeAnalysisUpdateRepository.findByApplicationId(applicationId);
 
 	    if (optional.isEmpty()) {
@@ -1222,7 +1222,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	    }
 	    
 
-	    ResumeAnalysisUpdateEntity entity = optional.get();
+	    ApplicanDetailsEntity entity = optional.get();
 	    
 	    Integer jobId=entity.getJobId();
 	    

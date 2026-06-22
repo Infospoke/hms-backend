@@ -5,11 +5,11 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.hms.service.entity.ResumeAnalysisUpdateEntity;
+import com.hms.service.entity.ApplicanDetailsEntity;
 
 @Repository
-public interface ResumeAnalysisUpdateRepository extends JpaRepository<ResumeAnalysisUpdateEntity,Integer> {
+public interface ResumeAnalysisUpdateRepository extends JpaRepository<ApplicanDetailsEntity,Integer> {
 
-	Optional<ResumeAnalysisUpdateEntity> findByApplicationId(Integer applicationId);
+	Optional<ApplicanDetailsEntity> findByApplicationId(Integer applicationId);
 
 }

@@ -14,11 +14,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tb_resume_analysis_update")
+@Table(name = "tb_applicant_details")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResumeAnalysisUpdateEntity {
+public class ApplicanDetailsEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
