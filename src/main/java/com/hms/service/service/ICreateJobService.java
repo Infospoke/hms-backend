@@ -18,6 +18,8 @@ public interface ICreateJobService {
 
 	void downloadFile(Integer appId, String type, String action, HttpServletResponse response);
 
+	ApiResponse<?> getAllJobs(SpecificationFilterRequest request);
+
 
 
 }

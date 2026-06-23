@@ -63,6 +63,7 @@ import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.response.JobDescriptionDetailResponse;
 import com.hms.service.response.JobDescriptionResponse;
+import com.hms.service.response.JobDetailsResponse;
 import com.hms.service.response.JobOverviewResponse;
 import com.hms.service.response.MyRecruiterResponse;
 import com.hms.service.response.RecruiterDetailsResponse;
@@ -977,5 +978,38 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			log.info("JobsServiceImpl::exception occured in downloadFile method"+e.getMessage());
 			throw new RuntimeException("Error downloading file from MinIO", e);
 		}
+	}
+
+//	@Override
+//	public ApiResponse<?> getAllJobs(SpecificationFilterRequest request) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+	
+	@Override
+	public ApiResponse<?> getAllJobs(SpecificationFilterRequest request) {
+
+	    log.info("CreateJobServiceImpl :: getAllJobs");
+
+		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findAll(request.buildJobsSpecification());
+
+	    List<JobDetailsResponse> response =
+	            jobs.stream()
+	                .map(job -> new JobDetailsResponse(
+	                        job.getJobId(),
+	                        job.getJobCode(),
+	                        job.getJobTitle(),
+	                        job.getMinExperience(),
+	                        job.getMaxExperience(),
+	                        job.getLocation(),
+	                        job.getSkillsMustHave() != null
+	                                ? Arrays.stream(job.getSkillsMustHave().split(","))
+	                                        .map(String::trim)
+	                                        .toList()
+	                                : Collections.emptyList(),
+	                        job.getWorkMode()))
+	                .toList();
+	    
+	    return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
 	}
 }

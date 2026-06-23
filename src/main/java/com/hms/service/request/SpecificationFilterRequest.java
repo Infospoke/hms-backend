@@ -1454,4 +1454,86 @@ public class SpecificationFilterRequest {
 	    };
 	}
 	
+	public Specification<CreateJobDetailsEntity> buildJobsSpecification() {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        // Only open jobs
+	        predicates.add(
+	                cb.or(
+	                        cb.isTrue(root.get("isOpen")),
+	                        cb.isNull(root.get("isOpen"))
+	                )
+	        );
+
+	        String country = getFilter("country");
+
+	        if (country != null && !country.isBlank()) {
+
+	            predicates.add(
+	                    cb.like(
+	                            cb.lower(root.get("country")),
+	                            "%" + country.toLowerCase().trim() + "%"
+	                    )
+	            );
+	        }
+
+	        String location = getFilter("location");
+
+	        if (location != null && !location.isBlank()) {
+
+	            predicates.add(
+	                    cb.like(
+	                            cb.lower(root.get("location")),
+	                            "%" + location.toLowerCase().trim() + "%"
+	                    )
+	            );
+	        }
+
+	        String workMode = getFilter("workMode");
+
+	        if (workMode != null && !workMode.isBlank()) {
+
+	            predicates.add(
+	                    cb.equal(
+	                            cb.lower(root.get("workMode")),
+	                            workMode.toLowerCase().trim()
+	                    )
+	            );
+	        }
+
+	        String employmentType = getFilter("employmentType");
+
+	        if (employmentType != null && !employmentType.isBlank()) {
+
+	            predicates.add(
+	                    cb.equal(
+	                            cb.lower(root.get("employmentType")),
+	                            employmentType.toLowerCase().trim()
+	                    )
+	            );
+	        }
+
+	        String search = getFilter("search");
+
+	        if (search != null && !search.isBlank()) {
+
+	            String keyword = "%" + search.toLowerCase().trim() + "%";
+
+	            predicates.add(
+	                    cb.or(
+	                            cb.like(cb.lower(root.get("jobTitle")), keyword),
+	                            cb.like(cb.lower(root.get("jobCode")), keyword)
+	                    )
+	            );
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
+
+
 }
+
