@@ -21,6 +21,9 @@ public interface ICreateJobService {
 
 	ApiResponse<?> updateJobDetailsById(UpdateJobDetailsRequest request);
 
+	ApiResponse<?> getAllJobs(SpecificationFilterRequest request);
+
+
 
 
 }

@@ -62,6 +62,7 @@ public class CreateJobController {
 
 		iCreateJobService.downloadFile(appId, type, action, response);
 	}
+
 	@PutMapping("update-job-details-by-id")
 	public ResponseEntity<ApiResponse<?>> updateJobDetailsById(@RequestBody UpdateJobDetailsRequest request) {
 
@@ -70,6 +71,15 @@ public class CreateJobController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+
+	
+	@PostMapping("/get-all-jobs")
+	public ResponseEntity<ApiResponse<?>> getAllJobs(@RequestBody SpecificationFilterRequest request){
+		ApiResponse<?> response = iCreateJobService.getAllJobs(request);
+		return new ResponseEntity<>(response,HttpStatus.OK);
+		
+	}
+
 }
 
 
