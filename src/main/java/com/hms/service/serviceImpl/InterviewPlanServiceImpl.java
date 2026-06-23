@@ -1547,7 +1547,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Job Not Found");
 		}
 
-		InterviewPlanEntity plan = interviewPlanRepository.findByPlanId(job.getPlanId()).orElse(null);
+		InterviewPlanEntity plan = interviewPlanRepository.findById(job.getPlanId()).orElse(null);
 
 		if (plan == null) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Plan Not Found");
@@ -1563,7 +1563,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		response.put("planName", plan.getPlanName());
 
-		response.put("interviewType", null);
+		response.put("interviewType", "AI Video Interview");
 
 		response.put("duration", null);
 
