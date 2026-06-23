@@ -69,7 +69,6 @@ public class JobServiceImpl implements IJobService {
 	private JobApplicationRepository jobApplicationRepository;
 
 
-
 	@Autowired
 	private InterviewAnalysisRepository interviewAnalysisRepository;
 
@@ -158,15 +157,15 @@ public class JobServiceImpl implements IJobService {
 
 		JobsDashboardResponse response = new JobsDashboardResponse();
 
-//		long openJobs = jobsRepository.countByIsOpenTrue();
+		long openJobs = createJobDetailsRepository.countByIsOpenTrue();
 
 		long applicants = jobApplicationRepository.count();
 
 		long interviews = interviewAnalysisRepository.count();
 
 		long offersAccepted = offerRepository.count();
-
-		//response.setOpenJobs(openJobs);
+		
+		response.setOpenJobs(openJobs);
 		response.setCandidates(applicants);
 		response.setInterviews(interviews);
 		response.setOffersAccepted(offersAccepted);
