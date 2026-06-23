@@ -63,7 +63,7 @@ public class CreateJobController {
 		iCreateJobService.downloadFile(appId, type, action, response);
 	}
 
-	@PutMapping("update-job-details-by-id")
+	@PutMapping("update-job-details-by-jobid")
 	public ResponseEntity<ApiResponse<?>> updateJobDetailsById(@RequestBody UpdateJobDetailsRequest request) {
 
 		ApiResponse<?> response = iCreateJobService.updateJobDetailsById(request);

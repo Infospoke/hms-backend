@@ -995,7 +995,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		createJobDetailsEntity.setIsOpen(request.getIsOpen());
 		createJobDetailsRepository.save(createJobDetailsEntity);
 		log.info("CreateJobServiceImpl : Exit from the updateJobDetailsById method");
-		return ApiResponse.success(ResponseCode.SUCCESS,"job details updated sucessfully");
+		return ApiResponse.success(ResponseCode.SUCCESS,"success","job details updated sucessfully");
 	}
 
 //	@Override
@@ -1008,7 +1008,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	@Override
 	public ApiResponse<?> getAllJobs(SpecificationFilterRequest request) {
 
-	    log.info("CreateJobServiceImpl :: getAllJobs");
+	    log.info("CreateJobServiceImpl :: Inside the getAllJobs");
 
 		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findAll(request.buildJobsSpecification());
 
@@ -1028,6 +1028,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	                                : Collections.emptyList(),
 	                        job.getWorkMode()))
 	                .toList();
+	    
+	    log.info("CreateJobServiceImpl :: Exit from the getAllJobs");
 	    
 	    return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
 
