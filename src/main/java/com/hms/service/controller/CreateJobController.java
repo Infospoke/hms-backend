@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.CreateJobRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateJobDetailsRequest;
 import com.hms.service.service.ICreateJobService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -60,6 +62,16 @@ public class CreateJobController {
 
 		iCreateJobService.downloadFile(appId, type, action, response);
 	}
+
+	@PutMapping("update-job-details-by-id")
+	public ResponseEntity<ApiResponse<?>> updateJobDetailsById(@RequestBody UpdateJobDetailsRequest request) {
+
+		ApiResponse<?> response = iCreateJobService.updateJobDetailsById(request);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+
 	
 	@PostMapping("/get-all-jobs")
 	public ResponseEntity<ApiResponse<?>> getAllJobs(@RequestBody SpecificationFilterRequest request){
@@ -67,6 +79,7 @@ public class CreateJobController {
 		return new ResponseEntity<>(response,HttpStatus.OK);
 		
 	}
+
 }
 
 

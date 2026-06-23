@@ -59,6 +59,7 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.JobDescriptionRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateJobDetailsRequest;
 import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.response.JobDescriptionDetailResponse;
@@ -980,9 +981,27 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		}
 	}
 
+
+	@Override
+	public ApiResponse<?> updateJobDetailsById(UpdateJobDetailsRequest request) {
+		log.info("CreateJobServiceImpl : Inside updateJobDetailsById method");
+		log.info("the jobId from the request is"+request.getJobId());
+		CreateJobDetailsEntity createJobDetailsEntity=createJobDetailsRepository.findByJobId(request.getJobId());
+		if(createJobDetailsEntity==null)
+		{
+			log.info("No job found wiith the "+request.getJobId()+"jobId");
+			return ApiResponse.failure(ResponseCode.FAILURE,"job not found with "+request.getJobId());
+		}
+		createJobDetailsEntity.setIsOpen(request.getIsOpen());
+		createJobDetailsRepository.save(createJobDetailsEntity);
+		log.info("CreateJobServiceImpl : Exit from the updateJobDetailsById method");
+		return ApiResponse.success(ResponseCode.SUCCESS,"job details updated sucessfully");
+	}
+
 //	@Override
 //	public ApiResponse<?> getAllJobs(SpecificationFilterRequest request) {
-//		// TODO Auto-generated method stub
+//		// 
+
 //		return null;
 //	}
 	
@@ -1011,5 +1030,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	                .toList();
 	    
 	    return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+
 	}
 }
