@@ -1,5 +1,7 @@
 package com.hms.service.service;
 
+import org.jspecify.annotations.Nullable;
+
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
@@ -42,6 +44,8 @@ public interface IInterviewPlanService {
 
 
 	ApiResponse<?> getAllAIInterviews(SpecificationFilterRequest request);
+
+	ApiResponse<?> candidateOverview(Integer applicantId);
 
 
 

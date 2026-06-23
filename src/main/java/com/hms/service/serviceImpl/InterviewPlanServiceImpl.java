@@ -35,6 +35,7 @@ import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AInterviewQuestionsRepository;
@@ -52,6 +53,7 @@ import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 
 import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.ResumeAnalysisUpdateRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
@@ -97,6 +99,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private RolesRepository rolesRepository;
+	
+	@Autowired
+	private ResumeAnalysisRepository resumeAnalysisRepository;
 
 	@Autowired
 	private INotificationService notificationService;
@@ -1516,5 +1521,52 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		result.put("totalPages", sessionPage.getTotalPages());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, result);
+	}
+
+	@Override
+	public ApiResponse<?> candidateOverview(Integer applicantId) {
+
+		log.info("AIInterviewZoneServiceImpl :: Inside candidateOverview");
+
+		InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantId(applicantId).orElse(null);
+
+		if (schedule == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Schedule Not Found");
+		}
+
+		ResumeAnalysisEntity candidate = resumeAnalysisRepository.findByApplicationId(schedule.getApplicantId())
+				.orElse(null);
+
+		if (candidate == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Candidate Not Found");
+		}
+
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(candidate.getJobId());
+
+		if (job == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Job Not Found");
+		}
+
+		InterviewPlanEntity plan = interviewPlanRepository.findByPlanId(job.getPlanId()).orElse(null);
+
+		if (plan == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Plan Not Found");
+		}
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("candidateName", candidate.getCandidateName());
+
+		response.put("email", candidate.getEmail());
+
+		response.put("jobTitle", job.getJobTitle());
+
+		response.put("planName", plan.getPlanName());
+
+		response.put("interviewType", schedule.getInterviewType());
+
+		log.info("AIInterviewZoneServiceImpl :: Exit candidateOverview");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate Overview fetched successfully", response);
 	}
 }

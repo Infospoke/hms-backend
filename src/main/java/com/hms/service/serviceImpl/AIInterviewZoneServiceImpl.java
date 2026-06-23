@@ -117,7 +117,7 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 			Map<String, Object> map = new LinkedHashMap<>();
 
 			map.put("sessionId", session.getId());
-			
+	
 			map.put("jobId", session.getJobId());
 
 			map.put("candidateName", session.getApplicant() != null ? session.getApplicant().getCandidateName() : null);
@@ -157,24 +157,15 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 	@Override
 	public ApiResponse<?> getDashboardCounts() {
 
-	    Long generateAIQuestionsCount =
-	            aInterviewQuestionsRepository.countGenerateAIQuestions();
+		Long generateAIQuestionsCount = aInterviewQuestionsRepository.countGenerateAIQuestions();
 
-	    Long scheduleAIInterviewCount =
-	            aInterviewQuestionsRepository.countScheduleAIInterview();
+		Long scheduleAIInterviewCount = aInterviewQuestionsRepository.countScheduleAIInterview();
 
-	    Long upcomingAIInterviewCount =
-	            aInterviewQuestionsRepository.countUpcomingAIInterview();
+		Long upcomingAIInterviewCount = aInterviewQuestionsRepository.countUpcomingAIInterview();
 
-	    AIInterviewDashboardDto dashboardDTO = new AIInterviewDashboardDto(
-	            generateAIQuestionsCount,
-	            scheduleAIInterviewCount,
-	            upcomingAIInterviewCount
-	    );
+		AIInterviewDashboardDto dashboardDTO = new AIInterviewDashboardDto(generateAIQuestionsCount,
+				scheduleAIInterviewCount, upcomingAIInterviewCount);
 
-	    return ApiResponse.success(ResponseCode.SUCCESS,
-	            "Dashboard counts fetched successfully",
-	            dashboardDTO
-	    );
+		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard counts fetched successfully", dashboardDTO);
 	}
 }
