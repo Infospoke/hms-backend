@@ -48,4 +48,6 @@ public interface CreateJobDetailsRepository
 	Optional<CreateJobDetailsEntity> findByJobTitle(String jobTitle);
 
 	List<CreateJobDetailsEntity> findByCountry(String country);
+
+	CreateJobDetailsEntity findByJobId(Integer jobId);
 }
