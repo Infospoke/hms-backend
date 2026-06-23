@@ -1244,11 +1244,12 @@ public class SpecificationFilterRequest {
 				predicates.add(cb.equal(cb.lower(jobJoin.get("jobTitle")), jobTitle.toLowerCase()));
 			}
 
-			String questionStatus = getFilter("questionStatus");
+			Boolean questionStatus = Boolean.valueOf(getFilter("questionStatus"));
 
-			if (questionStatus != null && !questionStatus.isBlank()) {
-
-				predicates.add(cb.equal(cb.lower(root.get("status")), questionStatus.toLowerCase()));
+			if (questionStatus != null) {
+			    predicates.add(
+			        cb.equal(root.get("questionsStatus"), questionStatus)
+			    );
 			}
 
 			LocalDate[] dates = getDateRange();

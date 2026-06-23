@@ -66,12 +66,12 @@ public class ResumeAnalysisEntity {
 
 	    // JSON-like fields (stored as separate tables)
 	    @ElementCollection
-	    @CollectionTable(name = "matching_skills", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_matching_skills", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "skill")
 	    private List<String> matchingSkills;
 
 	    @ElementCollection
-	    @CollectionTable(name = "missing_skills", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_missing_skills", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "skill")
 	    private List<String> missingSkills;
 
@@ -79,30 +79,30 @@ public class ResumeAnalysisEntity {
 	    private String experienceLevel;
 
 	    @ElementCollection
-	    @CollectionTable(name = "matching_experience", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_matching_experience", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "experience")
 	    private List<String> matchingExperience;
 
 	    @ElementCollection
-	    @CollectionTable(name = "experience_gaps", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_experience_gaps", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "gap")
 	    private List<String> experienceGaps;
 
-	    @Column(name = "education_level", length = 20)
+	    @Column(name = "tb_education_level", length = 20)
 	    private String educationLevel;
 
 	    @ElementCollection
-	    @CollectionTable(name = "education_highlights", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_education_highlights", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "highlight")
 	    private List<String> educationHighlights;
 
 	    @ElementCollection
-	    @CollectionTable(name = "matching_education", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_matching_education", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "education")
 	    private List<String> matchingEducation;
 
 	    @ElementCollection
-	    @CollectionTable(name = "missing_education", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_missing_education", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "education")
 	    private List<String> missingEducation;
 
@@ -117,22 +117,22 @@ public class ResumeAnalysisEntity {
 	    private String averageJobChange;
 
 	    @ElementCollection
-	    @CollectionTable(name = "strengths", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_strengths", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "value")
 	    private List<String> strengths;
 
 	    @ElementCollection
-	    @CollectionTable(name = "weaknesses", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_weaknesses", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "value")
 	    private List<String> weaknesses;
 
 	    @ElementCollection
-	    @CollectionTable(name = "red_flags", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_red_flags", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "value")
 	    private List<String> redFlags;
 
 	    @ElementCollection
-	    @CollectionTable(name = "cultural_fit_indicators", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_cultural_fit_indicators", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "value")
 	    private List<String> culturalFitIndicators;
 
@@ -143,7 +143,7 @@ public class ResumeAnalysisEntity {
 	    private String onboardingPriority;
 
 	    @ElementCollection
-	    @CollectionTable(name = "interview_focus_areas", joinColumns = @JoinColumn(name = "resume_analysis_id"))
+	    @CollectionTable(name = "tb_interview_focus_areas", joinColumns = @JoinColumn(name = "resume_analysis_id"))
 	    @Column(name = "value")
 	    private List<String> interviewFocusAreas;
 
