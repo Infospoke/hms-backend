@@ -1563,7 +1563,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		response.put("planName", plan.getPlanName());
 
-		response.put("interviewType", schedule.getInterviewType());
+		response.put("interviewType", null);
+
+		response.put("duration", null);
 
 		log.info("AIInterviewZoneServiceImpl :: Exit candidateOverview");
 
