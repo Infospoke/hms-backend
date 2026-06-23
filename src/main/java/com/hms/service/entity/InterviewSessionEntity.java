@@ -80,8 +80,7 @@ public class InterviewSessionEntity {
 	@Column(name = "interview_scheduled_datetime")
 	private LocalDateTime interviewScheduledDateTime;
 
-	
-	@Column(name="move_to_schedule_date_time")
+	@Column(name="move_to_schedule_datetime")
 	private LocalDateTime moveToScheduleDateTime;
 
 

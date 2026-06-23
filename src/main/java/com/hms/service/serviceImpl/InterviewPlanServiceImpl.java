@@ -1446,8 +1446,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		List<AIInterviewScheduleResponse> responseList = new ArrayList<>();
 
 		for (InterviewSessionEntity session : sessionPage.getContent()) {
-
-			if (Boolean.FALSE.equals(session.getIsScheduled())) {
+			
+			if (Boolean.TRUE.equals(session.getMoveToSchedule())) {
 
 				AIInterviewScheduleResponse response = new AIInterviewScheduleResponse();
 
