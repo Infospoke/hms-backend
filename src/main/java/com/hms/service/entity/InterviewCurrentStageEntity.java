@@ -1,0 +1,54 @@
+package com.hms.service.entity;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name="tb_interview_current_stage")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+
+public class InterviewCurrentStageEntity {
+	
+	    @Id
+	    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	    @Column(name = "id", nullable = false, updatable = false)
+	    private Integer id;
+	  
+	    @Column(name = "interviewer_id")
+	    private Integer interviewerId;
+	    
+	    @Column(name="application_id")
+	    private String applicationId;
+	    
+	    @Column(name="current_stage_type")
+	    private Integer currentStageType;
+	    
+	    @Column(name="to_schedule")
+	    private Boolean toSchedule;
+	    
+	    @Column(name="interview_completed")
+	    private Boolean interviewCompleted;
+	    
+	    @Column(name="interview_completed_on")
+	    private LocalDateTime interviewCompletedOn;
+	    
+	    @Column(name="interview_date")
+	    private LocalDateTime interviewDate;
+	    
+	    @Column(name="feedback")
+	    private Boolean feedback;
+	    
+	  
+
+}

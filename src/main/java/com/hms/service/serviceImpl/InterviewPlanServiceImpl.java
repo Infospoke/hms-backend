@@ -1086,7 +1086,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		interviewFeedbackRepository.save(interviewFeedbackEntity);
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Interview Feedback Submitted successfully");
+		return ApiResponse.success(ResponseCode.SUCCESS,"success","Interview Feedback Submitted successfully");
 	}
 
 	public ApiResponse<?> scheduleInterview(InterviewScheduleRequest request) {
