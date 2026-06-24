@@ -14,7 +14,7 @@ public class InterviewScheduleRequest {
 	
 	private Integer applicantId;
 	
-	private String roundType;
+	private Integer roundId;
 
 	private LocalDate interviewDate;
 

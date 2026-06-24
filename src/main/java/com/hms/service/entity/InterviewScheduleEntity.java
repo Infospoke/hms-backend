@@ -27,11 +27,14 @@ public class InterviewScheduleEntity {
 	@Column(name = "id", nullable = false, updatable = false)
 	private Integer id;
 	
+	@Column(name="user_id")
+	private Integer userId;
+	
+	@Column(name="round_id")
+	private Integer roundId;
+	
 	@Column(name="applicant_id")
 	private Integer applicantId;
-	
-	@Column(name="current_stage_type")
-	private String currentStageType;
 	
 	@Column(name="interview_date")
 	private LocalDate interviewDate;
@@ -42,30 +45,11 @@ public class InterviewScheduleEntity {
 	@Column(name="end_time")
 	private LocalTime endTime;
 	
-	@Column(name="interview_type")
-	private String interviewType;
-	
 	@Column(name="meeting_link")
 	private String meetingLink;
 	
 	@Column(name="venue_details")
 	private String venueDetails;
-	
-	@Column(name="to_schedule")
-	private Boolean toSchedule;
-	
-	@Column(name="interview_completed")
-	private Boolean interviewCompleted;
-	
-	@Column(name="interview_completed_on")
-	private LocalDateTime interviewCompletedOn;
-	
-	@Column(name="interviewer_id")
-	private Integer interviewerId;
-	
-	@Column(name="feedback")
-	private Boolean feedback;
-	
 
 	@Column(name="created_by")
 	private String createdBy;
