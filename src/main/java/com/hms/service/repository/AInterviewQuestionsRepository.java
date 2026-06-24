@@ -37,7 +37,7 @@ public interface AInterviewQuestionsRepository extends JpaRepository<AIInterview
 			    SELECT COUNT(i)
 			    FROM InterviewSessionEntity i
 			    WHERE i.isScheduled = true
-			      AND LOWER(i.status) = 'scheduled'
+			      AND LOWER(i.status) = 'upcoming'
 			      AND (i.isDeleted = false OR i.isDeleted IS NULL)
 			""")
 	Long countUpcomingAIInterview();
