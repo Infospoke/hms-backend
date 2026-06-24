@@ -1,6 +1,7 @@
 package com.hms.service.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -19,5 +20,7 @@ public interface InterviewSessionRepository
 
 
 	List<InterviewSessionEntity> findByJobId(Integer jobId);
+	
+	Optional<InterviewSessionEntity> findByApplicationId(Integer applicationId);
 
 }

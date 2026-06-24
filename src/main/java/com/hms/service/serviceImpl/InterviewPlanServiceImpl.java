@@ -1524,17 +1524,17 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	@Override
-	public ApiResponse<?> candidateOverview(Integer applicantId) {
+	public ApiResponse<?> candidateOverview(Integer applicationId) {
 
 		log.info("AIInterviewZoneServiceImpl :: Inside candidateOverview");
 
-		InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantId(applicantId).orElse(null);
+		InterviewSessionEntity session = interviewSessionRepository.findByApplicationId(applicationId).orElse(null);
 
-		if (schedule == null) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Schedule Not Found");
+		if (session == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Session Not Found");
 		}
 
-		ResumeAnalysisEntity candidate = resumeAnalysisRepository.findByApplicationId(schedule.getApplicantId())
+		ResumeAnalysisEntity candidate = resumeAnalysisRepository.findByApplicationId(session.getApplicationId())
 				.orElse(null);
 
 		if (candidate == null) {
@@ -1547,7 +1547,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Job Not Found");
 		}
 
-		InterviewPlanEntity plan = interviewPlanRepository.findByPlanId(job.getPlanId()).orElse(null);
+		InterviewPlanEntity plan = interviewPlanRepository.findById(job.getPlanId()).orElse(null);
 
 		if (plan == null) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Plan Not Found");
@@ -1563,7 +1563,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		response.put("planName", plan.getPlanName());
 
-		response.put("interviewType", null);
+		response.put("interviewType", "AI Video Interview");
 
 		response.put("duration", null);
 

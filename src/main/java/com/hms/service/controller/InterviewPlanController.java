@@ -129,10 +129,11 @@ public class InterviewPlanController {
 		return ResponseEntity.ok(response);
 	}
 	
-	@GetMapping("/candidate-overview/{applicantId}")
-	public ResponseEntity<ApiResponse<?>> candidateOverview(@PathVariable ("applicantId") Integer applicantId) {
-		ApiResponse<?> response = interviewPlanService.candidateOverview(applicantId);
+	@GetMapping("/candidate-overview/{applicationId}")
+	public ResponseEntity<ApiResponse<?>> candidateOverview(@PathVariable ("applicationId") Integer applicationId) {
+		ApiResponse<?> response = interviewPlanService.candidateOverview(applicationId);
 		return ResponseEntity.ok(response);
 	}
 
+	
 }
