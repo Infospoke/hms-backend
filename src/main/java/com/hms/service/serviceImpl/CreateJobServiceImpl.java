@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.JobCreationDetailsResponseDto;
+import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
@@ -41,6 +42,7 @@ import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingChannelEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
@@ -49,6 +51,7 @@ import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
+import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
@@ -60,6 +63,7 @@ import com.hms.service.request.JobDescriptionRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateJobDetailsRequest;
+import com.hms.service.response.ApplicantsCountResponse;
 import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.response.JobDescriptionDetailResponse;
@@ -131,7 +135,12 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	private JobApplicationRepository jobApplicationRepository;
 	
 	@Autowired
+	private ResumeAnalysisRepository resumeAnalysisRepository;
+	@Autowired
 	private MinioClient minioClient;
+	
+	@Autowired
+	private ActivityFeedRepository  activityFeedRepository;
 
 	private String generateJobCode(String srId) {
 
@@ -221,6 +230,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
 			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
+			ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
 
 			if (request.getCreateJobDetailsRequest() != null) {
 
@@ -358,12 +368,19 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				basicsEntity.setJobSubmit(request.getSubmit());
 				positionBasicsRepository.save(basicsEntity);
 
-				jobDescriptionRepository.save(descriptionEntity);
 				descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
-
-				sourcingChannelRepository.save(channelEntity);
+				jobDescriptionRepository.save(descriptionEntity);
+				
 				channelEntity.setJobId(createJobDetailsEntity.getJobId());
-
+				sourcingChannelRepository.save(channelEntity);
+				
+				
+				String jobTitle=createJobDetailsEntity.getJobTitle();
+				log.info("hello");
+				activityFeedEntity.setTimeStamp(LocalDateTime.now());
+				activityFeedEntity.setActivity(jobTitle +" job was posted successfully");
+				activityFeedRepository.save(activityFeedEntity);
+			
 			}
 		}
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
@@ -919,9 +936,26 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					}
 					response.setRecruiters(recruitersResponse);
 				}
+				long totalApplicants=jobApplicationRepository.countByJobId(jobId);
+				long resumeCompleted = resumeAnalysisRepository.countByJobId(jobId);
+
+				long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.SHORTLISTED);
+				
+				ApplicantsCountResponse applicants=new ApplicantsCountResponse();
+				
+				applicants.setApplicantCount(totalApplicants);
+				applicants.setShortlisted(shortlistedCount);
+				applicants.setResumeCount(resumeCompleted);
+				applicants.setHiredCount(0L);
+				applicants.setOfferReleased(0L);
+				applicants.setInterviewCount(0L);
+				
+				response.setApplicantsCount(applicants);
 
 				return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
 			}
+			
+		
 		}
 
 		catch (Exception e) {
@@ -970,7 +1004,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					(Constants.VIEW.equalsIgnoreCase(action) ? "inline" : "attachment") + "; filename*=UTF-8''"
 							+ encodedFileName);
 
-			IOUtils.copy(minioStream, response.getOutputStream());
+			IOUtils.copy(minioStream,response.getOutputStream());
 			response.flushBuffer();
 
 			minioStream.close();
