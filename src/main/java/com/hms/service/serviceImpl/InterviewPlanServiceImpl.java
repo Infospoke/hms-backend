@@ -1099,17 +1099,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		Long userId = jwtService.extractUserId(token);
 
 		entity.setApplicantId(request.getApplicantId());
-		entity.setRoundType(request.getRoundType());
+		entity.setRoundId(request.getRoundId());
 		entity.setInterviewDate(request.getInterviewDate());
 		entity.setStartTime(request.getStartTime());
 		entity.setEndTime(request.getEndTime());
-		entity.setInterviewType(request.getInterviewType());
 		entity.setUserId(userId.intValue());
-		if (request.getInterviewType().equalsIgnoreCase("Online Interview")) {
-			entity.setMeetingLink(request.getMeetingLink());
-		} else if (request.getInterviewType().equalsIgnoreCase("Offline Interview")) {
-			entity.setVenueDetails(request.getVenueDetails());
-		}
+		entity.setMeetingLink(request.getMeetingLink());
+		entity.setVenueDetails(request.getVenueDetails());
+		
 		entity.setCreatedBy(userName);
 		entity.setCreatedOn(LocalDateTime.now());
 

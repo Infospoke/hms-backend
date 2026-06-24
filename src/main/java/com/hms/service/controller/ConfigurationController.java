@@ -156,6 +156,15 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/interview-rounds")
+	public ResponseEntity<ApiResponse<List<?>>> getInterviewRounds() {
+
+		ApiResponse<List<?>> response = iConfigurationService.getInterviewRounds();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
 
 
 

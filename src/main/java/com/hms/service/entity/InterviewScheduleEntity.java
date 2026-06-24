@@ -30,11 +30,11 @@ public class InterviewScheduleEntity {
 	@Column(name="user_id")
 	private Integer userId;
 	
+	@Column(name="round_id")
+	private Integer roundId;
+	
 	@Column(name="applicant_id")
 	private Integer applicantId;
-	
-	@Column(name="round_type")
-	private String roundType;
 	
 	@Column(name="interview_date")
 	private LocalDate interviewDate;
@@ -45,15 +45,12 @@ public class InterviewScheduleEntity {
 	@Column(name="end_time")
 	private LocalTime endTime;
 	
-	@Column(name="interview_type")
-	private String interviewType;
-	
 	@Column(name="meeting_link")
 	private String meetingLink;
 	
 	@Column(name="venue_details")
 	private String venueDetails;
-	
+
 	@Column(name="created_by")
 	private String createdBy;
 	
