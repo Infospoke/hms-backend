@@ -1273,6 +1273,7 @@ public class SpecificationFilterRequest {
 
 			predicates.add(cb.isTrue(root.get("isScheduled")));
 			predicates.add(cb.isNotNull(root.get("scheduledTime")));
+			predicates.add(cb.equal(root.get("status"), "upcoming"));
 
 			predicates.add(cb.or(cb.isFalse(root.get("isDeleted")), cb.isNull(root.get("isDeleted"))));
 

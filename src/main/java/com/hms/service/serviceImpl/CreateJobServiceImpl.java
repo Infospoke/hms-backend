@@ -51,6 +51,7 @@ import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
+import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
@@ -62,6 +63,7 @@ import com.hms.service.request.JobDescriptionRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateJobDetailsRequest;
+import com.hms.service.response.ApplicantsCountResponse;
 import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
 import com.hms.service.response.JobDescriptionDetailResponse;
@@ -132,6 +134,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
 	
+	@Autowired
+	private ResumeAnalysisRepository resumeAnalysisRepository;
 	@Autowired
 	private MinioClient minioClient;
 	
@@ -932,9 +936,26 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					}
 					response.setRecruiters(recruitersResponse);
 				}
+				long totalApplicants=jobApplicationRepository.countByJobId(jobId);
+				long resumeCompleted = resumeAnalysisRepository.countByJobId(jobId);
+
+				long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.SHORTLISTED);
+				
+				ApplicantsCountResponse applicants=new ApplicantsCountResponse();
+				
+				applicants.setApplicantCount(totalApplicants);
+				applicants.setShortlisted(shortlistedCount);
+				applicants.setResumeCount(resumeCompleted);
+				applicants.setHiredCount(0L);
+				applicants.setOfferReleased(0L);
+				applicants.setInterviewCount(0L);
+				
+				response.setApplicantsCount(applicants);
 
 				return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
 			}
+			
+		
 		}
 
 		catch (Exception e) {
@@ -983,7 +1004,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					(Constants.VIEW.equalsIgnoreCase(action) ? "inline" : "attachment") + "; filename*=UTF-8''"
 							+ encodedFileName);
 
-			IOUtils.copy(minioStream, response.getOutputStream());
+			IOUtils.copy(minioStream,response.getOutputStream());
 			response.flushBuffer();
 
 			minioStream.close();
