@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.JobCreationDetailsResponseDto;
+import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
@@ -41,6 +42,7 @@ import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingChannelEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
@@ -132,6 +134,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	
 	@Autowired
 	private MinioClient minioClient;
+	
+	@Autowired
+	private ActivityFeedRepository  activityFeedRepository;
 
 	private String generateJobCode(String srId) {
 
@@ -221,6 +226,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
 			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
+			ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
 
 			if (request.getCreateJobDetailsRequest() != null) {
 
@@ -358,12 +364,19 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				basicsEntity.setJobSubmit(request.getSubmit());
 				positionBasicsRepository.save(basicsEntity);
 
-				jobDescriptionRepository.save(descriptionEntity);
 				descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
-
-				sourcingChannelRepository.save(channelEntity);
+				jobDescriptionRepository.save(descriptionEntity);
+				
 				channelEntity.setJobId(createJobDetailsEntity.getJobId());
-
+				sourcingChannelRepository.save(channelEntity);
+				
+				
+				String jobTitle=createJobDetailsEntity.getJobTitle();
+				log.info("hello");
+				activityFeedEntity.setTimeStamp(LocalDateTime.now());
+				activityFeedEntity.setActivity(jobTitle +" job was posted successfully");
+				activityFeedRepository.save(activityFeedEntity);
+			
 			}
 		}
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
