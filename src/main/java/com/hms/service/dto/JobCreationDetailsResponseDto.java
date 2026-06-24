@@ -1,5 +1,6 @@
 package com.hms.service.dto;
 
+import com.hms.service.response.ApplicantsCountResponse;
 import com.hms.service.response.JobDescriptionResponse;
 import com.hms.service.response.JobOverviewResponse;
 import com.hms.service.response.RecruitersResponse;
@@ -22,4 +23,6 @@ public class JobCreationDetailsResponseDto {
     private SourcingChannelResponse sourcingStrategy;
 
     private RecruitersResponse recruiters;
+    
+    private ApplicantsCountResponse applicantsCount;
 }
