@@ -24,6 +24,7 @@ import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewPlanRepository;
+import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
@@ -54,6 +55,9 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 	@Autowired
 	private RolesRepository rolesRepository;
+	
+	@Autowired
+	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
 
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
@@ -355,6 +359,18 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		log.info("ConfigurationServiceImpl::Exit from the getJobs method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Jobs fetched successfully", response);
+	}
+	
+	@Override
+	public ApiResponse<List<?>> getInterviewRounds() {
+		log.info("ConfigurationServiceImpl::Inside the getInterviewRounds method");
+
+		List<DropDownResponse> response = interviewRoundDropDownRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(ipr -> new DropDownResponse(ipr.getId(), ipr.getRoundName())).toList();
+
+		log.info("ConfigurationServiceImpl::Exit from the getInterviewRounds method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview rounds fetched successfully", response);
 	}
 
 }

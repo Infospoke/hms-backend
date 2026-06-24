@@ -41,6 +41,8 @@ public interface IConfigurationService {
 	ApiResponse<List<?>> getInterviewPlans();
 
 	ApiResponse<List<?>> getJobs();
+
+	ApiResponse<List<?>> getInterviewRounds();
 	
 	
 
