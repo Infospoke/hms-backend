@@ -56,6 +56,7 @@ import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
+import com.hms.service.repository.InterviewerAssignmentRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.ApplicantDetailsRepository;
@@ -67,6 +68,7 @@ import com.hms.service.request.InterviewRoundRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewFeedbackRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.AIInterviewScheduleResponse;
 import com.hms.service.response.CommentTimelineResponse;
@@ -154,10 +156,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	private AInterviewQuestionsRepository aiInterviewQuestionsRepository;
 	
 	@Autowired
+
 	private InterviewCurrentStageRepository interviewCurrentStageRepository;
 	
 	@Autowired
     private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
+	
+	@Autowired
+	private InterviewerAssignmentRepository interviewerAssignmentRepository;
+
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1094,8 +1101,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackEntity.setSubmittedOn(LocalDateTime.now());
 		interviewFeedbackEntity.setSubmittedBy(username);
 		interviewFeedbackEntity.setUserId(userId.intValue());
-
 		interviewFeedbackRepository.save(interviewFeedbackEntity);
+		
+		
+		ApiResponse<?> response= updateInterviewFeedback(request);
 
 		return ApiResponse.success(ResponseCode.SUCCESS,"success","Interview Feedback Submitted successfully");
 	}
@@ -1462,32 +1471,33 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			if (search != null && !search.isBlank()) {
 
-			    String searchText = search.toLowerCase().trim();
+				String searchText = search.toLowerCase().trim();
 
-			    content = content.stream()
-			            .filter(map -> {
+				content = content.stream()
+						.filter(map -> {
 
-			                String candidateName =
-			                        String.valueOf(
-			                                map.getOrDefault("candidateName", ""))
-			                                .toLowerCase();
+							String candidateName = String
+									.valueOf(map.getOrDefault("candidateName", ""))
+									.toLowerCase();
 
-			                String jobTitle =
-			                        String.valueOf(
-			                                map.getOrDefault("jobTitle", ""))
-			                                .toLowerCase();
+							String jobTitle = String
+									.valueOf(map.getOrDefault("jobTitle", ""))
+									.toLowerCase();
 
-			                String priority =
-			                        String.valueOf(
-			                                map.getOrDefault("priority", ""))
-			                                .toLowerCase();
+							return candidateName.contains(searchText)
+									|| jobTitle.contains(searchText);
 
-			                return candidateName.contains(searchText)
-			                        || jobTitle.contains(searchText)
-			                        || priority.contains(searchText);
+						})
+						.toList();
+			}
+			String priorityFilter = request.getFilter("priority");
 
-			            })
-			            .toList();
+			if (priorityFilter != null && !priorityFilter.isBlank()) {
+
+				content = content.stream()
+						.filter(map -> priorityFilter.equalsIgnoreCase(
+								String.valueOf(map.getOrDefault("priority", ""))))
+						.toList();
 			}
 			// Dynamic Pagination After Search
 			int totalElements = content.size();
@@ -1519,9 +1529,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 	}
 
-	private String calculatePriority(LocalDateTime createdOn) {
+	private String calculatePriority(LocalDate createdOn) {
 
-		long daysPassed = ChronoUnit.DAYS.between(createdOn.toLocalDate(), LocalDate.now());
+		long daysPassed = ChronoUnit.DAYS.between(createdOn, LocalDate.now());
 
 		if (daysPassed >= 5) {
 			return "High";
@@ -1725,5 +1735,40 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("AIInterviewZoneServiceImpl :: Exit candidateOverview");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate Overview fetched successfully", response);
+	}
+	
+	@Override
+	public ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest) {
+		log.info("InterviewPlanServiceImpl :: Inside updateInterviewFeedback");
+
+		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+			
+			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
+			int currentOrder=interviewRoundRepository.findByInterviewPlanIdAndStageTypeId(planId,interviewFeedbackRequest.getStageTypeId()).getRoundOrder();
+			
+			List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(planId);
+			int nextStageid = 0;
+			int roundOrder=0;
+			for (InterviewRoundEntity interviewRoundEntity : interviewRoundEntities) {
+				if (interviewRoundEntity.getRoundOrder() > currentOrder) {
+					nextStageid = interviewRoundEntity.getStageTypeId();
+					roundOrder=interviewRoundEntity.getRoundOrder();
+					break;
+				}
+			}
+			if (nextStageid!=0) {
+				InterviewCurrentStageEntity interviewCurrentStageEntity = new InterviewCurrentStageEntity();
+				interviewCurrentStageEntity.setApplicationId(interviewFeedbackRequest.getApplicantId());
+				interviewCurrentStageEntity.setCurrentStageType(nextStageid);
+				interviewCurrentStageEntity.setRoundOrder(roundOrder);
+				int interviewerId=interviewerAssignmentRepository.findByJobIdAndPlanIdAndStageTypeId(interviewFeedbackRequest.getJobId(),planId,roundOrder).getInterviewerUserId().intValue();
+				interviewCurrentStageEntity.setInterviewerId(interviewerId);
+				interviewCurrentStageEntity.setToSchedule(false);
+				interviewCurrentStageEntity.setCreatedOn(LocalDate.now(ZoneId.of("Asia/Kolkata")));
+				interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+			}
+		}
+		log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
+		return ApiResponse.success(ResponseCode.SUCCESS,"Applicant moved to next round" );
 	}
 }
