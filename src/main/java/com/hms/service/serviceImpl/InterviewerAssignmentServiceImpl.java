@@ -145,6 +145,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			entity.setRoundId(round.getId());
 
 			entity.setStageName(round.getStageName());
+			
+			entity.setStageTypeId(round.getStageTypeId());
 
 			entity.setInterviewerUserId(dto.getInterviewerUserId());
 
