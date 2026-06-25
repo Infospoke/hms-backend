@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.InterviewerAssignmentEntity;
+import com.hms.service.request.UpdateInterviewFeedbackRequest;
 
 @Repository
 public interface InterviewerAssignmentRepository extends JpaRepository<InterviewerAssignmentEntity, Integer>,
@@ -28,4 +29,6 @@ public interface InterviewerAssignmentRepository extends JpaRepository<Interview
 	Optional<InterviewerAssignmentEntity> findTopByJobIdAndRoundIdOrderByIdDesc(Integer jobId, Long roundId);
 	
 	List<InterviewerAssignmentEntity> findByJobIdOrderByIdAsc(Integer jobId);
+	
+	InterviewerAssignmentEntity findByJobIdAndPlanIdAndStageTypeId(Integer jobId,Integer PlanId, Integer RoundOrder);
 }

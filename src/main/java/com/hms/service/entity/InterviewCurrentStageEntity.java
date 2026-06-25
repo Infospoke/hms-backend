@@ -63,6 +63,9 @@ public class InterviewCurrentStageEntity {
 	    @Column(name="round_order")
 	    private Integer roundOrder;
 	    
+	    @Column(name="created_on")
+	    private LocalDate createdOn;
+	    
 	  
 
 }

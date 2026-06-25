@@ -48,7 +48,7 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> candidateOverview(Integer applicantId);
 	
-	ApiResponse<?> updateInterviewFeedback(UpdateInterviewFeedbackRequest updateInterviewFeedbackRequest);
+	ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest);
 
 
 

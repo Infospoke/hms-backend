@@ -12,6 +12,7 @@ public class UpdateInterviewFeedbackRequest {
 	private int id;
 	private String decision;
 	private int jobId;
-	private int currentStageId;
+	private int StageTypeId;
+
 
 }
