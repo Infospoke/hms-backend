@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class InterviewFeedbackRequest {
 	
+	private Integer jobId;
+	
 	private Integer applicantId;
 	
 	private String interviewType;
@@ -34,5 +36,7 @@ public class InterviewFeedbackRequest {
 	private String areasOfImprovemnets;
 	
 	private String additionalComments;
+	
+	private Integer currentStageId;
 
 }

@@ -20,4 +20,6 @@ public interface InterviewPlanRepository extends JpaRepository<InterviewPlanEnti
     List<InterviewPlanEntity> findByPlanNameContainingIgnoreCase(String planName);
     
     Optional<InterviewPlanEntity> findById(Integer Id);
+
+	Integer countById(Integer planId);
 }

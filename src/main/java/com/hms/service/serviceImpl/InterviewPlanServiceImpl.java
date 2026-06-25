@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.lang3.IntegerRange;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,8 +29,10 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCandidateDetailsEntity;
+import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
@@ -46,8 +49,10 @@ import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewCandidateDetailsRepository;
+import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
+import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
@@ -149,6 +154,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	
 	@Autowired
 	private AInterviewQuestionsRepository aiInterviewQuestionsRepository;
+	
+	@Autowired
+	private InterviewCurrentStageRepository interviewCurrentStageRepository;
+	
+	@Autowired
+	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1085,7 +1096,37 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackEntity.setUserId(userId.intValue());
 
 		interviewFeedbackRepository.save(interviewFeedbackEntity);
-
+		
+		int planId=createJobDetailsRepository.findByJobId(request.getJobId()).getPlanId();
+		
+		List<InterviewRoundEntity> interviewRoundEntities=interviewRoundRepository.findByInterviewPlanId(planId);
+		int nextStageid=0;
+		for(InterviewRoundEntity interviewRoundEntity : interviewRoundEntities)
+		{
+			if(interviewRoundEntity.getStageId()>request.getCurrentStageId())
+			{
+				nextStageid=interviewRoundEntity.getStageId();
+				break;
+			}
+		}
+		
+		InterviewCurrentStageEntity currentStage =
+		        interviewCurrentStageRepository.findByApplicationIdAndFeedbackFalse(request.getApplicantId());
+			log.info("enter into interview current satge"+currentStage);
+		
+			currentStage.setFeedback(true);
+			interviewCurrentStageRepository.save(currentStage);
+			
+			if(nextStageid>0)
+			{
+				InterviewCurrentStageEntity interviewCurrentStageEntity=new InterviewCurrentStageEntity();
+				interviewCurrentStageEntity.setApplicationId(request.getApplicantId());
+				interviewCurrentStageEntity.setCurrentStageType(nextStageid);
+				interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+				
+			}
+			
+			
 		return ApiResponse.success(ResponseCode.SUCCESS,"success","Interview Feedback Submitted successfully");
 	}
 
@@ -1130,17 +1171,40 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
-
-		Page<InterviewCandidateDetailsEntity> interviews = interviewCandidateDetailsRepository
-				.findAll(request.buildTodayInterviewSpecification(userIdFromToken), pageable);
-
-		Map<String, Object> response = new HashMap<>();
-		response.put("content", interviews.getContent());
-		response.put("currentPage", interviews.getNumber());
-		response.put("totalPages", interviews.getTotalPages());
-		response.put("totalElements", interviews.getTotalElements());
-		response.put("size", interviews.getSize());
-		return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+		
+		Page<InterviewCurrentStageEntity>currentStage=interviewCurrentStageRepository.findAll(request.buildTodayInterviewSpecification(userIdFromToken),pageable);
+		Integer applicationId=null;
+		for(InterviewCurrentStageEntity interviewCurrentStage:currentStage)
+		{
+			 applicationId= interviewCurrentStage.getApplicationId();
+			
+		}
+		Optional<JobApplicationEntity> applicationEntity=jobApplicationRepository.findById(applicationId);
+		JobApplicationEntity entities=applicationEntity.get();
+		Integer jobId=entities.getJobId();
+		CreateJobDetailsEntity jobDetailsEntity=createJobDetailsRepository.findByJobId(jobId);
+		String jobTitle=jobDetailsEntity.getJobTitle();
+		String jobCode=jobDetailsEntity.getJobCode();
+		Integer departmentId=jobDetailsEntity.getDepartmentId();
+		String departmentName=departmentsRepository.findById(departmentId).get().getDepartmentName();
+		Integer currentStageType=interviewCurrentStageRepository.findByApplicationId(applicationId);
+		String stageName=interviewRoundDropDownRepository.findById(currentStageType).get().getRoundName();
+		
+		
+		
+		
+//	
+//		Page<InterviewCandidateDetailsEntity> interviews = interviewCandidateDetailsRepository
+//				.findAll(request.buildTodayInterviewSpecification(userIdFromToken), pageable);
+//		Page<InterviewCurrentStageEntity>interviewsSatge=interviewCurrentStageRepository.findBy
+//
+//		Map<String, Object> response = new HashMap<>();
+//		response.put("content", interviews.getContent());
+//		response.put("currentPage", interviews.getNumber());
+//		response.put("totalPages", interviews.getTotalPages());
+//		response.put("totalElements", interviews.getTotalElements());
+//		response.put("size", interviews.getSize());
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success","fghjk");
 
 	}
 
@@ -1165,10 +1229,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
-			Specification<InterviewCandidateDetailsEntity> specification = request
+			Specification<InterviewCurrentStageEntity> specification = request
 					.buildTodayInterviewSpecification(userIdFromToken);
 
-			Page<InterviewCandidateDetailsEntity> page = interviewCandidateDetailsRepository.findAll(specification,
+			Page<InterviewCurrentStageEntity> page = interviewCurrentStageRepository.findAll(specification,
 					pageable);
 
 			List<Map<String, Object>> content = page.getContent().stream()
