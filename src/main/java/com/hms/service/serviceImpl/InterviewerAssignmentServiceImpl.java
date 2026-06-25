@@ -258,6 +258,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				roundMap.put("roundName", round.getStageName());
 
 				roundMap.put("roundType", round.getStageType());
+				
+				roundMap.put("roundTypeId", round.getStageTypeId());
 
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
 
@@ -325,7 +327,9 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			roundResponse.put("roundId", roundId);
 			roundResponse.put("stageName", round != null ? round.getStageName() : null);
 			roundResponse.put("stageType", round != null ? round.getStageType() : null);
+			roundResponse.put("stageTypeId", rounds !=null ? round.getStageTypeId() : null);
 			roundResponse.put("currentStatus", latest.getStatus());
+			
 
 			List<Map<String, Object>> assignmentHistory = new ArrayList<>();
 
