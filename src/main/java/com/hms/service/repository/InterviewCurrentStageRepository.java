@@ -16,5 +16,5 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 
 	Integer countByApplicationId(Integer applicationId);
 	 
-
+	InterviewCurrentStageEntity  findByApplicationIdAndFeedbackFalse(Integer applicationId);
 }
