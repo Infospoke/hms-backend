@@ -1127,6 +1127,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewCurrentStageEntity.setEndTime(request.getEndTime());
 		interviewCurrentStageEntity.setToSchedule(true);
 		interviewCurrentStageEntity.setInterviewCompleted(false);
+		interviewCurrentStageEntity.setFeedback(false);
 		interviewCurrentStageRepository.save(interviewCurrentStageEntity);
 		
 
@@ -1258,7 +1259,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
 				.findByApplicationIdAndFeedbackFalse(applicationId);
 		
-
 		Duration duration = Duration.between(interviewScheduleEntity.getStartTime(),
 				interviewScheduleEntity.getEndTime());
 
