@@ -1114,21 +1114,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackEntity.setSubmittedBy(username);
 		interviewFeedbackEntity.setUserId(userId.intValue());
 		interviewFeedbackRepository.save(interviewFeedbackEntity);
-		
-		
-		ApiResponse<?> response= updateInterviewFeedback(request);
-
-		int planId = createJobDetailsRepository.findByJobId(request.getJobId()).getPlanId();
-
-		List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository.findByInterviewPlanId(planId);
-		int nextStageid = 0;
-		for (InterviewRoundEntity interviewRoundEntity : interviewRoundEntities) {
-			if (interviewRoundEntity.getStageTypeId() > request.getCurrentStageId()) {
-				nextStageid = interviewRoundEntity.getStageTypeId();
-				break;
-			}
-		}
-
 		InterviewCurrentStageEntity currentStage = interviewCurrentStageRepository
 				.findByApplicationIdAndFeedbackFalse(request.getApplicantId());
 		log.info("enter into interview current satge" + currentStage);
@@ -1136,13 +1121,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		currentStage.setFeedback(true);
 		interviewCurrentStageRepository.save(currentStage);
 
-		if (nextStageid > 0) {
-			InterviewCurrentStageEntity interviewCurrentStageEntity = new InterviewCurrentStageEntity();
-			interviewCurrentStageEntity.setApplicationId(request.getApplicantId());
-			interviewCurrentStageEntity.setCurrentStageType(nextStageid);
-			interviewCurrentStageRepository.save(interviewCurrentStageEntity);
-
-		}
+		
+		ApiResponse<?> response= updateInterviewFeedback(request);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Feedback Submitted successfully");
 	}
@@ -1445,48 +1425,143 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
  
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview details fetched successfully", response);
 	}
- 
- 
+
 	@Override
 	public ApiResponse<?> getScheduleList(SpecificationFilterRequest request) {
 
 		try {
 
-			String authHeader = httpServletRequest.getHeader("Authorization");
-
-			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing");
-			}
-
-			String token = authHeader.substring(7);
-
-			Long userId = jwtService.extractUserId(token);
-
-			Integer userIdFromToken = userId.intValue();
-
 			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
-//			
+		
+			Specification<InterviewCurrentStageEntity> specification = request
+					.toBeScheduleInterviewSpecification();
+
+			List<InterviewCurrentStageEntity> stages = interviewCurrentStageRepository.findAll(specification);
+
+			List<Map<String, Object>> content = stages.stream().map(stage -> {
+
+				Map<String, Object> map = new LinkedHashMap<>();
+
+				JobApplicationEntity application = jobApplicationRepository.findById(stage.getApplicationId())
+						.orElse(null);
+
+				String candidateName = null;
+				String jobTitle = null;
+
+				if (application != null) {
+
+					candidateName = application.getFirstName();
+
+					CreateJobDetailsEntity job = createJobDetailsRepository.findById(application.getJobId())
+							.orElse(null);
+
+					if (job != null) {
+						jobTitle = job.getJobTitle();
+					}
+				}
+
+				String roundName = null;
+
+				InterviewRoundDropDownEntity round = interviewRoundDropDownRepository
+						.findById(stage.getCurrentStageType()).orElse(null);
+
+				if (round != null) {
+					roundName = round.getRoundName();
+				}
+
+				map.put("candidateName", candidateName);
+				map.put("jobTitle", jobTitle);
+				map.put("round", roundName);
+				map.put("requestedOn", stage.getCreatedOn());
+				map.put("roundId", stage.getCurrentStageType());
+
+				map.put("priority",
+						stage.getCreatedOn() != null ? calculatePriority(stage.getCreatedOn()) : "Low");
+
+				map.put("applicationId", stage.getApplicationId());
+
+				return map;
+
+			}).toList();
+
+			String search = request.getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String searchText = search.toLowerCase().trim();
+
+				content = content.stream()
+						.filter(map -> {
+
+							String candidateName = String
+									.valueOf(map.getOrDefault("candidateName", ""))
+									.toLowerCase();
+
+							String jobTitle = String
+									.valueOf(map.getOrDefault("jobTitle", ""))
+									.toLowerCase();
+
+							return candidateName.contains(searchText)
+									|| jobTitle.contains(searchText);
+
+						})
+						.toList();
+			}
+			String priorityFilter = request.getFilter("priority");
+
+			if (priorityFilter != null && !priorityFilter.isBlank()) {
+
+				content = content.stream()
+						.filter(map -> priorityFilter.equalsIgnoreCase(
+								String.valueOf(map.getOrDefault("priority", ""))))
+						.toList();
+			}
+			// Dynamic Pagination After Search
+			int totalElements = content.size();
+
+			int start = request.getPage() * request.getSize();
+
+			int end = Math.min(start + request.getSize(), totalElements);
+
+			List<Map<String, Object>> paginatedContent = start < totalElements
+					? content.subList(start, end)
+					: Collections.emptyList();
+
+			int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
+
 			Map<String, Object> response = new LinkedHashMap<>();
 
-//			response.put("content", content);
-//
-//			response.put("currentPage", page.getNumber());
-//
-//			response.put("totalPages", page.getTotalPages());
-//
-//			response.put("totalElements", page.getTotalElements());
-//
-//			response.put("size", page.getSize());
+			response.put("content", paginatedContent);
+			response.put("currentPage", request.getPage());
+			response.put("totalPages", totalPages);
+			response.put("totalElements", totalElements);
+			response.put("size", paginatedContent.size());
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Feedback list fetched successfully", response);
+			return ApiResponse.success(ResponseCode.SUCCESS,
+					"Applicants to be schedule list fetched successfully", response);
+
 
 		} catch (Exception e) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
+	}
+
+	private String calculatePriority(LocalDate createdOn) {
+
+		long daysPassed = ChronoUnit.DAYS.between(createdOn, LocalDate.now());
+
+		if (daysPassed >= 5) {
+			return "High";
+		}
+
+		if (daysPassed >= 3) {
+			return "Medium";
+		}
+
+		return "Low";
 	}
 
 	@Override
@@ -1723,6 +1798,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				response.put("endTime", stage.getEndTime());
 				
+				response.put("jobId",job.getJobId());
 
 				// SLA
 

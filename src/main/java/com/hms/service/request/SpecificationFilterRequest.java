@@ -1469,5 +1469,40 @@ public class SpecificationFilterRequest {
 	        return cb.and(predicates.toArray(new Predicate[0]));
 	    };
 	}
+	public Specification<InterviewCurrentStageEntity> toBeScheduleInterviewSpecification() {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.isFalse(root.get("toSchedule")));
+
+			String round = getFilter("round");
+
+			if (round != null && !round.isBlank()) {
+
+				try {
+
+					predicates.add(cb.equal(root.get("currentStageType"), Integer.parseInt(round)));
+
+				} catch (NumberFormatException e) {
+
+				}
+			}
+
+			Specification<InterviewCurrentStageEntity> dateSpecification = dateSpec("createdOn");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
 
 }
