@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1334,69 +1335,203 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview details fetched successfully", response);
 	}
 
+//	@Override
+//	public ApiResponse<?> getScheduleList(SpecificationFilterRequest request) {
+//
+//		try {
+//
+//			String authHeader = httpServletRequest.getHeader("Authorization");
+//
+//			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+//
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing");
+//			}
+//
+//			String token = authHeader.substring(7);
+//
+//			Long userId = jwtService.extractUserId(token);
+//
+//			Integer userIdFromToken = userId.intValue();
+//
+//			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+//					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+//
+//			Specification<InterviewCandidateDetailsEntity> specification = request
+//					.buildTodayInterviewSpecification(userIdFromToken);
+//
+//			Page<InterviewCandidateDetailsEntity> page = interviewCandidateDetailsRepository.findAll(specification,
+//					pageable);
+//
+//			List<Map<String, Object>> content = page.getContent().stream()
+//					.filter(candidate -> Objects.equals(candidate.getUserId(), userIdFromToken)).map(candidate -> {
+//
+//						Map<String, Object> map = new LinkedHashMap<>();
+//
+//						map.put("candidateName", candidate.getCanidateName());
+//
+//						map.put("jobTitle", candidate.getJobTitle());
+//
+//						map.put("interviewDate", null);
+//
+//						map.put("round", candidate.getRound());
+//
+//						map.put("priority", null);
+//
+//						return map;
+//					}).toList();
+//
+//			Map<String, Object> response = new LinkedHashMap<>();
+//
+//			response.put("content", content);
+//
+//			response.put("currentPage", page.getNumber());
+//
+//			response.put("totalPages", page.getTotalPages());
+//
+//			response.put("totalElements", page.getTotalElements());
+//
+//			response.put("size", page.getSize());
+//
+//			return ApiResponse.success(ResponseCode.SUCCESS, "Feedback list fetched successfully", response);
+//
+//		} catch (Exception e) {
+//
+//			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+//		}
+//	}
+	
 	@Override
 	public ApiResponse<?> getScheduleList(SpecificationFilterRequest request) {
 
 		try {
 
-			String authHeader = httpServletRequest.getHeader("Authorization");
-
-			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing");
-			}
-
-			String token = authHeader.substring(7);
-
-			Long userId = jwtService.extractUserId(token);
-
-			Integer userIdFromToken = userId.intValue();
-
 			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
-			Specification<InterviewCandidateDetailsEntity> specification = request
-					.buildTodayInterviewSpecification(userIdFromToken);
+			Specification<InterviewCurrentStageEntity> specification = request
+					.toBeScheduleInterviewSpecification();
 
-			Page<InterviewCandidateDetailsEntity> page = interviewCandidateDetailsRepository.findAll(specification,
-					pageable);
+			List<InterviewCurrentStageEntity> stages = interviewCurrentStageRepository.findAll(specification);
 
-			List<Map<String, Object>> content = page.getContent().stream()
-					.filter(candidate -> Objects.equals(candidate.getUserId(), userIdFromToken)).map(candidate -> {
+			List<Map<String, Object>> content = stages.stream().map(stage -> {
 
-						Map<String, Object> map = new LinkedHashMap<>();
+				Map<String, Object> map = new LinkedHashMap<>();
 
-						map.put("candidateName", candidate.getCanidateName());
+				JobApplicationEntity application = jobApplicationRepository.findById(stage.getApplicationId())
+						.orElse(null);
 
-						map.put("jobTitle", candidate.getJobTitle());
+				String candidateName = null;
+				String jobTitle = null;
 
-						map.put("interviewDate", null);
+				if (application != null) {
 
-						map.put("round", candidate.getRound());
+					candidateName = application.getFirstName();
 
-						map.put("priority", null);
+					CreateJobDetailsEntity job = createJobDetailsRepository.findById(application.getJobId())
+							.orElse(null);
 
-						return map;
-					}).toList();
+					if (job != null) {
+						jobTitle = job.getJobTitle();
+					}
+				}
+
+				String roundName = null;
+
+				InterviewRoundDropDownEntity round = interviewRoundDropDownRepository
+						.findById(stage.getCurrentStageType()).orElse(null);
+
+				if (round != null) {
+					roundName = round.getRoundName();
+				}
+
+				map.put("candidateName", candidateName);
+				map.put("jobTitle", jobTitle);
+				map.put("round", roundName);
+				map.put("requestedOn", stage.getCreatedOn());
+
+				map.put("priority",
+						stage.getCreatedOn() != null ? calculatePriority(stage.getCreatedOn()) : "Low");
+
+				map.put("applicationId", stage.getApplicationId());
+
+				return map;
+
+			}).toList();
+
+			String search = request.getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+			    String searchText = search.toLowerCase().trim();
+
+			    content = content.stream()
+			            .filter(map -> {
+
+			                String candidateName =
+			                        String.valueOf(
+			                                map.getOrDefault("candidateName", ""))
+			                                .toLowerCase();
+
+			                String jobTitle =
+			                        String.valueOf(
+			                                map.getOrDefault("jobTitle", ""))
+			                                .toLowerCase();
+
+			                String priority =
+			                        String.valueOf(
+			                                map.getOrDefault("priority", ""))
+			                                .toLowerCase();
+
+			                return candidateName.contains(searchText)
+			                        || jobTitle.contains(searchText)
+			                        || priority.contains(searchText);
+
+			            })
+			            .toList();
+			}
+			// Dynamic Pagination After Search
+			int totalElements = content.size();
+
+			int start = request.getPage() * request.getSize();
+
+			int end = Math.min(start + request.getSize(), totalElements);
+
+			List<Map<String, Object>> paginatedContent = start < totalElements
+					? content.subList(start, end)
+					: Collections.emptyList();
+
+			int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
 
 			Map<String, Object> response = new LinkedHashMap<>();
 
-			response.put("content", content);
+			response.put("content", paginatedContent);
+			response.put("currentPage", request.getPage());
+			response.put("totalPages", totalPages);
+			response.put("totalElements", totalElements);
+			response.put("size", paginatedContent.size());
 
-			response.put("currentPage", page.getNumber());
-
-			response.put("totalPages", page.getTotalPages());
-
-			response.put("totalElements", page.getTotalElements());
-
-			response.put("size", page.getSize());
-
-			return ApiResponse.success(ResponseCode.SUCCESS, "Feedback list fetched successfully", response);
+			return ApiResponse.success(ResponseCode.SUCCESS,
+					"Applicants to be schedule list fetched successfully", response);
 
 		} catch (Exception e) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
+	}
+
+	private String calculatePriority(LocalDateTime createdOn) {
+
+		long daysPassed = ChronoUnit.DAYS.between(createdOn.toLocalDate(), LocalDate.now());
+
+		if (daysPassed >= 5) {
+			return "High";
+		}
+
+		if (daysPassed >= 3) {
+			return "Medium";
+		}
+
+		return "Low";
 	}
 
 	@Override

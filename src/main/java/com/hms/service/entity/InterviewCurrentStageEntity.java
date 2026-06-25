@@ -60,6 +60,12 @@ public class InterviewCurrentStageEntity {
 	    @Column(name="feedback")
 	    private Boolean feedback;
 	    
+	    @Column(name="created_on")
+	    private LocalDateTime createdOn;
+	    
+	    @Column(name="created_by")
+	    private String createdBy;
+	    
 	  
 
 }
