@@ -29,6 +29,7 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCandidateDetailsEntity;
+import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
@@ -63,6 +64,7 @@ import com.hms.service.request.InterviewRoundRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewFeedbackRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.AIInterviewScheduleResponse;
 import com.hms.service.response.CommentTimelineResponse;
@@ -150,6 +152,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	
 	@Autowired
 	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
+	
+	
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1086,7 +1090,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackEntity.setSubmittedOn(LocalDateTime.now());
 		interviewFeedbackEntity.setSubmittedBy(username);
 		interviewFeedbackEntity.setUserId(userId.intValue());
-
 		interviewFeedbackRepository.save(interviewFeedbackEntity);
 
 		return ApiResponse.success(ResponseCode.SUCCESS,"success","Interview Feedback Submitted successfully");
@@ -1549,5 +1552,54 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("AIInterviewZoneServiceImpl :: Exit candidateOverview");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate Overview fetched successfully", response);
+	}
+	
+	@Override
+	public ApiResponse<?> updateInterviewFeedback(UpdateInterviewFeedbackRequest updateInterviewFeedbackRequest) {
+		log.info("InterviewPlanServiceImpl :: Inside updateInterviewFeedback");
+		InterviewFeedbackEntity interviewFeedbackEntity = interviewFeedbackRepository
+				.findById(updateInterviewFeedbackRequest.getId()).get();
+		if (updateInterviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+			
+			int planId = createJobDetailsRepository.findByJobId(updateInterviewFeedbackRequest.getJobId()).getPlanId();
+			
+			
+//			int currentRoundOrder=inter;
+//			
+//			
+			
+			
+			
+			
+			
+			List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(planId);
+			int nextStageid = 0;
+			for (InterviewRoundEntity interviewRoundEntity : interviewRoundEntities) {
+				if (interviewRoundEntity.getRoundOrder() > updateInterviewFeedbackRequest.getCurrentStageId()) {
+					nextStageid = interviewRoundEntity.getStageTypeId();
+					break;
+				}
+			}
+
+//			InterviewCurrentStageEntity currentStage = interviewCurrentStageRepository
+//					.findByApplicationIdAndFeedbackFalse(request.getApplicantId());
+//			log.info("enter into interview current satge" + currentStage);
+
+//			currentStage.setFeedback(true);
+//			interviewCurrentStageRepository.save(currentStage);
+//
+//			if (nextStageid > 0) {
+//				InterviewCurrentStageEntity interviewCurrentStageEntity = new InterviewCurrentStageEntity();
+//				interviewCurrentStageEntity.setApplicationId(request.getApplicantId());
+//				interviewCurrentStageEntity.setCurrentStageType(nextStageid);
+//				interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+//
+//			}
+
+		}
+		
+		
+		log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
+		return null;
 	}
 }

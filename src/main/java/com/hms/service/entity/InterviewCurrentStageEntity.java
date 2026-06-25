@@ -49,6 +49,9 @@ public class InterviewCurrentStageEntity {
 	    @Column(name="feedback")
 	    private Boolean feedback;
 	    
+	    @Column(name="round_order")
+	    private Integer roundOrder;
+	    
 	  
 
 }

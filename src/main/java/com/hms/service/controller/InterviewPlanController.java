@@ -18,6 +18,7 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewFeedbackRequest;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -80,6 +81,14 @@ public class InterviewPlanController {
 		ApiResponse<?> response = interviewPlanService.interviewFeedback(request);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
+	
+	@PutMapping("/update-interview-feedback")
+	public ResponseEntity<ApiResponse<?>> updateInterviewFeedback(@RequestBody UpdateInterviewFeedbackRequest updaInterviewFeedbackRequest) {
+		
+		
+		return null;
+	}
+	
 
 	@PostMapping("/interview-schedule")
 	public ResponseEntity<ApiResponse<?>> scheduleInterview(@RequestBody InterviewScheduleRequest request){

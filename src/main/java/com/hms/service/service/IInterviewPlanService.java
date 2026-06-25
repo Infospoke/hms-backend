@@ -7,6 +7,7 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewFeedbackRequest;
 import com.hms.service.wrappers.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -46,6 +47,8 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getAllAIInterviews(SpecificationFilterRequest request);
 
 	ApiResponse<?> candidateOverview(Integer applicantId);
+	
+	ApiResponse<?> updateInterviewFeedback(UpdateInterviewFeedbackRequest updateInterviewFeedbackRequest);
 
 
 
