@@ -1256,7 +1256,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				.findByApplicantIdAndInterviewDate(applicationId, LocalDate.now());
 
 		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
-				.findByApplicationIdAndToScheduleFalse(applicationId);
+				.findByApplicationIdAndFeedbackFalse(applicationId);
 		
 
 		Duration duration = Duration.between(interviewScheduleEntity.getStartTime(),
