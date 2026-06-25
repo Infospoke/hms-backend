@@ -30,6 +30,8 @@ public class InterviewerAssignmentEntity {
 
 	@Column(name = "round_id")
 	private Long roundId;
+	
+	private Integer stageTypeId;
 
 	@Column(name = "stage_name")
 	private String stageName;
@@ -69,9 +71,6 @@ public class InterviewerAssignmentEntity {
 	
 	@Column(name="user_id")
 	private Long userId;
-
-	@Column(name="priority")
-	private String priority;
 
 	
 }

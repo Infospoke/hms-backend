@@ -30,8 +30,8 @@ public class InterviewFeedbackEntity {
 	@Column(name="interview_type")
 	private String interviewType;
 	
-	@Column(name="round_type")
-	private String roundType;
+	@Column(name="current_stage_id")
+	private Integer currentStageId;
 	
 	@Column(name="overall_rating")
 	private Integer overallRating;

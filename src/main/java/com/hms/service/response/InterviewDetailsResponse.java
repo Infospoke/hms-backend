@@ -1,5 +1,6 @@
 package com.hms.service.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -32,11 +33,11 @@ public class InterviewDetailsResponse {
     
     private String InterviewMode;
     
-    private String InterviewRound;
+    private Integer InterviewRound;
     
-    private LocalDateTime scheduleTime;
+    private LocalDate scheduleTime;
     
-    private LocalTime duration;
+    private String duration;
     
     private String InterviewFlatform;
 

@@ -17,6 +17,7 @@ import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCandidateDetailsEntity;
+import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
@@ -1129,26 +1130,17 @@ public class SpecificationFilterRequest {
 		return spec;
 	}
 
-	public Specification<InterviewCandidateDetailsEntity> buildTodayInterviewSpecification(Integer userId) {
+	public Specification<InterviewCurrentStageEntity> buildTodayInterviewSpecification(Integer userId) {
 
 		return (root, query, cb) -> {
 
 			List<Predicate> predicates = new ArrayList<>();
 
 			// Logged-in user filter
-			predicates.add(cb.equal(root.get("userId"), userId));
+			predicates.add(cb.equal(root.get("interviewerId"), userId));
+			predicates.add(cb.equal(root.get("interviewDate"), LocalDate.now()));
 
-			String search = getFilter("search");
-
-			if (search != null && !search.isBlank()) {
-
-				String searchText = "%" + search.toLowerCase().trim() + "%";
-
-				predicates.add(cb.or(cb.like(cb.lower(root.get("canidateName")), searchText),
-						cb.like(cb.lower(root.get("jobTitle")), searchText)
-
-				));
-			}
+			
 
 			String interviewType = getFilter("interviewType");
 
@@ -1164,7 +1156,7 @@ public class SpecificationFilterRequest {
 				predicates.add(cb.equal(cb.lower(root.get("round")), round.toLowerCase()));
 			}
 
-			Specification<InterviewCandidateDetailsEntity> dateSpecification = dateSpec("createdOn");
+			Specification<InterviewCurrentStageEntity> dateSpecification = dateSpec("createdOn");
 
 			if (dateSpecification != null) {
 
@@ -1178,7 +1170,7 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
-
+	
 	public Specification<InterviewerAssignmentEntity> buildInterviewAssignmentSpecification(Integer userId) {
 
 		return (root, query, cb) -> {
@@ -1397,77 +1389,80 @@ public class SpecificationFilterRequest {
 
 	public Specification<CreateJobDetailsEntity> buildJobsSpecification() {
 
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			// Only open jobs
+			predicates.add(cb.or(cb.isTrue(root.get("isOpen")), cb.isNull(root.get("isOpen"))));
+
+			String country = getFilter("country");
+
+			if (country != null && !country.isBlank()) {
+
+				predicates.add(cb.like(cb.lower(root.get("country")), "%" + country.toLowerCase().trim() + "%"));
+			}
+
+			String location = getFilter("location");
+
+			if (location != null && !location.isBlank()) {
+
+				predicates.add(cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase().trim() + "%"));
+			}
+
+			String workMode = getFilter("workMode");
+
+			if (workMode != null && !workMode.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(root.get("workMode")), workMode.toLowerCase().trim()));
+			}
+
+			String employmentType = getFilter("employmentType");
+
+			if (employmentType != null && !employmentType.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(root.get("employmentType")), employmentType.toLowerCase().trim()));
+			}
+
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.toLowerCase().trim() + "%";
+
+				predicates.add(cb.or(cb.like(cb.lower(root.get("jobTitle")), keyword),
+						cb.like(cb.lower(root.get("jobCode")), keyword)));
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+	
+	public Specification<InterviewCurrentStageEntity> buildFeedbackSpecification() {
+
 	    return (root, query, cb) -> {
 
 	        List<Predicate> predicates = new ArrayList<>();
 
-	        // Only open jobs
-	        predicates.add(
-	                cb.or(
-	                        cb.isTrue(root.get("isOpen")),
-	                        cb.isNull(root.get("isOpen"))
+	        predicates.add(cb.isFalse(root.get("feedback")));
+	        predicates.add(cb.isTrue(root.get("interviewCompleted")));
+
+	        LocalDate[] dates = getDateRange();
+
+	        if (dates != null) {
+
+	            predicates.add(
+	                cb.greaterThanOrEqualTo(
+	                    root.get("interviewCompletedOn"),
+	                    dates[0].atStartOfDay()
 	                )
-	        );
-
-	        String country = getFilter("country");
-
-	        if (country != null && !country.isBlank()) {
-
-	            predicates.add(
-	                    cb.like(
-	                            cb.lower(root.get("country")),
-	                            "%" + country.toLowerCase().trim() + "%"
-	                    )
 	            );
-	        }
-
-	        String location = getFilter("location");
-
-	        if (location != null && !location.isBlank()) {
 
 	            predicates.add(
-	                    cb.like(
-	                            cb.lower(root.get("location")),
-	                            "%" + location.toLowerCase().trim() + "%"
-	                    )
-	            );
-	        }
-
-	        String workMode = getFilter("workMode");
-
-	        if (workMode != null && !workMode.isBlank()) {
-
-	            predicates.add(
-	                    cb.equal(
-	                            cb.lower(root.get("workMode")),
-	                            workMode.toLowerCase().trim()
-	                    )
-	            );
-	        }
-
-	        String employmentType = getFilter("employmentType");
-
-	        if (employmentType != null && !employmentType.isBlank()) {
-
-	            predicates.add(
-	                    cb.equal(
-	                            cb.lower(root.get("employmentType")),
-	                            employmentType.toLowerCase().trim()
-	                    )
-	            );
-	        }
-
-	        String search = getFilter("search");
-
-	        if (search != null && !search.isBlank()) {
-
-	            String keyword = "%" + search.toLowerCase().trim() + "%";
-
-	            predicates.add(
-	                    cb.or(
-	                            cb.like(cb.lower(root.get("jobTitle")), keyword),
-	                            cb.like(cb.lower(root.get("jobCode")), keyword)
-	                    )
+	                cb.lessThan(
+	                    root.get("interviewCompletedOn"),
+	                    dates[1].plusDays(1).atStartOfDay()
+	                )
 	            );
 	        }
 
@@ -1475,6 +1470,4 @@ public class SpecificationFilterRequest {
 	    };
 	}
 
-
 }
-

@@ -27,6 +27,8 @@ public class InterviewRoundEntity {
 	private String stageName;
 
 	private String stageType;
+	
+	private Integer stageTypeId;
 
 	private String interviewMode;
 

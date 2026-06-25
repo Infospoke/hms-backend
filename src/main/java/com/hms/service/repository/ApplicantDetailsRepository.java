@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.hms.service.entity.ApplicanDetailsEntity;
 
 @Repository
-public interface ResumeAnalysisUpdateRepository extends JpaRepository<ApplicanDetailsEntity,Integer> {
+public interface ApplicantDetailsRepository extends JpaRepository<ApplicanDetailsEntity,Integer> {
 
 	Optional<ApplicanDetailsEntity> findByApplicationId(Integer applicationId);
 
