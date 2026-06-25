@@ -1162,5 +1162,5 @@ public class Constants {
 	public static final String RESUME = "Resume";
 	public static final String ADDITIONAL = "Additional";
 	public static final String BUCKETNAME = "infospokejobapplicationsbucket";
-
+public static final String MOVE_TO_INTERVIEW ="Move to Interview";
 }

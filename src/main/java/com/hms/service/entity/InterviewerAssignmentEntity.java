@@ -31,6 +31,7 @@ public class InterviewerAssignmentEntity {
 	@Column(name = "round_id")
 	private Long roundId;
 	
+	@Column(name = "stage_type_id")
 	private Integer stageTypeId;
 
 	@Column(name = "stage_name")
