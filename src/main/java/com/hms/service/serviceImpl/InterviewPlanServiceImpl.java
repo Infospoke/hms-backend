@@ -1,5 +1,6 @@
 package com.hms.service.serviceImpl;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -47,6 +48,7 @@ import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewCandidateDetailsRepository;
+import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
@@ -55,7 +57,7 @@ import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
-import com.hms.service.repository.ResumeAnalysisUpdateRepository;
+import com.hms.service.repository.ApplicantDetailsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.InterviewFeedbackRequest;
@@ -136,7 +138,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	private CreateJobDetailsRepository createJobDetailsRepository;
 
 	@Autowired
-	private ResumeAnalysisUpdateRepository resumeAnalysisUpdateRepository;
+	private ApplicantDetailsRepository applicantDetailsRepository;
+	
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
@@ -151,9 +154,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	private AInterviewQuestionsRepository aiInterviewQuestionsRepository;
 	
 	@Autowired
-	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
+
+	private InterviewCurrentStageRepository interviewCurrentStageRepository;
 	
-	
+	@Autowired
+    private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
+
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1116,6 +1122,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		entity.setCreatedOn(LocalDateTime.now());
 
 		interviewScheduleRepository.save(entity);
+		
+		InterviewCurrentStageEntity interviewCurrentStageEntity = interviewCurrentStageRepository.findByApplicationIdAndToScheduleFalse(request.getApplicantId());		
+		interviewCurrentStageEntity.setInterviewDate(request.getInterviewDate());
+		interviewCurrentStageEntity.setStartTime(request.getStartTime());
+		interviewCurrentStageEntity.setEndTime(request.getEndTime());
+		interviewCurrentStageEntity.setToSchedule(true);
+		interviewCurrentStageEntity.setInterviewCompleted(false);
+		interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+		
 
 		log.info("InterviewPlanServiceImpl:Exit from  the scheduleInterview method");
 
@@ -1219,36 +1234,61 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		log.info("InterviewPlanServiceImpl :: getInterviewDetails");
 
-		Optional<ApplicanDetailsEntity> optional = resumeAnalysisUpdateRepository.findByApplicationId(applicationId);
+
+	    Optional<ApplicanDetailsEntity> optional =
+	    		applicantDetailsRepository.findByApplicationId(applicationId);
 
 		if (optional.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview details not found");
 		}
 
-		ApplicanDetailsEntity entity = optional.get();
+	    ApplicanDetailsEntity entity = optional.get();
+	    
+	    Integer jobId=entity.getJobId();
+	    
+	    Optional<CreateJobDetailsEntity> jobDetailsEnity=createJobDetailsRepository.findById(jobId);
+	    CreateJobDetailsEntity createJobDetailsEntity=jobDetailsEnity.get();
+	    Integer deptId=createJobDetailsEntity.getDepartmentId();
+	    
+	    
+	    InterviewDetailsResponse response = new InterviewDetailsResponse();
+        String department=departmentsRepository.findById(deptId).get().getDepartmentName();
+        
+		InterviewScheduleEntity interviewScheduleEntity = interviewScheduleRepository
+				.findByApplicantIdAndInterviewDate(applicationId, LocalDate.now());
 
-		Integer jobId = entity.getJobId();
+		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
+				.findByApplicationIdAndToScheduleFalse(applicationId);
+		
 
-		Optional<CreateJobDetailsEntity> jobDetailsEnity = createJobDetailsRepository.findById(jobId);
-		CreateJobDetailsEntity createJobDetailsEntity = jobDetailsEnity.get();
-		Integer deptId = createJobDetailsEntity.getDepartmentId();
+		Duration duration = Duration.between(interviewScheduleEntity.getStartTime(),
+				interviewScheduleEntity.getEndTime());
 
-		InterviewDetailsResponse response = new InterviewDetailsResponse();
-		String department = departmentsRepository.findById(deptId).get().getDepartmentName();
+		long hours = duration.toHours();
+		long minutes = duration.toMinutesPart();
 
-		response.setCandidateName(entity.getName());
-		response.setJobTitle(createJobDetailsEntity.getJobTitle());
-		response.setDepartment(department);
-		response.setInterviewMode(null);
-		response.setInterviewRound(null);
-		response.setInterviewType(null);
-		response.setInterviewFlatform(null);
-		response.setScheduleTime(null);
-		response.setDuration(null);
-		response.setDesignation(entity.getDesignation());
-		response.setTotalExperience(entity.getTotalExperience());
-		response.setCurrentCompany(entity.getCurrentCompany());
+		String durationText = hours > 0 ? hours + " Hour(s) " + minutes + " Minute(s)" : minutes + " Minute(s)";
+		
+		Integer currentStageId=currentStageEntity.getCurrentStageType();;
+		
+		String currentStageName=interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
+		
+		Integer interviewRound=interviewCurrentStageRepository.countByApplicationId(applicationId);
+		interviewRound=interviewRound+1;
+        
+	    response.setCandidateName(entity.getName());
+	    response.setJobTitle(createJobDetailsEntity.getJobTitle());
+	    response.setDepartment(department);
+		response.setInterviewMode(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
+	    response.setInterviewRound(interviewRound);
+	    response.setInterviewType(currentStageName);
+	    response.setScheduleTime(currentStageEntity.getInterviewDate());
+	    response.setDuration(durationText);
+	    response.setDesignation(entity.getDesignation());
+	    response.setTotalExperience(entity.getTotalExperience());
+	    response.setCurrentCompany(entity.getCurrentCompany());
 
+		
 		// Experience Details
 		List<InterviewExperienceResponse> experienceResponses = new ArrayList<>();
 

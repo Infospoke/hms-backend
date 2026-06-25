@@ -1,6 +1,8 @@
 package com.hms.service.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,7 +31,8 @@ public class InterviewCurrentStageEntity {
 	    private Integer interviewerId;
 	    
 	    @Column(name="application_id")
-	    private String applicationId;
+	    private Integer applicationId;
+
 	    
 	    @Column(name="current_stage_type")
 	    private Integer currentStageType;
@@ -44,7 +47,15 @@ public class InterviewCurrentStageEntity {
 	    private LocalDateTime interviewCompletedOn;
 	    
 	    @Column(name="interview_date")
-	    private LocalDateTime interviewDate;
+	    private LocalDate interviewDate;
+
+	    
+	    @Column(name="start_time")
+		private LocalTime startTime;
+		
+		@Column(name="end_time")
+		private LocalTime endTime;
+
 	    
 	    @Column(name="feedback")
 	    private Boolean feedback;
