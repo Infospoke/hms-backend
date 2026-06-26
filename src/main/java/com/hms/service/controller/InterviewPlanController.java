@@ -83,10 +83,9 @@ public class InterviewPlanController {
 	}
 	
 	@PutMapping("/update-interview-feedback")
-	public ResponseEntity<ApiResponse<?>> updateInterviewFeedback(@RequestBody UpdateInterviewFeedbackRequest updaInterviewFeedbackRequest) {
-		
-		
-		return null;
+	public ResponseEntity<ApiResponse<?>> updateInterviewFeedback(@RequestBody InterviewFeedbackRequest interviewFeedbackRequest) {
+		ApiResponse<?> response=interviewPlanService.updateInterviewFeedback(interviewFeedbackRequest);
+		return new ResponseEntity<>(response,HttpStatus.OK);
 	}
 	
 
