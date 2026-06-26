@@ -1044,7 +1044,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	    log.info("CreateJobServiceImpl :: Inside the getAllJobs");
 
-		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findAll(request.buildJobsSpecification());
+		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findAll(request.buildJobsSpecification(),Sort.by(Sort.Direction.DESC, "createdAt"));
 
 	    List<JobDetailsResponse> response =
 	            jobs.stream()

@@ -71,5 +71,7 @@ public class JobApplicationEntity {
 	
 	@Column(name = "rejected")
 	private Boolean rejected;
-
+	
+	@Column(name="in_person_interviews")
+	private boolean inPersonInterviews;
 }

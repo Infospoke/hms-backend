@@ -149,7 +149,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Autowired
 	private ApplicantDetailsRepository applicantDetailsRepository;
 
-
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
 
@@ -161,20 +160,18 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private AInterviewQuestionsRepository aiInterviewQuestionsRepository;
-	
+
 	@Autowired
 
 	private InterviewCurrentStageRepository interviewCurrentStageRepository;
-	
+
 	@Autowired
-    private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
-	
+	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
+
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
 	
 	
-
-
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -206,10 +203,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				roundEntity.setRoundOrder(round.getRoundOrder());
 				roundEntity.setStageName(round.getStageName());
 
-				
-
-				InterviewRoundDropDownEntity dropdown = interviewRoundDropDownRepository.findById(round.getStageTypeId()).orElseThrow(() -> new RuntimeException("Invalid Stage Type Id"));
-				roundEntity.setStageTypeId(round.getStageTypeId()); 
+				InterviewRoundDropDownEntity dropdown = interviewRoundDropDownRepository
+						.findById(round.getStageTypeId())
+						.orElseThrow(() -> new RuntimeException("Invalid Stage Type Id"));
+				roundEntity.setStageTypeId(round.getStageTypeId());
 
 				roundEntity.setStageType(dropdown.getRoundName());
 				roundEntity.setInterviewMode(round.getInterviewMode());
@@ -1122,9 +1119,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		currentStage.setFeedback(true);
 		interviewCurrentStageRepository.save(currentStage);
-
-		
-		ApiResponse<?> response= updateInterviewFeedback(request);
+		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+			ApiResponse<?> response = updateInterviewFeedback(request);
+			if (!response.getMessage().equalsIgnoreCase("")) {
+				return ApiResponse.failure(ResponseCode.FAILURE, response.getMessage());
+			}
+		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Feedback Submitted successfully");
 	}
@@ -1150,8 +1150,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		entity.setCreatedOn(LocalDateTime.now());
 
 		interviewScheduleRepository.save(entity);
-		
-		InterviewCurrentStageEntity interviewCurrentStageEntity = interviewCurrentStageRepository.findByApplicationIdAndToScheduleFalse(request.getApplicantId());		
+
+		InterviewCurrentStageEntity interviewCurrentStageEntity = interviewCurrentStageRepository
+				.findByApplicationIdAndToScheduleFalse(request.getApplicantId());
 		interviewCurrentStageEntity.setInterviewDate(request.getInterviewDate());
 		interviewCurrentStageEntity.setStartTime(request.getStartTime());
 		interviewCurrentStageEntity.setEndTime(request.getEndTime());
@@ -1159,7 +1160,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewCurrentStageEntity.setInterviewCompleted(false);
 		interviewCurrentStageEntity.setFeedback(false);
 		interviewCurrentStageRepository.save(interviewCurrentStageEntity);
-		
 
 		log.info("InterviewPlanServiceImpl:Exit from  the scheduleInterview method");
 
@@ -1329,54 +1329,53 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Override
 	public ApiResponse<?> getInterviewDetails(Integer applicationId) {
- 
+
 		log.info("InterviewPlanServiceImpl :: getInterviewDetails");
- 
- 
-	    Optional<ApplicanDetailsEntity> optional =
-	    		applicantDetailsRepository.findByApplicationId(applicationId);
- 
+
+		Optional<ApplicanDetailsEntity> optional = applicantDetailsRepository.findByApplicationId(applicationId);
+
 		if (optional.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview details not found");
 		}
- 
-	    ApplicanDetailsEntity entity = optional.get();
-	    
-	    Integer jobId=entity.getJobId();
-	    
-	    Optional<CreateJobDetailsEntity> jobDetailsEnity=createJobDetailsRepository.findById(jobId);
-	    CreateJobDetailsEntity createJobDetailsEntity=jobDetailsEnity.get();
-	    Integer deptId=createJobDetailsEntity.getDepartmentId();
-	    
-	    
-	    InterviewDetailsResponse response = new InterviewDetailsResponse();
-        String department=departmentsRepository.findById(deptId).get().getDepartmentName();
-        
+
+		ApplicanDetailsEntity entity = optional.get();
+
+		Integer jobId = entity.getJobId();
+
+		Optional<CreateJobDetailsEntity> jobDetailsEnity = createJobDetailsRepository.findById(jobId);
+		CreateJobDetailsEntity createJobDetailsEntity = jobDetailsEnity.get();
+		Integer deptId = createJobDetailsEntity.getDepartmentId();
+
+		InterviewDetailsResponse response = new InterviewDetailsResponse();
+		String department = departmentsRepository.findById(deptId).get().getDepartmentName();
+
 		InterviewScheduleEntity interviewScheduleEntity = interviewScheduleRepository
 				.findByApplicantIdAndInterviewDate(applicationId, LocalDate.now());
- 
+
 		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
 				.findByApplicationIdAndFeedbackFalse(applicationId);
-		
+
 		Duration duration = Duration.between(interviewScheduleEntity.getStartTime(),
 				interviewScheduleEntity.getEndTime());
- 
+
 		long hours = duration.toHours();
 		long minutes = duration.toMinutesPart();
- 
+
 		String durationText = hours > 0 ? hours + " Hour(s) " + minutes + " Minute(s)" : minutes + " Minute(s)";
-		
-		Integer currentStageId=currentStageEntity.getCurrentStageType();;
-		
-		String currentStageName=interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
-		
-		Integer interviewRound=interviewCurrentStageRepository.countByApplicationId(applicationId);
-		interviewRound=interviewRound+1;
-        
-	    response.setCandidateName(entity.getName());
-	    response.setJobTitle(createJobDetailsEntity.getJobTitle());
-	    response.setDepartment(department);
+
+		Integer currentStageId = currentStageEntity.getCurrentStageType();
+		;
+
+		String currentStageName = interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
+
+		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(applicationId);
+		interviewRound = interviewRound + 1;
+
+		response.setCandidateName(entity.getName());
+		response.setJobTitle(createJobDetailsEntity.getJobTitle());
+		response.setDepartment(department);
 		response.setInterviewMode(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
+
 	    response.setInterviewRound(interviewRound);
 	    response.setInterviewType(currentStageName);
 	    response.setDuration(durationText);
@@ -1385,52 +1384,51 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	    response.setCurrentCompany(entity.getCurrentCompany());
 	    response.setScheduleTime(currentStageEntity.getStartTime());
 	    response.setScheduleDate(currentStageEntity.getInterviewDate());
- 
-		
+
 		// Experience Details
 		List<InterviewExperienceResponse> experienceResponses = new ArrayList<>();
- 
+
 		if (entity.getExperienceDetails() != null) {
- 
+
 			for (Map<String, Object> exp : entity.getExperienceDetails()) {
- 
+
 				InterviewExperienceResponse experience = new InterviewExperienceResponse();
- 
+
 				experience.setCompany(String.valueOf(exp.get("company")));
- 
+
 				experience.setRole(String.valueOf(exp.get("job_title")));
- 
+
 				experience.setStartDate(String.valueOf(exp.get("start_date")));
- 
+
 				experience.setEndDate(String.valueOf(exp.get("end_date")));
- 
+
 				experienceResponses.add(experience);
 			}
 		}
- 
+
 		response.setExperienceDetails(experienceResponses);
- 
+
 		// Project Details
 		List<InterviewProjectResponse> projectResponses = new ArrayList<>();
- 
+
 		if (entity.getProjects() != null) {
- 
+
 			for (Map<String, Object> project : entity.getProjects()) {
- 
+
 				InterviewProjectResponse projectResponse = new InterviewProjectResponse();
- 
+
 				projectResponse.setProjectTitle(String.valueOf(project.get("project_title")));
- 
+
 				projectResponse.setTechStack((List<String>) project.get("tech_stack"));
- 
+
 				projectResponse.setDescription((List<String>) project.get("description"));
- 
+
 				projectResponses.add(projectResponse);
 			}
 		}
- 
+
 		response.setProjectDetails(projectResponses);
- 
+
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview details fetched successfully", response);
 	}
 
@@ -1442,9 +1440,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
-		
-			Specification<InterviewCurrentStageEntity> specification = request
-					.toBeScheduleInterviewSpecification();
+			Specification<InterviewCurrentStageEntity> specification = request.toBeScheduleInterviewSpecification();
 
 			List<InterviewCurrentStageEntity> stages = interviewCurrentStageRepository.findAll(specification);
 
@@ -1485,8 +1481,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				map.put("requestedOn", stage.getCreatedOn());
 				map.put("roundId", stage.getCurrentStageType());
 
-				map.put("priority",
-						stage.getCreatedOn() != null ? calculatePriority(stage.getCreatedOn()) : "Low");
+				map.put("priority", stage.getCreatedOn() != null ? calculatePriority(stage.getCreatedOn()) : "Low");
 
 				map.put("applicationId", stage.getApplicationId());
 
@@ -1500,30 +1495,22 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				String searchText = search.toLowerCase().trim();
 
-				content = content.stream()
-						.filter(map -> {
+				content = content.stream().filter(map -> {
 
-							String candidateName = String
-									.valueOf(map.getOrDefault("candidateName", ""))
-									.toLowerCase();
+					String candidateName = String.valueOf(map.getOrDefault("candidateName", "")).toLowerCase();
 
-							String jobTitle = String
-									.valueOf(map.getOrDefault("jobTitle", ""))
-									.toLowerCase();
+					String jobTitle = String.valueOf(map.getOrDefault("jobTitle", "")).toLowerCase();
 
-							return candidateName.contains(searchText)
-									|| jobTitle.contains(searchText);
+					return candidateName.contains(searchText) || jobTitle.contains(searchText);
 
-						})
-						.toList();
+				}).toList();
 			}
 			String priorityFilter = request.getFilter("priority");
 
 			if (priorityFilter != null && !priorityFilter.isBlank()) {
 
-				content = content.stream()
-						.filter(map -> priorityFilter.equalsIgnoreCase(
-								String.valueOf(map.getOrDefault("priority", ""))))
+				content = content.stream().filter(
+						map -> priorityFilter.equalsIgnoreCase(String.valueOf(map.getOrDefault("priority", ""))))
 						.toList();
 			}
 			// Dynamic Pagination After Search
@@ -1533,8 +1520,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			int end = Math.min(start + request.getSize(), totalElements);
 
-			List<Map<String, Object>> paginatedContent = start < totalElements
-					? content.subList(start, end)
+			List<Map<String, Object>> paginatedContent = start < totalElements ? content.subList(start, end)
 					: Collections.emptyList();
 
 			int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
@@ -1547,9 +1533,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			response.put("totalElements", totalElements);
 			response.put("size", paginatedContent.size());
 
-			return ApiResponse.success(ResponseCode.SUCCESS,
-					"Applicants to be schedule list fetched successfully", response);
-
+			return ApiResponse.success(ResponseCode.SUCCESS, "Applicants to be schedule list fetched successfully",
+					response);
 
 		} catch (Exception e) {
 
@@ -1810,10 +1795,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				response.put("interviewDate", stage.getInterviewDate());
 
 				response.put("endTime", stage.getEndTime());
+
 				
 				response.put("jobId",job.getJobId());
 				Integer deptId=job.getDepartmentId();
 				String departmentName=departmentsRepository.findById(deptId).get().getDepartmentName();
+
+
 
 				// SLA
 
@@ -1940,41 +1928,51 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	}
 
-
-	
 	@Override
 	public ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest) {
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewFeedback");
 
 		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
-			
+
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
-			int currentOrder=interviewRoundRepository.findByInterviewPlanIdAndStageTypeId(planId,interviewFeedbackRequest.getStageTypeId()).getRoundOrder();
-			
-			List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(planId);
+			int currentOrder = interviewRoundRepository
+					.findByInterviewPlanIdAndStageTypeId(planId, interviewFeedbackRequest.getStageTypeId())
+					.getRoundOrder();
+
+			List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository
+					.findByInterviewPlan_IdOrderByRoundOrderAsc(planId);
 			int nextStageid = 0;
-			int roundOrder=0;
+			int roundOrder = 0;
 			for (InterviewRoundEntity interviewRoundEntity : interviewRoundEntities) {
 				if (interviewRoundEntity.getRoundOrder() > currentOrder) {
 					nextStageid = interviewRoundEntity.getStageTypeId();
-					roundOrder=interviewRoundEntity.getRoundOrder();
+					roundOrder = interviewRoundEntity.getRoundOrder();
 					break;
 				}
 			}
-			if (nextStageid!=0) {
+			if (nextStageid != 0) {
 				InterviewCurrentStageEntity interviewCurrentStageEntity = new InterviewCurrentStageEntity();
 				interviewCurrentStageEntity.setApplicationId(interviewFeedbackRequest.getApplicantId());
 				interviewCurrentStageEntity.setCurrentStageType(nextStageid);
 				interviewCurrentStageEntity.setRoundOrder(roundOrder);
-				int interviewerId=interviewerAssignmentRepository.findByJobIdAndPlanIdAndStageTypeId(interviewFeedbackRequest.getJobId(),planId,roundOrder).getInterviewerUserId().intValue();
+				int interviewerId = interviewerAssignmentRepository
+						.findByJobIdAndPlanIdAndStageTypeId(interviewFeedbackRequest.getJobId(), planId, roundOrder)
+						.getInterviewerUserId().intValue();
 				interviewCurrentStageEntity.setInterviewerId(interviewerId);
 				interviewCurrentStageEntity.setToSchedule(false);
 				interviewCurrentStageEntity.setCreatedOn(LocalDate.now(ZoneId.of("Asia/Kolkata")));
 				interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+				log.info("InterviewPlanServiceImpl :: Applicant moved to the next Round");
+			} else {
+				JobApplicationEntity applicationEntity = jobApplicationRepository
+						.findById(interviewFeedbackRequest.getApplicantId()).get();
+				applicationEntity.setInPersonInterviews(true);
+				jobApplicationRepository.save(applicationEntity);
+				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 			}
 		}
 		log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
-		return ApiResponse.success(ResponseCode.SUCCESS,"Applicant moved to next round" );
+		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant moved to next round");
 	}
 
 }
