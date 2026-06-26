@@ -25,4 +25,6 @@ public interface InterviewRoundRepository extends JpaRepository<InterviewRoundEn
 	
 	InterviewRoundEntity findByInterviewPlanIdAndStageTypeId(Integer interviewPlanId,Integer stageTypeId);
 
+	Integer findByInterviewPlanIdAndStageType(Integer planId, Integer currentStageType);
+
 }
