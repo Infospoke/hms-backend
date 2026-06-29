@@ -1,14 +1,13 @@
 package com.hms.service.service;
 
-import org.jspecify.annotations.Nullable;
-
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
-import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.request.SpecificationFilterRequest;
-import com.hms.service.request.UpdateInterviewFeedbackRequest;
+import com.hms.service.request.UpdateInterviewPlanRequest;
+import com.hms.service.response.InterviewDashboardResponse;
 import com.hms.service.wrappers.ApiResponse;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -49,6 +48,11 @@ public interface IInterviewPlanService {
 	ApiResponse<?> candidateOverview(Integer applicantId);
 	
 	ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest);
+
+
+	ApiResponse<?> getInterviewProgressList(SpecificationFilterRequest request);
+	
+	ApiResponse<InterviewDashboardResponse> getInterviewDashboard();
 
 
 
