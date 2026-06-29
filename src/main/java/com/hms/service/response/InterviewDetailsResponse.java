@@ -35,7 +35,7 @@ public class InterviewDetailsResponse {
     
     private Integer InterviewRound;
     
-    private LocalDate scheduleTime;
+    private LocalTime scheduleTime;
     
     private String duration;
     
@@ -44,5 +44,7 @@ public class InterviewDetailsResponse {
     private List<InterviewExperienceResponse> experienceDetails;
 
     private List<InterviewProjectResponse> projectDetails;
+    
+    private LocalDate scheduleDate;
 
 }

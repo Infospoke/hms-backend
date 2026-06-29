@@ -170,6 +170,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
+	
+	
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1253,10 +1255,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 			Integer departmentId = job.getDepartmentId();
+			Integer planId=job.getPlanId();
 
 			String departmentName = departmentMap.get(departmentId);
-
 			Integer currentStageType = stage.getCurrentStageType();
+			
+			Integer roundOrder=interviewRoundRepository.findByInterviewPlanIdAndStageType(planId,currentStageType);
+
+			
 
 			String stageName = stageNameMap.get(currentStageType);
 
@@ -1272,6 +1278,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			interviewData.put("stageName", stageName);
 			interviewData.put("startTime", stage.getStartTime());
 			interviewData.put("endTime", stage.getEndTime());
+			interviewData.put("round", roundOrder);
 
 			responseList.add(interviewData);
 		}
@@ -1368,13 +1375,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setJobTitle(createJobDetailsEntity.getJobTitle());
 		response.setDepartment(department);
 		response.setInterviewMode(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
-		response.setInterviewRound(interviewRound);
-		response.setInterviewType(currentStageName);
-		response.setScheduleTime(currentStageEntity.getInterviewDate());
-		response.setDuration(durationText);
-		response.setDesignation(entity.getDesignation());
-		response.setTotalExperience(entity.getTotalExperience());
-		response.setCurrentCompany(entity.getCurrentCompany());
+
+	    response.setInterviewRound(interviewRound);
+	    response.setInterviewType(currentStageName);
+	    response.setDuration(durationText);
+	    response.setDesignation(entity.getDesignation());
+	    response.setTotalExperience(entity.getTotalExperience());
+	    response.setCurrentCompany(entity.getCurrentCompany());
+	    response.setScheduleTime(currentStageEntity.getStartTime());
+	    response.setScheduleDate(currentStageEntity.getInterviewDate());
 
 		// Experience Details
 		List<InterviewExperienceResponse> experienceResponses = new ArrayList<>();
@@ -1775,14 +1784,24 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 						+ (application.getLastName() == null ? "" : application.getLastName());
 
 				response.put("applicantName", applicantName.trim());
+				Integer currentStageType=stage.getCurrentStageType();
+				String stageName=interviewRoundDropDownRepository.findById(currentStageType).get().getRoundName();
 
-				response.put("currentStageType", stage.getCurrentStageType());
+				response.put("currentStageType",stageName);
+				
+				
+				
 
 				response.put("interviewDate", stage.getInterviewDate());
 
 				response.put("endTime", stage.getEndTime());
 
-				response.put("jobId", job.getJobId());
+				
+				response.put("jobId",job.getJobId());
+				Integer deptId=job.getDepartmentId();
+				String departmentName=departmentsRepository.findById(deptId).get().getDepartmentName();
+
+
 
 				// SLA
 
@@ -1800,7 +1819,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 
 				response.put("sla", sla);
-
+             
 				if (job != null) {
 
 					response.put("jobId", job.getJobId());
@@ -1809,7 +1828,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 					response.put("jobTitle", job.getJobTitle());
 
-					response.put("department", job.getDepartmentId());
+					response.put("department",departmentName);
 				}
 
 				responseList.add(response);
@@ -1851,7 +1870,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				responseList = responseList.stream()
 
-						.filter(item -> round.equals(String.valueOf(item.get("currentStageType"))))
+						.filter(item -> round.equals(String.valueOf(item.get("stageName"))))
 
 						.toList();
 			}
