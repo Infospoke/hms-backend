@@ -1434,13 +1434,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Override
 	public ApiResponse<?> getScheduleList(SpecificationFilterRequest request) {
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String token = authHeader.substring(7);
+
+		Long userId = jwtService.extractUserId(token);
+		Integer userIdFromToken = userId.intValue();
 
 		try {
 
 			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
-			Specification<InterviewCurrentStageEntity> specification = request.toBeScheduleInterviewSpecification();
+			Specification<InterviewCurrentStageEntity> specification = request.toBeScheduleInterviewSpecification(userIdFromToken);
 
 			List<InterviewCurrentStageEntity> stages = interviewCurrentStageRepository.findAll(specification);
 

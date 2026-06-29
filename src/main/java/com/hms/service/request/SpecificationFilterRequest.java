@@ -1469,13 +1469,15 @@ public class SpecificationFilterRequest {
 	        return cb.and(predicates.toArray(new Predicate[0]));
 	    };
 	}
-	public Specification<InterviewCurrentStageEntity> toBeScheduleInterviewSpecification() {
+	public Specification<InterviewCurrentStageEntity> toBeScheduleInterviewSpecification(Integer userId) {
 
 		return (root, query, cb) -> {
 
 			List<Predicate> predicates = new ArrayList<>();
 
 			predicates.add(cb.isFalse(root.get("toSchedule")));
+			
+			 predicates.add(cb.equal(root.get("interviewerId"), userId));
 
 			String round = getFilter("round");
 
