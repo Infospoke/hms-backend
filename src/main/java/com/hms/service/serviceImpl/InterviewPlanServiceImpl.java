@@ -16,8 +16,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.IntegerRange;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.AIInterviewQuestionsEntity;
@@ -35,7 +32,6 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
-import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
@@ -1755,7 +1751,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("InterviewPlanServiceImpl :: Inside of getFeedbackList method");
 
 		try {
-			Specification<InterviewCurrentStageEntity> spec = request.buildFeedbackSpecification();
+			
+			String authHeader = httpServletRequest.getHeader("Authorization");
+			String token = authHeader.substring(7);
+
+			Long userId = jwtService.extractUserId(token);
+			Integer userIdFromToken = userId.intValue();
+			
+			Specification<InterviewCurrentStageEntity> spec =
+			        request.buildFeedbackSpecification(userIdFromToken);
 
 			List<InterviewCurrentStageEntity> interviewStages = interviewCurrentStageRepository.findAll(spec);
 			log.info("InterviewPlanServiceImpl :: retrived data from JobApplicationEntity ");
@@ -1931,7 +1935,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Override
 	public ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest) {
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewFeedback");
-
 		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
