@@ -1444,7 +1444,7 @@ public class SpecificationFilterRequest {
 	        predicates.add(cb.isFalse(root.get("feedback")));
 	        predicates.add(cb.isTrue(root.get("interviewCompleted")));
 
-	        predicates.add(cb.equal(root.get("userId"), userId));
+	        predicates.add(cb.equal(root.get("interviewerId"), userId));
 
 	        LocalDate[] dates = getDateRange();
 
