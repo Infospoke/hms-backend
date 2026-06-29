@@ -1998,10 +1998,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			Map<String, Object> result = new LinkedHashMap<>();
 
 			result.put("content", responseList);
-			result.put("currentPage", applicantPage.getNumber());
-			result.put("totalPages", applicantPage.getTotalPages());
-			result.put("totalElements", applicantPage.getTotalElements());
-			result.put("pageSize", applicantPage.getSize());
+
+			result.put("currentPage", request.getPage());
+
+			result.put("pageSize", request.getSize());
+
+			result.put("totalElements", responseList.size());
+
+			result.put("totalPages",responseList.isEmpty() ? 0 : (int) Math.ceil((double) responseList.size() / request.getSize()));
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Progress List fetched successfully", result);
 
@@ -2101,7 +2105,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		int completedRounds = 0;
 
-// Find current round order from interview rounds
 		Integer currentRoundOrder = rounds.stream()
 				.filter(r -> r.getStageTypeId().equals(currentStage.getCurrentStageType()))
 				.map(InterviewRoundEntity::getRoundOrder).findFirst().orElse(0);
