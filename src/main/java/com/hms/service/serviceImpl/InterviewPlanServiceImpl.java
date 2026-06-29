@@ -3,7 +3,6 @@ package com.hms.service.serviceImpl;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.IntegerRange;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,7 +33,6 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
-import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
@@ -47,6 +44,7 @@ import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AInterviewQuestionsRepository;
+import com.hms.service.repository.ApplicantDetailsRepository;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.ChildLinkCommentsRepository;
@@ -61,12 +59,9 @@ import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
-
 import com.hms.service.repository.InterviewerAssignmentRepository;
-
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
-import com.hms.service.repository.ApplicantDetailsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.InterviewFeedbackRequest;
@@ -75,15 +70,17 @@ import com.hms.service.request.InterviewRoundRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
-import com.hms.service.request.UpdateInterviewFeedbackRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.AIInterviewScheduleResponse;
 import com.hms.service.response.CommentTimelineResponse;
 import com.hms.service.response.InterviewApplicantDetailsResponse;
+import com.hms.service.response.InterviewDashboardResponse;
 import com.hms.service.response.InterviewDetailsResponse;
 import com.hms.service.response.InterviewExperienceResponse;
 import com.hms.service.response.InterviewPlanResponse;
+import com.hms.service.response.InterviewProgressListResponse;
 import com.hms.service.response.InterviewProjectResponse;
+import com.hms.service.response.InterviewRoundResponse;
 import com.hms.service.response.InterviewRoundsResponse;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.service.INotificationService;
@@ -170,8 +167,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
-	
-	
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -1255,14 +1250,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 			Integer departmentId = job.getDepartmentId();
-			Integer planId=job.getPlanId();
+			Integer planId = job.getPlanId();
 
 			String departmentName = departmentMap.get(departmentId);
 			Integer currentStageType = stage.getCurrentStageType();
-			
-			Integer roundOrder=interviewRoundRepository.findByInterviewPlanIdAndStageType(planId,currentStageType);
 
-			
+			Integer roundOrder = interviewRoundRepository.findByInterviewPlanIdAndStageType(planId, currentStageType);
 
 			String stageName = stageNameMap.get(currentStageType);
 
@@ -1376,14 +1369,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setDepartment(department);
 		response.setInterviewMode(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
 
-	    response.setInterviewRound(interviewRound);
-	    response.setInterviewType(currentStageName);
-	    response.setDuration(durationText);
-	    response.setDesignation(entity.getDesignation());
-	    response.setTotalExperience(entity.getTotalExperience());
-	    response.setCurrentCompany(entity.getCurrentCompany());
-	    response.setScheduleTime(currentStageEntity.getStartTime());
-	    response.setScheduleDate(currentStageEntity.getInterviewDate());
+		response.setInterviewRound(interviewRound);
+		response.setInterviewType(currentStageName);
+		response.setDuration(durationText);
+		response.setDesignation(entity.getDesignation());
+		response.setTotalExperience(entity.getTotalExperience());
+		response.setCurrentCompany(entity.getCurrentCompany());
+		response.setScheduleTime(currentStageEntity.getStartTime());
+		response.setScheduleDate(currentStageEntity.getInterviewDate());
 
 		// Experience Details
 		List<InterviewExperienceResponse> experienceResponses = new ArrayList<>();
@@ -1784,24 +1777,18 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 						+ (application.getLastName() == null ? "" : application.getLastName());
 
 				response.put("applicantName", applicantName.trim());
-				Integer currentStageType=stage.getCurrentStageType();
-				String stageName=interviewRoundDropDownRepository.findById(currentStageType).get().getRoundName();
+				Integer currentStageType = stage.getCurrentStageType();
+				String stageName = interviewRoundDropDownRepository.findById(currentStageType).get().getRoundName();
 
-				response.put("currentStageType",stageName);
-				
-				
-				
+				response.put("currentStageType", stageName);
 
 				response.put("interviewDate", stage.getInterviewDate());
 
 				response.put("endTime", stage.getEndTime());
 
-				
-				response.put("jobId",job.getJobId());
-				Integer deptId=job.getDepartmentId();
-				String departmentName=departmentsRepository.findById(deptId).get().getDepartmentName();
-
-
+				response.put("jobId", job.getJobId());
+				Integer deptId = job.getDepartmentId();
+				String departmentName = departmentsRepository.findById(deptId).get().getDepartmentName();
 
 				// SLA
 
@@ -1819,7 +1806,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 
 				response.put("sla", sla);
-             
+
 				if (job != null) {
 
 					response.put("jobId", job.getJobId());
@@ -1828,7 +1815,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 					response.put("jobTitle", job.getJobTitle());
 
-					response.put("department",departmentName);
+					response.put("department", departmentName);
 				}
 
 				responseList.add(response);
@@ -1975,4 +1962,184 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant moved to next round");
 	}
 
+	@Override
+	public ApiResponse<?> getInterviewProgressList(SpecificationFilterRequest request) {
+
+		log.info("InterviewPlanServiceImpl :: Inside getInterviewProgressList");
+
+		try {
+
+			if (request.getPage() == null || request.getSize() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Page and Size are mandatory");
+			}
+
+			Sort sort = Sort.by(
+
+					"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
+
+					request.getSortBy() == null ? "applicationId" : request.getSortBy());
+
+			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+			Specification<ApplicanDetailsEntity> specification = request.buildInterviewProgressSpecification();
+
+			Page<ApplicanDetailsEntity> applicantPage = applicantDetailsRepository.findAll(specification, pageable);
+
+			List<InterviewProgressListResponse> responseList = new ArrayList<>();
+
+			String departmentFilter = request.getFilter("departmentId");
+
+			String currentStageFilter = request.getFilter("currentStage");
+
+			for (ApplicanDetailsEntity applicant : applicantPage.getContent()) {
+
+				InterviewProgressListResponse response = buildInterviewProgressResponse(applicant, departmentFilter,
+						currentStageFilter);
+
+				if (response != null) {
+					responseList.add(response);
+				}
+			}
+
+			Map<String, Object> result = new LinkedHashMap<>();
+
+			result.put("content", responseList);
+			result.put("currentPage", applicantPage.getNumber());
+			result.put("totalPages", applicantPage.getTotalPages());
+			result.put("totalElements", applicantPage.getTotalElements());
+			result.put("pageSize", applicantPage.getSize());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Progress List fetched successfully", result);
+
+		} catch (Exception e) {
+
+			log.error("Error while fetching Interview Progress List", e);
+
+			e.printStackTrace();
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+
+	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
+			String departmentFilter, String currentStageFilter) {
+
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
+
+		if (job == null) {
+			return null;
+		}
+
+		if (departmentFilter != null && !job.getDepartmentId().equals(Integer.parseInt(departmentFilter))) {
+
+			return null;
+		}
+
+		InterviewCurrentStageEntity currentStage = interviewCurrentStageRepository
+				.findByApplicationIdAndToScheduleFalse(applicant.getApplicationId());
+
+		if (currentStage == null) {
+			return null;
+		}
+
+		if (currentStageFilter != null
+				&& !currentStage.getCurrentStageType().equals(Integer.parseInt(currentStageFilter))) {
+
+			return null;
+		}
+
+		InterviewProgressListResponse dto = new InterviewProgressListResponse();
+
+		dto.setApplicationId(applicant.getApplicationId());
+		dto.setCandidateName(applicant.getName());
+		dto.setEmail(applicant.getEmail());
+		dto.setJobTitle(job.getJobTitle());
+
+		dto.setDepartment(getDepartmentName(job.getDepartmentId()));
+
+		dto.setCurrentStageId(currentStage.getCurrentStageType());
+
+		dto.setCurrentStage(getStageName(currentStage.getCurrentStageType()));
+
+		dto.setLastActivity(currentStage.getInterviewCompletedOn());
+
+		buildRoundDetails(dto, job.getPlanId(), currentStage.getCurrentStageType());
+
+		return dto;
+	}
+
+	private void buildRoundDetails(InterviewProgressListResponse dto, Integer planId, Integer currentStageType) {
+
+		List<InterviewRoundEntity> rounds = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(planId);
+
+		List<InterviewRoundResponse> roundResponses = new ArrayList<>();
+
+		int completedRounds = 0;
+
+		for (InterviewRoundEntity round : rounds) {
+
+			InterviewRoundResponse response = new InterviewRoundResponse();
+
+			response.setRoundOrder(round.getRoundOrder());
+
+			response.setStageTypeId(round.getStageTypeId());
+
+			response.setRoundName(getStageName(round.getStageTypeId()));
+
+			if (round.getStageTypeId() < currentStageType) {
+
+				response.setStatus("COMPLETED");
+
+				completedRounds++;
+
+			} else if (round.getStageTypeId().equals(currentStageType)) {
+
+				response.setStatus("IN_PROGRESS");
+
+			} else {
+
+				response.setStatus("PENDING");
+			}
+
+			roundResponses.add(response);
+		}
+
+		dto.setCompletedRounds(completedRounds);
+
+		dto.setTotalRounds(rounds.size());
+
+		dto.setRoundDetails(roundResponses);
+	}
+
+	private String getStageName(Integer stageTypeId) {
+
+		return interviewRoundDropDownRepository.findById(stageTypeId).map(InterviewRoundDropDownEntity::getRoundName)
+				.orElse("");
+	}
+
+	private String getDepartmentName(Integer departmentId) {
+
+		if (departmentId == null) {
+			return "";
+		}
+
+		return departmentsRepository.findById(departmentId).map(x -> x.getDepartmentName()).orElse("");
+	}
+
+	@Override
+	public ApiResponse<InterviewDashboardResponse> getInterviewDashboard() {
+
+		Object[] result = jobApplicationRepository.getInterviewDashboard().get(0);
+
+		InterviewDashboardResponse response = new InterviewDashboardResponse();
+
+		response.setAllClearedCandidates(((Number) result[0]).intValue());
+		response.setAiInterview(((Number) result[1]).intValue());
+		response.setTechnicalRound(((Number) result[2]).intValue());
+		response.setManagerialRound(((Number) result[3]).intValue());
+		response.setHrRound(((Number) result[4]).intValue());
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview progress count fetched successfully", response);
+	}
 }

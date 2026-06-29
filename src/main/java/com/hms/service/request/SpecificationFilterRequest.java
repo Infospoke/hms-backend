@@ -13,10 +13,10 @@ import java.util.Objects;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
-import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewSessionEntity;
@@ -1503,6 +1503,50 @@ public class SpecificationFilterRequest {
 
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
+	}
+	
+	public Specification<ApplicanDetailsEntity> buildInterviewProgressSpecification(){
+
+	    return (root,query,cb)->{
+
+	        List<Predicate> predicates=new ArrayList<>();
+
+	        if(filters!=null){
+
+	            Object search=filters.get("search");
+
+	            if(search!=null){
+
+	                String keyword="%"+search.toString().toLowerCase()+"%";
+
+	                predicates.add(cb.or(
+
+	                        cb.like(cb.lower(root.get("name")),keyword),
+
+	                        cb.like(cb.lower(root.get("email")),keyword)
+
+	                ));
+	            }
+
+	            Object jobId=filters.get("jobId");
+
+	            if(jobId!=null){
+
+	                predicates.add(
+
+	                        cb.equal(root.get("jobId"),
+
+	                                Integer.parseInt(jobId.toString()))
+
+	                );
+	            }
+
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+
+	    };
+
 	}
 
 }
