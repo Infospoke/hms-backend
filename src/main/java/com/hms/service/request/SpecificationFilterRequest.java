@@ -13,10 +13,10 @@ import java.util.Objects;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
-import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewSessionEntity;
@@ -1139,10 +1139,7 @@ public class SpecificationFilterRequest {
 			// Logged-in user filter
 			predicates.add(cb.equal(root.get("interviewerId"), userId));
 			predicates.add(cb.equal(root.get("interviewDate"), LocalDate.now()));
-
-			
-
-			String interviewType = getFilter("interviewType");
+  		String interviewType = getFilter("interviewType");
 
 			if (interviewType != null && !interviewType.isBlank()) {
 
@@ -1438,7 +1435,7 @@ public class SpecificationFilterRequest {
 		};
 	}
 	
-	public Specification<InterviewCurrentStageEntity> buildFeedbackSpecification() {
+	public Specification<InterviewCurrentStageEntity> buildFeedbackSpecification(Integer userId) {
 
 	    return (root, query, cb) -> {
 
@@ -1446,6 +1443,8 @@ public class SpecificationFilterRequest {
 
 	        predicates.add(cb.isFalse(root.get("feedback")));
 	        predicates.add(cb.isTrue(root.get("interviewCompleted")));
+
+	        predicates.add(cb.equal(root.get("interviewerId"), userId));
 
 	        LocalDate[] dates = getDateRange();
 
@@ -1506,5 +1505,30 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
+	
+	public Specification<ApplicanDetailsEntity> buildInterviewProgressSpecification() {
 
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        if (filters != null) {
+
+	            Object jobId = filters.get("jobId");
+
+	            if (jobId != null && !jobId.toString().isBlank()) {
+
+	                predicates.add(
+	                        cb.equal(
+	                                root.get("jobId"),
+	                                Integer.parseInt(jobId.toString())
+	                        )
+	                );
+	            }
+
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
 }

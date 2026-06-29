@@ -36,7 +36,6 @@ public class CreateJobController {
 
 	@GetMapping("details/{srId}")
 	public ResponseEntity<ApiResponse<?>> getJobDetails(@PathVariable("srId") String srId) {
-
 		ApiResponse<?> response = iCreateJobService.getJobDetails(srId);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -65,9 +64,7 @@ public class CreateJobController {
 
 	@PutMapping("update-job-details-by-jobid")
 	public ResponseEntity<ApiResponse<?>> updateJobDetailsById(@RequestBody UpdateJobDetailsRequest request) {
-
 		ApiResponse<?> response = iCreateJobService.updateJobDetailsById(request);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
