@@ -504,52 +504,30 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		for (InterviewerAssignmentEntity assignment : assignmentPage.getContent()) {
 
 			log.info("Assignment Id = {}", assignment.getId());
-
 			String search = request.getFilter("search");
 
-			List<InterviewCandidateDetailsEntity> candidates = interviewCandidateDetailsRepository
-					.findAllByAssignmentIdAndUserId(assignment.getId(), userId);
+			if (search != null && !search.isBlank()) {
+			    boolean jobTitleMatch = assignment.getJobTitle() != null
+			            && assignment.getJobTitle().toLowerCase()
+			                    .contains(search.toLowerCase().trim());
 
-			log.info("Candidates Count = {}", candidates.size());
-
-			for (InterviewCandidateDetailsEntity candidate : candidates) {
-				if (search != null && !search.isBlank()) {
-
-					boolean candidateMatch = candidate.getCanidateName() != null
-							&& candidate.getCanidateName().toLowerCase().contains(search.toLowerCase().trim());
-
-					boolean jobTitleMatch = assignment.getJobTitle() != null
-							&& assignment.getJobTitle().toLowerCase().contains(search.toLowerCase().trim());
-
-					if (!candidateMatch && !jobTitleMatch) {
-						continue;
-					}
-				}
-
-				Map<String, Object> map = new LinkedHashMap<>();
-
-				// Response 
-				
-				map.put("assignmentId", assignment.getId());
-
-				map.put("candidateName", candidate.getCanidateName());
-
-				map.put("jobTitle", assignment.getJobTitle());
-
-				map.put("department", assignment.getDeptName());
-
-				map.put("round", assignment.getStageName());
-
-				map.put("requestedOn", assignment.getCreatedAt());
-
-				map.put("status", assignment.getStatus());
-
-				map.put("jobId", assignment.getJobId());
-
-				map.put("priority", calculatePriority(assignment.getCreatedAt()));
-
-				responseList.add(map);
+			    if (!jobTitleMatch) {
+			        continue;
+			    }
 			}
+
+			Map<String, Object> map = new LinkedHashMap<>();
+
+			map.put("assignmentId", assignment.getId());
+			map.put("jobTitle", assignment.getJobTitle());
+			map.put("department", assignment.getDeptName());
+			map.put("round", assignment.getStageName());
+			map.put("requestedOn", assignment.getCreatedAt());
+			map.put("status", assignment.getStatus());
+			map.put("jobId", assignment.getJobId());
+			map.put("priority", calculatePriority(assignment.getCreatedAt()));
+
+			responseList.add(map);
 		}
 
 		Map<String, Object> response = new LinkedHashMap<>();
@@ -560,7 +538,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		response.put("totalPages", assignmentPage.getTotalPages());
 
-		response.put("totalElements", responseList.size());
+		response.put("totalElements", assignmentPage.getTotalElements());
 
 		response.put("pageSize", assignmentPage.getSize());
 
