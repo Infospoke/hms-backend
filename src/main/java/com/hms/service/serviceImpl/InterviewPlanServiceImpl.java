@@ -1969,18 +1969,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		try {
 
-			if (request.getPage() == null || request.getSize() == null) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Page and Size are mandatory");
-			}
-
-			Sort sort = Sort.by(
-
-					"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
-
-					request.getSortBy() == null ? "applicationId" : request.getSortBy());
-
-			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
 			Specification<ApplicanDetailsEntity> specification = request.buildInterviewProgressSpecification();
 
@@ -1988,18 +1978,21 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			List<InterviewProgressListResponse> responseList = new ArrayList<>();
 
+			String search = request.getFilter("search");
+
 			String departmentFilter = request.getFilter("departmentId");
 
 			String currentStageFilter = request.getFilter("currentStage");
 
 			for (ApplicanDetailsEntity applicant : applicantPage.getContent()) {
 
-				InterviewProgressListResponse response = buildInterviewProgressResponse(applicant, departmentFilter,
-						currentStageFilter);
+				InterviewProgressListResponse response = buildInterviewProgressResponse(applicant, search,
+						departmentFilter, currentStageFilter);
 
 				if (response != null) {
 					responseList.add(response);
 				}
+
 			}
 
 			Map<String, Object> result = new LinkedHashMap<>();
@@ -2016,13 +2009,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			log.error("Error while fetching Interview Progress List", e);
 
-			e.printStackTrace();
-
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
+
 	}
 
-	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
+	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant, String search,
 			String departmentFilter, String currentStageFilter) {
 
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
@@ -2031,18 +2023,45 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return null;
 		}
 
-		if (departmentFilter != null && !job.getDepartmentId().equals(Integer.parseInt(departmentFilter))) {
+		if (search != null && !search.trim().isEmpty()) {
+
+			String keyword = search.trim().toLowerCase();
+
+			boolean matches = false;
+
+			if (applicant.getName() != null && applicant.getName().toLowerCase().contains(keyword)) {
+
+				matches = true;
+			}
+
+			if (!matches && applicant.getEmail() != null && applicant.getEmail().toLowerCase().contains(keyword)) {
+
+				matches = true;
+			}
+
+			if (!matches && job.getJobTitle() != null && job.getJobTitle().toLowerCase().contains(keyword)) {
+
+				matches = true;
+			}
+
+			if (!matches) {
+				return null;
+			}
+
+		}
+
+		if (departmentFilter != null && job.getDepartmentId() != null
+				&& !job.getDepartmentId().equals(Integer.parseInt(departmentFilter))) {
 
 			return null;
 		}
 
 		InterviewCurrentStageEntity currentStage = interviewCurrentStageRepository
-				.findByApplicationIdAndToScheduleFalse(applicant.getApplicationId());
+				.findByApplicationIdAndToScheduleFalse(String.valueOf(applicant.getApplicationId()));
 
 		if (currentStage == null) {
 			return null;
 		}
-
 		if (currentStageFilter != null
 				&& !currentStage.getCurrentStageType().equals(Integer.parseInt(currentStageFilter))) {
 
@@ -2052,8 +2071,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		InterviewProgressListResponse dto = new InterviewProgressListResponse();
 
 		dto.setApplicationId(applicant.getApplicationId());
+
 		dto.setCandidateName(applicant.getName());
+
 		dto.setEmail(applicant.getEmail());
+
 		dto.setJobTitle(job.getJobTitle());
 
 		dto.setDepartment(getDepartmentName(job.getDepartmentId()));
@@ -2064,18 +2086,25 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		dto.setLastActivity(currentStage.getInterviewCompletedOn());
 
-		buildRoundDetails(dto, job.getPlanId(), currentStage.getCurrentStageType());
+		buildRoundDetails(dto, job.getPlanId(), currentStage);
 
 		return dto;
+
 	}
 
-	private void buildRoundDetails(InterviewProgressListResponse dto, Integer planId, Integer currentStageType) {
+	private void buildRoundDetails(InterviewProgressListResponse dto, Integer planId,
+			InterviewCurrentStageEntity currentStage) {
 
 		List<InterviewRoundEntity> rounds = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(planId);
 
 		List<InterviewRoundResponse> roundResponses = new ArrayList<>();
 
 		int completedRounds = 0;
+
+// Find current round order from interview rounds
+		Integer currentRoundOrder = rounds.stream()
+				.filter(r -> r.getStageTypeId().equals(currentStage.getCurrentStageType()))
+				.map(InterviewRoundEntity::getRoundOrder).findFirst().orElse(0);
 
 		for (InterviewRoundEntity round : rounds) {
 
@@ -2087,15 +2116,22 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			response.setRoundName(getStageName(round.getStageTypeId()));
 
-			if (round.getStageTypeId() < currentStageType) {
+			if (round.getRoundOrder() < currentRoundOrder) {
 
 				response.setStatus("COMPLETED");
-
 				completedRounds++;
 
-			} else if (round.getStageTypeId().equals(currentStageType)) {
+			} else if (round.getRoundOrder().equals(currentRoundOrder)) {
 
-				response.setStatus("IN_PROGRESS");
+				if (Boolean.TRUE.equals(currentStage.getInterviewCompleted())) {
+
+					response.setStatus("COMPLETED");
+					completedRounds++;
+
+				} else {
+
+					response.setStatus("IN_PROGRESS");
+				}
 
 			} else {
 
@@ -2124,7 +2160,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return "";
 		}
 
-		return departmentsRepository.findById(departmentId).map(x -> x.getDepartmentName()).orElse("");
+		return departmentsRepository.findById(departmentId).map(DepartmentsEntity::getDepartmentName).orElse("");
 	}
 
 	@Override

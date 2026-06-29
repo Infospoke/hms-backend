@@ -1505,48 +1505,29 @@ public class SpecificationFilterRequest {
 		};
 	}
 	
-	public Specification<ApplicanDetailsEntity> buildInterviewProgressSpecification(){
+	public Specification<ApplicanDetailsEntity> buildInterviewProgressSpecification() {
 
-	    return (root,query,cb)->{
+	    return (root, query, cb) -> {
 
-	        List<Predicate> predicates=new ArrayList<>();
+	        List<Predicate> predicates = new ArrayList<>();
 
-	        if(filters!=null){
+	        if (filters != null) {
 
-	            Object search=filters.get("search");
+	            Object jobId = filters.get("jobId");
 
-	            if(search!=null){
-
-	                String keyword="%"+search.toString().toLowerCase()+"%";
-
-	                predicates.add(cb.or(
-
-	                        cb.like(cb.lower(root.get("name")),keyword),
-
-	                        cb.like(cb.lower(root.get("email")),keyword)
-
-	                ));
-	            }
-
-	            Object jobId=filters.get("jobId");
-
-	            if(jobId!=null){
+	            if (jobId != null && !jobId.toString().isBlank()) {
 
 	                predicates.add(
-
-	                        cb.equal(root.get("jobId"),
-
-	                                Integer.parseInt(jobId.toString()))
-
+	                        cb.equal(
+	                                root.get("jobId"),
+	                                Integer.parseInt(jobId.toString())
+	                        )
 	                );
 	            }
 
 	        }
 
 	        return cb.and(predicates.toArray(new Predicate[0]));
-
 	    };
-
 	}
-
 }
