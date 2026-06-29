@@ -1,5 +1,7 @@
 package com.hms.service.service;
 
+import org.jspecify.annotations.Nullable;
+
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
@@ -51,7 +53,11 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> getInterviewProgressList(SpecificationFilterRequest request);
 	
-	ApiResponse<InterviewDashboardResponse> getInterviewDashboard();
+	ApiResponse<InterviewDashboardResponse> getInterviewProgressCount();
+
+	ApiResponse<?> getInterviewUpcomingList(SpecificationFilterRequest request);
+
+	ApiResponse<?> getInterviewSummary(Integer scheduleId);
 
 
 

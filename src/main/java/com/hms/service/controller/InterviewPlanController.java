@@ -147,9 +147,19 @@ public class InterviewPlanController {
 	}
 
 	@GetMapping("/progress-count")
-	public ResponseEntity<ApiResponse<InterviewDashboardResponse>> getInterviewDashboard() {
-	    return ResponseEntity.ok(interviewPlanService.getInterviewDashboard());
+	public ResponseEntity<ApiResponse<InterviewDashboardResponse>> getInterviewProgressCount() {
+		return ResponseEntity.ok(interviewPlanService.getInterviewProgressCount());
 
+	}
+
+	@PostMapping("/interview-upcoming-list")
+	public ResponseEntity<ApiResponse<?>> getInterviewUpcomingList(@RequestBody SpecificationFilterRequest request) {
+		return ResponseEntity.ok(interviewPlanService.getInterviewUpcomingList(request));
+	}
+
+	@GetMapping("/interview-summary/{scheduleId}")
+	public ResponseEntity<ApiResponse<?>> getInterviewSummary(@PathVariable("scheduleId") Integer scheduleId) {
+		return ResponseEntity.ok(interviewPlanService.getInterviewSummary(scheduleId));
 	}
 
 }

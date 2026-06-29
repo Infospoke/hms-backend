@@ -3,6 +3,7 @@ package com.hms.service.serviceImpl;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -81,6 +82,8 @@ import com.hms.service.response.InterviewProgressListResponse;
 import com.hms.service.response.InterviewProjectResponse;
 import com.hms.service.response.InterviewRoundResponse;
 import com.hms.service.response.InterviewRoundsResponse;
+import com.hms.service.response.InterviewSummaryResponse;
+import com.hms.service.response.InterviewUpcomingListResponse;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
@@ -2017,7 +2020,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			result.put("totalElements", responseList.size());
 
-			result.put("totalPages",responseList.isEmpty() ? 0 : (int) Math.ceil((double) responseList.size() / request.getSize()));
+			result.put("totalPages",
+					responseList.isEmpty() ? 0 : (int) Math.ceil((double) responseList.size() / request.getSize()));
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Progress List fetched successfully", result);
 
@@ -2179,7 +2183,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	@Override
-	public ApiResponse<InterviewDashboardResponse> getInterviewDashboard() {
+	public ApiResponse<InterviewDashboardResponse> getInterviewProgressCount() {
 
 		Object[] result = jobApplicationRepository.getInterviewDashboard().get(0);
 
@@ -2192,5 +2196,142 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setHrRound(((Number) result[4]).intValue());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview progress count fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewUpcomingList(SpecificationFilterRequest request) {
+
+		try {
+
+			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+			String search = Optional.ofNullable(request.getFilter("search")).orElse("");
+
+			Integer departmentId = Optional.ofNullable(request.getFilter("departmentId")).map(Integer::parseInt)
+					.orElse(0);
+
+			Integer roundId = Optional.ofNullable(request.getFilter("roundId")).map(Integer::parseInt).orElse(0);
+
+			String interviewMode = Optional.ofNullable(request.getFilter("interviewMode")).orElse("");
+
+			LocalDate interviewDate = Optional.ofNullable(request.getFilter("interviewDate")).map(LocalDate::parse)
+					.orElse(LocalDate.of(1900, 1, 1));
+
+			Page<Object[]> page = interviewScheduleRepository.getInterviewSchedules(search, departmentId, roundId,
+					interviewMode, interviewDate, pageable);
+
+			List<InterviewUpcomingListResponse> response = page.getContent().stream().map(this::mapInterviewSchedule)
+					.toList();
+
+			return ApiResponse.success("Interview schedules fetched successfully", response,
+					(int) page.getTotalElements());
+
+		} catch (Exception e) {
+
+			log.error("Error while fetching interview schedules", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
+		}
+	}
+
+	private InterviewUpcomingListResponse mapInterviewSchedule(Object[] obj) {
+
+		InterviewUpcomingListResponse dto = new InterviewUpcomingListResponse();
+
+		dto.setScheduleId(((Number) obj[0]).intValue());
+
+		dto.setApplicantId(((Number) obj[1]).intValue());
+
+		dto.setCandidateName((String) obj[2]);
+
+		dto.setJobTitle((String) obj[3]);
+
+		dto.setDepartment((String) obj[4]);
+
+		dto.setRound((String) obj[5]);
+
+		dto.setInterviewMode((String) obj[6]);
+
+		Integer currentRound = ((Number) obj[7]).intValue();
+
+		Integer totalRounds = ((Number) obj[8]).intValue();
+
+		dto.setRoundProgress("Round " + currentRound + " of " + totalRounds);
+
+		dto.setInterviewDate((LocalDate) obj[9]);
+
+		dto.setStartTime((LocalTime) obj[10]);
+
+		dto.setEndTime((LocalTime) obj[11]);
+
+		dto.setMeetingLink((String) obj[12]);
+
+		dto.setVenueDetails((String) obj[13]);
+
+		return dto;
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewSummary(Integer scheduleId) {
+
+		try {
+
+			List<Object[]> result = interviewScheduleRepository.getInterviewSummary(scheduleId);
+
+			if (result == null || result.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Interview summary not found");
+			}
+
+			InterviewSummaryResponse response = mapInterviewSummary(result.get(0));
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Interview summary fetched successfully", response);
+		} catch (Exception e) {
+
+			log.error("Error while fetching interview summary", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
+		}
+	}
+
+	private InterviewSummaryResponse mapInterviewSummary(Object[] obj) {
+
+		InterviewSummaryResponse dto = new InterviewSummaryResponse();
+
+		dto.setJobTitle((String) obj[0]);
+
+		dto.setDepartment((String) obj[1]);
+
+		dto.setRound((String) obj[2]);
+
+		dto.setInterviewMode((String) obj[3]);
+
+		dto.setInterviewType((String) obj[4]);
+
+		dto.setEmploymentType((String) obj[5]);
+
+		dto.setLocation((String) obj[6]);
+
+		dto.setWorkMode((String) obj[7]);
+
+		dto.setExperienceRequired((String) obj[8]);
+
+		dto.setCandidateName((String) obj[9]);
+
+		dto.setEmail((String) obj[10]);
+
+		dto.setPhone((String) obj[11]);
+
+		dto.setCurrentOrganization((String) obj[12]);
+
+		dto.setCurrentLocation((String) obj[13]);
+
+		dto.setTotalExperience((String) obj[14]);
+
+		dto.setNoticePeriod((String) obj[15]);
+
+		dto.setCurrentStage((String) obj[16]);
+
+		return dto;
 	}
 }
