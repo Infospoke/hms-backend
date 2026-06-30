@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 
 @Repository
@@ -45,10 +44,20 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 
 	List<InterviewCurrentStageEntity> findAll(Specification<InterviewCurrentStageEntity> specification);
 
+	long countByInterviewerIdAndInterviewDate(Integer interviewerId, LocalDate interviewDate);
+
+	long countByInterviewerIdAndToScheduleFalse(Integer interviewerId);
+
+	long countByInterviewerIdAndToScheduleTrueAndInterviewCompletedFalse(Integer interviewerId);
+
+	long countByInterviewerIdAndInterviewCompletedTrueAndFeedbackFalse(Integer interviewerId);
+
 	InterviewCurrentStageEntity findByApplicationIdAndToScheduleFalse(String valueOf);
+
 
 	InterviewCurrentStageEntity findByApplicationIdAndCurrentStageType(Integer applicationId, Integer roundId);
 
 
-
 }
+
+

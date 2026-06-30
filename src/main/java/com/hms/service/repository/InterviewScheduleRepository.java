@@ -13,9 +13,8 @@ import org.springframework.stereotype.Repository;
 import com.hms.service.entity.InterviewScheduleEntity;
 
 @Repository
-public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity, Integer> {
+public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity,Integer> {
 
-	long countByUserId(Integer userId);
 
 	InterviewScheduleEntity findByApplicantIdAndInterviewDate(Integer applicationId, LocalDate now);
 
