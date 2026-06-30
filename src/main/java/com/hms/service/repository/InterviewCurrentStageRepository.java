@@ -53,6 +53,7 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 
 	long countByInterviewerIdAndInterviewCompletedTrueAndFeedbackFalse(Integer interviewerId);
 
-	}
+	InterviewCurrentStageEntity findByApplicationIdAndToScheduleFalse(String valueOf);
+}
 
 

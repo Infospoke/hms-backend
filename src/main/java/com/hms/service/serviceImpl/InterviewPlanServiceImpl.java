@@ -3,6 +3,7 @@ package com.hms.service.serviceImpl;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -23,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.AIInterviewQuestionsEntity;
@@ -82,6 +82,8 @@ import com.hms.service.response.InterviewProgressListResponse;
 import com.hms.service.response.InterviewProjectResponse;
 import com.hms.service.response.InterviewRoundResponse;
 import com.hms.service.response.InterviewRoundsResponse;
+import com.hms.service.response.InterviewSummaryResponse;
+import com.hms.service.response.InterviewUpcomingListResponse;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
@@ -1427,13 +1429,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Override
 	public ApiResponse<?> getScheduleList(SpecificationFilterRequest request) {
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String token = authHeader.substring(7);
+
+		Long userId = jwtService.extractUserId(token);
+		Integer userIdFromToken = userId.intValue();
 
 		try {
 
 			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
-			Specification<InterviewCurrentStageEntity> specification = request.toBeScheduleInterviewSpecification();
+			Specification<InterviewCurrentStageEntity> specification = request.toBeScheduleInterviewSpecification(userIdFromToken);
 
 			List<InterviewCurrentStageEntity> stages = interviewCurrentStageRepository.findAll(specification);
 
@@ -1748,7 +1756,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("InterviewPlanServiceImpl :: Inside of getFeedbackList method");
 
 		try {
-			Specification<InterviewCurrentStageEntity> spec = request.buildFeedbackSpecification();
+			
+			String authHeader = httpServletRequest.getHeader("Authorization");
+			String token = authHeader.substring(7);
+
+			Long userId = jwtService.extractUserId(token);
+			Integer userIdFromToken = userId.intValue();
+			
+			Specification<InterviewCurrentStageEntity> spec =
+			        request.buildFeedbackSpecification(userIdFromToken);
 
 			List<InterviewCurrentStageEntity> interviewStages = interviewCurrentStageRepository.findAll(spec);
 			log.info("InterviewPlanServiceImpl :: retrived data from JobApplicationEntity ");
@@ -1918,7 +1934,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Override
 	public ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest) {
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewFeedback");
-
 		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
@@ -1969,18 +1984,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		try {
 
-			if (request.getPage() == null || request.getSize() == null) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Page and Size are mandatory");
-			}
-
-			Sort sort = Sort.by(
-
-					"DESC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC,
-
-					request.getSortBy() == null ? "applicationId" : request.getSortBy());
-
-			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 
 			Specification<ApplicanDetailsEntity> specification = request.buildInterviewProgressSpecification();
 
@@ -1988,27 +1993,35 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			List<InterviewProgressListResponse> responseList = new ArrayList<>();
 
+			String search = request.getFilter("search");
+
 			String departmentFilter = request.getFilter("departmentId");
 
 			String currentStageFilter = request.getFilter("currentStage");
 
 			for (ApplicanDetailsEntity applicant : applicantPage.getContent()) {
 
-				InterviewProgressListResponse response = buildInterviewProgressResponse(applicant, departmentFilter,
-						currentStageFilter);
+				InterviewProgressListResponse response = buildInterviewProgressResponse(applicant, search,
+						departmentFilter, currentStageFilter);
 
 				if (response != null) {
 					responseList.add(response);
 				}
+
 			}
 
 			Map<String, Object> result = new LinkedHashMap<>();
 
 			result.put("content", responseList);
-			result.put("currentPage", applicantPage.getNumber());
-			result.put("totalPages", applicantPage.getTotalPages());
-			result.put("totalElements", applicantPage.getTotalElements());
-			result.put("pageSize", applicantPage.getSize());
+
+			result.put("currentPage", request.getPage());
+
+			result.put("pageSize", request.getSize());
+
+			result.put("totalElements", responseList.size());
+
+			result.put("totalPages",
+					responseList.isEmpty() ? 0 : (int) Math.ceil((double) responseList.size() / request.getSize()));
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Progress List fetched successfully", result);
 
@@ -2016,13 +2029,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			log.error("Error while fetching Interview Progress List", e);
 
-			e.printStackTrace();
-
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
+
 	}
 
-	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
+	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant, String search,
 			String departmentFilter, String currentStageFilter) {
 
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
@@ -2031,18 +2043,45 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return null;
 		}
 
-		if (departmentFilter != null && !job.getDepartmentId().equals(Integer.parseInt(departmentFilter))) {
+		if (search != null && !search.trim().isEmpty()) {
+
+			String keyword = search.trim().toLowerCase();
+
+			boolean matches = false;
+
+			if (applicant.getName() != null && applicant.getName().toLowerCase().contains(keyword)) {
+
+				matches = true;
+			}
+
+			if (!matches && applicant.getEmail() != null && applicant.getEmail().toLowerCase().contains(keyword)) {
+
+				matches = true;
+			}
+
+			if (!matches && job.getJobTitle() != null && job.getJobTitle().toLowerCase().contains(keyword)) {
+
+				matches = true;
+			}
+
+			if (!matches) {
+				return null;
+			}
+
+		}
+
+		if (departmentFilter != null && job.getDepartmentId() != null
+				&& !job.getDepartmentId().equals(Integer.parseInt(departmentFilter))) {
 
 			return null;
 		}
 
 		InterviewCurrentStageEntity currentStage = interviewCurrentStageRepository
-				.findByApplicationIdAndToScheduleFalse(applicant.getApplicationId());
+				.findByApplicationIdAndToScheduleFalse(String.valueOf(applicant.getApplicationId()));
 
 		if (currentStage == null) {
 			return null;
 		}
-
 		if (currentStageFilter != null
 				&& !currentStage.getCurrentStageType().equals(Integer.parseInt(currentStageFilter))) {
 
@@ -2052,8 +2091,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		InterviewProgressListResponse dto = new InterviewProgressListResponse();
 
 		dto.setApplicationId(applicant.getApplicationId());
+
 		dto.setCandidateName(applicant.getName());
+
 		dto.setEmail(applicant.getEmail());
+
 		dto.setJobTitle(job.getJobTitle());
 
 		dto.setDepartment(getDepartmentName(job.getDepartmentId()));
@@ -2064,18 +2106,24 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		dto.setLastActivity(currentStage.getInterviewCompletedOn());
 
-		buildRoundDetails(dto, job.getPlanId(), currentStage.getCurrentStageType());
+		buildRoundDetails(dto, job.getPlanId(), currentStage);
 
 		return dto;
+
 	}
 
-	private void buildRoundDetails(InterviewProgressListResponse dto, Integer planId, Integer currentStageType) {
+	private void buildRoundDetails(InterviewProgressListResponse dto, Integer planId,
+			InterviewCurrentStageEntity currentStage) {
 
 		List<InterviewRoundEntity> rounds = interviewRoundRepository.findByInterviewPlan_IdOrderByRoundOrderAsc(planId);
 
 		List<InterviewRoundResponse> roundResponses = new ArrayList<>();
 
 		int completedRounds = 0;
+
+		Integer currentRoundOrder = rounds.stream()
+				.filter(r -> r.getStageTypeId().equals(currentStage.getCurrentStageType()))
+				.map(InterviewRoundEntity::getRoundOrder).findFirst().orElse(0);
 
 		for (InterviewRoundEntity round : rounds) {
 
@@ -2087,15 +2135,22 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			response.setRoundName(getStageName(round.getStageTypeId()));
 
-			if (round.getStageTypeId() < currentStageType) {
+			if (round.getRoundOrder() < currentRoundOrder) {
 
 				response.setStatus("COMPLETED");
-
 				completedRounds++;
 
-			} else if (round.getStageTypeId().equals(currentStageType)) {
+			} else if (round.getRoundOrder().equals(currentRoundOrder)) {
 
-				response.setStatus("IN_PROGRESS");
+				if (Boolean.TRUE.equals(currentStage.getInterviewCompleted())) {
+
+					response.setStatus("COMPLETED");
+					completedRounds++;
+
+				} else {
+
+					response.setStatus("IN_PROGRESS");
+				}
 
 			} else {
 
@@ -2124,11 +2179,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return "";
 		}
 
-		return departmentsRepository.findById(departmentId).map(x -> x.getDepartmentName()).orElse("");
+		return departmentsRepository.findById(departmentId).map(DepartmentsEntity::getDepartmentName).orElse("");
 	}
 
 	@Override
-	public ApiResponse<InterviewDashboardResponse> getInterviewDashboard() {
+	public ApiResponse<InterviewDashboardResponse> getInterviewProgressCount() {
 
 		Object[] result = jobApplicationRepository.getInterviewDashboard().get(0);
 
@@ -2141,5 +2196,142 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setHrRound(((Number) result[4]).intValue());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview progress count fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewUpcomingList(SpecificationFilterRequest request) {
+
+		try {
+
+			Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+			String search = Optional.ofNullable(request.getFilter("search")).orElse("");
+
+			Integer departmentId = Optional.ofNullable(request.getFilter("departmentId")).map(Integer::parseInt)
+					.orElse(0);
+
+			Integer roundId = Optional.ofNullable(request.getFilter("roundId")).map(Integer::parseInt).orElse(0);
+
+			String interviewMode = Optional.ofNullable(request.getFilter("interviewMode")).orElse("");
+
+			LocalDate interviewDate = Optional.ofNullable(request.getFilter("interviewDate")).map(LocalDate::parse)
+					.orElse(LocalDate.of(1900, 1, 1));
+
+			Page<Object[]> page = interviewScheduleRepository.getInterviewSchedules(search, departmentId, roundId,
+					interviewMode, interviewDate, pageable);
+
+			List<InterviewUpcomingListResponse> response = page.getContent().stream().map(this::mapInterviewSchedule)
+					.toList();
+
+			return ApiResponse.success("Interview schedules fetched successfully", response,
+					(int) page.getTotalElements());
+
+		} catch (Exception e) {
+
+			log.error("Error while fetching interview schedules", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
+		}
+	}
+
+	private InterviewUpcomingListResponse mapInterviewSchedule(Object[] obj) {
+
+		InterviewUpcomingListResponse dto = new InterviewUpcomingListResponse();
+
+		dto.setScheduleId(((Number) obj[0]).intValue());
+
+		dto.setApplicantId(((Number) obj[1]).intValue());
+
+		dto.setCandidateName((String) obj[2]);
+
+		dto.setJobTitle((String) obj[3]);
+
+		dto.setDepartment((String) obj[4]);
+
+		dto.setRound((String) obj[5]);
+
+		dto.setInterviewMode((String) obj[6]);
+
+		Integer currentRound = ((Number) obj[7]).intValue();
+
+		Integer totalRounds = ((Number) obj[8]).intValue();
+
+		dto.setRoundProgress("Round " + currentRound + " of " + totalRounds);
+
+		dto.setInterviewDate((LocalDate) obj[9]);
+
+		dto.setStartTime((LocalTime) obj[10]);
+
+		dto.setEndTime((LocalTime) obj[11]);
+
+		dto.setMeetingLink((String) obj[12]);
+
+		dto.setVenueDetails((String) obj[13]);
+
+		return dto;
+	}
+
+	@Override
+	public ApiResponse<?> getInterviewSummary(Integer scheduleId) {
+
+		try {
+
+			List<Object[]> result = interviewScheduleRepository.getInterviewSummary(scheduleId);
+
+			if (result == null || result.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Interview summary not found");
+			}
+
+			InterviewSummaryResponse response = mapInterviewSummary(result.get(0));
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Interview summary fetched successfully", response);
+		} catch (Exception e) {
+
+			log.error("Error while fetching interview summary", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
+		}
+	}
+
+	private InterviewSummaryResponse mapInterviewSummary(Object[] obj) {
+
+		InterviewSummaryResponse dto = new InterviewSummaryResponse();
+
+		dto.setJobTitle((String) obj[0]);
+
+		dto.setDepartment((String) obj[1]);
+
+		dto.setRound((String) obj[2]);
+
+		dto.setInterviewMode((String) obj[3]);
+
+		dto.setInterviewType((String) obj[4]);
+
+		dto.setEmploymentType((String) obj[5]);
+
+		dto.setLocation((String) obj[6]);
+
+		dto.setWorkMode((String) obj[7]);
+
+		dto.setExperienceRequired((String) obj[8]);
+
+		dto.setCandidateName((String) obj[9]);
+
+		dto.setEmail((String) obj[10]);
+
+		dto.setPhone((String) obj[11]);
+
+		dto.setCurrentOrganization((String) obj[12]);
+
+		dto.setCurrentLocation((String) obj[13]);
+
+		dto.setTotalExperience((String) obj[14]);
+
+		dto.setNoticePeriod((String) obj[15]);
+
+		dto.setCurrentStage((String) obj[16]);
+
+		return dto;
 	}
 }

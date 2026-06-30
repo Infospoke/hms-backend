@@ -1139,10 +1139,7 @@ public class SpecificationFilterRequest {
 			// Logged-in user filter
 			predicates.add(cb.equal(root.get("interviewerId"), userId));
 			predicates.add(cb.equal(root.get("interviewDate"), LocalDate.now()));
-
-			
-
-			String interviewType = getFilter("interviewType");
+  		String interviewType = getFilter("interviewType");
 
 			if (interviewType != null && !interviewType.isBlank()) {
 
@@ -1450,7 +1447,7 @@ public class SpecificationFilterRequest {
 		};
 	}
 	
-	public Specification<InterviewCurrentStageEntity> buildFeedbackSpecification() {
+	public Specification<InterviewCurrentStageEntity> buildFeedbackSpecification(Integer userId) {
 
 	    return (root, query, cb) -> {
 
@@ -1458,6 +1455,8 @@ public class SpecificationFilterRequest {
 
 	        predicates.add(cb.isFalse(root.get("feedback")));
 	        predicates.add(cb.isTrue(root.get("interviewCompleted")));
+
+	        predicates.add(cb.equal(root.get("interviewerId"), userId));
 
 	        LocalDate[] dates = getDateRange();
 
@@ -1481,13 +1480,15 @@ public class SpecificationFilterRequest {
 	        return cb.and(predicates.toArray(new Predicate[0]));
 	    };
 	}
-	public Specification<InterviewCurrentStageEntity> toBeScheduleInterviewSpecification() {
+	public Specification<InterviewCurrentStageEntity> toBeScheduleInterviewSpecification(Integer userId) {
 
 		return (root, query, cb) -> {
 
 			List<Predicate> predicates = new ArrayList<>();
 
 			predicates.add(cb.isFalse(root.get("toSchedule")));
+			
+			 predicates.add(cb.equal(root.get("interviewerId"), userId));
 
 			String round = getFilter("round");
 
@@ -1517,48 +1518,29 @@ public class SpecificationFilterRequest {
 		};
 	}
 	
-	public Specification<ApplicanDetailsEntity> buildInterviewProgressSpecification(){
+	public Specification<ApplicanDetailsEntity> buildInterviewProgressSpecification() {
 
-	    return (root,query,cb)->{
+	    return (root, query, cb) -> {
 
-	        List<Predicate> predicates=new ArrayList<>();
+	        List<Predicate> predicates = new ArrayList<>();
 
-	        if(filters!=null){
+	        if (filters != null) {
 
-	            Object search=filters.get("search");
+	            Object jobId = filters.get("jobId");
 
-	            if(search!=null){
-
-	                String keyword="%"+search.toString().toLowerCase()+"%";
-
-	                predicates.add(cb.or(
-
-	                        cb.like(cb.lower(root.get("name")),keyword),
-
-	                        cb.like(cb.lower(root.get("email")),keyword)
-
-	                ));
-	            }
-
-	            Object jobId=filters.get("jobId");
-
-	            if(jobId!=null){
+	            if (jobId != null && !jobId.toString().isBlank()) {
 
 	                predicates.add(
-
-	                        cb.equal(root.get("jobId"),
-
-	                                Integer.parseInt(jobId.toString()))
-
+	                        cb.equal(
+	                                root.get("jobId"),
+	                                Integer.parseInt(jobId.toString())
+	                        )
 	                );
 	            }
 
 	        }
 
 	        return cb.and(predicates.toArray(new Predicate[0]));
-
 	    };
-
 	}
-
 }
