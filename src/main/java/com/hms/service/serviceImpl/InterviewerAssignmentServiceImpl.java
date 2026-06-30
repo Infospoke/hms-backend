@@ -364,8 +364,9 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		LocalDate today = LocalDate.now();
 
 		long todaysInterviews = interviewCurrentStageRepository.countByInterviewerIdAndInterviewDate(userId, today);
-
-		long assignedInterviews = interviewerAssignmentRepository.countByInterviewerUserId(userId);
+		
+		long assignedInterviews = interviewerAssignmentRepository
+				.countByInterviewerUserIdAndRespondedAtIsNull(userId.longValue());
 
 		long toSchedule = interviewCurrentStageRepository.countByInterviewerIdAndToScheduleFalse(userId);
 
@@ -476,7 +477,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		Page<InterviewerAssignmentEntity> assignmentPage = interviewerAssignmentRepository.findAll(spec, pageable);
 
-		log.info("Total Assignments Found : {}", assignmentPage.getContent().size());
+		log.info("Total Assignments Found : {}", assignmentPage.getContent().size());;
 
 		assignmentPage.getContent()
 				.forEach(a -> log.info("DB Assignment -> Id={}, InterviewerUserId={}, JobId={}, JobTitle={}", a.getId(),
@@ -485,7 +486,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		List<Map<String, Object>> responseList = new ArrayList<>();
 
 		for (InterviewerAssignmentEntity assignment : assignmentPage.getContent()) {
-
+			
 			log.info("Assignment Id = {}", assignment.getId());
 			
 			  String calculatedPriority = calculatePriority(assignment.getCreatedAt());

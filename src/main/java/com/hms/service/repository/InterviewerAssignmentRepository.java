@@ -31,4 +31,6 @@ public interface InterviewerAssignmentRepository extends JpaRepository<Interview
 	List<InterviewerAssignmentEntity> findByJobIdOrderByIdAsc(Integer jobId);
 	
 	InterviewerAssignmentEntity findByJobIdAndPlanIdAndStageTypeId(Integer jobId,Integer PlanId, Integer RoundOrder);
+
+	long countByInterviewerUserIdAndRespondedAtIsNull(Long interviewerUserId);
 }
