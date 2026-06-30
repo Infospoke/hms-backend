@@ -63,5 +63,21 @@ public class InterviewScheduleEntity {
 	@Column(name="updated_date")
 	private LocalDateTime updateOn;
 	
+	@Column(name="reschedule_date")
+	private LocalDate rescheduleDate;
+	
+	@Column(name="rescedule_start_time")
+	private LocalTime rescheduleStartTime;
+	
+	@Column(name="reschedule_end_time")
+	private LocalTime rescheduleEndTime;
+	
+	@Column(name="reschedule_venue_details")
+	private String rescheduleVenueDetails;
+	
+	@Column(name="reschedule_meeting_link")
+	private String rescheduleMeetingLink;
+	
+	
 
 }
