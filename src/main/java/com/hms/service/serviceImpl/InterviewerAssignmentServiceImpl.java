@@ -105,7 +105,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 					.orElseThrow(() -> new RuntimeException("Round not found"));
 
 			List<InterviewerAssignmentEntity> history = interviewerAssignmentRepository
-					.findByJobIdAndRoundIdOrderByIdDesc(request.getJobId(), round.getId());
+					.findByJobIdAndStageTypeIdOrderByIdDesc(request.getJobId(), round.getStageTypeId());
 
 			if (!history.isEmpty()) {
 
@@ -127,8 +127,6 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			entity.setJobId(request.getJobId());
 
 			entity.setPlanId(request.getPlanId());
-
-			entity.setRoundId(round.getId());
 
 			entity.setStageName(round.getStageName());
 			
@@ -237,7 +235,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			for (InterviewRoundEntity round : rounds) {
 				InterviewerAssignmentEntity assignment = interviewerAssignmentRepository
-						.findTopByJobIdAndRoundIdOrderByIdDesc(job.getJobId(), round.getId()).orElse(null);
+						.findTopByJobIdAndStageTypeIdOrderByIdDesc(job.getJobId(), round.getStageTypeId()).orElse(null);
 
 				Map<String, Object> roundMap = new LinkedHashMap<>();
 
@@ -290,29 +288,29 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 	private Map<String, Object> buildAssignmentDetailsResponse(List<InterviewerAssignmentEntity> assignments) {
 
-		Map<Long, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
-				.groupingBy(InterviewerAssignmentEntity::getRoundId, LinkedHashMap::new, Collectors.toList()));
+		Map<Integer, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
+				.groupingBy(InterviewerAssignmentEntity::getStageTypeId, LinkedHashMap::new, Collectors.toList()));
 
-		List<Integer> roundIds = roundWise.keySet().stream().map(Long::intValue).toList();
+		List<Integer> roundIds = roundWise.keySet().stream().map(Integer::intValue).toList();
 
-		Map<Long, InterviewRoundEntity> roundMap = interviewRoundRepository.findByIdIn(roundIds).stream()
-				.collect(Collectors.toMap(r -> Long.valueOf(r.getId()), r -> r));
+		Map<Integer, InterviewRoundEntity> roundMap = interviewRoundRepository.findByIdIn(roundIds)
+			    .stream()
+			    .collect(Collectors.toMap(InterviewRoundEntity::getStageTypeId, r -> r));
 
 		List<Map<String, Object>> rounds = new ArrayList<>();
 
-		for (Map.Entry<Long, List<InterviewerAssignmentEntity>> entry : roundWise.entrySet()) {
+		for (Map.Entry<Integer, List<InterviewerAssignmentEntity>> entry : roundWise.entrySet()) {
 
-			Long roundId = entry.getKey();
+			Integer stageTypeId = entry.getKey();
 			List<InterviewerAssignmentEntity> history = entry.getValue();
 
-			InterviewRoundEntity round = roundMap.get(roundId);
+			InterviewRoundEntity round = roundMap.get(stageTypeId);
 
 			// Since repository returns records ordered by id ASC,
 			// last record is the latest assignment.
 			InterviewerAssignmentEntity latest = history.get(history.size() - 1);
 
 			Map<String, Object> roundResponse = new LinkedHashMap<>();
-			roundResponse.put("roundId", roundId);
 			roundResponse.put("stageName", round != null ? round.getStageName() : null);
 			roundResponse.put("stageType", round != null ? round.getStageType() : null);
 			roundResponse.put("stageTypeId", rounds !=null ? round.getStageTypeId() : null);
@@ -400,8 +398,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		InterviewerAssignmentEntity assignment = interviewerAssignmentRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Interview Assignment Not Found"));
 
-		InterviewRoundEntity round = interviewRoundRepository.findById(assignment.getRoundId())
-				.orElseThrow(() -> new ResourceNotFoundException("Interview Round Not Found"));
+		InterviewRoundEntity round = interviewRoundRepository.findById(assignment.getStageTypeId())
+				.orElseThrow(() -> new ResourceNotFoundException("Interview stage Not Found"));
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
