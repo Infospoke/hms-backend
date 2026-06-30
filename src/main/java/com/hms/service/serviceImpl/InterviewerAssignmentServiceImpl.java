@@ -22,20 +22,15 @@ import org.springframework.stereotype.Service;
 import com.hms.service.dto.RoundAssignmentDto;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
-import com.hms.service.entity.InterviewCandidateDetailsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 
-import com.hms.service.repository.InterviewFeedbackRepository;
-
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
-import com.hms.service.repository.InterviewCandidateDetailsRepository;
+import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
-import com.hms.service.repository.InterviewScheduleRepository;
-import com.hms.service.repository.InterviewUpcomingRepository;
 import com.hms.service.repository.InterviewerAssignmentRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
@@ -63,16 +58,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 	private InterviewPlanRepository interviewPlanRepository;
 
 	@Autowired
-	private InterviewCandidateDetailsRepository interviewCandidateDetailsRepository;
-
-	@Autowired
-	private InterviewScheduleRepository interviewScheduleRepository;
-
-	@Autowired
-	private InterviewUpcomingRepository interviewUpcomingRepository;
-
-	@Autowired
-	private InterviewFeedbackRepository interviewFeedbackRepository;
+	private InterviewCurrentStageRepository interviewCurrentStageRepository;
 
 	@Autowired
 	private JwtService jwtService;
@@ -377,20 +363,17 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		LocalDate today = LocalDate.now();
 
-		LocalDateTime startOfDay = today.atStartOfDay();
-
-		LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
-
-		long todaysInterviews = interviewCandidateDetailsRepository.countByUserIdAndCreatedOnBetween(userId, startOfDay,
-				endOfDay);
+		long todaysInterviews = interviewCurrentStageRepository.countByInterviewerIdAndInterviewDate(userId, today);
 
 		long assignedInterviews = interviewerAssignmentRepository.countByInterviewerUserId(userId);
 
-		long toSchedule = interviewScheduleRepository.countByUserId(userId);
+		long toSchedule = interviewCurrentStageRepository.countByInterviewerIdAndToScheduleFalse(userId);
 
-		long upcomingInterview = interviewUpcomingRepository.countByUserId(userId);
+		long upcomingInterview = interviewCurrentStageRepository
+				.countByInterviewerIdAndToScheduleTrueAndInterviewCompletedFalse(userId);
 
-		long feedbackInterview = interviewFeedbackRepository.countByUserId(userId);
+		long feedbackInterview = interviewCurrentStageRepository
+				.countByInterviewerIdAndInterviewCompletedTrueAndFeedbackFalse(userId);
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
@@ -504,17 +487,17 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		for (InterviewerAssignmentEntity assignment : assignmentPage.getContent()) {
 
 			log.info("Assignment Id = {}", assignment.getId());
-			String search = request.getFilter("search");
+			
+			  String calculatedPriority = calculatePriority(assignment.getCreatedAt());
 
-			if (search != null && !search.isBlank()) {
-			    boolean jobTitleMatch = assignment.getJobTitle() != null
-			            && assignment.getJobTitle().toLowerCase()
-			                    .contains(search.toLowerCase().trim());
+			    String priorityFilter = request.getFilter("priority");
 
-			    if (!jobTitleMatch) {
+			    if (priorityFilter != null
+			            && !priorityFilter.isBlank()
+			            && !"ALL".equalsIgnoreCase(priorityFilter)
+			            && !calculatedPriority.equalsIgnoreCase(priorityFilter)) {
 			        continue;
 			    }
-			}
 
 			Map<String, Object> map = new LinkedHashMap<>();
 
@@ -525,7 +508,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			map.put("requestedOn", assignment.getCreatedAt());
 			map.put("status", assignment.getStatus());
 			map.put("jobId", assignment.getJobId());
-			map.put("priority", calculatePriority(assignment.getCreatedAt()));
+			map.put("priority", calculatedPriority);
 
 			responseList.add(map);
 		}
