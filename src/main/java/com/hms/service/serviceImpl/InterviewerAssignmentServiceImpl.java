@@ -163,7 +163,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			interviewerAssignmentRepository.save(entity);
 		}
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Success", "Interviewers assigned successfully");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interviewers assigned successfully","Success");
 	}
 
 	@Override
