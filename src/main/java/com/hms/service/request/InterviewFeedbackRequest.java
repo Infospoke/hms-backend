@@ -42,5 +42,6 @@ public class InterviewFeedbackRequest {
 	
 	private int StageTypeId;
 
+	private String interviewMode;
 
 }

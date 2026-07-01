@@ -1,5 +1,7 @@
 package com.hms.service.response;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,5 +30,6 @@ public class InterviewSummaryResponse {
     private String totalExperience;
     private String noticePeriod;
     private String currentStage;
+    private LocalDateTime interviewCompletedOn;
 
 }

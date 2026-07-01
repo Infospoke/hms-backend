@@ -71,5 +71,9 @@ public class InterviewFeedbackEntity {
 	
 	@Column(name="user_id")
 	private Integer userId;
+	
+	@Column(name="interview_mode")
+	private String interviewMode;
+	
 
 }

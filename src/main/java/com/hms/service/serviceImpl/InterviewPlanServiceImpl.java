@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.AIInterviewQuestionsEntity;
@@ -69,6 +70,7 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
+import com.hms.service.request.RescheduleInterviewRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.AIInterviewScheduleResponse;
@@ -82,6 +84,7 @@ import com.hms.service.response.InterviewProgressListResponse;
 import com.hms.service.response.InterviewProjectResponse;
 import com.hms.service.response.InterviewRoundResponse;
 import com.hms.service.response.InterviewRoundsResponse;
+import com.hms.service.response.InterviewScheduleDetailsResponse;
 import com.hms.service.response.InterviewSummaryResponse;
 import com.hms.service.response.InterviewUpcomingListResponse;
 import com.hms.service.service.IInterviewPlanService;
@@ -1105,6 +1108,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackEntity.setStrengths(request.getStrengths());
 		interviewFeedbackEntity.setAdditionalComments(request.getAdditionalComments());
 		interviewFeedbackEntity.setCurrentStageId(request.getCurrentStageId());
+		interviewFeedbackEntity.setInterviewMode(request.getInterviewMode());
 		interviewFeedbackEntity.setDecision(request.getDecision());
 		interviewFeedbackEntity.setSubmittedOn(LocalDateTime.now());
 		interviewFeedbackEntity.setSubmittedBy(username);
@@ -1938,7 +1942,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
 			int currentOrder = interviewRoundRepository
-					.findByInterviewPlanIdAndStageTypeId(planId, interviewFeedbackRequest.getStageTypeId())
+					.findByInterviewPlan_IdAndStageTypeId(planId, interviewFeedbackRequest.getStageTypeId())
 					.getRoundOrder();
 
 			List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository
@@ -2334,4 +2338,70 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		return dto;
 	}
+
+	@Override
+	public ApiResponse<?> getInterviewScheduleDetailsById(Integer scheduleId) {
+		log.info("InterviewPlanServiceImpl :: Inside the getInterviewScheduleDetailsById");
+		
+		InterviewScheduleDetailsResponse response = new InterviewScheduleDetailsResponse();
+		try {
+		Optional<InterviewScheduleEntity> entity = interviewScheduleRepository.findById(scheduleId);
+		
+		if(entity==null || entity.isEmpty() )
+		{
+			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Schedule Details not found");
+		}
+		
+		InterviewScheduleEntity interviewScheduleEntity = entity.get();
+		
+		response.setInterviewDate(interviewScheduleEntity.getInterviewDate());
+		
+		response.setStartTime(interviewScheduleEntity.getStartTime());
+		
+		response.setEndTime(interviewScheduleEntity.getEndTime());
+		
+		response.setInterviewType(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
+		
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview schedule details fetched successfully", response);
+	
+	}
+	catch (Exception e) {
+
+		log.error("Error while fetching interview schedule details", e);
+
+		return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
+	}
+	}
+	
+	@Override
+	public ApiResponse<?> rescheduleInterview(RescheduleInterviewRequest request) {
+		Optional<InterviewScheduleEntity> scheduleEntity=interviewScheduleRepository.findById(request.getScheduleId());
+		if(scheduleEntity==null)
+		{
+			return ApiResponse.failure(ResponseCode.FAILURE, "schedule details not found");	
+		}
+		InterviewScheduleEntity entity=scheduleEntity.get();
+		entity.setRescheduleDate(request.getRescheduleDate());
+		entity.setRescheduleVenueDetails(request.getRescheduleVenueDetails());
+		entity.setRescheduleMeetingLink(request.getRescheduleMeetingLink());
+		entity.setRescheduleStartTime(request.getRescheduleStartTime());
+		entity.setRescheduleEndTime(request.getRescheduleEndTime());
+		Integer applicationId=entity.getApplicantId();
+		Integer roundId=entity.getRoundId();
+		
+		interviewScheduleRepository.save(entity);
+		
+		InterviewCurrentStageEntity currentStageEntity=interviewCurrentStageRepository.findByApplicationIdAndCurrentStageType(applicationId,roundId);
+		
+		currentStageEntity.setInterviewDate(request.getRescheduleDate());
+		currentStageEntity.setStartTime(request.getRescheduleStartTime());
+		currentStageEntity.setEndTime(request.getRescheduleEndTime());
+		interviewCurrentStageRepository.save(currentStageEntity);
+	
+		
+		return ApiResponse.success(ResponseCode.SUCCESS, "success","Interview Rescheduled successfully");
+		
+	}
+ 
+
 }

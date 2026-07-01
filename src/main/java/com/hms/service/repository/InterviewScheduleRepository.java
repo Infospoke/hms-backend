@@ -196,7 +196,10 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 			  ad.notice_period,
 
-			  rd.round_name
+              
+			  rd.round_name,
+			  
+			  cs.interview_completed_on
 
 					    FROM tb_interview_schedule s
 
@@ -225,4 +228,6 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 					    """, nativeQuery = true)
 	List<Object[]> getInterviewSummary(@Param("scheduleId") Integer scheduleId);
+
+	
 }
