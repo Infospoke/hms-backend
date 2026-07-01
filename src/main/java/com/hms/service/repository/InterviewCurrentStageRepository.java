@@ -21,9 +21,6 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 
 	Integer countByApplicationId(Integer applicationId);
 
-
-
-
 	Page<InterviewCurrentStageEntity> findAll(Specification<InterviewCurrentStageEntity> todayInterviewSpecification,
 			Pageable pageable);
 
@@ -53,7 +50,6 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 	long countByInterviewerIdAndInterviewCompletedTrueAndFeedbackFalse(Integer interviewerId);
 
 	InterviewCurrentStageEntity findByApplicationIdAndToScheduleFalse(String valueOf);
-
 
 	InterviewCurrentStageEntity findByApplicationIdAndCurrentStageType(Integer applicationId, Integer roundId);
 

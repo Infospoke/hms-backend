@@ -1108,6 +1108,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewFeedbackEntity.setStrengths(request.getStrengths());
 		interviewFeedbackEntity.setAdditionalComments(request.getAdditionalComments());
 		interviewFeedbackEntity.setCurrentStageId(request.getCurrentStageId());
+		interviewFeedbackEntity.setInterviewMode(request.getInterviewMode());
 		interviewFeedbackEntity.setDecision(request.getDecision());
 		interviewFeedbackEntity.setSubmittedOn(LocalDateTime.now());
 		interviewFeedbackEntity.setSubmittedBy(username);
