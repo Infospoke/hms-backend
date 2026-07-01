@@ -11,8 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RoundAssignmentDto {
 
-	 private Long roundId;
-
 	    private String stageName;
 
 	    private String stageType;
@@ -28,4 +26,7 @@ public class RoundAssignmentDto {
 	    private LocalDateTime respondedAt;
 	    
 	    private String roleName;
+	    
+	    private Integer stageTypeId;
+	    
 }
