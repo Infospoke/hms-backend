@@ -4,10 +4,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashMap;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.common.errors.ResourceNotFoundException;
@@ -25,7 +26,6 @@ import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
-
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
@@ -129,7 +129,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			entity.setPlanId(request.getPlanId());
 
 			entity.setStageName(round.getStageName());
-			
+
 			entity.setStageTypeId(round.getStageTypeId());
 
 			entity.setInterviewerUserId(dto.getInterviewerUserId());
@@ -244,7 +244,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				roundMap.put("roundName", round.getStageName());
 
 				roundMap.put("roundType", round.getStageType());
-				
+
 				roundMap.put("roundTypeId", round.getStageTypeId());
 
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
@@ -291,12 +291,9 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		Map<Integer, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
 				.groupingBy(InterviewerAssignmentEntity::getStageTypeId, LinkedHashMap::new, Collectors.toList()));
 
-		List<Integer> roundIds = roundWise.keySet().stream().map(Integer::intValue).toList();
-
-		Map<Integer, InterviewRoundEntity> roundMap = interviewRoundRepository.findByIdIn(roundIds)
-			    .stream()
-			    .collect(Collectors.toMap(InterviewRoundEntity::getStageTypeId, r -> r));
-
+//		List<Integer> roundIds = roundWise.keySet().stream().map(Integer::intValue).toList();
+//		Map<Integer, InterviewRoundEntity> roundMap = interviewRoundRepository.findByStageTypeIdIn(roundIds).stream()
+//				.collect(Collectors.toMap(InterviewRoundEntity::getStageTypeId, Function.identity()));
 		List<Map<String, Object>> rounds = new ArrayList<>();
 
 		for (Map.Entry<Integer, List<InterviewerAssignmentEntity>> entry : roundWise.entrySet()) {
@@ -304,18 +301,18 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			Integer stageTypeId = entry.getKey();
 			List<InterviewerAssignmentEntity> history = entry.getValue();
 
-			InterviewRoundEntity round = roundMap.get(stageTypeId);
-
-			// Since repository returns records ordered by id ASC,
-			// last record is the latest assignment.
 			InterviewerAssignmentEntity latest = history.get(history.size() - 1);
+
+			InterviewRoundEntity round = interviewRoundRepository
+			        .findByInterviewPlan_IdAndStageTypeId(
+			                latest.getPlanId(),
+			                latest.getStageTypeId());
 
 			Map<String, Object> roundResponse = new LinkedHashMap<>();
 			roundResponse.put("stageName", round != null ? round.getStageName() : null);
 			roundResponse.put("stageType", round != null ? round.getStageType() : null);
-			roundResponse.put("stageTypeId", rounds !=null ? round.getStageTypeId() : null);
+			roundResponse.put("stageTypeId", stageTypeId);
 			roundResponse.put("currentStatus", latest.getStatus());
-			
 
 			List<Map<String, Object>> assignmentHistory = new ArrayList<>();
 
@@ -362,7 +359,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		LocalDate today = LocalDate.now();
 
 		long todaysInterviews = interviewCurrentStageRepository.countByInterviewerIdAndInterviewDate(userId, today);
-		
+
 		long assignedInterviews = interviewerAssignmentRepository
 				.countByInterviewerUserIdAndRespondedAtIsNull(userId.longValue());
 
@@ -475,7 +472,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		Page<InterviewerAssignmentEntity> assignmentPage = interviewerAssignmentRepository.findAll(spec, pageable);
 
-		log.info("Total Assignments Found : {}", assignmentPage.getContent().size());;
+		log.info("Total Assignments Found : {}", assignmentPage.getContent().size());
+		;
 
 		assignmentPage.getContent()
 				.forEach(a -> log.info("DB Assignment -> Id={}, InterviewerUserId={}, JobId={}, JobTitle={}", a.getId(),
@@ -484,19 +482,17 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		List<Map<String, Object>> responseList = new ArrayList<>();
 
 		for (InterviewerAssignmentEntity assignment : assignmentPage.getContent()) {
-			
+
 			log.info("Assignment Id = {}", assignment.getId());
-			
-			  String calculatedPriority = calculatePriority(assignment.getCreatedAt());
 
-			    String priorityFilter = request.getFilter("priority");
+			String calculatedPriority = calculatePriority(assignment.getCreatedAt());
 
-			    if (priorityFilter != null
-			            && !priorityFilter.isBlank()
-			            && !"ALL".equalsIgnoreCase(priorityFilter)
-			            && !calculatedPriority.equalsIgnoreCase(priorityFilter)) {
-			        continue;
-			    }
+			String priorityFilter = request.getFilter("priority");
+
+			if (priorityFilter != null && !priorityFilter.isBlank() && !"ALL".equalsIgnoreCase(priorityFilter)
+					&& !calculatedPriority.equalsIgnoreCase(priorityFilter)) {
+				continue;
+			}
 
 			Map<String, Object> map = new LinkedHashMap<>();
 

@@ -1942,7 +1942,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
 			int currentOrder = interviewRoundRepository
-					.findByInterviewPlanIdAndStageTypeId(planId, interviewFeedbackRequest.getStageTypeId())
+					.findByInterviewPlan_IdAndStageTypeId(planId, interviewFeedbackRequest.getStageTypeId())
 					.getRoundOrder();
 
 			List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository
