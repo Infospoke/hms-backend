@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
+import com.hms.service.request.RescheduleInterviewRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.InterviewDashboardResponse;
@@ -167,5 +168,16 @@ public class InterviewPlanController {
 	public ResponseEntity<ApiResponse<?>> getInterviewSummary(@PathVariable("scheduleId") Integer scheduleId) {
 		return ResponseEntity.ok(interviewPlanService.getInterviewSummary(scheduleId));
 	}
+	
+	@PostMapping("/rescedule-interview")
+	public ResponseEntity<ApiResponse<?>> resceduleInterview(@RequestBody RescheduleInterviewRequest request) {
+		ApiResponse<?> response = interviewPlanService.rescheduleInterview(request);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+	}
+
+	
+	
+	
+	
 
 }

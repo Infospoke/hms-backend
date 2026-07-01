@@ -7,6 +7,4 @@ import com.hms.service.entity.InterviewFeedbackEntity;
 @Repository
 public interface InterviewFeedbackRepository extends JpaRepository<InterviewFeedbackEntity, Integer>{
 
-	long countByUserId(Integer userId);
-
 }

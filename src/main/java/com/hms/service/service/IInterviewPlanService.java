@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
+import com.hms.service.request.RescheduleInterviewRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 
 import com.hms.service.request.UpdateInterviewPlanRequest;
@@ -58,6 +59,9 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getInterviewSummary(Integer scheduleId);
 
 	ApiResponse<?> getInterviewScheduleDetailsById(Integer scheduleId);
+
+	ApiResponse<?> rescheduleInterview(RescheduleInterviewRequest request);
+
 
 
 

@@ -7,7 +7,6 @@ import com.hms.service.entity.InterviewUpcomingEntity;
 
 @Repository
 public interface InterviewUpcomingRepository extends JpaRepository<InterviewUpcomingEntity,Integer> {
-	
-	long countByUserId(Integer userId);
+
 
 }

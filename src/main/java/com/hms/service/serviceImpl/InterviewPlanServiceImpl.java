@@ -70,6 +70,7 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
+import com.hms.service.request.RescheduleInterviewRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.AIInterviewScheduleResponse;
@@ -2345,17 +2346,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		try {
 		Optional<InterviewScheduleEntity> entity = interviewScheduleRepository.findById(scheduleId);
 		
-
-		
-	
 		if(entity==null || entity.isEmpty() )
 		{
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Schedule Details not found");
 		}
 		
 		InterviewScheduleEntity interviewScheduleEntity = entity.get();
-		
-		
 		
 		response.setInterviewDate(interviewScheduleEntity.getInterviewDate());
 		
@@ -2374,5 +2370,37 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 	}
-	}	
+	}
+	
+	@Override
+	public ApiResponse<?> rescheduleInterview(RescheduleInterviewRequest request) {
+		Optional<InterviewScheduleEntity> scheduleEntity=interviewScheduleRepository.findById(request.getScheduleId());
+		if(scheduleEntity==null)
+		{
+			return ApiResponse.failure(ResponseCode.FAILURE, "schedule details not found");	
+		}
+		InterviewScheduleEntity entity=scheduleEntity.get();
+		entity.setRescheduleDate(request.getRescheduleDate());
+		entity.setRescheduleVenueDetails(request.getRescheduleVenueDetails());
+		entity.setRescheduleMeetingLink(request.getRescheduleMeetingLink());
+		entity.setRescheduleStartTime(request.getRescheduleStartTime());
+		entity.setRescheduleEndTime(request.getRescheduleEndTime());
+		Integer applicationId=entity.getApplicantId();
+		Integer roundId=entity.getRoundId();
+		
+		interviewScheduleRepository.save(entity);
+		
+		InterviewCurrentStageEntity currentStageEntity=interviewCurrentStageRepository.findByApplicationIdAndCurrentStageType(applicationId,roundId);
+		
+		currentStageEntity.setInterviewDate(request.getRescheduleDate());
+		currentStageEntity.setStartTime(request.getRescheduleStartTime());
+		currentStageEntity.setEndTime(request.getRescheduleEndTime());
+		interviewCurrentStageRepository.save(currentStageEntity);
+	
+		
+		return ApiResponse.success(ResponseCode.SUCCESS, "success","Interview Rescheduled successfully");
+		
+	}
+ 
+
 }
