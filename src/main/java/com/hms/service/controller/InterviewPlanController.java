@@ -118,6 +118,12 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 
 	}
+	
+	@GetMapping("get-interview-schedule-details-by-id/{scheduleId}")
+	public ResponseEntity<ApiResponse<?>> getInterviewScheduleDetailsById(@PathVariable("scheduleId") Integer scheduleId){
+		ApiResponse<?> response = interviewPlanService.getInterviewScheduleDetailsById(scheduleId);
+		return new ResponseEntity<>(response,HttpStatus.OK);
+		}
 
 	@GetMapping("/interview-progress-details/{applicationId}")
 	public ResponseEntity<ApiResponse<?>> getInterviewProgressDetailsById(

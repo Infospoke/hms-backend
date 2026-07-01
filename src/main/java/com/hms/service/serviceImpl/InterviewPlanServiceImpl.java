@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.AIInterviewQuestionsEntity;
@@ -82,6 +83,7 @@ import com.hms.service.response.InterviewProgressListResponse;
 import com.hms.service.response.InterviewProjectResponse;
 import com.hms.service.response.InterviewRoundResponse;
 import com.hms.service.response.InterviewRoundsResponse;
+import com.hms.service.response.InterviewScheduleDetailsResponse;
 import com.hms.service.response.InterviewSummaryResponse;
 import com.hms.service.response.InterviewUpcomingListResponse;
 import com.hms.service.service.IInterviewPlanService;
@@ -2334,4 +2336,43 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		return dto;
 	}
+
+	@Override
+	public ApiResponse<?> getInterviewScheduleDetailsById(Integer scheduleId) {
+		log.info("InterviewPlanServiceImpl :: Inside the getInterviewScheduleDetailsById");
+		
+		InterviewScheduleDetailsResponse response = new InterviewScheduleDetailsResponse();
+		try {
+		Optional<InterviewScheduleEntity> entity = interviewScheduleRepository.findById(scheduleId);
+		
+
+		
+	
+		if(entity==null || entity.isEmpty() )
+		{
+			return ApiResponse.failure(ResponseCode.FAILURE, "Interview Schedule Details not found");
+		}
+		
+		InterviewScheduleEntity interviewScheduleEntity = entity.get();
+		
+		
+		
+		response.setInterviewDate(interviewScheduleEntity.getInterviewDate());
+		
+		response.setStartTime(interviewScheduleEntity.getStartTime());
+		
+		response.setEndTime(interviewScheduleEntity.getEndTime());
+		
+		response.setInterviewType(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
+		
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview schedule details fetched successfully", response);
+	
+	}
+	catch (Exception e) {
+
+		log.error("Error while fetching interview schedule details", e);
+
+		return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
+	}
+	}	
 }

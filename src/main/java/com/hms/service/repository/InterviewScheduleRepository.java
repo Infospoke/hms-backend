@@ -226,4 +226,6 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 					    """, nativeQuery = true)
 	List<Object[]> getInterviewSummary(@Param("scheduleId") Integer scheduleId);
+
+	
 }

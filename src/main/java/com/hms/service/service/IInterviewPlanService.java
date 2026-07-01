@@ -49,8 +49,6 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest);
 
-
-
 	ApiResponse<?> getInterviewProgressList(SpecificationFilterRequest request);
 	
 	ApiResponse<InterviewDashboardResponse> getInterviewProgressCount();
@@ -58,6 +56,8 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getInterviewUpcomingList(SpecificationFilterRequest request);
 
 	ApiResponse<?> getInterviewSummary(Integer scheduleId);
+
+	ApiResponse<?> getInterviewScheduleDetailsById(Integer scheduleId);
 
 
 
