@@ -54,7 +54,6 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 				endDate = LocalDate.parse(endObj.toString()).atTime(23, 59, 59);
 			}
 		}
-
 		List<String> sources = filters.get("sources") != null ? (List<String>) filters.get("sources") : List.of("ALL");
 
 		List<String> sla = filters.get("sla") != null ? (List<String>) filters.get("sla") : List.of("ALL");
@@ -240,11 +239,11 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 						return false;
 				}
 			}
-			}
 		}
+	}
 
 		return true;
-	}
+}
 
 	public void rejectCandidate(Integer applicationId) {
 
