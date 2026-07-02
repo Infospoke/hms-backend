@@ -118,12 +118,13 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
-	
+
 	@GetMapping("get-interview-schedule-details-by-id/{scheduleId}")
-	public ResponseEntity<ApiResponse<?>> getInterviewScheduleDetailsById(@PathVariable("scheduleId") Integer scheduleId){
+	public ResponseEntity<ApiResponse<?>> getInterviewScheduleDetailsById(
+			@PathVariable("scheduleId") Integer scheduleId) {
 		ApiResponse<?> response = interviewPlanService.getInterviewScheduleDetailsById(scheduleId);
-		return new ResponseEntity<>(response,HttpStatus.OK);
-		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 	@GetMapping("/interview-progress-details/{applicationId}")
 	public ResponseEntity<ApiResponse<?>> getInterviewProgressDetailsById(
@@ -163,11 +164,11 @@ public class InterviewPlanController {
 		return ResponseEntity.ok(interviewPlanService.getInterviewUpcomingList(request));
 	}
 
-	@GetMapping("/interview-summary/{scheduleId}")
-	public ResponseEntity<ApiResponse<?>> getInterviewSummary(@PathVariable("scheduleId") Integer scheduleId) {
-		return ResponseEntity.ok(interviewPlanService.getInterviewSummary(scheduleId));
+	@GetMapping("/interview-summary/{applicationId}")
+	public ResponseEntity<ApiResponse<?>> getInterviewSummary(@PathVariable("applicationId") Integer applicationId) {
+		return ResponseEntity.ok(interviewPlanService.getInterviewSummary(applicationId));
 	}
-	
+
 	@PostMapping("/rescedule-interview")
 	public ResponseEntity<ApiResponse<?>> resceduleInterview(@RequestBody RescheduleInterviewRequest request) {
 		ApiResponse<?> response = interviewPlanService.rescheduleInterview(request);
