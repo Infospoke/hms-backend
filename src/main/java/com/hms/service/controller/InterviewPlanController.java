@@ -116,7 +116,7 @@ public class InterviewPlanController {
 	@PostMapping("/get-to-be-schedule-list")
 	public ResponseEntity<ApiResponse<?>> getScheduleList(@RequestBody SpecificationFilterRequest request) {
 		ApiResponse<?> response = interviewPlanService.getScheduleList(request);
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
 	

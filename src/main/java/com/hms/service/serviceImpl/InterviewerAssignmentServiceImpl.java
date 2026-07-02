@@ -163,7 +163,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			interviewerAssignmentRepository.save(entity);
 		}
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Success", "Interviewers assigned successfully");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interviewers assigned successfully","Success");
 	}
 
 	@Override
@@ -250,6 +250,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				roundMap.put("roundType", round.getStageType());
 
 				roundMap.put("roundTypeId", round.getStageTypeId());
+				
+				roundMap.put("stageTypeId",  round.getStageTypeId());
 
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
 

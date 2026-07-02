@@ -796,7 +796,7 @@ public class SpecificationFilterRequest {
 			spec = spec.and(equalSpec("employmentType", employmentType));
 		}
 
-		Specification<CreateJobDetailsEntity> dateSpec = dateSpec("targetStartDate");
+		Specification<CreateJobDetailsEntity> dateSpec = dateSpec("createdAt");
 
 		if (dateSpec != null) {
 
