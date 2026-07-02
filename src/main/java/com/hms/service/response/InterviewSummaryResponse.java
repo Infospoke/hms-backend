@@ -30,6 +30,7 @@ public class InterviewSummaryResponse {
     private String totalExperience;
     private String noticePeriod;
     private String currentStage;
+    private Integer roundId;
     private LocalDateTime interviewCompletedOn;
 
 }
