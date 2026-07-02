@@ -54,6 +54,7 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 	InterviewCurrentStageEntity findByApplicationIdAndCurrentStageType(Integer applicationId, Integer roundId);
 
 
+
 }
 
 

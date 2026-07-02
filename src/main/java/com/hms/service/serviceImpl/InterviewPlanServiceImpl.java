@@ -52,7 +52,6 @@ import com.hms.service.repository.ChildLinkCommentsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
-import com.hms.service.repository.InterviewCandidateDetailsRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
@@ -141,9 +140,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewScheduleRepository interviewScheduleRepository;
-
-	@Autowired
-	private InterviewCandidateDetailsRepository interviewCandidateDetailsRepository;
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;

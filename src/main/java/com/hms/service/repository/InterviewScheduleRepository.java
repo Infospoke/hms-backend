@@ -2,6 +2,7 @@ package com.hms.service.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -237,6 +238,8 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 					    """, nativeQuery = true)
 	List<Object[]> getInterviewSummary(@Param("scheduleId") Integer scheduleId);
+
+	Optional<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
 
 	
 }
