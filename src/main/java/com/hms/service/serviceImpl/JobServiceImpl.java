@@ -14,10 +14,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.CompletedStageDto;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
+import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.enums.FilterApplicantEnum;
@@ -29,6 +32,7 @@ import com.hms.service.repository.InterviewAnalysisRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
+import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
@@ -70,12 +74,15 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private InterviewAnalysisRepository interviewAnalysisRepository;
-	
+
 	@Autowired
 	private InterviewFeedbackRepository interviewFeedbackRepository;
 
 	@Autowired
 	private CandidateCreationRepository candidateCreationRepository;
+
+	@Autowired
+	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
@@ -144,6 +151,7 @@ public class JobServiceImpl implements IJobService {
 		DepartmentsEntity department = departmentsRepository.findById(jobs.getDepartmentId()).orElse(null);
 
 		JobApplicantsResponse response = new JobApplicantsResponse();
+
 		BeanUtils.copyProperties(entity, response);
 
 		response.setJobTitle(jobs.getJobTitle());
@@ -151,14 +159,8 @@ public class JobServiceImpl implements IJobService {
 		response.setLocation(jobs.getLocation());
 		response.setMinExperience(jobs.getMinExperience());
 		response.setMaxExperience(jobs.getMaxExperience());
+
 		response.setPlanName(interview.getPlanName());
-		
-		int totalStages = interview.getRounds() != null ? interview.getRounds().size() : 0;
-
-		Integer completedStages = interviewFeedbackRepository.countByApplicantId(entity.getId());
-
-		response.setNoOfStages(totalStages);
-		response.setCompletedStages((int) completedStages);
 
 		response.setDepartment(department != null ? department.getDepartmentName() : null);
 
@@ -174,7 +176,34 @@ public class JobServiceImpl implements IJobService {
 		if (current != null) {
 			response.setCurrentStageType(current.getCurrentStageType());
 		}
-		
+
+		int totalStages = interview.getRounds() != null ? interview.getRounds().size() : 0;
+
+		response.setNoOfRounds(totalStages);
+		response.setNoOfStages(totalStages);
+
+		List<InterviewFeedbackEntity> feedbackList = interviewFeedbackRepository.findByApplicantId(entity.getId());
+
+		response.setCompletedStages(feedbackList.size());
+
+		List<CompletedStageDto> completedStageDetails = new ArrayList<>();
+
+		for (InterviewFeedbackEntity feedback : feedbackList) {
+
+			CompletedStageDto dto = new CompletedStageDto();
+
+			dto.setStageTypeId(feedback.getCurrentStageId());
+
+			InterviewRoundDropDownEntity round = interviewRoundDropDownRepository.findById(feedback.getCurrentStageId())
+					.orElse(null);
+
+			dto.setStageName(round != null ? round.getRoundName() : null);
+
+			completedStageDetails.add(dto);
+		}
+
+		response.setCompletedStageDetails(completedStageDetails);
+
 		log.info("JobServiceImpl: Exit from getApplicantDetailsById method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant fetched successfully", response);
