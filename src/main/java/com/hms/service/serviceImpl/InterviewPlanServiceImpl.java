@@ -2418,9 +2418,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewCompletionStatus");
 
 		//Validations
-		
+		Integer applicationId = request.getApplicantId();
 		String status = request.getStatus();
 
+		if(applicationId == null) {
+			
+			return ApiResponse.failure(ResponseCode.FAILURE, "ApplicantId is required");
+		}
+		
 		if (status == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Status is required");
@@ -2467,11 +2472,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	private void sendInterviewSelectedMail(JobApplicationEntity application) {
 
 		log.info("InterviewPlanServiceImpl :: Inside sendInterviewSelectedMail");
-		
-		log.info("interview mail sent to the athiyaruksana@gmail.com");
-		
+
 		 CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
+		 log.info("Job Id : {}", application.getJobId());
+		 log.info("Job Entity : {}", job);
+		 log.info("From Email : {}", fromEmail);
+		 
 		 if (job == null) {
 			    throw new RuntimeException("Job Title Not Found");
 			}

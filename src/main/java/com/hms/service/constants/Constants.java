@@ -1169,35 +1169,59 @@ public static final String INTERVIEW_SELECTED_SUBJECT = "Congratulations! Interv
 public static final String INTERVIEW_REJECTED_SUBJECT = "Interview Result";
 
 public static final String INTERVIEW_REJECTED_BODY = """
+
 		<html>
 		<body>
+
 		<p>Dear %s,</p>
-		<p>Thank you for taking the time to participate in our interview process.</p>
-		<p>After careful consideration, we regret to inform you that you have not been selected for this opportunity.</p>
-		<p>We truly appreciate your interest in our organization and wish you success in your future career.</p>
+
+		<p>Thank you for taking the time to participate in our interview process for the <b>%s</b> position.</p>
+
+		<p>After carefully evaluating your overall performance throughout all stages of the interview process, we regret to inform you that your application has not been selected to move forward in the hiring process.</p>
+
+		<p>This decision was made after thorough consideration of all candidates. We sincerely appreciate the time, effort, and interest you showed in joining our organization.</p>
+
+		<p>We wish you every success in your future career and encourage you to apply for suitable opportunities with us in the future.</p>
+
+		<br>
+
 		<p>
 		Regards,<br>
 		Hiring Management System
 		</p>
+
 		</body>
 		</html>
+
 		""";
 
 public static final String INTERVIEW_SELECTED_BODY = """
 
 		<html>
 		<body>
+
 		<p>Dear %s,</p>
+
 		<p>Congratulations!</p>
-		<p>We are pleased to inform you that you have successfully cleared the interview round.</p>
-		<p>Our recruitment team will contact you shortly regarding the next steps.</p>
-		<p>Thank you for participating in the interview process.</p>
+
+		<p>We are delighted to inform you that you have successfully completed all stages of the interview process for the <b>%s</b> position.</p>
+
+		<p>Based on your overall performance throughout the interview process, you have been selected to move forward in our hiring process.</p>
+
+		<p>Our recruitment team will reach out to you shortly with the next steps and further details.</p>
+
+		<p>Thank you for your interest in joining our organization. We look forward to welcoming you onboard.</p>
+
+		<br>
+
 		<p>
 		Regards,<br>
 		Hiring Management System
 		</p>
+
 		</body>
 		</html>
+
 		""";
 
 }
