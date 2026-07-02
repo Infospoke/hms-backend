@@ -14,8 +14,7 @@ import org.springframework.stereotype.Repository;
 import com.hms.service.entity.InterviewScheduleEntity;
 
 @Repository
-public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity,Integer> {
-
+public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity, Integer> {
 
 	InterviewScheduleEntity findByApplicantIdAndInterviewDate(Integer applicationId, LocalDate now);
 
@@ -164,82 +163,62 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 	@Query(value = """
 			SELECT
+			    j.job_title,
+			    d.department_name,
+			    ir.stage_name,
+			    ir.interview_mode,
+			    ir.stage_type,
+			    j.employment_type,
+			    CONCAT(j.location, ', ', j.country),
+			    j.work_mode,
+			    CONCAT(j.min_experience, ' - ', j.max_experience, ' Years'),
+			    ad.name,
+			    ad.email,
+			    ad.phone_no,
+			    ad.current_company,
+			    ad.current_location,
+			    ad.total_experience,
+			    ad.notice_period,
+			    rd.round_name,
+			    cs.interview_completed_on,
+			    bc.proposed_total_compensation,
+			    cs.current_stage_type
 
-			  j.job_title,
+			FROM tb_job_applications ja
 
-			  d.department_name,
+			INNER JOIN tb_applicant_details ad
+			    ON ad.application_id = ja.id
 
-			  ir.stage_name,
+			INNER JOIN tb_create_job_details j
+			    ON j.job_id = ja.job_id
 
-			  ir.interview_mode,
+			LEFT JOIN tb_budget_compensation bc
+			    ON bc.sr_id = j.sr_id
 
-			  ir.stage_type,
+			LEFT JOIN tb_departments d
+			    ON d.id = j.department
 
-			  j.employment_type,
+			INNER JOIN tb_interview_plan ip
+			    ON ip.id = j.plan_id
 
-			  j.location || ', ' || j.country,
+			LEFT JOIN tb_interview_current_stage cs
+			    ON cs.id = (
+			        SELECT MAX(cs1.id)
+			        FROM tb_interview_current_stage cs1
+			        WHERE cs1.application_id = ja.id
+			    )
 
-			  j.work_mode,
+			LEFT JOIN tb_interview_round ir
+			    ON ir.interview_plan_id = ip.id
+			   AND ir.stage_type_id = cs.current_stage_type
 
-			  j.min_experience || ' - ' || j.max_experience || ' Years',
+			LEFT JOIN tb_interview_round_dropdown rd
+			    ON rd.id = cs.current_stage_type
 
-			  ad.name,
-
-			  ad.email,
-
-			  ad.phone_no,
-
-			  ad.current_company,
-
-			  ad.current_location,
-
-			  ad.total_experience,
-
-			  ad.notice_period,
-			  
-			  rd.round_name,
-			  
-			  cs.interview_completed_on,
-			  
-			  bc.proposed_total_compensation
-
-					    FROM tb_interview_schedule s
-
-					    INNER JOIN tb_job_applications ja
-					        ON ja.id=s.applicant_id
-
-					    INNER JOIN tb_applicant_details ad
-					        ON ad.application_id=ja.id
-
-					    INNER JOIN tb_create_job_details j
-					        ON j.job_id=ja.job_id
-					        
-					     LEFT JOIN tb_budget_compensation bc
-                                ON bc.sr_id = j.sr_id
-
-					    LEFT JOIN tb_departments d
-					        ON d.id=j.department
-
-					    INNER JOIN tb_interview_plan ip
-					        ON ip.id=j.plan_id
-
-					        
-					    INNER JOIN tb_interview_round ir
-                               ON ir.interview_plan_id = ip.id
-
-					    LEFT JOIN tb_interview_current_stage cs
-					        ON cs.application_id=ja.id AND cs.current_stage_type = ir.stage_type_id
-
-					    LEFT JOIN tb_interview_round_dropdown rd
-					        ON rd.id=cs.current_stage_type
-					        
-					     
-					    WHERE s.id=:scheduleId
-
-					    """, nativeQuery = true)
-	List<Object[]> getInterviewSummary(@Param("scheduleId") Integer scheduleId);
+			WHERE ja.id = :applicationId
+			""", nativeQuery = true)
+	List<Object[]> getInterviewSummary(@Param("applicationId") Integer applicationId);
 
 	Optional<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
 
-	
 }

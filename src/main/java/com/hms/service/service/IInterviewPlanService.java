@@ -54,7 +54,7 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> getInterviewUpcomingList(SpecificationFilterRequest request);
 
-	ApiResponse<?> getInterviewSummary(Integer scheduleId);
+	ApiResponse<?> getInterviewSummary(Integer applicationId);
 
 	ApiResponse<?> getInterviewScheduleDetailsById(Integer scheduleId);
 
