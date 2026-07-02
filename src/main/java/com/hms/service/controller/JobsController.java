@@ -3,23 +3,17 @@ package com.hms.service.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.enums.FilterApplicantEnum;
-import com.hms.service.request.JobRequest;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.service.IJobService;
 import com.hms.service.wrappers.ApiResponse;
 
-import jakarta.validation.Valid;
 
 
 @RestController

@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,6 @@ import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
-import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.CandidateCreationRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -38,11 +36,8 @@ import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
 import com.hms.service.service.IJobService;
-import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
-
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -58,8 +53,8 @@ public class JobServiceImpl implements IJobService {
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
 
-	@Autowired
-	private JwtService jwtService;
+//	@Autowired
+//	private JwtService jwtService;
 	
 	@Autowired
 	private InterviewScheduleRepository interviewScheduleRepository;
@@ -94,9 +89,9 @@ public class JobServiceImpl implements IJobService {
 
 //	@Autowired
 //	private UserServiceImpl userService;
-
-	@Autowired
-	private HttpServletRequest httpServletRequest;
+//
+//	@Autowired
+//	private HttpServletRequest httpServletRequest;
 
 //	@Autowired
 //	private InfospokeWebisteFeign infospokeWebsiteFeign;
@@ -104,9 +99,9 @@ public class JobServiceImpl implements IJobService {
 //	@Autowired
 //	private InfospokeATSFeign infospokeATSFeign;
 
-	@Autowired
-	private ActivityFeedRepository activityFeedRepository;
-
+//	@Autowired
+//	private ActivityFeedRepository activityFeedRepository;
+//
 
 
 
