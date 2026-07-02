@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,33 +14,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.DepartmentsEntity;
+import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.CandidateCreationRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
+import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.InterviewAnalysisRepository;
+import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewPlanRepository;
-
+import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
-
-
 import com.hms.service.repository.OfferRepository;
-
 import com.hms.service.repository.ResumeAnalysisRepository;
-
-import com.hms.service.request.JobRequest;
-import com.hms.service.request.JobSkillRequest;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
-import com.hms.service.response.JobsResponse;
-import com.hms.service.response.SkillsResponse;
 import com.hms.service.service.IJobService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -63,7 +60,15 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private JwtService jwtService;
+	
+	@Autowired
+	private InterviewScheduleRepository interviewScheduleRepository;
+	
+	@Autowired
+	private DepartmentsRepository departmentsRepository;
 
+	@Autowired
+	private InterviewCurrentStageRepository interviewCurrentStageRepository;
 	
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
@@ -139,13 +144,38 @@ public class JobServiceImpl implements IJobService {
 				.orElseThrow(() -> new CustomSystemErrorException("job not found"));
 		InterviewPlanEntity interview = interviewPlanRepository.findById(jobs.getPlanId())
 				.orElseThrow(() -> new CustomSystemErrorException("plan not found"));
+		InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantId(entity.getId())
+				.orElseThrow(() -> new CustomSystemErrorException("not scheduled"));
+		InterviewCurrentStageEntity current = interviewCurrentStageRepository
+		        .findByApplicationId(entity.getId());
 
+		if (current == null) {
+		    throw new CustomSystemErrorException("Current stage not found");
+		}
 		JobApplicantsResponse jobApplicantsResponse = new JobApplicantsResponse();
 		BeanUtils.copyProperties(entity, jobApplicantsResponse);
 
 		jobApplicantsResponse.setJobTitle(jobs.getJobTitle());
 		jobApplicantsResponse.setJobCode(jobs.getJobCode());
+		jobApplicantsResponse.setLocation(jobs.getLocation());
+		jobApplicantsResponse.setMinExperience(jobs.getMinExperience());
+		jobApplicantsResponse.setMaxExperience(jobs.getMaxExperience());
 		jobApplicantsResponse.setPlanName(interview.getPlanName());
+		jobApplicantsResponse.setStartTime(schedule.getStartTime());
+		jobApplicantsResponse.setEndTime(schedule.getEndTime());
+		jobApplicantsResponse.setInterviewDate(schedule.getInterviewDate());
+		jobApplicantsResponse.setRescheduleDate(schedule.getRescheduleDate());
+		jobApplicantsResponse.setRescheduleEndTime(schedule.getRescheduleEndTime());
+		jobApplicantsResponse.setRescheduleStartTime(schedule.getRescheduleStartTime());
+		jobApplicantsResponse.setCurrentStageType(current.getCurrentStageType());
+		
+		DepartmentsEntity department = departmentsRepository.findById(jobs.getDepartmentId()).orElse(null);
+
+		if (department != null) {
+		    jobApplicantsResponse.setDepartment(department.getDepartmentName());
+		} else {
+		    jobApplicantsResponse.setDepartment(null);
+		}
 		jobApplicantsResponse.setNoOfRounds(interview.getRounds() != null ? interview.getRounds().size() : 0);
 
 		log.info("JobServiceImpl: Exit from getApplicantDetailsById method");

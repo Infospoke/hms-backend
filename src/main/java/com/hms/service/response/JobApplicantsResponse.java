@@ -1,13 +1,16 @@
 package com.hms.service.response;
 
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,6 +46,18 @@ public class JobApplicantsResponse {
 	private String currentStage;
 	private String planName;
 	private Integer noOfRounds;
+	private String location;
+	private Integer minExperience;
+	private Integer maxExperience;
+	private String department;
+	private LocalDate interviewDate;
+	private LocalTime startTime;
+	private LocalTime endTime;
+	private Integer currentStageType;
+	private LocalDate rescheduleDate;
+	private LocalTime rescheduleStartTime;
+	private LocalTime rescheduleEndTime;
+	
 	
 	
 
