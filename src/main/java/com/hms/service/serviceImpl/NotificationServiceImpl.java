@@ -126,7 +126,11 @@ public class NotificationServiceImpl implements INotificationService {
 		updateNotification(event);
 
 		// Send email to every user in the roleEmailMap
-		sendEmailsToAllRoles(event);
+		try {
+			sendEmailsToAllRoles(event);
+		} catch (Exception e) {
+			log.error(e.getMessage());
+		}
 		log.info("NotificationServiceImpl :: Notification fully processed for " + event.getType() + ": {}",
 				event.getProcessId());
 	}
