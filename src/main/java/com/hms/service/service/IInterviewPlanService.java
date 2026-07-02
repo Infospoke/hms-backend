@@ -5,7 +5,7 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.RescheduleInterviewRequest;
 import com.hms.service.request.SpecificationFilterRequest;
-
+import com.hms.service.request.UpdateInterviewCompletionStatusRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.InterviewDashboardResponse;
 
@@ -59,6 +59,8 @@ public interface IInterviewPlanService {
 	ApiResponse<?> getInterviewScheduleDetailsById(Integer scheduleId);
 
 	ApiResponse<?> rescheduleInterview(RescheduleInterviewRequest request);
+
+	ApiResponse<?> updateInterviewCompletionStatus(UpdateInterviewCompletionStatusRequest request);
 
 
 

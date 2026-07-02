@@ -1163,4 +1163,41 @@ public class Constants {
 	public static final String ADDITIONAL = "Additional";
 	public static final String BUCKETNAME = "infospokejobapplicationsbucket";
 public static final String MOVE_TO_INTERVIEW ="Move to Interview";
+
+public static final String INTERVIEW_SELECTED_SUBJECT = "Congratulations! Interview Cleared";
+
+public static final String INTERVIEW_REJECTED_SUBJECT = "Interview Result";
+
+public static final String INTERVIEW_REJECTED_BODY = """
+		<html>
+		<body>
+		<p>Dear %s,</p>
+		<p>Thank you for taking the time to participate in our interview process.</p>
+		<p>After careful consideration, we regret to inform you that you have not been selected for this opportunity.</p>
+		<p>We truly appreciate your interest in our organization and wish you success in your future career.</p>
+		<p>
+		Regards,<br>
+		Hiring Management System
+		</p>
+		</body>
+		</html>
+		""";
+
+public static final String INTERVIEW_SELECTED_BODY = """
+
+		<html>
+		<body>
+		<p>Dear %s,</p>
+		<p>Congratulations!</p>
+		<p>We are pleased to inform you that you have successfully cleared the interview round.</p>
+		<p>Our recruitment team will contact you shortly regarding the next steps.</p>
+		<p>Thank you for participating in the interview process.</p>
+		<p>
+		Regards,<br>
+		Hiring Management System
+		</p>
+		</body>
+		</html>
+		""";
+
 }
