@@ -65,7 +65,7 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 
 		List<JobApplicationEntity> jobs = jobIds.isEmpty() ? jobApplicationRepository.findAll()
 				: jobApplicationRepository.findByJobIdInOrderByStageEntryDateDesc(jobIds);
-
+																																																				
 		Map<String, Integer> counts = new HashMap<>();
 		counts.put("shortlisted", 0);
 		counts.put("interview", 0);

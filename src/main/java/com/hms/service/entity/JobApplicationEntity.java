@@ -74,4 +74,8 @@ public class JobApplicationEntity {
 	
 	@Column(name="in_person_interviews")
 	private boolean inPersonInterviews;
+	
+	@Column(name="interview_completion_status")
+	private String interviewCompletionStatus;
+
 }

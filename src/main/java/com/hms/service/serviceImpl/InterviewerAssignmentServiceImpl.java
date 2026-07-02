@@ -531,7 +531,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 	@Override
 	public ApiResponse<?> updateInterviewAssignment(UpdateInterviewAssignmentRequest request) {
 
-		log.info("InterviewerAssignmentServiceImpl :: Inside respondToAssignment");
+		log.info("InterviewerAssignmentServiceImpl :: Inside updateInterviewAssignment");
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
@@ -560,7 +560,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		interviewerAssignmentRepository.save(assignment);
 
-		log.info("InterviewerAssignmentServiceImpl :: Exit respondToAssignment");
+		log.info("InterviewerAssignmentServiceImpl :: Exit updateInterviewAssignment");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment updated successfully", null);
 	}
