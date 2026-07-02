@@ -2227,13 +2227,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			LocalDate interviewDate = Optional.ofNullable(request.getFilter("interviewDate")).map(LocalDate::parse)
 					.orElse(LocalDate.of(1900, 1, 1));
 
-			Page<Object[]> page = interviewScheduleRepository.getInterviewSchedules(search, departmentId, roundId,
+			Page<Object[]> page = interviewScheduleRepository.getUpcomingInterviews(search, departmentId, roundId,
 					interviewMode, interviewDate, pageable);
 
 			List<InterviewUpcomingListResponse> response = page.getContent().stream().map(this::mapInterviewSchedule)
 					.toList();
 
-			return ApiResponse.success("Interview schedules fetched successfully", response,
+			return ApiResponse.success("Upcoming Interviews fetched successfully", response,
 					(int) page.getTotalElements());
 
 		} catch (Exception e) {
