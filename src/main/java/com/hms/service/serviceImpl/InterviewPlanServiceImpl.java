@@ -2335,6 +2335,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		dto.setNoticePeriod((String) obj[15]);
 
 		dto.setCurrentStage((String) obj[16]);
+		
+		dto.setInterviewCompletedOn((LocalDateTime)obj[17]);
+		
+		dto.setSalary((Integer)obj[18]);
 
 		return dto;
 	}
