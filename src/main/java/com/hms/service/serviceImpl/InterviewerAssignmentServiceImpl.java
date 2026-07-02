@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.common.errors.ResourceNotFoundException;
@@ -101,8 +100,12 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		for (RoundAssignmentDto dto : request.getAssignments()) {
 
-			InterviewRoundEntity round = interviewRoundRepository.findById(dto.getRoundId())
-					.orElseThrow(() -> new RuntimeException("Round not found"));
+			InterviewRoundEntity round = interviewRoundRepository
+					.findByInterviewPlan_IdAndStageTypeId(request.getPlanId(), dto.getStageTypeId());
+
+			if (round == null) {
+				throw new RuntimeException("Stage not found");
+			}
 
 			List<InterviewerAssignmentEntity> history = interviewerAssignmentRepository
 					.findByJobIdAndStageTypeIdOrderByIdDesc(request.getJobId(), round.getStageTypeId());
@@ -159,7 +162,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			interviewerAssignmentRepository.save(entity);
 		}
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Success", "Interviewers assigned successfully");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interviewers assigned successfully","Success");
 	}
 
 	@Override
@@ -246,6 +249,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				roundMap.put("roundType", round.getStageType());
 
 				roundMap.put("roundTypeId", round.getStageTypeId());
+				
+				roundMap.put("stageTypeId",  round.getStageTypeId());
 
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
 
@@ -304,9 +309,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			InterviewerAssignmentEntity latest = history.get(history.size() - 1);
 
 			InterviewRoundEntity round = interviewRoundRepository
-			        .findByInterviewPlan_IdAndStageTypeId(
-			                latest.getPlanId(),
-			                latest.getStageTypeId());
+					.findByInterviewPlan_IdAndStageTypeId(latest.getPlanId(), latest.getStageTypeId());
 
 			Map<String, Object> roundResponse = new LinkedHashMap<>();
 			roundResponse.put("stageName", round != null ? round.getStageName() : null);

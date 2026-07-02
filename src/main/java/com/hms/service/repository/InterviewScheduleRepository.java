@@ -2,6 +2,7 @@ package com.hms.service.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -172,7 +173,7 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 			  ir.interview_mode,
 
-			  ir.stage_name,
+			  ir.stage_type,
 
 			  j.employment_type,
 
@@ -195,11 +196,12 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 			  ad.total_experience,
 
 			  ad.notice_period,
-
-              
+			  
 			  rd.round_name,
 			  
-			  cs.interview_completed_on
+			  cs.interview_completed_on,
+			  
+			  bc.proposed_total_compensation
 
 					    FROM tb_interview_schedule s
 
@@ -211,23 +213,33 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 					    INNER JOIN tb_create_job_details j
 					        ON j.job_id=ja.job_id
+					        
+					     LEFT JOIN tb_budget_compensation bc
+                                ON bc.sr_id = j.sr_id
 
 					    LEFT JOIN tb_departments d
 					        ON d.id=j.department
 
+					    INNER JOIN tb_interview_plan ip
+					        ON ip.id=j.plan_id
+
+					        
 					    INNER JOIN tb_interview_round ir
-					        ON ir.id=s.round_id
+                               ON ir.interview_plan_id = ip.id
 
 					    LEFT JOIN tb_interview_current_stage cs
-					        ON cs.application_id=ja.id
+					        ON cs.application_id=ja.id AND cs.current_stage_type = ir.stage_type_id
 
 					    LEFT JOIN tb_interview_round_dropdown rd
 					        ON rd.id=cs.current_stage_type
-
+					        
+					     
 					    WHERE s.id=:scheduleId
 
 					    """, nativeQuery = true)
 	List<Object[]> getInterviewSummary(@Param("scheduleId") Integer scheduleId);
+
+	Optional<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
 
 	
 }

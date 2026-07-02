@@ -40,4 +40,5 @@ public class InterviewRoundEntity {
 	@lombok.EqualsAndHashCode.Exclude
 	private InterviewPlanEntity interviewPlan;
 
+
 }

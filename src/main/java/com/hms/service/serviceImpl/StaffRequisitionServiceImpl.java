@@ -59,7 +59,6 @@ import com.hms.service.request.LevelConfig;
 import com.hms.service.request.PositonBascicsRequest;
 import com.hms.service.request.ReviewRequest;
 import com.hms.service.request.RolesAndRequirementsRequest;
-import com.hms.service.request.SourcingStrategyRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.request.UpdateSrRequest;
@@ -70,7 +69,6 @@ import com.hms.service.response.BusinessValidationResponse;
 import com.hms.service.response.PositonBasicsResponse;
 import com.hms.service.response.RolesAndRequirementsResponse;
 import com.hms.service.response.SRCountResponse;
-import com.hms.service.response.SourcingStrategyResponse;
 import com.hms.service.response.SrApprovalResponse;
 import com.hms.service.service.INotificationService;
 import com.hms.service.service.IStaffingRequisitionService;
@@ -82,6 +80,7 @@ import com.hms.service.wrappers.ResponseCode;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -145,6 +144,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
 
+	@Transactional
 	@Override
 	public ApiResponse<?> newStaffingRequisition(StaffingRequisitionRequest request, MultipartFile file) {
 
@@ -1616,6 +1616,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		}
 
 		ApprovalsChildEntity entity = optional.get();
+		
+		
+		
 
 		// FIND CURRENT LEVEL
 
@@ -1641,6 +1644,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		String roleName = getRoleNameFromToken();
 		String username = getUsernameFromToken();
+
 
 		// ROLE VALIDATION
 
@@ -1739,7 +1743,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		if (approvalLevel == 1) {
 
-			levelName = "Department Head";
+			levelName = roleName;
 
 			pos.setApprover1By(username);
 			pos.setApprover1Role(roleName);
@@ -1760,7 +1764,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		} else if (approvalLevel == 2) {
 
-			levelName = "HRBP";
+			levelName = roleName;
 
 			pos.setApprover2By(username);
 			pos.setApprover2Role(roleName);
@@ -1781,7 +1785,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		} else if (approvalLevel == 3) {
 
-			levelName = "Finance";
+			levelName = roleName;
 
 			pos.setApprover3By(username);
 			pos.setApprover3Role(roleName);
@@ -1856,7 +1860,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				makerSubject = "Your Staffing Requisition has been approved by Level 1 (Department Head) and is now under Level 2 approval flow";
 
-				makerTitle = "Level 1 Approved — Department Head";
+				makerTitle = "Level 1 Approved — "+ roleName;
 
 				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
 						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
@@ -1866,7 +1870,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				makerSubject = "Your Staffing Requisition has been approved by Level 2 (HRBP) and is now under Level 3 approval flow";
 
-				makerTitle = "Level 2 Approved — HRBP";
+				makerTitle = "Level 2 Approved — "+ roleName;
 
 				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
 						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
@@ -1876,7 +1880,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				makerSubject = "Your Staffing Requisition has been fully approved successfully and is now ready for Recruiter Assignment and Job Creation";
 
-				makerTitle = "Level 3 Approved — Finance";
+				makerTitle = "Level 3 Approved — "+ roleName;
 
 				makerMailBody = String.format(Constants.SR_FULLY_APPROVED_NOTIFY, pos.getCreatedBy(), pos.getSrId(),
 						pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(), pos.getEmploymentType(),
