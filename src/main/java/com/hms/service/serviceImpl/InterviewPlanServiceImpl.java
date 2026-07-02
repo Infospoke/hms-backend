@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -72,6 +73,7 @@ import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.RescheduleInterviewRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewCompletionStatusRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.AIInterviewScheduleResponse;
 import com.hms.service.response.CommentTimelineResponse;
@@ -88,6 +90,7 @@ import com.hms.service.response.InterviewScheduleDetailsResponse;
 import com.hms.service.response.InterviewSummaryResponse;
 import com.hms.service.response.InterviewUpcomingListResponse;
 import com.hms.service.service.IInterviewPlanService;
+import com.hms.service.service.IMailService;
 import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -123,6 +126,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private JwtService jwtService;
+	
+	@Autowired
+	private IMailService iMailService;
 
 	@Autowired
 	private FunctionalityRepository functionalityRepository;
@@ -172,6 +178,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
+	
+	@Value("${spring.mail.username}")
+	private String fromEmail;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -2402,6 +2411,99 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "success","Interview Rescheduled successfully");
 		
 	}
- 
 
+	@Override
+	public ApiResponse<?> updateInterviewCompletionStatus(UpdateInterviewCompletionStatusRequest request) {
+
+		log.info("InterviewPlanServiceImpl :: Inside updateInterviewCompletionStatus");
+
+		//Validations
+		
+		String status = request.getStatus();
+
+		if (status == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Status is required");
+		}
+
+		if (!(status.equalsIgnoreCase("HOLD") || status.equalsIgnoreCase("ACCEPTED")
+				|| status.equalsIgnoreCase("REJECTED"))) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Status");
+		}
+		
+		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
+
+		if (application == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
+		}
+		
+		String currentStatus = application.getInterviewCompletionStatus();
+
+		if ("ACCEPTED".equalsIgnoreCase(currentStatus) || "REJECTED".equalsIgnoreCase(currentStatus)) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Interview completion status cannot be modified.");
+		}
+
+		application.setInterviewCompletionStatus(request.getStatus());
+
+		jobApplicationRepository.save(application);
+
+		if ("ACCEPTED".equalsIgnoreCase(request.getStatus())) {
+
+		    sendInterviewSelectedMail(application);
+
+		} else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
+
+		    sendInterviewRejectedMail(application);
+		}
+
+		log.info("InterviewPlanServiceImpl :: Exit updateInterviewCompletionStatus");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview completion status updated successfully", null);
+	}
+	
+	private void sendInterviewSelectedMail(JobApplicationEntity application) {
+
+		log.info("InterviewPlanServiceImpl :: Inside sendInterviewSelectedMail");
+		
+		log.info("interview mail sent to the athiyaruksana@gmail.com");
+		
+		 CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+
+		 if (job == null) {
+			    throw new RuntimeException("Job Title Not Found");
+			}
+
+		String jobTitle = job.getJobTitle();
+		
+		String subject = Constants.INTERVIEW_SELECTED_SUBJECT;
+		
+		String body = String.format(Constants.INTERVIEW_SELECTED_BODY, application.getFirstName(),
+				jobTitle);
+		
+		iMailService.sendMail(fromEmail, application.getEmail(), null, subject, body, null);
+	}
+
+	private void sendInterviewRejectedMail(JobApplicationEntity application) {
+
+		log.info("InterviewPlanServiceImpl :: Inside sendInterviewRejectedMail");
+
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+
+		if (job == null) {
+			throw new RuntimeException("Job Details Not Found");
+		}
+
+		String jobTitle = job.getJobTitle();
+		
+		String subject = Constants.INTERVIEW_REJECTED_SUBJECT;
+
+		String body = String.format(Constants.INTERVIEW_REJECTED_BODY, application.getFirstName(),
+				jobTitle);
+
+		iMailService.sendMail(fromEmail, application.getEmail(), null, subject, body, null);
+	}
+	
 }

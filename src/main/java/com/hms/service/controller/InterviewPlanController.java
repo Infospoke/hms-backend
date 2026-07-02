@@ -16,6 +16,7 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
 import com.hms.service.request.RescheduleInterviewRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateInterviewCompletionStatusRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.InterviewDashboardResponse;
 import com.hms.service.service.IInterviewPlanService;
@@ -46,9 +47,7 @@ public class InterviewPlanController {
 	@PutMapping("/update")
 	public ResponseEntity<ApiResponse<?>> updateInterviewPlan(@Valid @RequestBody UpdateInterviewPlanRequest request,
 			HttpServletRequest httpRequest) {
-
 		ApiResponse<?> response = interviewPlanService.updateInterviewPlan(request, httpRequest);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -174,10 +173,10 @@ public class InterviewPlanController {
 		ApiResponse<?> response = interviewPlanService.rescheduleInterview(request);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
-
 	
-	
-	
-	
-
+	@PostMapping("/update-interview-completion-status")
+	public ResponseEntity<ApiResponse<?>> updateInterviewCompletionStatus(@RequestBody UpdateInterviewCompletionStatusRequest request) {
+		ApiResponse<?> response = interviewPlanService.updateInterviewCompletionStatus(request);
+		return ResponseEntity.ok(response);
+	}
 }

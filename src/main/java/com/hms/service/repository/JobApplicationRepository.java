@@ -1,6 +1,7 @@
 package com.hms.service.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,8 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 	List<JobApplicationEntity> findByJobIdInOrderByStageEntryDateDesc(List<Integer> jobIds);
 
 	List<JobApplicationEntity> findByJobIdOrderByCreatedDateDesc(Integer jobId);
+	
+	Optional<JobApplicationEntity> findById(Integer id);
 
 	@Query(value = """
 	        SELECT
