@@ -21,7 +21,7 @@ public class InterviewSummaryResponse {
     private String workMode;
     private String interviewMode;
     private String experienceRequired;
-    private String salaryRange;
+    private Integer salary;
     private String candidateName;
     private String email;
     private String phone;
