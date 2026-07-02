@@ -27,6 +27,7 @@ import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.InterviewAnalysisRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
+import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
@@ -38,14 +39,13 @@ import com.hms.service.response.JobsDashboardResponse;
 import com.hms.service.service.IJobService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
 
 public class JobServiceImpl implements IJobService {
-
-	
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
@@ -55,22 +55,24 @@ public class JobServiceImpl implements IJobService {
 
 //	@Autowired
 //	private JwtService jwtService;
-	
+
 	@Autowired
 	private InterviewScheduleRepository interviewScheduleRepository;
-	
+
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
 
 	@Autowired
 	private InterviewCurrentStageRepository interviewCurrentStageRepository;
-	
+
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
 
-
 	@Autowired
 	private InterviewAnalysisRepository interviewAnalysisRepository;
+	
+	@Autowired
+	private InterviewFeedbackRepository interviewFeedbackRepository;
 
 	@Autowired
 	private CandidateCreationRepository candidateCreationRepository;
@@ -81,11 +83,8 @@ public class JobServiceImpl implements IJobService {
 	@Autowired
 	private OfferRepository offerRepository;
 
-	
 	@Autowired
 	private InterviewSessionRepository interviewSessionRepository;
-
-	
 
 //	@Autowired
 //	private UserServiceImpl userService;
@@ -103,9 +102,6 @@ public class JobServiceImpl implements IJobService {
 //	private ActivityFeedRepository activityFeedRepository;
 //
 
-
-
-	
 	@Override
 	public ApiResponse<?> getAllJobApplicants() {
 
@@ -136,47 +132,54 @@ public class JobServiceImpl implements IJobService {
 				.orElseThrow(() -> new CustomSystemErrorException(Constants.NO_APPLICANTS_FOUND));
 
 		CreateJobDetailsEntity jobs = createJobDetailsRepository.findById(entity.getJobId())
-				.orElseThrow(() -> new CustomSystemErrorException("job not found"));
+				.orElseThrow(() -> new CustomSystemErrorException("Job not found"));
+
 		InterviewPlanEntity interview = interviewPlanRepository.findById(jobs.getPlanId())
-				.orElseThrow(() -> new CustomSystemErrorException("plan not found"));
-		InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantId(entity.getId())
-				.orElseThrow(() -> new CustomSystemErrorException("not scheduled"));
-		InterviewCurrentStageEntity current = interviewCurrentStageRepository
-		        .findByApplicationId(entity.getId());
+				.orElseThrow(() -> new CustomSystemErrorException("Interview plan not found"));
 
-		if (current == null) {
-		    throw new CustomSystemErrorException("Current stage not found");
-		}
-		JobApplicantsResponse jobApplicantsResponse = new JobApplicantsResponse();
-		BeanUtils.copyProperties(entity, jobApplicantsResponse);
+		InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantId(entity.getId()).orElse(null);
 
-		jobApplicantsResponse.setJobTitle(jobs.getJobTitle());
-		jobApplicantsResponse.setJobCode(jobs.getJobCode());
-		jobApplicantsResponse.setLocation(jobs.getLocation());
-		jobApplicantsResponse.setMinExperience(jobs.getMinExperience());
-		jobApplicantsResponse.setMaxExperience(jobs.getMaxExperience());
-		jobApplicantsResponse.setPlanName(interview.getPlanName());
-		jobApplicantsResponse.setStartTime(schedule.getStartTime());
-		jobApplicantsResponse.setEndTime(schedule.getEndTime());
-		jobApplicantsResponse.setInterviewDate(schedule.getInterviewDate());
-		jobApplicantsResponse.setRescheduleDate(schedule.getRescheduleDate());
-		jobApplicantsResponse.setRescheduleEndTime(schedule.getRescheduleEndTime());
-		jobApplicantsResponse.setRescheduleStartTime(schedule.getRescheduleStartTime());
-		jobApplicantsResponse.setCurrentStageType(current.getCurrentStageType());
-		
+		InterviewCurrentStageEntity current = interviewCurrentStageRepository.findByApplicationId(entity.getId());
+
 		DepartmentsEntity department = departmentsRepository.findById(jobs.getDepartmentId()).orElse(null);
 
-		if (department != null) {
-		    jobApplicantsResponse.setDepartment(department.getDepartmentName());
-		} else {
-		    jobApplicantsResponse.setDepartment(null);
-		}
-		jobApplicantsResponse.setNoOfRounds(interview.getRounds() != null ? interview.getRounds().size() : 0);
+		JobApplicantsResponse response = new JobApplicantsResponse();
+		BeanUtils.copyProperties(entity, response);
 
+		response.setJobTitle(jobs.getJobTitle());
+		response.setJobCode(jobs.getJobCode());
+		response.setLocation(jobs.getLocation());
+		response.setMinExperience(jobs.getMinExperience());
+		response.setMaxExperience(jobs.getMaxExperience());
+		response.setPlanName(interview.getPlanName());
+		
+		int totalStages = interview.getRounds() != null ? interview.getRounds().size() : 0;
+
+		Integer completedStages = interviewFeedbackRepository.countByApplicantId(entity.getId());
+
+		response.setNoOfStages(totalStages);
+		response.setCompletedStages((int) completedStages);
+
+		response.setDepartment(department != null ? department.getDepartmentName() : null);
+
+		if (schedule != null) {
+			response.setStartTime(schedule.getStartTime());
+			response.setEndTime(schedule.getEndTime());
+			response.setInterviewDate(schedule.getInterviewDate());
+			response.setRescheduleDate(schedule.getRescheduleDate());
+			response.setRescheduleStartTime(schedule.getRescheduleStartTime());
+			response.setRescheduleEndTime(schedule.getRescheduleEndTime());
+		}
+
+		if (current != null) {
+			response.setCurrentStageType(current.getCurrentStageType());
+		}
+		
 		log.info("JobServiceImpl: Exit from getApplicantDetailsById method");
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant fetched", jobApplicantsResponse);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant fetched successfully", response);
 	}
+
 	@Override
 	public ApiResponse<?> getAllJobsDashboardCounts() {
 
@@ -189,7 +192,7 @@ public class JobServiceImpl implements IJobService {
 		long interviews = interviewAnalysisRepository.count();
 
 		long offersAccepted = offerRepository.count();
-		
+
 		response.setOpenJobs(openJobs);
 		response.setCandidates(applicants);
 		response.setInterviews(interviews);

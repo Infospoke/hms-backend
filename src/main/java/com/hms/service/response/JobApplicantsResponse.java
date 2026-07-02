@@ -10,6 +10,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -56,8 +57,6 @@ public class JobApplicantsResponse {
 	private LocalDate rescheduleDate;
 	private LocalTime rescheduleStartTime;
 	private LocalTime rescheduleEndTime;
-	
-	
-	
-
+    private Integer	noOfStages;
+    private Integer completedStages;
 }
