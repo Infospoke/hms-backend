@@ -286,7 +286,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		response.put("totalPages", page.getTotalPages());
 
-		response.put("totalElements", content.size());
+		response.put("totalElements", page.getTotalElements());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Assignments fetched successfully", response);
 	}
