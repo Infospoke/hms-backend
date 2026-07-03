@@ -1,5 +1,6 @@
 package com.hms.service.service;
 
+import com.hms.service.request.InterviewCompleteRequest;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
@@ -61,6 +62,8 @@ public interface IInterviewPlanService {
 	ApiResponse<?> rescheduleInterview(RescheduleInterviewRequest request);
 
 	ApiResponse<?> updateInterviewCompletionStatus(UpdateInterviewCompletionStatusRequest request);
+
+	ApiResponse<?> interviewComplete(InterviewCompleteRequest request);
 
 
 

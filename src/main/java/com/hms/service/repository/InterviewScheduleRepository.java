@@ -146,7 +146,8 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 			    rd.round_name,
 			    cs.interview_completed_on,
 			    bc.proposed_total_compensation,
-			    cs.current_stage_type
+			    cs.current_stage_type,
+			    j.job_id
 
 			FROM tb_job_applications ja
 

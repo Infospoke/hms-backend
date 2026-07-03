@@ -66,6 +66,7 @@ import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.InterviewCompleteRequest;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
@@ -2446,6 +2447,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		dto.setSalary((Integer) obj[18]);
 		
 		dto.setRoundId((Integer) obj[19]);
+		
+		dto.setJobId((Integer)obj[20]);
 
 		return dto;
 	}
@@ -2612,6 +2615,29 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				jobTitle);
 
 		iMailService.sendMail(fromEmail, application.getEmail(), null, subject, body, null);
+	}
+
+	@Override
+	public ApiResponse<?> interviewComplete(InterviewCompleteRequest request) {
+		log.info("InterviewPlanServiceImpl :: Inside InterviewCompleteMethod");
+		InterviewCurrentStageEntity currentStageEntity=interviewCurrentStageRepository.findByApplicationIdAndCurrentStageType(request.getApplicantId(),request.getCurrentStageType());
+		log.info("localDateNow is"+LocalDate.now());
+		log.info("current stage entity interview date is"+currentStageEntity.getInterviewDate());
+		if(currentStageEntity.getInterviewDate().isEqual(LocalDate.now())) {
+			
+		currentStageEntity.setInterviewCompleted(request.getInterviewCompleted());
+		currentStageEntity.setInterviewCompletedOn(request.getInterviewCompletedOn());
+		interviewCurrentStageRepository.save(currentStageEntity);
+		log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
+		return ApiResponse.success(ResponseCode.SUCCESS, "success","Interview Completed successfully");
+		
+		}
+		else
+		{
+			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
+			return ApiResponse.failure(ResponseCode.FAILURE, "The interview is not scheduled for today");
+		}
+		
 	}
 	
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.InterviewCompleteRequest;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewScheduleRequest;
@@ -180,4 +181,11 @@ public class InterviewPlanController {
 		ApiResponse<?> response = interviewPlanService.updateInterviewCompletionStatus(request);
 		return ResponseEntity.ok(response);
 	}
+	
+	@PostMapping("/interview-complete")
+	public ResponseEntity<ApiResponse<?>> interviewComplete(@RequestBody InterviewCompleteRequest request) {
+		ApiResponse<?> response = interviewPlanService.interviewComplete(request);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+	}
+	
 }
