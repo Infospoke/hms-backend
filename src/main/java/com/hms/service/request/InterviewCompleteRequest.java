@@ -14,8 +14,8 @@ public class InterviewCompleteRequest {
 	
 	private Integer currentStageType;
 	
-	private LocalDateTime interviewCompltedOn;
+	private LocalDateTime interviewCompletedOn;
 	
-	private Boolean interviewCompelted;
+	private Boolean interviewCompleted;
 
 }

@@ -2524,8 +2524,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("current stage entity interview date is"+currentStageEntity.getInterviewDate());
 		if(currentStageEntity.getInterviewDate().isEqual(LocalDate.now())) {
 			
-		currentStageEntity.setInterviewCompleted(request.getInterviewCompelted());
-		currentStageEntity.setInterviewCompletedOn(request.getInterviewCompltedOn());
+		currentStageEntity.setInterviewCompleted(request.getInterviewCompleted());
+		currentStageEntity.setInterviewCompletedOn(request.getInterviewCompletedOn());
 		interviewCurrentStageRepository.save(currentStageEntity);
 		log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
 		return ApiResponse.success(ResponseCode.SUCCESS, "success","Interview Completed successfully");
