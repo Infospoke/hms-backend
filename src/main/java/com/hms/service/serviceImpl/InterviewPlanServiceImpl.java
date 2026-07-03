@@ -1368,17 +1368,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String durationText = hours > 0 ? hours + " Hour(s) " + minutes + " Minute(s)" : minutes + " Minute(s)";
 
 		Integer currentStageId = currentStageEntity.getCurrentStageType();
-		;
+		
 
 		String currentStageName = interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
 
 		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(applicationId);
 		interviewRound = interviewRound + 1;
+		
+		String interviewMode=interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline";
 
 		response.setCandidateName(entity.getName());
 		response.setJobTitle(createJobDetailsEntity.getJobTitle());
 		response.setDepartment(department);
-		response.setInterviewMode(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
+		response.setInterviewMode(interviewMode);
 
 		response.setInterviewRound(interviewRound);
 		response.setInterviewType(currentStageName);
@@ -1388,6 +1390,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setCurrentCompany(entity.getCurrentCompany());
 		response.setScheduleTime(currentStageEntity.getStartTime());
 		response.setScheduleDate(currentStageEntity.getInterviewDate());
+		if(interviewMode.equalsIgnoreCase("Online"))
+		{
+			response.setMeetingPlatForm(interviewScheduleEntity.getMeetingLink());
+		}
+		else {
+			response.setVenueDetails(interviewScheduleEntity.getVenueDetails());
+		}
 
 		// Experience Details
 		List<InterviewExperienceResponse> experienceResponses = new ArrayList<>();
