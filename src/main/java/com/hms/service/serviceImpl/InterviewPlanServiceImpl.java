@@ -42,6 +42,7 @@ import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
+import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.UserEntity;
@@ -174,6 +175,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
+	
+	@Autowired
+	private MailServiceImpl mailService;
 	
 	@Value("${spring.mail.username}")
 	private String fromEmail;
@@ -1166,6 +1170,94 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewCurrentStageEntity.setInterviewCompleted(false);
 		interviewCurrentStageEntity.setFeedback(false);
 		interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+		
+
+		// Fetch applicant
+		JobApplicationEntity applicant = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
+		
+		Integer jobId = applicant.getJobId();
+		
+		Optional<InterviewerAssignmentEntity> interviewerAssignments = interviewerAssignmentRepository
+				.findByJobIdAndStageTypeId(jobId, request.getRoundId());
+		
+		InterviewerAssignmentEntity interviewerAssignmentEntity=null;
+		
+		if (interviewerAssignments.isPresent()) {
+		 interviewerAssignmentEntity=interviewerAssignments.get();
+		}
+
+		// Send mail
+		try {
+
+		    if (applicant != null && applicant.getEmail() != null) {
+
+		        String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
+
+		        String body = String.format(
+		                Constants.INTERVIEW_SCHEDULE_BODY,
+		                request.getInterviewDate(),
+		                request.getStartTime(),
+		                request.getEndTime(),
+		                request.getMeetingLink(),
+		                request.getVenueDetails());
+
+		        mailService.sendMail(
+		                fromEmail,
+		                applicant.getEmail(),
+		                null,
+		                subject,
+		                body,
+		                null);
+
+		    }
+
+		} catch (Exception e) {
+
+		    log.error("InterviewPlanServiceImpl::Mail failed : {}", e.getMessage());
+
+		}
+		
+		// Send mail to Interviewer
+		try {
+
+		    if (interviewerAssignmentEntity != null) {
+
+		        Integer interviewerUserId = interviewerAssignmentEntity.getInterviewerUserId().intValue();
+
+		        // Fetch interviewer details
+		        UserEntity interviewer = userRepository.findById(interviewerUserId).orElse(null);
+
+		        if (interviewer != null && interviewer.getEmail() != null) {
+
+		            String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
+
+		            String body = String.format(
+		                    Constants.INTERVIEWER_SCHEDULE_BODY,
+		                    interviewerAssignmentEntity.getInterviewerName(),
+		                    applicant.getFirstName(),
+		                    interviewerAssignmentEntity.getJobTitle(),
+		                    request.getInterviewDate(),
+		                    request.getStartTime(),
+		                    request.getEndTime(),
+		                    request.getMeetingLink() != null ? "Online" : "Offline",
+		                    request.getMeetingLink() != null ? request.getMeetingLink() : null,
+		                    request.getVenueDetails() != null ? request.getVenueDetails() : null);
+
+		            mailService.sendMail(
+		                    fromEmail,
+		                    interviewer.getEmail(),
+		                    null,
+		                    subject,
+		                    body,
+		                    null);
+		        }
+		    }
+
+		} catch (Exception e) {
+
+		    log.error("InterviewPlanServiceImpl::Interviewer Mail failed : {}", e.getMessage());
+
+		}
 
 		log.info("InterviewPlanServiceImpl:Exit from  the scheduleInterview method");
 
