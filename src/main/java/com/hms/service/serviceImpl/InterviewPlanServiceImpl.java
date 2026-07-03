@@ -2345,6 +2345,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		dto.setSalary((Integer) obj[18]);
 		
 		dto.setRoundId((Integer) obj[19]);
+		
+		dto.setJobId((Integer)obj[20]);
 
 		return dto;
 	}
