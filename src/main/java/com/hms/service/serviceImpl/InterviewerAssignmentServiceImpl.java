@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,22 +20,28 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.RoundAssignmentDto;
+import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewerAssignmentRepository;
+import com.hms.service.repository.RolesRepository;
+import com.hms.service.repository.UserRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewAssignmentRequest;
 import com.hms.service.service.IInterviewerAssignmentService;
+import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -60,6 +67,9 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 	private InterviewCurrentStageRepository interviewCurrentStageRepository;
 
 	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired
 	private JwtService jwtService;
 
 	@Autowired
@@ -70,6 +80,15 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
+
+	@Autowired
+	private INotificationService notificationService;
+
+	@Autowired
+	private RolesRepository rolesRepository;
+
+	@Autowired
+	private AssignRolesRepository assignRolesRepository;
 
 	@Override
 	@Transactional
@@ -107,6 +126,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				throw new RuntimeException("Stage not found");
 			}
 
+			boolean isReassignment = false;
+
 			List<InterviewerAssignmentEntity> history = interviewerAssignmentRepository
 					.findByJobIdAndStageTypeIdOrderByIdDesc(request.getJobId(), round.getStageTypeId());
 
@@ -115,13 +136,15 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				InterviewerAssignmentEntity latest = history.get(0);
 
 				if ("PENDING".equalsIgnoreCase(latest.getStatus())) {
-
 					throw new RuntimeException("Round already assigned and pending response");
 				}
 
 				if ("ACCEPTED".equalsIgnoreCase(latest.getStatus())) {
-
 					throw new RuntimeException("Round already accepted");
+				}
+
+				if ("REJECTED".equalsIgnoreCase(latest.getStatus())) {
+					isReassignment = true;
 				}
 			}
 
@@ -160,9 +183,76 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			entity.setDeptName(deptName);
 
 			interviewerAssignmentRepository.save(entity);
-		}
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Interviewers assigned successfully","Success");
+			// callNotification
+
+			Integer makerRoleId = assignRolesRepository.findByUserId(userId.intValue())
+					.orElseThrow(() -> new RuntimeException("Role not found")).getRoleId();
+
+			String makerRoleName = rolesRepository.findById(makerRoleId)
+					.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
+
+			NotificationEvent event = new NotificationEvent();
+
+			event.setProcessId(request.getJobId().toString());
+
+//			event.setMakerId(userId.intValue());
+//			event.setCheckerId(dto.getInterviewerUserId());
+
+			event.setMakerRoleId(makerRoleId);
+
+			event.setMakerRoleName(makerRoleName);
+			event.setCheckerRoleName(dto.getRoleName());
+
+			event.setDeptName(deptName);
+
+			event.setTriggeredAt(LocalDateTime.now());
+
+			if (isReassignment) {
+
+				event.setType("INTERVIEWER_REASSIGNMENT");
+
+				event.setMakerNotificationTitle("Interviewer Reassigned");
+				event.setCheckerNotificationTitle("Interview Reassigned");
+
+				event.setMakerMessage("You reassigned interviewer " + dto.getInterviewerName() + " for Interview Plan '"
+						+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+
+				event.setCheckerMessage(
+						userName + " (" + makerRoleName + ") reassigned you as interviewer for Interview Plan '"
+								+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+
+			} else {
+
+				event.setType("INTERVIEWER_ASSIGNMENT");
+
+				event.setMakerNotificationTitle("Interviewer Assigned");
+				event.setCheckerNotificationTitle("Interview Assignment");
+
+				event.setMakerMessage("You assigned interviewer " + dto.getInterviewerName() + " for Interview Plan '"
+						+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+
+				event.setCheckerMessage(
+						userName + " (" + makerRoleName + ") assigned you as interviewer for Interview Plan '"
+								+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+			}
+
+			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+			Integer checkerRoleId = rolesRepository.findByRoleNameIgnoreCase(dto.getRoleName()).getRoleId();
+
+			String interviewerEmail = userRepository.findByUserId(dto.getInterviewerUserId())
+					.orElseThrow(() -> new RuntimeException("User not found")).getEmail();
+
+			roleEmailMap.put(checkerRoleId, List.of(interviewerEmail));
+
+			event.setRoleEmailMap(roleEmailMap);
+			notificationService.callNotification(event);
+
+			log.info("Notification Event : {}", event);
+		}
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interviewers assigned successfully", "Success");
+
 	}
 
 	@Override
@@ -249,8 +339,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				roundMap.put("roundType", round.getStageType());
 
 				roundMap.put("roundTypeId", round.getStageTypeId());
-				
-				roundMap.put("stageTypeId",  round.getStageTypeId());
+
+				roundMap.put("stageTypeId", round.getStageTypeId());
 
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
 
@@ -559,6 +649,75 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		assignment.setRespondedAt(LocalDateTime.now());
 
 		interviewerAssignmentRepository.save(assignment);
+
+		Integer makerUserId = userId;
+
+		AssignRolesEntity makerRole = assignRolesRepository.findByUserId(makerUserId)
+				.orElseThrow(() -> new RuntimeException("Maker role not found"));
+
+		Integer makerRoleId = makerRole.getRoleId();
+
+		String makerRoleName = rolesRepository.findById(makerRoleId)
+				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
+
+		// Assigner (Checker)
+		Integer checkerUserId = assignment.getUserId().intValue(); 
+		AssignRolesEntity checkerRole = assignRolesRepository.findByUserId(checkerUserId)
+				.orElseThrow(() -> new RuntimeException("Checker role not found"));
+
+		Integer checkerRoleId = checkerRole.getRoleId();
+
+		String checkerRoleName = rolesRepository.findById(checkerRoleId)
+				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
+
+		// Checker email map (required by NotificationServiceImpl)
+		String checkerEmail = userRepository.findByUserId(checkerUserId)
+				.orElseThrow(() -> new RuntimeException("Checker not found")).getEmail();
+
+		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+		roleEmailMap.put(checkerRoleId, List.of(checkerEmail));
+
+		NotificationEvent event = new NotificationEvent();
+
+		event.setProcessId(assignment.getJobId().toString());
+
+		event.setMakerRoleId(makerRoleId);
+		event.setMakerRoleName(makerRoleName);
+		event.setCheckerRoleName(checkerRoleName);
+
+		event.setDeptName(assignment.getDeptName());
+
+		event.setRoleEmailMap(roleEmailMap);
+
+		event.setTriggeredAt(LocalDateTime.now());
+
+		if ("ACCEPTED".equalsIgnoreCase(request.getStatus())) {
+
+			event.setType("INTERVIEW_ASSIGNMENT_ACCEPTED");
+
+			event.setMakerNotificationTitle("Interview Assignment Accepted");
+			event.setCheckerNotificationTitle("Interview Assignment Accepted");
+
+			event.setMakerMessage("You accepted the interview assignment.");
+
+			event.setCheckerMessage(assignment.getInterviewerName() + " accepted the interview assignment for Job '"
+					+ assignment.getJobTitle() + "'.");
+		}
+
+		else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
+
+			event.setType("INTERVIEW_ASSIGNMENT_REJECTED");
+
+			event.setMakerNotificationTitle("Interview Assignment Rejected");
+			event.setCheckerNotificationTitle("Interview Assignment Rejected");
+
+			event.setMakerMessage("You rejected the interview assignment.");
+
+			event.setCheckerMessage(assignment.getInterviewerName() + " rejected the interview assignment for Job '"
+					+ assignment.getJobTitle() + "'. Please reassign another interviewer.");
+		}
+
+		notificationService.callNotification(event);
 
 		log.info("InterviewerAssignmentServiceImpl :: Exit updateInterviewAssignment");
 
