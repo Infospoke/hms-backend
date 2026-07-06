@@ -3,7 +3,6 @@ package com.hms.service.service;
 import java.util.List;
 
 import com.hms.service.request.RolesByDepartmentIdsRequest;
-import com.hms.service.response.DropDownResponse;
 import com.hms.service.wrappers.ApiResponse;
 
 public interface IConfigurationService {
@@ -34,11 +33,16 @@ public interface IConfigurationService {
 	
 	ApiResponse<List<?>> getUsersByRole();
 
-	ApiResponse<List<?>> getAiOptions();
 
 	ApiResponse<List<?>> getRolesByDepartments(RolesByDepartmentIdsRequest request);
 
 	ApiResponse<List<?>> getUsersWithCreatePermission();
+
+	ApiResponse<List<?>> getInterviewPlans();
+
+	ApiResponse<List<?>> getJobs();
+
+	ApiResponse<List<?>> getInterviewRounds();
 	
 	
 

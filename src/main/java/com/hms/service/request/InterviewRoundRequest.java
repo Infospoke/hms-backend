@@ -1,6 +1,5 @@
 package com.hms.service.request;
 
-import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,8 +18,9 @@ public class InterviewRoundRequest {
     @NotBlank(message = "Stage name is required")
     private String stageName;
 
-    @NotBlank(message = "Stage type is required")
     private String stageType;
+    
+    private Integer stageTypeId;
 
     @NotBlank(message = "Interview mode is required")
     private String interviewMode;

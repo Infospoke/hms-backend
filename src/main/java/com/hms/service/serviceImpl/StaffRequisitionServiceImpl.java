@@ -38,7 +38,6 @@ import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
-import com.hms.service.entity.SourcingStrategyEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.FunctionalityTypes;
 import com.hms.service.repository.ApprovalChainRepository;
@@ -53,7 +52,6 @@ import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SeniorityLevelRepository;
-import com.hms.service.repository.SourceStrategyRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.BudgetAndCompensationRequest;
 import com.hms.service.request.BusinessJustificationRequest;
@@ -61,7 +59,6 @@ import com.hms.service.request.LevelConfig;
 import com.hms.service.request.PositonBascicsRequest;
 import com.hms.service.request.ReviewRequest;
 import com.hms.service.request.RolesAndRequirementsRequest;
-import com.hms.service.request.SourcingStrategyRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.StaffingRequisitionRequest;
 import com.hms.service.request.UpdateSrRequest;
@@ -72,7 +69,6 @@ import com.hms.service.response.BusinessValidationResponse;
 import com.hms.service.response.PositonBasicsResponse;
 import com.hms.service.response.RolesAndRequirementsResponse;
 import com.hms.service.response.SRCountResponse;
-import com.hms.service.response.SourcingStrategyResponse;
 import com.hms.service.response.SrApprovalResponse;
 import com.hms.service.service.INotificationService;
 import com.hms.service.service.IStaffingRequisitionService;
@@ -84,6 +80,7 @@ import com.hms.service.wrappers.ResponseCode;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -107,9 +104,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 	@Autowired
 	private RolesAndRequirementsRepository rolesAndRequirementsRepository;
-
-	@Autowired
-	private SourceStrategyRepository sourceStrategyRepository;
 
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
@@ -150,6 +144,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
 
+	@Transactional
 	@Override
 	public ApiResponse<?> newStaffingRequisition(StaffingRequisitionRequest request, MultipartFile file) {
 
@@ -385,46 +380,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		}
 
-		if (request.getSourcingStrategyRequest() != null) {
-
-			SourcingStrategyRequest sourcingStrategyRequest = request.getSourcingStrategyRequest();
-
-			ApiResponse<?> error = validateSourcingStrategyRequest(sourcingStrategyRequest);
-			if (error != null)
-				return error;
-
-			srId = sourcingStrategyRequest.getSrId();
-
-			if (srId == null || srId.isBlank()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "srId is required", List.of("srId is required"));
-			}
-
-			SourcingStrategyEntity entity = sourceStrategyRepository.findBySrId(srId).orElse(null);
-
-			if (entity == null) {
-				entity = new SourcingStrategyEntity();
-
-				entity.setSrId(srId);
-				entity.setSubmitted(false);
-				entity.setApproved(false);
-			}
-
-			entity.setInternalBoard(sourcingStrategyRequest.getInternalBoard());
-			entity.setNaukri(sourcingStrategyRequest.getNaukri());
-			entity.setLinkedIn(sourcingStrategyRequest.getLinkedIn());
-			entity.setIndeed(sourcingStrategyRequest.getIndeed());
-			entity.setCompanySite(sourcingStrategyRequest.getCompanySite());
-			entity.setAgencyRpo(sourcingStrategyRequest.getAgencyRpo());
-			entity.setInternalFirstPolicy(sourcingStrategyRequest.getInternalFirstPolicy());
-			entity.setSourcingBudget(sourcingStrategyRequest.getSourcingBudget());
-			entity.setReferralEnabled(sourcingStrategyRequest.getReferralEnabled());
-			entity.setReferralAmount(sourcingStrategyRequest.getReferralAmount());
-			entity.setDiversityEnabled(sourcingStrategyRequest.getDiversityEnabled());
-			entity.setDiversityTags(sourcingStrategyRequest.getDiversityTags());
-
-			sourceStrategyRepository.save(entity);
-
-		}
 
 		if (request.getReviewRequest() != null) {
 			ReviewRequest reviewRequest = request.getReviewRequest();
@@ -464,14 +419,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					entity.setApproved(false);
 					rolesAndRequirementsRepository.save(entity);
 				});
-				sourceStrategyRepository.findBySrId(srId).ifPresent(entity -> {
-
-					entity.setSubmitted(true);
-					entity.setApproved(false);
-					sourceStrategyRepository.save(entity);
-
-				});
-
 				processApprovalChain(finalSrId);
 				Integer checkerRoleId = null;
 				Map<Integer, List<String>> roleEmailMap = processApprovalChain(finalSrId);
@@ -1087,64 +1034,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		return null;
 	}
 
-	private ApiResponse<?> validateSourcingStrategyRequest(SourcingStrategyRequest req) {
-
-		ApiResponse<?> error;
-
-		if (req == null) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Request is required",
-					List.of("SourcingStrategyRequest cannot be null"));
-		}
-
-		if (req.getSrId() == null || req.getSrId().isBlank()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "srId is required",
-					List.of("srId cannot be null or empty"));
-		}
-
-		if (req.getInternalFirstPolicy() != null) {
-			error = validateObject(req.getInternalFirstPolicy(), "internalFirstPolicy");
-			if (error != null)
-				return error;
-		}
-
-		boolean hasJobBoard = Boolean.TRUE.equals(req.getInternalBoard()) || Boolean.TRUE.equals(req.getLinkedIn())
-				|| Boolean.TRUE.equals(req.getNaukri()) || Boolean.TRUE.equals(req.getIndeed())
-				|| Boolean.TRUE.equals(req.getCompanySite());
-
-		if (!hasJobBoard) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "targetJobBoard is required",
-					List.of("At least one job board must be selected"));
-		}
-
-		if (Boolean.TRUE.equals(req.getReferralEnabled())) {
-
-			if (req.getReferralAmount() == null) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "referralAmount is required",
-						List.of("Provide referral amount"));
-			}
-
-			if (req.getReferralAmount() <= 0) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "referralAmount must be greater than 0",
-						List.of("Referral amount must be positive"));
-			}
-		}
-
-		if (Boolean.TRUE.equals(req.getDiversityEnabled())) {
-
-			if (req.getDiversityTags() == null || req.getDiversityTags().isBlank()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "diversityTags is required",
-						List.of("Provide diversity tags"));
-			}
-		}
-
-		if (req.getSourcingBudget() != null && req.getSourcingBudget() < 0) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid sourcingBudget",
-					List.of("Sourcing budget cannot be negative"));
-		}
-
-		return null;
-	}
-
 	@Override
 	public ApiResponse<?> getBySrId(String srId) {
 
@@ -1164,11 +1053,10 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					.orElse(null);
 			RolesAndRequirementsEntity rolesAndRequirementsEntity = rolesAndRequirementsRepository.findBySrId(srId)
 					.orElse(null);
-			SourcingStrategyEntity sourcingStrategyEntity = sourceStrategyRepository.findBySrId(srId).orElse(null);
+
 
 			if (srPositionBasicsEntity == null && businessJustificationEntity == null
-					&& budgetAndCompensationEntity == null && rolesAndRequirementsEntity == null
-					&& sourcingStrategyEntity == null) {
+					&& budgetAndCompensationEntity == null && rolesAndRequirementsEntity == null) {
 
 				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND,
 						List.of(Constants.INVALID_SR_ID_IS + srId));
@@ -1336,31 +1224,6 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				response.setRolesAndRequirementsResponse(rolesAndRequirementsResponse);
 			}
 
-			if (sourcingStrategyEntity != null) {
-
-				SourcingStrategyResponse sourcingStrategyResponse = new SourcingStrategyResponse();
-
-				sourcingStrategyResponse.setId(sourcingStrategyEntity.getId());
-				sourcingStrategyResponse.setSrId(sourcingStrategyEntity.getSrId());
-				sourcingStrategyResponse.setInternalBoard(sourcingStrategyEntity.getInternalBoard());
-				sourcingStrategyResponse.setNaukri(sourcingStrategyEntity.getNaukri());
-				sourcingStrategyResponse.setLinkedIn(sourcingStrategyEntity.getLinkedIn());
-				sourcingStrategyResponse.setIndeed(sourcingStrategyEntity.getIndeed());
-				sourcingStrategyResponse.setCompanySite(sourcingStrategyEntity.getCompanySite());
-				sourcingStrategyResponse.setAgencyRpo(sourcingStrategyEntity.getAgencyRpo());
-				sourcingStrategyResponse.setInternalFirstPolicy(sourcingStrategyEntity.getInternalFirstPolicy());
-				sourcingStrategyResponse.setSourcingBudget(sourcingStrategyEntity.getSourcingBudget());
-				sourcingStrategyResponse.setReferralEnabled(sourcingStrategyEntity.getReferralEnabled());
-				sourcingStrategyResponse.setReferralAmount(sourcingStrategyEntity.getReferralAmount());
-				sourcingStrategyResponse.setDiversityEnabled(sourcingStrategyEntity.getDiversityEnabled());
-				sourcingStrategyResponse.setDiversityTags(sourcingStrategyEntity.getDiversityTags() != null
-						? Arrays.asList(sourcingStrategyEntity.getDiversityTags().split(","))
-						: Collections.emptyList());
-				sourcingStrategyResponse.setSubmitted(sourcingStrategyEntity.getSubmitted());
-				sourcingStrategyResponse.setApproved(sourcingStrategyEntity.getApproved());
-
-				response.setSourcingStrategyResponse(sourcingStrategyResponse);
-			}
 
 			return ApiResponse.success(ResponseCode.SUCCESS, Constants.SR_DATA_FETCHED_SUCCESSFULLY, response);
 
@@ -1753,6 +1616,9 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		}
 
 		ApprovalsChildEntity entity = optional.get();
+		
+		
+		
 
 		// FIND CURRENT LEVEL
 
@@ -1778,6 +1644,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		String roleName = getRoleNameFromToken();
 		String username = getUsernameFromToken();
+
 
 		// ROLE VALIDATION
 
@@ -1876,7 +1743,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		if (approvalLevel == 1) {
 
-			levelName = "Department Head";
+			levelName = roleName;
 
 			pos.setApprover1By(username);
 			pos.setApprover1Role(roleName);
@@ -1897,7 +1764,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		} else if (approvalLevel == 2) {
 
-			levelName = "HRBP";
+			levelName = roleName;
 
 			pos.setApprover2By(username);
 			pos.setApprover2Role(roleName);
@@ -1918,7 +1785,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		} else if (approvalLevel == 3) {
 
-			levelName = "Finance";
+			levelName = roleName;
 
 			pos.setApprover3By(username);
 			pos.setApprover3Role(roleName);
@@ -1993,7 +1860,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				makerSubject = "Your Staffing Requisition has been approved by Level 1 (Department Head) and is now under Level 2 approval flow";
 
-				makerTitle = "Level 1 Approved — Department Head";
+				makerTitle = "Level 1 Approved — "+ roleName;
 
 				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
 						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
@@ -2003,7 +1870,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				makerSubject = "Your Staffing Requisition has been approved by Level 2 (HRBP) and is now under Level 3 approval flow";
 
-				makerTitle = "Level 2 Approved — HRBP";
+				makerTitle = "Level 2 Approved — "+ roleName;
 
 				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
 						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
@@ -2013,7 +1880,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				makerSubject = "Your Staffing Requisition has been fully approved successfully and is now ready for Recruiter Assignment and Job Creation";
 
-				makerTitle = "Level 3 Approved — Finance";
+				makerTitle = "Level 3 Approved — "+ roleName;
 
 				makerMailBody = String.format(Constants.SR_FULLY_APPROVED_NOTIFY, pos.getCreatedBy(), pos.getSrId(),
 						pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(), pos.getEmploymentType(),
@@ -2171,13 +2038,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				? Sort.by(request.getSortBy()).ascending()
 				: Sort.by(request.getSortBy()).descending();
 
-		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-
-		Page<SRPositionBasicsEntity> srPage = positionBasicsRepository.findAll(request.toSrApprovalSpecification(srIds),
-				pageable);
-
-		List<SRPositionBasicsEntity> srEntities = srPage.getContent();
-
+		List<SRPositionBasicsEntity> srEntities = positionBasicsRepository
+				.findAll(request.toSrApprovalSpecification(srIds), sort);
 		Map<String, Object> countFilters = new HashMap<>();
 
 		if (request.getFilters() != null) {
@@ -2270,6 +2132,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 				currentStageRoleId = approvalChainEntity.getLevelConfig().get(2).getRoleId();
 			}
+			
+			if (currentStageRoleId != roleId) {
+			    continue;
+			}
+
 
 			if (currentStageRoleId != 0) {
 
@@ -2294,12 +2161,51 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 			responseList.add(srApprovalResponse);
 		}
+		
+		 if ("ASC".equalsIgnoreCase(request.getDirection())) {
+
+		        responseList.sort(
+		                Comparator.comparing(
+		                        SrApprovalResponse::getSubmittedOn,
+		                        Comparator.nullsLast(
+		                                Comparator.naturalOrder())));
+
+		    } else {
+
+		        responseList.sort(
+		                Comparator.comparing(
+		                        SrApprovalResponse::getSubmittedOn,
+		                        Comparator.nullsLast(
+		                                Comparator.reverseOrder())));
+		    }
+
+		int page = request.getPage();
+		int size = request.getSize();
+
+		int start = page * size;
+		int end = Math.min(start + size, responseList.size());
+
+		List<SrApprovalResponse> paginatedContent;
+
+		if (start >= responseList.size()) {
+		    paginatedContent = Collections.emptyList();
+		} else {
+		    paginatedContent = responseList.subList(start, end);
+		}
 
 		Map<String, Object> response = new HashMap<>();
+		response.put("content", paginatedContent);
 
-		response.put("content", responseList);
+		response.put("totalItems", responseList.size());
 
-		response.put("totalItems", srPage.getTotalElements());
+		response.put("currentPage", page);
+
+		response.put("pageSize", size);
+
+		response.put(
+		        "totalPages",
+		        (int) Math.ceil((double) responseList.size() / size)
+		);
 
 		Map<String, Object> counts = new HashMap<>();
 

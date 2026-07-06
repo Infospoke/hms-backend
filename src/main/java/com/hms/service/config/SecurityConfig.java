@@ -49,7 +49,9 @@ public class SecurityConfig {
 										"/hms/notifications/**" ,          // Notification test endpoint
 										"/hms/create-job/**" , 
 										"/hms/interview-plan/**",
-										"/hms/jobs/**"
+										"/hms/interviewer-assignment/**",
+										"/hms/jobs/**",
+										"/hms/ai-interview-zone/**"
 								).permitAll()
 								.anyRequest().authenticated())
 				.addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

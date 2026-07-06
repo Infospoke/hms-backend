@@ -125,11 +125,6 @@ public class ConfigurationController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@GetMapping("/get-ai-options")
-	public ResponseEntity<ApiResponse<List<?>>> getAiOtions() {
-		ApiResponse<List<?>> response = iConfigurationService.getAiOptions();
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
 
 	@PostMapping("/roles/by-departments")
 	public ResponseEntity<ApiResponse<List<?>>> getRolesByDepartments(
@@ -145,5 +140,32 @@ public class ConfigurationController {
 		ApiResponse<List<?>> response = iConfigurationService.getUsersWithCreatePermission();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/interview-plans")
+	public ResponseEntity<ApiResponse<List<?>>> getInterviewPlans() {
+
+		ApiResponse<List<?>> response = iConfigurationService.getInterviewPlans();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@GetMapping("/jobs")
+	public ResponseEntity<ApiResponse<List<?>>> getJobs() {
+
+		ApiResponse<List<?>> response = iConfigurationService.getJobs();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@GetMapping("/interview-rounds")
+	public ResponseEntity<ApiResponse<List<?>>> getInterviewRounds() {
+
+		ApiResponse<List<?>> response = iConfigurationService.getInterviewRounds();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
+
+
 
 }

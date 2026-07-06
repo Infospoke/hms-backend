@@ -1,5 +1,9 @@
 package com.hms.service.repository;
 
+
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -13,4 +17,9 @@ public interface InterviewPlanRepository extends JpaRepository<InterviewPlanEnti
 
 	long countByStatusIsNull();
 
+    List<InterviewPlanEntity> findByPlanNameContainingIgnoreCase(String planName);
+    
+    Optional<InterviewPlanEntity> findById(Integer Id);
+
+	Integer countById(Integer planId);
 }

@@ -54,8 +54,10 @@ public class InterviewPlanEntity {
 	private LocalDateTime createdOn;
 
 	@OneToMany(mappedBy = "interviewPlan", cascade = CascadeType.ALL, orphanRemoval = true)
+	@lombok.ToString.Exclude
+	@lombok.EqualsAndHashCode.Exclude
 	private List<InterviewRoundEntity> rounds;
-
+	
 	@Column(name = "request_type")
 	private String requestType;
 

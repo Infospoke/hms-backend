@@ -2,8 +2,7 @@ package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -127,7 +126,11 @@ public class NotificationServiceImpl implements INotificationService {
 		updateNotification(event);
 
 		// Send email to every user in the roleEmailMap
-		sendEmailsToAllRoles(event);
+		try {
+			sendEmailsToAllRoles(event);
+		} catch (Exception e) {
+			log.error(e.getMessage());
+		}
 		log.info("NotificationServiceImpl :: Notification fully processed for " + event.getType() + ": {}",
 				event.getProcessId());
 	}
@@ -189,13 +192,13 @@ public class NotificationServiceImpl implements INotificationService {
 		
 		List<NotificationEngineEntity> notifications= notificationEngineRepository.findByProcessIdAndSentIsFalse(event.getProcessId());
 		List<NotificationEngineEntity> notificationsList = new ArrayList<>();
-		for(int i=0;i<notificationsList.size();i++)
+		for(int i=0;i<notifications.size();i++)
 		{
 			NotificationEngineEntity checkerEntity = notifications.get(i);
 			checkerEntity.setSent(true);
 			notificationsList.add(checkerEntity);
 		}
-		notificationEngineRepository.saveAll(notifications);
+		notificationEngineRepository.saveAll(notificationsList);
 		
 		
 		log.info("Successfully updated Notifications for " + event.getType() + ": {}", event.getProcessId());

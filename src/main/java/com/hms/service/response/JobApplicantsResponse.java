@@ -1,12 +1,15 @@
 package com.hms.service.response;
 
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.hms.service.dto.CompletedStageDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,6 +44,22 @@ public class JobApplicantsResponse {
 	private Map<String, Long> report = new LinkedHashMap<>();
 	private String slaColor;
 	private String currentStage;
-	
+	private String planName;
+	private Integer noOfRounds;
+	private String location;
+	private Integer minExperience;
+	private Integer maxExperience;
+	private String department;
+	private LocalDate interviewDate;
+	private LocalTime startTime;
+	private LocalTime endTime;
+	private Integer currentStageType;
+	private LocalDate rescheduleDate;
+	private LocalTime rescheduleStartTime;
+	private LocalTime rescheduleEndTime;
+	private Integer noOfStages;
 
+	private Integer completedStages;
+
+	private List<CompletedStageDto> completedStageDetails;
 }

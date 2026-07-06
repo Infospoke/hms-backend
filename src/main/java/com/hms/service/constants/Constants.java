@@ -999,4 +999,260 @@ public class Constants {
 
 	public static final String FUNCTIONALITY_FETCHED_SUCCESSFULLY = "Functionality fetched successfully";
 	public static final String CREATED_AT = "createdAt";
+	
+	//Approval
+	public static final String INTERVIEW_PLAN_APPROVED_MAIL_SUBJECT =
+	        "Interview Plan Approved";
+
+	public static final String INTERVIEW_PLAN_APPROVED_MAKER_BODY =
+			"Your Interview Plan has been approved.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Approval Confirmation (Checker)
+	public static final String INTERVIEW_PLAN_APPROVER_CONFIRMATION_SUBJECT =
+	        "Interview Plan Approval Confirmation";
+
+	public static final String INTERVIEW_PLAN_APPROVED_CHECKER_BODY =
+			"You have approved the Interview Plan.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Rejected
+	public static final String INTERVIEW_PLAN_REJECTED_MAIL_SUBJECT =
+	        "Interview Plan Rejected";
+
+	public static final String INTERVIEW_PLAN_REJECTED_MAKER_BODY =
+			"Your Interview Plan has been rejected.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	//Rejected Confirmation
+	public static final String INTERVIEW_PLAN_REJECTION_CONFIRMATION_SUBJECT =
+	        "Interview Plan Rejection Confirmation";
+
+	public static final String INTERVIEW_PLAN_REJECTED_CHECKER_BODY =
+			"You have rejected the Interview Plan.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	//Activation Request
+	public static final String INTERVIEW_PLAN_ACTIVATION_REQUEST_MAIL_SUBJECT =
+	        "Interview Plan Activation Request";
+
+	public static final String INTERVIEW_PLAN_ACTIVATION_REQUEST_MAKER_BODY =
+			"Your activation request has been submitted successfully.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Raised By : %s\n"
+			+ "Raised On : %s";
+	
+	public static final String INTERVIEW_PLAN_ACTIVATION_REQUEST_CHECKER_BODY =
+			"An activation request is pending for your approval.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Requested By : %s\n"
+			+ "Requested On : %s";
+	
+	//Activation Approved
+	public static final String INTERVIEW_PLAN_ACTIVATED_MAIL_SUBJECT =
+	        "Interview Plan Activated";
+
+	public static final String INTERVIEW_PLAN_ACTIVATED_MAKER_BODY =
+			"Your activation request has been approved.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	public static final String INTERVIEW_PLAN_ACTIVATED_CHECKER_BODY =
+			"You have successfully approved the activation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Activation Rejected
+	public static final String INTERVIEW_PLAN_ACTIVATION_REJECTED_MAIL_SUBJECT =
+	        "Interview Plan Activation Rejected";
+
+	public static final String INTERVIEW_PLAN_ACTIVATION_REJECTED_MAKER_BODY =
+			"Your activation request has been rejected.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	public static final String INTERVIEW_PLAN_ACTIVATION_REJECTED_CHECKER_BODY =
+			"You have rejected the activation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	//Deactivation Request
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REQUEST_MAIL_SUBJECT =
+	        "Interview Plan Deactivation Request";
+
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REQUEST_MAKER_BODY =
+			"Your deactivation request has been submitted successfully.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Raised By : %s\n"
+			+ "Raised On : %s";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REQUEST_CHECKER_BODY =
+			"A deactivation request is pending for your approval.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Reason : %s\n"
+			+ "Requested By : %s\n"
+			+ "Requested On : %s";
+	
+	//Deactivated
+	public static final String INTERVIEW_PLAN_DEACTIVATED_MAIL_SUBJECT =
+	        "Interview Plan Deactivated";
+
+	public static final String INTERVIEW_PLAN_DEACTIVATED_MAKER_BODY =
+			"Your deactivation request has been approved.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATED_CHECKER_BODY =
+			"You have successfully approved the deactivation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Approved By : %s\n"
+			+ "Approved On : %s";
+	
+	//Deactivation Rejected
+	
+
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAIL_SUBJECT =
+        "Interview Plan Deactivation Request Rejected";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAKER_BODY =
+			"Your deactivation request has been rejected.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	
+	public static final String INTERVIEW_PLAN_DEACTIVATION_REJECTED_CHECKER_BODY =
+			"You have rejected the deactivation request.\n\n"
+			+ "Plan Id : %s\n"
+			+ "Plan Name : %s\n"
+			+ "Comments : %s\n"
+			+ "Rejected On : %s";
+	public static final String APPLICATION_NOT_FOUND = "Application not found";
+	public static final String FILE_NOT_UPLOADED = "File not uploaded";
+	public static final String RESUME = "Resume";
+	public static final String ADDITIONAL = "Additional";
+	public static final String BUCKETNAME = "infospokejobapplicationsbucket";
+public static final String MOVE_TO_INTERVIEW ="Move to Interview";
+
+public static final String INTERVIEW_SELECTED_SUBJECT = "Congratulations! Interview Cleared";
+
+public static final String INTERVIEW_REJECTED_SUBJECT = "Interview Result";
+
+public static final String INTERVIEW_REJECTED_BODY = """
+
+		<html>
+		<body>
+
+		<p>Dear %s,</p>
+
+		<p>Thank you for taking the time to participate in our interview process for the <b>%s</b> position.</p>
+
+		<p>After carefully evaluating your overall performance throughout all stages of the interview process, we regret to inform you that your application has not been selected to move forward in the hiring process.</p>
+
+		<p>This decision was made after thorough consideration of all candidates. We sincerely appreciate the time, effort, and interest you showed in joining our organization.</p>
+
+		<p>We wish you every success in your future career and encourage you to apply for suitable opportunities with us in the future.</p>
+
+		<br>
+
+		<p>
+		Regards,<br>
+		Hiring Management System
+		</p>
+
+		</body>
+		</html>
+
+		""";
+
+public static final String INTERVIEW_SELECTED_BODY = """
+
+		<html>
+		<body>
+
+		<p>Dear %s,</p>
+
+		<p>Congratulations!</p>
+
+		<p>We are delighted to inform you that you have successfully completed all stages of the interview process for the <b>%s</b> position.</p>
+
+		<p>Based on your overall performance throughout the interview process, you have been selected to move forward in our hiring process.</p>
+
+		<p>Our recruitment team will reach out to you shortly with the next steps and further details.</p>
+
+		<p>Thank you for your interest in joining our organization. We look forward to welcoming you onboard.</p>
+
+		<br>
+
+		<p>
+		Regards,<br>
+		Hiring Management System
+		</p>
+
+		</body>
+		</html>
+
+		""";
+
+public static final String INTERVIEW_SCHEDULE_SUBJECT = "Interview Scheduled";
+
+public static final String INTERVIEW_SCHEDULE_BODY =
+        "Dear Candidate,\n\n"
+      + "Your interview has been scheduled.\n\n"
+      + "Interview Date : %s\n"
+      + "Start Time     : %s\n"
+      + "End Time       : %s\n"
+      + "Meeting Link   : %s\n"
+      + "Venue          : %s\n\n"
+      + "Best of Luck!\n"
+      + "Regards,\nHR Team";
+
+
+
+public static final String INTERVIEWER_SCHEDULE_BODY =
+"Dear %s,\n\n"
++ "An interview has been scheduled and assigned to you.\n\n"
++ "Interview Details:\n"
++ "Candidate Name : %s\n"
++ "Job Title      : %s\n"
++ "Interview Date : %s\n"
++ "Start Time     : %s\n"
++ "End Time       : %s\n"
++ "Interview Mode : %s\n"
++ "Meeting Link   : %s\n"
++ "Venue          : %s\n\n"
++ "Please ensure you are available at the scheduled time.\n\n"
++ "Regards,\n"
++ "HR Team";
+
 }

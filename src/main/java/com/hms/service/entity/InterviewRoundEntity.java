@@ -28,12 +28,17 @@ public class InterviewRoundEntity {
 
 	private String stageType;
 
+	private Integer stageTypeId;
+
 	private String interviewMode;
 
 	private Boolean mandatory;
 
 	@ManyToOne
 	@JoinColumn(name = "interview_plan_id")
+	@lombok.ToString.Exclude
+	@lombok.EqualsAndHashCode.Exclude
 	private InterviewPlanEntity interviewPlan;
+
 
 }
