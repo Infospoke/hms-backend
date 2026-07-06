@@ -40,6 +40,7 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewAssignmentRequest;
+import com.hms.service.response.InterviewerAssignmentCountResponse;
 import com.hms.service.service.IInterviewerAssignmentService;
 import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
@@ -722,6 +723,56 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		log.info("InterviewerAssignmentServiceImpl :: Exit updateInterviewAssignment");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment updated successfully", null);
+	}
+	@Override
+	public ApiResponse<?> getInterviewersAssignmentCounts() {
+
+	    log.info("InterviewerAssignmentServiceImpl :: Inside the getInterviewersAssignmentCounts");
+
+	    String authHeader = httpServletRequest.getHeader("Authorization");
+
+	    Long userId = null;
+
+	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+	        String token = authHeader.substring(7);
+
+	        userId = jwtService.extractUserId(token);
+	    }
+
+	    List<Object[]> statusCounts = interviewerAssignmentRepository.getStatusCounts(userId);
+
+	    int totalAssignments = 0;
+	    int acceptedCount = 0;
+	    int rejectedCount = 0;
+	    int pendingCount = 0;
+
+	    for (Object[] row : statusCounts) {
+
+	        String status = (String) row[0];
+	        int count = ((Long) row[1]).intValue();
+
+	        totalAssignments += count;
+
+	        if ("Accepted".equalsIgnoreCase(status)) {
+	            acceptedCount = count;
+	        } else if ("Rejected".equalsIgnoreCase(status)) {
+	            rejectedCount = count;
+	        } else if ("Pending".equalsIgnoreCase(status)) {
+	            pendingCount = count;
+	        }
+	    }
+
+	    InterviewerAssignmentCountResponse response = new InterviewerAssignmentCountResponse();
+
+	    response.setTotalAssignments(totalAssignments);
+	    response.setAcceptedCount(acceptedCount);
+	    response.setRejectedCount(rejectedCount);
+	    response.setPendingCount(pendingCount);
+
+	    log.info("InterviewerAssignmentServiceImpl :: Exit from the getInterviewersAssignmentCounts");
+
+	    return new ApiResponse<>(ResponseCode.SUCCESS, "Assignment counts fetched successfully", response);
 	}
 
 }
