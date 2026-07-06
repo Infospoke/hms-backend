@@ -93,6 +93,8 @@ public interface RecruiterAssignmentRepository
 	
 	RecruiterAssignmentEntity findByJobIdAndUserId(Integer jobId ,Integer userId);
 	RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
+
+	List<RecruiterAssignmentEntity> findByJobIdAndSrId(Integer jobId, String srId);
 	
 }
 

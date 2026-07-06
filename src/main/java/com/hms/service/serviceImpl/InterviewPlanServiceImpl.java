@@ -2578,10 +2578,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("InterviewPlanServiceImpl :: Inside sendInterviewSelectedMail");
 
 		 CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
-
-		 log.info("Job Id : {}", application.getJobId());
-		 log.info("Job Entity : {}", job);
-		 log.info("From Email : {}", fromEmail);
 		 
 		 if (job == null) {
 			    throw new RuntimeException("Job Title Not Found");

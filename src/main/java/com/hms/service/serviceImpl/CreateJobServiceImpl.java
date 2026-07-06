@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.JobCreationDetailsResponseDto;
+import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
@@ -75,6 +77,7 @@ import com.hms.service.response.RecruiterDetailsResponse;
 import com.hms.service.response.RecruitersResponse;
 import com.hms.service.response.SourcingChannelResponse;
 import com.hms.service.service.ICreateJobService;
+import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -141,6 +144,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	
 	@Autowired
 	private ActivityFeedRepository  activityFeedRepository;
+	
+	@Autowired
+	private INotificationService notificationService;
 
 	private String generateJobCode(String srId) {
 
@@ -363,7 +369,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					list.get(i).setJobId(createJobDetailsEntity.getJobId());
 				}
 				recruiterAssignmentRepository.saveAll(list);
-
+				
 				SRPositionBasicsEntity basicsEntity = srOptional.get();
 				basicsEntity.setJobSubmit(request.getSubmit());
 				positionBasicsRepository.save(basicsEntity);
@@ -380,6 +386,81 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				activityFeedEntity.setTimeStamp(LocalDateTime.now());
 				activityFeedEntity.setActivity(jobTitle +" job was posted successfully");
 				activityFeedRepository.save(activityFeedEntity);
+				
+				
+				List<AssignRolesEntity> makerAssignRoles =
+				        assignRolesRepository.findByRoleId(createJobDetailsEntity.getRoleId().intValue());
+
+				if (makerAssignRoles != null && !makerAssignRoles.isEmpty()) {
+
+				    AssignRolesEntity makerAssignRole = makerAssignRoles.get(0);
+
+					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
+							.get().getDepartmentName();
+
+					String makerRoleName = rolesRepository.findByRoleId(makerAssignRole.getRoleId()).get()
+							.getRoleName();
+					
+					Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+					
+					roleEmailMap.put(makerAssignRole.getRoleId(), List.of());
+
+					NotificationEvent creatorEvent = new NotificationEvent();
+					
+					creatorEvent.setRoleEmailMap(roleEmailMap);
+
+				    creatorEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+
+				    creatorEvent.setType("JOB CREATION");
+
+				    creatorEvent.setDeptName(departmentName);
+
+				    creatorEvent.setMakerRoleId(makerAssignRole.getRoleId());
+
+				    creatorEvent.setMakerRoleName(makerRoleName);
+
+				    creatorEvent.setMakerNotificationTitle("New Job Created");
+
+					creatorEvent.setMakerMessage(
+							createJobDetailsEntity.getJobTitle() + " job has been created successfully.");
+
+				    notificationService.callNotification(creatorEvent);
+				}
+				
+				List<RecruiterAssignmentEntity> recruiterAssignments = recruiterAssignmentRepository
+						.findByJobIdAndSrId(createJobDetailsEntity.getJobId(), createJobDetailsEntity.getSrId());
+
+				if (recruiterAssignments != null && !recruiterAssignments.isEmpty()) {
+
+					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
+							.get().getDepartmentName();
+
+				    for (RecruiterAssignmentEntity recruiter : recruiterAssignments) {
+
+				        Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				        roleEmailMap.put(recruiter.getRoleId(), List.of());
+
+				        NotificationEvent recruiterEvent = new NotificationEvent();
+
+				        recruiterEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+
+				        recruiterEvent.setType("JOB ASSIGNMENT");
+
+				        recruiterEvent.setDeptName(departmentName);
+
+				        recruiterEvent.setCheckerRoleName(recruiter.getRoleName());
+
+				        recruiterEvent.setCheckerNotificationTitle("New Job Assignment");
+
+						recruiterEvent.setCheckerMessage("A new job assignment has been allocated to you for "
+								+ createJobDetailsEntity.getJobTitle());
+
+				        recruiterEvent.setRoleEmailMap(roleEmailMap);
+
+				        notificationService.callNotification(recruiterEvent);
+				    }
+				}			
 			
 			}
 		}
