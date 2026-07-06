@@ -22,5 +22,7 @@ public interface IInterviewerAssignmentService {
 
 	ApiResponse<?> updateInterviewAssignment(UpdateInterviewAssignmentRequest request);
 
+	ApiResponse<?> getInterviewersAssignmentCounts();
+
 	
 }
