@@ -20,7 +20,6 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 	@Query(value = """
 			SELECT
-
 			    s.id,
 			    ja.id,
 			    CONCAT(ja.first_name,' ',ja.last_name) AS candidateName,
@@ -28,138 +27,103 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 			    d.department_name,
 			    ir.stage_name,
 			    ir.interview_mode,
-
 			    cs.round_order,
-
 			    (
 			        SELECT COUNT(*)
 			        FROM tb_interview_round ir2
-			        WHERE ir2.interview_plan_id = ir.interview_plan_id
+			        WHERE ir2.interview_plan_id = j.plan_id
 			    ) AS totalRounds,
-
 			    s.interview_date,
 			    s.start_time,
 			    s.end_time,
 			    s.meeting_link,
 			    s.venue_details
-
 			FROM tb_interview_schedule s
-
 			INNER JOIN tb_job_applications ja
-			        ON ja.id = s.applicant_id
-
+			    ON ja.id = s.applicant_id
 			INNER JOIN tb_create_job_details j
-			        ON j.job_id = ja.job_id
-
+			    ON j.job_id = ja.job_id
 			LEFT JOIN tb_departments d
-			       ON d.id = j.department
-
+			    ON d.id = j.department
 			INNER JOIN tb_interview_round ir
-			       ON ir.id = s.round_id
-
+			    ON ir.interview_plan_id = j.plan_id
+			   AND ir.stage_type_id = s.round_id
 			INNER JOIN tb_interview_current_stage cs
-			       ON cs.application_id = ja.id
-
+			    ON cs.application_id = ja.id
 			WHERE
-
-			(
+			    s.interview_date > CURRENT_DATE
+			AND (
 			    :search = ''
 			    OR LOWER(CONCAT(ja.first_name,' ',ja.last_name))
-			       LIKE LOWER(CONCAT('%',:search,'%'))
+			        LIKE LOWER(CONCAT('%',:search,'%'))
 			    OR LOWER(j.job_title)
-			       LIKE LOWER(CONCAT('%',:search,'%'))
+			        LIKE LOWER(CONCAT('%',:search,'%'))
 			)
-
-			AND
-			(
+			AND (
 			    :departmentId = 0
 			    OR d.id = :departmentId
 			)
-
-			AND
-			(
+			AND (
 			    :roundId = 0
-			    OR ir.id = :roundId
+			    OR ir.stage_type_id = :roundId
 			)
-
-			AND
-			(
+			AND (
 			    :interviewMode = ''
-			    OR LOWER(ir.interview_mode)=LOWER(:interviewMode)
+			    OR LOWER(ir.interview_mode) = LOWER(:interviewMode)
 			)
-
-			AND
-			(
+			AND (
 			    :interviewDate = DATE '1900-01-01'
 			    OR s.interview_date = :interviewDate
 			)
-			""", countQuery = """
+			""",
+			countQuery = """
 			SELECT COUNT(*)
-
 			FROM tb_interview_schedule s
-
 			INNER JOIN tb_job_applications ja
-			        ON ja.id = s.applicant_id
-
+			    ON ja.id = s.applicant_id
 			INNER JOIN tb_create_job_details j
-			        ON j.job_id = ja.job_id
-
+			    ON j.job_id = ja.job_id
 			LEFT JOIN tb_departments d
-			       ON d.id = j.department
-
+			    ON d.id = j.department
 			INNER JOIN tb_interview_round ir
-			       ON ir.id = s.round_id
-
+			    ON ir.interview_plan_id = j.plan_id
+			   AND ir.stage_type_id = s.round_id
 			INNER JOIN tb_interview_current_stage cs
-			       ON cs.application_id = ja.id
-
+			    ON cs.application_id = ja.id
 			WHERE
-
-			(
+			    s.interview_date > CURRENT_DATE
+			AND (
 			    :search = ''
 			    OR LOWER(CONCAT(ja.first_name,' ',ja.last_name))
-			       LIKE LOWER(CONCAT('%',:search,'%'))
+			        LIKE LOWER(CONCAT('%',:search,'%'))
 			    OR LOWER(j.job_title)
-			       LIKE LOWER(CONCAT('%',:search,'%'))
+			        LIKE LOWER(CONCAT('%',:search,'%'))
 			)
-
-			AND
-			(
+			AND (
 			    :departmentId = 0
 			    OR d.id = :departmentId
 			)
-
-			AND
-			(
+			AND (
 			    :roundId = 0
-			    OR ir.id = :roundId
+			    OR ir.stage_type_id = :roundId
 			)
-
-			AND
-			(
+			AND (
 			    :interviewMode = ''
-			    OR LOWER(ir.interview_mode)=LOWER(:interviewMode)
+			    OR LOWER(ir.interview_mode) = LOWER(:interviewMode)
 			)
-
-			AND
-			(
+			AND (
 			    :interviewDate = DATE '1900-01-01'
 			    OR s.interview_date = :interviewDate
 			)
-			""", nativeQuery = true)
-	Page<Object[]> getInterviewSchedules(
-
-			@Param("search") String search,
-
-			@Param("departmentId") Integer departmentId,
-
-			@Param("roundId") Integer roundId,
-
-			@Param("interviewMode") String interviewMode,
-
-			@Param("interviewDate") LocalDate interviewDate,
-
-			Pageable pageable);
+			""",
+			nativeQuery = true)
+			Page<Object[]> getUpcomingInterviews(
+			        @Param("search") String search,
+			        @Param("departmentId") Integer departmentId,
+			        @Param("roundId") Integer roundId,
+			        @Param("interviewMode") String interviewMode,
+			        @Param("interviewDate") LocalDate interviewDate,
+			        Pageable pageable);
 
 	@Query(value = """
 			SELECT
@@ -182,7 +146,8 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 			    rd.round_name,
 			    cs.interview_completed_on,
 			    bc.proposed_total_compensation,
-			    cs.current_stage_type
+			    cs.current_stage_type,
+			    j.job_id
 
 			FROM tb_job_applications ja
 

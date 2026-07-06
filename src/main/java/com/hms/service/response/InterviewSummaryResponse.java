@@ -32,5 +32,6 @@ public class InterviewSummaryResponse {
     private String currentStage;
     private Integer roundId;
     private LocalDateTime interviewCompletedOn;
+    private Integer jobId;
 
 }

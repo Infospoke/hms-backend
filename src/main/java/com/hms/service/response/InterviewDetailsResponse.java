@@ -45,5 +45,9 @@ public class InterviewDetailsResponse {
     private List<InterviewProjectResponse> projectDetails;
     
     private LocalDate scheduleDate;
+    
+    private String meetingPlatForm;
+    
+    private String venueDetails;
 
 }

@@ -1224,4 +1224,35 @@ public static final String INTERVIEW_SELECTED_BODY = """
 
 		""";
 
+public static final String INTERVIEW_SCHEDULE_SUBJECT = "Interview Scheduled";
+
+public static final String INTERVIEW_SCHEDULE_BODY =
+        "Dear Candidate,\n\n"
+      + "Your interview has been scheduled.\n\n"
+      + "Interview Date : %s\n"
+      + "Start Time     : %s\n"
+      + "End Time       : %s\n"
+      + "Meeting Link   : %s\n"
+      + "Venue          : %s\n\n"
+      + "Best of Luck!\n"
+      + "Regards,\nHR Team";
+
+
+
+public static final String INTERVIEWER_SCHEDULE_BODY =
+"Dear %s,\n\n"
++ "An interview has been scheduled and assigned to you.\n\n"
++ "Interview Details:\n"
++ "Candidate Name : %s\n"
++ "Job Title      : %s\n"
++ "Interview Date : %s\n"
++ "Start Time     : %s\n"
++ "End Time       : %s\n"
++ "Interview Mode : %s\n"
++ "Meeting Link   : %s\n"
++ "Venue          : %s\n\n"
++ "Please ensure you are available at the scheduled time.\n\n"
++ "Regards,\n"
++ "HR Team";
+
 }

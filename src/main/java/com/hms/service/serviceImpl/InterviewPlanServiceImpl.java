@@ -42,6 +42,7 @@ import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
+import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.UserEntity;
@@ -65,6 +66,7 @@ import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.InterviewCompleteRequest;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.InterviewRoundRequest;
@@ -174,6 +176,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
+	
+	@Autowired
+	private MailServiceImpl mailService;
 	
 	@Value("${spring.mail.username}")
 	private String fromEmail;
@@ -1166,6 +1171,94 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewCurrentStageEntity.setInterviewCompleted(false);
 		interviewCurrentStageEntity.setFeedback(false);
 		interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+		
+
+		// Fetch applicant
+		JobApplicationEntity applicant = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
+		
+		Integer jobId = applicant.getJobId();
+		
+		Optional<InterviewerAssignmentEntity> interviewerAssignments = interviewerAssignmentRepository
+				.findByJobIdAndStageTypeId(jobId, request.getRoundId());
+		
+		InterviewerAssignmentEntity interviewerAssignmentEntity=null;
+		
+		if (interviewerAssignments.isPresent()) {
+		 interviewerAssignmentEntity=interviewerAssignments.get();
+		}
+
+		// Send mail
+		try {
+
+		    if (applicant != null && applicant.getEmail() != null) {
+
+		        String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
+
+		        String body = String.format(
+		                Constants.INTERVIEW_SCHEDULE_BODY,
+		                request.getInterviewDate(),
+		                request.getStartTime(),
+		                request.getEndTime(),
+		                request.getMeetingLink(),
+		                request.getVenueDetails());
+
+		        mailService.sendMail(
+		                fromEmail,
+		                applicant.getEmail(),
+		                null,
+		                subject,
+		                body,
+		                null);
+
+		    }
+
+		} catch (Exception e) {
+
+		    log.error("InterviewPlanServiceImpl::Mail failed : {}", e.getMessage());
+
+		}
+		
+		// Send mail to Interviewer
+		try {
+
+		    if (interviewerAssignmentEntity != null) {
+
+		        Integer interviewerUserId = interviewerAssignmentEntity.getInterviewerUserId().intValue();
+
+		        // Fetch interviewer details
+		        UserEntity interviewer = userRepository.findById(interviewerUserId).orElse(null);
+
+		        if (interviewer != null && interviewer.getEmail() != null) {
+
+		            String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
+
+		            String body = String.format(
+		                    Constants.INTERVIEWER_SCHEDULE_BODY,
+		                    interviewerAssignmentEntity.getInterviewerName(),
+		                    applicant.getFirstName(),
+		                    interviewerAssignmentEntity.getJobTitle(),
+		                    request.getInterviewDate(),
+		                    request.getStartTime(),
+		                    request.getEndTime(),
+		                    request.getMeetingLink() != null ? "Online" : "Offline",
+		                    request.getMeetingLink() != null ? request.getMeetingLink() : null,
+		                    request.getVenueDetails() != null ? request.getVenueDetails() : null);
+
+		            mailService.sendMail(
+		                    fromEmail,
+		                    interviewer.getEmail(),
+		                    null,
+		                    subject,
+		                    body,
+		                    null);
+		        }
+		    }
+
+		} catch (Exception e) {
+
+		    log.error("InterviewPlanServiceImpl::Interviewer Mail failed : {}", e.getMessage());
+
+		}
 
 		log.info("InterviewPlanServiceImpl:Exit from  the scheduleInterview method");
 
@@ -1368,17 +1461,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String durationText = hours > 0 ? hours + " Hour(s) " + minutes + " Minute(s)" : minutes + " Minute(s)";
 
 		Integer currentStageId = currentStageEntity.getCurrentStageType();
-		;
+		
 
 		String currentStageName = interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
 
 		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(applicationId);
 		interviewRound = interviewRound + 1;
+		
+		String interviewMode=interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline";
 
 		response.setCandidateName(entity.getName());
 		response.setJobTitle(createJobDetailsEntity.getJobTitle());
 		response.setDepartment(department);
-		response.setInterviewMode(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
+		response.setInterviewMode(interviewMode);
 
 		response.setInterviewRound(interviewRound);
 		response.setInterviewType(currentStageName);
@@ -1388,6 +1483,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setCurrentCompany(entity.getCurrentCompany());
 		response.setScheduleTime(currentStageEntity.getStartTime());
 		response.setScheduleDate(currentStageEntity.getInterviewDate());
+		if(interviewMode.equalsIgnoreCase("Online"))
+		{
+			response.setMeetingPlatForm(interviewScheduleEntity.getMeetingLink());
+		}
+		else {
+			response.setVenueDetails(interviewScheduleEntity.getVenueDetails());
+		}
 
 		// Experience Details
 		List<InterviewExperienceResponse> experienceResponses = new ArrayList<>();
@@ -2227,13 +2329,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			LocalDate interviewDate = Optional.ofNullable(request.getFilter("interviewDate")).map(LocalDate::parse)
 					.orElse(LocalDate.of(1900, 1, 1));
 
-			Page<Object[]> page = interviewScheduleRepository.getInterviewSchedules(search, departmentId, roundId,
+			Page<Object[]> page = interviewScheduleRepository.getUpcomingInterviews(search, departmentId, roundId,
 					interviewMode, interviewDate, pageable);
 
 			List<InterviewUpcomingListResponse> response = page.getContent().stream().map(this::mapInterviewSchedule)
 					.toList();
 
-			return ApiResponse.success("Interview schedules fetched successfully", response,
+			return ApiResponse.success("Upcoming Interviews fetched successfully", response,
 					(int) page.getTotalElements());
 
 		} catch (Exception e) {
@@ -2345,6 +2447,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		dto.setSalary((Integer) obj[18]);
 		
 		dto.setRoundId((Integer) obj[19]);
+		
+		dto.setJobId((Integer)obj[20]);
 
 		return dto;
 	}
@@ -2507,6 +2611,29 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				jobTitle);
 
 		iMailService.sendMail(fromEmail, application.getEmail(), null, subject, body, null);
+	}
+
+	@Override
+	public ApiResponse<?> interviewComplete(InterviewCompleteRequest request) {
+		log.info("InterviewPlanServiceImpl :: Inside InterviewCompleteMethod");
+		InterviewCurrentStageEntity currentStageEntity=interviewCurrentStageRepository.findByApplicationIdAndCurrentStageType(request.getApplicantId(),request.getCurrentStageType());
+		log.info("localDateNow is"+LocalDate.now());
+		log.info("current stage entity interview date is"+currentStageEntity.getInterviewDate());
+		if(currentStageEntity.getInterviewDate().isEqual(LocalDate.now())) {
+			
+		currentStageEntity.setInterviewCompleted(request.getInterviewCompleted());
+		currentStageEntity.setInterviewCompletedOn(request.getInterviewCompletedOn());
+		interviewCurrentStageRepository.save(currentStageEntity);
+		log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
+		return ApiResponse.success(ResponseCode.SUCCESS, "success","Interview Completed successfully");
+		
+		}
+		else
+		{
+			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
+			return ApiResponse.failure(ResponseCode.FAILURE, "The interview is not scheduled for today");
+		}
+		
 	}
 	
 }
