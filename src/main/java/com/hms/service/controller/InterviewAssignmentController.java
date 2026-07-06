@@ -66,5 +66,12 @@ public class InterviewAssignmentController {
 		return ResponseEntity.ok(iInterviewerAssignmentService.getAssignmentDetails(jobId));
 	}
 	
+	@GetMapping("/interviewers-assignment-counts")
+	public ResponseEntity<ApiResponse<?>> getInterviewersAssignmentCounts(){
+		ApiResponse<?> response = iInterviewerAssignmentService.getInterviewersAssignmentCounts();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	
+	}
+	
 
 }
