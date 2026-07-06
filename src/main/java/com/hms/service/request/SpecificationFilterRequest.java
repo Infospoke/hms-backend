@@ -3,6 +3,7 @@ package com.hms.service.request;
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,15 +13,22 @@ import java.util.Objects;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
+import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewSessionEntity;
+import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.NotificationEngineEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
+import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.InterviewPlanRepository;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -788,7 +796,7 @@ public class SpecificationFilterRequest {
 			spec = spec.and(equalSpec("employmentType", employmentType));
 		}
 
-		Specification<CreateJobDetailsEntity> dateSpec = dateSpec("targetStartDate");
+		Specification<CreateJobDetailsEntity> dateSpec = dateSpec("createdAt");
 
 		if (dateSpec != null) {
 
@@ -951,6 +959,14 @@ public class SpecificationFilterRequest {
 
 							cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
 				}
+				String approvalStatus = getFilter("approvalStatus");
+
+				if (approvalStatus != null && !approvalStatus.isBlank()) {
+
+					predicates.add(
+
+							cb.equal(cb.lower(root.get("approvalStatus")), approvalStatus.toLowerCase()));
+				}
 
 				String search = getFilter("search");
 
@@ -1041,64 +1057,488 @@ public class SpecificationFilterRequest {
 		};
 
 		long allPlans = interviewPlanRepository.count(countSpec);
-
 		long activePlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "active")));
+				.count(countSpec.and((root, query, cb) -> cb.equal(root.get("status"), "ACTIVE")));
 
-		long inactivePlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "deactive")));
-
-		long inProgressPlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(cb.lower(root.get("status")), "inprogress")));
-
+		long deactivePlans = interviewPlanRepository
+				.count(countSpec.and((root, query, cb) -> cb.equal(root.get("status"), "DEACTIVE")));
 		counts.put("allPlans", allPlans);
 		counts.put("activePlans", activePlans);
-		counts.put("inactivePlans", inactivePlans);
-		counts.put("inProgressPlans", inProgressPlans);
+		counts.put("deactivePlans", deactivePlans);
 
 		return counts;
 	}
-	
+
 	public Specification<InterviewPlanEntity> buildInterviewPlanApprovalSpecification() {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				search = search.toLowerCase().trim();
+
+				predicates.add(cb.or(cb.like(cb.lower(root.get("planName")), "%" + search + "%")
+
+				));
+			}
+
+			Specification<InterviewPlanEntity> dateSpecification = dateSpec("createdOn");
+
+			if (dateSpecification != null) {
+
+				predicates.add(dateSpecification.toPredicate(root, query, cb));
+			}
+
+			predicates.add(cb.equal(cb.lower(root.get("approvalStatus")), "inprogress"));
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
+	public Specification<CreateJobDetailsEntity> buildJobAssignmentSpecification() {
+
+		Specification<CreateJobDetailsEntity> spec = Specification.allOf();
+
+		spec = spec.and((root, query, cb) -> cb.isTrue(root.get("isOpen")));
+
+		String jobTitle = getFilter("jobTitle");
+
+		if (jobTitle != null) {
+
+			spec = spec.and(
+					(root, query, cb) -> cb.like(cb.lower(root.get("jobTitle")), "%" + jobTitle.toLowerCase() + "%"));
+		}
+
+		String jobId = getFilter("jobId");
+
+		if (jobId != null) {
+
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("jobId"), Integer.valueOf(jobId)));
+		}
+
+		Specification<CreateJobDetailsEntity> createdDateSpec = dateSpec("createdAt");
+
+		if (createdDateSpec != null) {
+
+			spec = spec.and(createdDateSpec);
+		}
+
+		return spec;
+	}
+
+	public Specification<InterviewCurrentStageEntity> buildTodayInterviewSpecification(Integer userId) {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			// Logged-in user filter
+			predicates.add(cb.equal(root.get("interviewerId"), userId));
+			predicates.add(cb.equal(root.get("interviewDate"), LocalDate.now()));
+  		String interviewType = getFilter("interviewType");
+
+			if (interviewType != null && !interviewType.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(root.get("interviewType")), interviewType.toLowerCase()));
+			}
+
+			String round = getFilter("round");
+
+			if (round != null && !round.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(root.get("round")), round.toLowerCase()));
+			}
+
+			Specification<InterviewCurrentStageEntity> dateSpecification = dateSpec("createdOn");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+	
+	public Specification<InterviewerAssignmentEntity> buildInterviewAssignmentSpecification(Integer userId) {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.equal(root.get("interviewerUserId"), userId.longValue()));
+
+			predicates.add(cb.isNull(root.get("respondedAt")));
+
+			 // Search Filter
+	        String search = getFilter("search");
+
+	        if (search != null && !search.isBlank()) {
+
+	            String searchText = "%" + search.toLowerCase().trim() + "%";
+
+	            Predicate jobTitlePredicate = cb.like(
+	                    cb.lower(root.get("jobTitle")),
+	                    searchText);
+
+	            Predicate departmentPredicate = cb.like(
+	                    cb.lower(root.get("deptName")),
+	                    searchText);
+
+	            predicates.add(cb.or(jobTitlePredicate, departmentPredicate));
+	        }
+				
+			Specification<InterviewerAssignmentEntity> dateSpecification = dateSpec("createdAt");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
+	public Specification<InterviewSessionEntity> buildAIInterviewQuestionSpecification() {
+
+		return (root, query, cb) -> {
+
+			query.distinct(true);
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			Join<InterviewSessionEntity, ResumeAnalysisEntity> applicantJoin = root.join("applicant", JoinType.INNER);
+
+			Join<InterviewSessionEntity, CreateJobDetailsEntity> jobJoin = root.join("job", JoinType.LEFT);
+
+			predicates.add(cb.or(cb.isFalse(root.get("moveToSchedule")), cb.isNull(root.get("moveToSchedule"))));
+
+			predicates.add(cb.equal(cb.lower(applicantJoin.get("status")), "shortlisted"));
+
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.trim().toLowerCase() + "%";
+
+				predicates.add(cb.or(cb.like(cb.lower(applicantJoin.get("candidateName")), keyword),
+
+						cb.like(cb.lower(jobJoin.get("jobTitle")), keyword)));
+			}
+
+			String jobTitle = getFilter("jobTitle");
+
+			if (jobTitle != null && !jobTitle.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(jobJoin.get("jobTitle")), jobTitle.toLowerCase()));
+			}
+
+			String questionStatusFilter = getFilter("questionStatus");
+
+			if (questionStatusFilter != null && !questionStatusFilter.isBlank()) {
+
+				Boolean questionStatus = Boolean.valueOf(questionStatusFilter);
+
+				predicates.add(cb.equal(root.get("questionsStatus"), questionStatus));
+			}
+			LocalDate[] dates = getDateRange();
+
+			if (dates != null) {
+
+				predicates.add(cb.greaterThanOrEqualTo(root.get("createdDate"), dates[0].atStartOfDay()));
+
+				predicates.add(cb.lessThan(root.get("createdDate"), dates[1].plusDays(1).atStartOfDay()));
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
+	public Specification<InterviewSessionEntity> buildInterviewInProgressSpecification() {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.isTrue(root.get("isScheduled")));
+			predicates.add(cb.isNotNull(root.get("scheduledTime")));
+			predicates.add(cb.equal(root.get("status"), "upcoming"));
+
+			predicates.add(cb.or(cb.isFalse(root.get("isDeleted")), cb.isNull(root.get("isDeleted"))));
+
+			String search = getFilter("search");
+
+			String jobTitle = getFilter("jobTitle");
+
+			if (jobTitle != null && !jobTitle.isBlank() && !"ALL".equalsIgnoreCase(jobTitle)) {
+
+				Join<InterviewSessionEntity, CreateJobDetailsEntity> job = root.join("job", JoinType.LEFT);
+
+				predicates.add(cb.like(cb.lower(job.get("jobTitle")), "%" + jobTitle.toLowerCase().trim() + "%"));
+			}
+
+			if (search != null && !search.isBlank()) {
+
+				Join<InterviewSessionEntity, ResumeAnalysisEntity> applicant = root.join("applicant", JoinType.LEFT);
+
+				Predicate candidateName = cb.like(cb.lower(applicant.get("candidateName")),
+						"%" + search.toLowerCase().trim() + "%");
+
+				Predicate email = cb.like(cb.lower(applicant.get("email")), "%" + search.toLowerCase().trim() + "%");
+
+				predicates.add(cb.or(candidateName, email));
+			}
+
+			Specification<InterviewSessionEntity> dateSpecification = dateSpec("scheduledTime");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
+	public Specification<InterviewSessionEntity> buildAIScheduleInterviewSpecification(
+			InterviewPlanRepository interviewPlanRepository) {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.isFalse(root.get("isScheduled")));
+
+			// Search
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.toLowerCase().trim() + "%";
+
+				predicates.add(cb.or(cb.like(cb.lower(root.get("applicant").get("candidateName")), keyword),
+						cb.like(cb.lower(root.get("applicant").get("email")), keyword),
+						cb.like(cb.lower(root.get("job").get("jobTitle")), keyword)));
+			}
+
+			// Job Title Filter
+			String jobTitle = getFilter("jobTitle");
+
+			if (jobTitle != null && !jobTitle.isBlank()) {
+
+				predicates.add(
+						cb.like(cb.lower(root.get("job").get("jobTitle")), "%" + jobTitle.toLowerCase().trim() + "%"));
+			}
+
+			// Interview Plan Filter
+			String interviewPlan = getFilter("interviewPlan");
+
+			if (interviewPlan != null && !interviewPlan.isBlank()) {
+
+				List<Integer> planIds = interviewPlanRepository.findByPlanNameContainingIgnoreCase(interviewPlan)
+						.stream().map(InterviewPlanEntity::getPlanId).toList();
+
+				if (!planIds.isEmpty()) {
+
+					predicates.add(root.get("job").get("planId").in(planIds));
+				}
+			}
+
+			// Priority Filter
+			String priority = getFilter("priority");
+
+			if (priority != null && !priority.isBlank()) {
+
+				LocalDateTime now = LocalDateTime.now();
+
+				if ("Low".equalsIgnoreCase(priority)) {
+
+					predicates.add(cb.between(root.get("moveToScheduleDateTime"), now.minusDays(2), now));
+
+				} else if ("Medium".equalsIgnoreCase(priority)) {
+
+					predicates.add(cb.between(root.get("moveToScheduleDateTime"), now.minusDays(3), now.minusDays(2)));
+
+				} else if ("High".equalsIgnoreCase(priority)) {
+
+					predicates.add(cb.lessThan(root.get("moveToScheduleDateTime"), now.minusDays(3)));
+				}
+			}
+
+			Specification<InterviewSessionEntity> dateSpecification = dateSpec("moveToScheduleDateTime");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
+	public Specification<CreateJobDetailsEntity> buildJobsSpecification() {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			// Only open jobs
+			predicates.add(cb.or(cb.isTrue(root.get("isOpen")), cb.isNull(root.get("isOpen"))));
+
+			String country = getFilter("country");
+
+			if (country != null && !country.isBlank()) {
+
+				predicates.add(cb.like(cb.lower(root.get("country")), "%" + country.toLowerCase().trim() + "%"));
+			}
+
+			String location = getFilter("location");
+
+			if (location != null && !location.isBlank()) {
+
+				predicates.add(cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase().trim() + "%"));
+			}
+
+			String workMode = getFilter("workMode");
+
+			if (workMode != null && !workMode.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(root.get("workMode")), workMode.toLowerCase().trim()));
+			}
+
+			String employmentType = getFilter("employmentType");
+
+			if (employmentType != null && !employmentType.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(root.get("employmentType")), employmentType.toLowerCase().trim()));
+			}
+
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.toLowerCase().trim() + "%";
+
+				predicates.add(cb.or(cb.like(cb.lower(root.get("jobTitle")), keyword),
+						cb.like(cb.lower(root.get("jobCode")), keyword)));
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+	
+	public Specification<InterviewCurrentStageEntity> buildFeedbackSpecification(Integer userId) {
 
 	    return (root, query, cb) -> {
 
 	        List<Predicate> predicates = new ArrayList<>();
 
-	        String search = getFilter("search");
+	        predicates.add(cb.isFalse(root.get("feedback")));
+	        predicates.add(cb.isTrue(root.get("interviewCompleted")));
 
-	        if (search != null && !search.isBlank()) {
+	        predicates.add(cb.equal(root.get("interviewerId"), userId));
 
-	            search = search.toLowerCase().trim();
+	        LocalDate[] dates = getDateRange();
 
-	            predicates.add(
-	                    cb.or(
-	                            cb.like(
-	                                    cb.lower(root.get("planName")),
-	                                    "%" + search + "%"
-	                            )
-
-	                         
-	                    )
-	            );
-	        }
-
-	        Specification<InterviewPlanEntity> dateSpecification =
-	                dateSpec("createdOn");
-
-	        if (dateSpecification != null) {
+	        if (dates != null) {
 
 	            predicates.add(
-	                    dateSpecification.toPredicate(root, query, cb)
-	            );
-	        }
-
-	        predicates.add(
-	                cb.equal(
-	                        cb.lower(root.get("status")),
-	                        "inprogress"
+	                cb.greaterThanOrEqualTo(
+	                    root.get("interviewCompletedOn"),
+	                    dates[0].atStartOfDay()
 	                )
-	        );
+	            );
+
+	            predicates.add(
+	                cb.lessThan(
+	                    root.get("interviewCompletedOn"),
+	                    dates[1].plusDays(1).atStartOfDay()
+	                )
+	            );
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
+	public Specification<InterviewCurrentStageEntity> toBeScheduleInterviewSpecification(Integer userId) {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			predicates.add(cb.isFalse(root.get("toSchedule")));
+			
+			 predicates.add(cb.equal(root.get("interviewerId"), userId));
+
+			String round = getFilter("round");
+
+			if (round != null && !round.isBlank()) {
+
+				try {
+
+					predicates.add(cb.equal(root.get("currentStageType"), Integer.parseInt(round)));
+
+				} catch (NumberFormatException e) {
+
+				}
+			}
+
+			Specification<InterviewCurrentStageEntity> dateSpecification = dateSpec("createdOn");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+	
+	public Specification<ApplicanDetailsEntity> buildInterviewProgressSpecification() {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        if (filters != null) {
+
+	            Object jobId = filters.get("jobId");
+
+	            if (jobId != null && !jobId.toString().isBlank()) {
+
+	                predicates.add(
+	                        cb.equal(
+	                                root.get("jobId"),
+	                                Integer.parseInt(jobId.toString())
+	                        )
+	                );
+	            }
+
+	        }
 
 	        return cb.and(predicates.toArray(new Predicate[0]));
 	    };

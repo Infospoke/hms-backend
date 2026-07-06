@@ -17,12 +17,14 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
-import com.hms.service.repository.AiOptionsRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
 import com.hms.service.repository.FunctionalityRepository;
+import com.hms.service.repository.InterviewPlanRepository;
+import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
@@ -53,6 +55,12 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 	@Autowired
 	private RolesRepository rolesRepository;
+	
+	@Autowired
+	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
+
+	@Autowired
+	private InterviewPlanRepository interviewPlanRepository;
 
 	@Autowired
 	private EmployementTypeRepository employementTypeRepository;
@@ -82,10 +90,10 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	private AssignRolesRepository assignRolesRepository;
 
 	@Autowired
-	private AiOptionsRepository aiOptionsRepository;
-	
-	@Autowired
 	private PermissionRepository permissionRepository;
+
+	@Autowired
+	private CreateJobDetailsRepository createJobDetailsRepository;
 
 	@Override
 	public ApiResponse<List<?>> getAllBusinessUnits() {
@@ -278,17 +286,6 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		return new ApiResponse<>(ResponseCode.SUCCESS, "Users fetched successfully", response);
 	}
 
-	@Override
-	public ApiResponse<List<?>> getAiOptions() {
-
-		List<DropDownResponse> response = aiOptionsRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
-				.map(ai -> new DropDownResponse(ai.getId(), ai.getAiOptions())).toList();
-
-		log.info("ConfigurationServiceImpl::Exit from the getAllFunctionality method");
-
-		return ApiResponse.success(ResponseCode.SUCCESS, Constants.FUNCTIONALITY_FETCHED_SUCCESSFULLY, response);
-
-	}
 
 	@Override
 	public ApiResponse<List<?>> getRolesByDepartments(RolesByDepartmentIdsRequest request) {
@@ -302,54 +299,78 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 		return new ApiResponse<>(ResponseCode.SUCCESS, "Roles fetched successfully", response);
 	}
-	
+
 	@Override
 	public ApiResponse<List<?>> getUsersWithCreatePermission() {
 
-	    List<Integer> roleIds =
-	            permissionRepository
-	                    .findRoleIdsWithCreatePermission();
+		List<Integer> roleIds = permissionRepository.findRoleIdsWithCreatePermission();
 
-	    if (roleIds.isEmpty()) {
+		if (roleIds.isEmpty()) {
 
-	        return ApiResponse.success(
-	                ResponseCode.SUCCESS,
-	                "No users found",
-	                List.of());
-	    }
+			return ApiResponse.success(ResponseCode.SUCCESS, "No users found", List.of());
+		}
 
-	    List<AssignRolesEntity> assignedRoles =
-	            assignRolesRepository
-	                    .findByRoleIdIn(roleIds);
+		List<AssignRolesEntity> assignedRoles = assignRolesRepository.findByRoleIdIn(roleIds);
 
-	    List<Integer> userIds =
-	            assignedRoles.stream()
+		List<Integer> userIds = assignedRoles.stream()
 
-	                    .map(AssignRolesEntity::getUserId)
+				.map(AssignRolesEntity::getUserId)
 
-	                    .distinct()
+				.distinct()
 
-	                    .toList();
+				.toList();
 
-	    List<UserEntity> users =
-	            userRepository.findByUserIdIn(userIds);
+		List<UserEntity> users = userRepository.findByUserIdIn(userIds);
 
-	    List<DropDownResponse> response =
-	            users.stream()
+		List<DropDownResponse> response = users.stream()
 
-	                    .map(user -> new DropDownResponse(
+				.map(user -> new DropDownResponse(
 
-	                            user.getUserId(),
+						user.getUserId(),
 
-	                            user.getUsername()
+						user.getUsername()
 
-	                    ))
+				))
 
-	                    .toList();
+				.toList();
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "Users fetched successfully",
-	            response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Users fetched successfully", response);
 	}
+
+	@Override
+	public ApiResponse<List<?>> getInterviewPlans() {
+		log.info("ConfigurationServiceImpl::Inside the getInterviewPlans method");
+
+		List<DropDownResponse> response = interviewPlanRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(ipr -> new DropDownResponse(ipr.getId(), ipr.getPlanName())).toList();
+
+		log.info("ConfigurationServiceImpl::Exit from the getInterviewPlans method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview plans fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<List<?>> getJobs() {
+		log.info("ConfigurationServiceImpl::Inside the getJobs method");
+
+		List<DropDownResponse> response = createJobDetailsRepository
+				.findByIsOpenTrue(Sort.by(Sort.Direction.ASC, "jobId")).stream()
+				.map(job -> new DropDownResponse(job.getJobId(), job.getJobTitle())).toList();
+		log.info("ConfigurationServiceImpl::Exit from the getJobs method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Jobs fetched successfully", response);
+	}
+	
+	@Override
+	public ApiResponse<List<?>> getInterviewRounds() {
+		log.info("ConfigurationServiceImpl::Inside the getInterviewRounds method");
+
+		List<DropDownResponse> response = interviewRoundDropDownRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+				.map(ipr -> new DropDownResponse(ipr.getId(), ipr.getRoundName())).toList();
+
+		log.info("ConfigurationServiceImpl::Exit from the getInterviewRounds method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview rounds fetched successfully", response);
+	}
+
 }

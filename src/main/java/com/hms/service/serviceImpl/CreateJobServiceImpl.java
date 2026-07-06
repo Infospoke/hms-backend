@@ -1,10 +1,15 @@
 package com.hms.service.serviceImpl;
 
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,6 +18,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.compress.utils.IOUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,11 +28,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hms.service.constants.Constants;
 import com.hms.service.dto.JobCreationDetailsResponseDto;
+import com.hms.service.dto.NotificationEvent;
+import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
+import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.JobDescriptionEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
@@ -33,13 +44,16 @@ import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingChannelEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.JobDescriptionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
+import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
@@ -50,20 +64,28 @@ import com.hms.service.request.InterviewPlanRequest;
 import com.hms.service.request.JobDescriptionRequest;
 import com.hms.service.request.SourcingChannelRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateJobDetailsRequest;
+import com.hms.service.response.ApplicantsCountResponse;
 import com.hms.service.response.AssignedRecruiterResponse;
 import com.hms.service.response.CreateJobDetailsResponse;
+import com.hms.service.response.JobDescriptionDetailResponse;
 import com.hms.service.response.JobDescriptionResponse;
+import com.hms.service.response.JobDetailsResponse;
 import com.hms.service.response.JobOverviewResponse;
 import com.hms.service.response.MyRecruiterResponse;
 import com.hms.service.response.RecruiterDetailsResponse;
 import com.hms.service.response.RecruitersResponse;
 import com.hms.service.response.SourcingChannelResponse;
 import com.hms.service.service.ICreateJobService;
+import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -111,6 +133,20 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private RecruiterServiceImpl recruiterServiceImpl;
+	
+	@Autowired
+	private JobApplicationRepository jobApplicationRepository;
+	
+	@Autowired
+	private ResumeAnalysisRepository resumeAnalysisRepository;
+	@Autowired
+	private MinioClient minioClient;
+	
+	@Autowired
+	private ActivityFeedRepository  activityFeedRepository;
+	
+	@Autowired
+	private INotificationService notificationService;
 
 	private String generateJobCode(String srId) {
 
@@ -200,7 +236,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			CreateJobDetailsEntity createJobDetailsEntity = new CreateJobDetailsEntity();
 			JobDescriptionEntity descriptionEntity = new JobDescriptionEntity();
 			SourcingChannelEntity channelEntity = new SourcingChannelEntity();
-		
+			ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
 
 			if (request.getCreateJobDetailsRequest() != null) {
 
@@ -251,15 +287,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				createJobDetailsEntity.setEducationRequirement(req.getEducationRequirement());
 
 				createJobDetailsEntity.setCountry(req.getCountry());
-				
+
 				createJobDetailsEntity.setIsOpen(true);
-				
+
 				createJobDetailsEntity.setCertificationsRequired(req.getCertificationsRequired());
-				
+
 				createJobDetailsEntity.setLanguages(req.getLanguages());
-	
+
 			}
-			createJobDetailsRepository.save(createJobDetailsEntity);
 
 			// job description
 
@@ -309,7 +344,11 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			// recuriter assignment
 
 			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getJobId());
-			recruiterServiceImpl.saveRecruiterAssignments(request.getRecuriterAssignmentRequest());
+			ApiResponse<?> recruitersList = recruiterServiceImpl
+					.assignRecruiter(request.getRecuriterAssignmentRequest());
+
+			if (recruitersList.getResponsecode().equals("01"))
+				return recruitersList;
 
 			// Interview plan
 			if (request.getInterviewPlanRequest() != null) {
@@ -324,17 +363,105 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				createJobDetailsEntity.setPlanId(req.getPlanId());
 				createJobDetailsRepository.save(createJobDetailsEntity);
-	
+
+				List<RecruiterAssignmentEntity> list = (List<RecruiterAssignmentEntity>) recruitersList.getData();
+				for (int i = 0; i < list.size(); i++) {
+					list.get(i).setJobId(createJobDetailsEntity.getJobId());
+				}
+				recruiterAssignmentRepository.saveAll(list);
+				
 				SRPositionBasicsEntity basicsEntity = srOptional.get();
 				basicsEntity.setJobSubmit(request.getSubmit());
 				positionBasicsRepository.save(basicsEntity);
-				
-				jobDescriptionRepository.save(descriptionEntity);
-				descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
-				
-				sourcingChannelRepository.save(channelEntity);
-				channelEntity.setJobId(createJobDetailsEntity.getJobId());
 
+				descriptionEntity.setJobId(createJobDetailsEntity.getJobId());
+				jobDescriptionRepository.save(descriptionEntity);
+				
+				channelEntity.setJobId(createJobDetailsEntity.getJobId());
+				sourcingChannelRepository.save(channelEntity);
+				
+				
+				String jobTitle=createJobDetailsEntity.getJobTitle();
+				log.info("hello");
+				activityFeedEntity.setTimeStamp(LocalDateTime.now());
+				activityFeedEntity.setActivity(jobTitle +" job was posted successfully");
+				activityFeedRepository.save(activityFeedEntity);
+				
+				
+				List<AssignRolesEntity> makerAssignRoles =
+				        assignRolesRepository.findByRoleId(createJobDetailsEntity.getRoleId().intValue());
+
+				if (makerAssignRoles != null && !makerAssignRoles.isEmpty()) {
+
+				    AssignRolesEntity makerAssignRole = makerAssignRoles.get(0);
+
+					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
+							.get().getDepartmentName();
+
+					String makerRoleName = rolesRepository.findByRoleId(makerAssignRole.getRoleId()).get()
+							.getRoleName();
+					
+					Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+					
+					roleEmailMap.put(makerAssignRole.getRoleId(), List.of());
+
+					NotificationEvent creatorEvent = new NotificationEvent();
+					
+					creatorEvent.setRoleEmailMap(roleEmailMap);
+
+				    creatorEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+
+				    creatorEvent.setType("JOB CREATION");
+
+				    creatorEvent.setDeptName(departmentName);
+
+				    creatorEvent.setMakerRoleId(makerAssignRole.getRoleId());
+
+				    creatorEvent.setMakerRoleName(makerRoleName);
+
+				    creatorEvent.setMakerNotificationTitle("New Job Created");
+
+					creatorEvent.setMakerMessage(
+							createJobDetailsEntity.getJobTitle() + " job has been created successfully.");
+
+				    notificationService.callNotification(creatorEvent);
+				}
+				
+				List<RecruiterAssignmentEntity> recruiterAssignments = recruiterAssignmentRepository
+						.findByJobIdAndSrId(createJobDetailsEntity.getJobId(), createJobDetailsEntity.getSrId());
+
+				if (recruiterAssignments != null && !recruiterAssignments.isEmpty()) {
+
+					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
+							.get().getDepartmentName();
+
+				    for (RecruiterAssignmentEntity recruiter : recruiterAssignments) {
+
+				        Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+				        roleEmailMap.put(recruiter.getRoleId(), List.of());
+
+				        NotificationEvent recruiterEvent = new NotificationEvent();
+
+				        recruiterEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+
+				        recruiterEvent.setType("JOB ASSIGNMENT");
+
+				        recruiterEvent.setDeptName(departmentName);
+
+				        recruiterEvent.setCheckerRoleName(recruiter.getRoleName());
+
+				        recruiterEvent.setCheckerNotificationTitle("New Job Assignment");
+
+						recruiterEvent.setCheckerMessage("A new job assignment has been allocated to you for "
+								+ createJobDetailsEntity.getJobTitle());
+
+				        recruiterEvent.setRoleEmailMap(roleEmailMap);
+
+				        notificationService.callNotification(recruiterEvent);
+				    }
+				}			
+			
 			}
 		}
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
@@ -621,7 +748,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 //				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
 
 		if (finalRoleIds == null || finalRoleIds.isEmpty()) {
-		    return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
+			return ApiResponse.success(ResponseCode.SUCCESS, "No recruiters found", Collections.emptyMap());
 		}
 		Page<AssignRolesEntity> assignRolesPage = assignRolesRepository
 				.findAll(request.buildRecruiterSpecification(new ArrayList<>(finalRoleIds)), pageable);
@@ -823,72 +950,93 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			}
 
 			// JOB DESCRIPTION
-
 			if (descriptionEntity != null) {
 
 				JobDescriptionResponse jobDescriptionResponse = new JobDescriptionResponse();
 
-				jobDescriptionResponse.setDescription(descriptionEntity.getDescription());
-
-				response.setJobDescription(jobDescriptionResponse);
-			}
-
-			// SOURCING STRATEGY
-
-			if (sourcingEntity != null) {
-
-				SourcingChannelResponse sourcingChannelResponse = new SourcingChannelResponse();
-
-				sourcingChannelResponse.setSourcingChannels(sourcingEntity.getSourcingChannelRequest());
-
-				sourcingChannelResponse.setReferral(sourcingEntity.getReferral());
-
-				sourcingChannelResponse.setReferralAmount(sourcingEntity.getReferralAmount());
-
-				response.setSourcingStrategy(sourcingChannelResponse);
-			}
-
-			// RECRUITERS
-
-			if (!recruiterEntities.isEmpty()) {
-
-				List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
-
-					AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
-
-					recruiter.setUserName(entity.getUserName());
-
-					recruiter.setEmail(entity.getEmail());
-
-					recruiter.setAssignedAt(entity.getAssignedAt());
-
-					return recruiter;
-
+				List<JobDescriptionDetailResponse> details = descriptionEntity.getDescription().stream().map(desc -> {
+					JobDescriptionDetailResponse detail = new JobDescriptionDetailResponse();
+					BeanUtils.copyProperties(desc, detail);
+					return detail;
 				}).toList();
 
-				RecruitersResponse recruitersResponse = new RecruitersResponse();
+				jobDescriptionResponse.setDescription(details);
 
-				recruitersResponse.setRecruiters(recruiters);
+				response.setJobDescription(jobDescriptionResponse);
+				// SOURCING STRATEGY
 
-				RecruiterAssignmentEntity loggedInRecruiter = recruiterAssignmentRepository.findByJobIdAndUserId(jobId,
-						userId.intValue());
+				if (sourcingEntity != null) {
 
-				if (loggedInRecruiter != null) {
+					SourcingChannelResponse sourcingChannelResponse = new SourcingChannelResponse();
 
-					RecruiterAssignmentEntity entity = loggedInRecruiter;
+					sourcingChannelResponse.setSourcingChannels(sourcingEntity.getSourcingChannelRequest());
 
-					MyRecruiterResponse myResponse = new MyRecruiterResponse();
+					sourcingChannelResponse.setReferral(sourcingEntity.getReferral());
 
-					myResponse.setComments(entity.getComments());
+					sourcingChannelResponse.setReferralAmount(sourcingEntity.getReferralAmount());
 
-					myResponse.setStatus(entity.getStatus());
-
-					recruitersResponse.setMyResponse(List.of(myResponse));
+					response.setSourcingStrategy(sourcingChannelResponse);
 				}
-				response.setRecruiters(recruitersResponse);
-			}
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+				// RECRUITERS
+
+				if (!recruiterEntities.isEmpty()) {
+
+					List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
+
+						AssignedRecruiterResponse recruiter = new AssignedRecruiterResponse();
+
+						recruiter.setUserName(entity.getUserName());
+
+						recruiter.setEmail(entity.getEmail());
+
+						recruiter.setAssignedAt(entity.getAssignedAt());
+
+						return recruiter;
+
+					}).toList();
+
+					RecruitersResponse recruitersResponse = new RecruitersResponse();
+
+					recruitersResponse.setRecruiters(recruiters);
+
+					RecruiterAssignmentEntity loggedInRecruiter = recruiterAssignmentRepository
+							.findByJobIdAndUserId(jobId, userId.intValue());
+
+					if (loggedInRecruiter != null) {
+
+						RecruiterAssignmentEntity entity = loggedInRecruiter;
+
+						MyRecruiterResponse myResponse = new MyRecruiterResponse();
+
+						myResponse.setComments(entity.getComments());
+
+						myResponse.setStatus(entity.getStatus());
+
+						recruitersResponse.setMyResponse(List.of(myResponse));
+					}
+					response.setRecruiters(recruitersResponse);
+				}
+				long totalApplicants=jobApplicationRepository.countByJobId(jobId);
+				long resumeCompleted = resumeAnalysisRepository.countByJobId(jobId);
+
+				long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId, Constants.SHORTLISTED);
+				
+				ApplicantsCountResponse applicants=new ApplicantsCountResponse();
+				
+				applicants.setApplicantCount(totalApplicants);
+				applicants.setShortlisted(shortlistedCount);
+				applicants.setResumeCount(resumeCompleted);
+				applicants.setHiredCount(0L);
+				applicants.setOfferReleased(0L);
+				applicants.setInterviewCount(0L);
+				
+				response.setApplicantsCount(applicants);
+
+				return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+			}
+			
+		
 		}
 
 		catch (Exception e) {
@@ -897,6 +1045,108 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
+		return null;
+	}
+	
+	@Override
+	public void downloadFile(Integer appId, String type, String action, HttpServletResponse response) {
+		log.info("JobsServiceImpl:Inside downloadFile method");
+
+		JobApplicationEntity app = jobApplicationRepository.findById(appId)
+				.orElseThrow(() -> new RuntimeException(Constants.APPLICATION_NOT_FOUND));
+
+		String objectKey;
+
+		if (Constants.RESUME.equalsIgnoreCase(type)) {
+			objectKey = app.getResume();
+		} else if (Constants.ADDITIONAL.equalsIgnoreCase(type)) {
+			objectKey = app.getAdditionalFile();
+		} else {
+			throw new RuntimeException(Constants.INVALID_FILE_TYPE);
+		}
+
+		if (objectKey == null) {
+			throw new RuntimeException(Constants.FILE_NOT_UPLOADED);
+		}
+
+		String fileName = Paths.get(objectKey).getFileName().toString();
+
+		try {
+
+			InputStream minioStream = minioClient
+					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
+
+			String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+
+			response.setContentType("application/octet-stream");
+			response.setCharacterEncoding("UTF-8");
+
+			response.setHeader("Content-Disposition",
+					(Constants.VIEW.equalsIgnoreCase(action) ? "inline" : "attachment") + "; filename*=UTF-8''"
+							+ encodedFileName);
+
+			IOUtils.copy(minioStream,response.getOutputStream());
+			response.flushBuffer();
+
+			minioStream.close();
+
+		} catch (Exception e) {
+			log.info("JobsServiceImpl::exception occured in downloadFile method"+e.getMessage());
+			throw new RuntimeException("Error downloading file from MinIO", e);
+		}
 	}
 
+
+	@Override
+	public ApiResponse<?> updateJobDetailsById(UpdateJobDetailsRequest request) {
+		log.info("CreateJobServiceImpl : Inside updateJobDetailsById method");
+		log.info("the jobId from the request is"+request.getJobId());
+		CreateJobDetailsEntity createJobDetailsEntity=createJobDetailsRepository.findByJobId(request.getJobId());
+		if(createJobDetailsEntity==null)
+		{
+			log.info("No job found wiith the "+request.getJobId()+"jobId");
+			return ApiResponse.failure(ResponseCode.FAILURE,"job not found with "+request.getJobId());
+		}
+		createJobDetailsEntity.setIsOpen(request.getIsOpen());
+		createJobDetailsRepository.save(createJobDetailsEntity);
+		log.info("CreateJobServiceImpl : Exit from the updateJobDetailsById method");
+		return ApiResponse.success(ResponseCode.SUCCESS,"success","job details updated sucessfully");
+	}
+
+//	@Override
+//	public ApiResponse<?> getAllJobs(SpecificationFilterRequest request) {
+//		// 
+
+//		return null;
+//	}
+	
+	@Override
+	public ApiResponse<?> getAllJobs(SpecificationFilterRequest request) {
+
+	    log.info("CreateJobServiceImpl :: Inside the getAllJobs");
+
+		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findAll(request.buildJobsSpecification(),Sort.by(Sort.Direction.DESC, "createdAt"));
+
+	    List<JobDetailsResponse> response =
+	            jobs.stream()
+	                .map(job -> new JobDetailsResponse(
+	                        job.getJobId(),
+	                        job.getJobCode(),
+	                        job.getJobTitle(),
+	                        job.getMinExperience(),
+	                        job.getMaxExperience(),
+	                        job.getLocation(),
+	                        job.getSkillsMustHave() != null
+	                                ? Arrays.stream(job.getSkillsMustHave().split(","))
+	                                        .map(String::trim)
+	                                        .toList()
+	                                : Collections.emptyList(),
+	                        job.getWorkMode()))
+	                .toList();
+	    
+	    log.info("CreateJobServiceImpl :: Exit from the getAllJobs");
+	    
+	    return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+
+	}
 }

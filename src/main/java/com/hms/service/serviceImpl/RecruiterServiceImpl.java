@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -376,312 +377,182 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
-	
+
 	@Override
 	public ApiResponse<?> getMyJobAssignments(SpecificationFilterRequest request) {
 
-	    try {
+		try {
 
-	        int page = request.getPage() != null
-	                ? request.getPage()
-	                : 0;
+			int page = request.getPage() != null ? request.getPage() : 0;
 
-	        int size = request.getSize() != null
-	                ? request.getSize()
-	                : 10;
+			int size = request.getSize() != null ? request.getSize() : 10;
 
-	        String sortBy = request.getSortBy() != null
-	                ? request.getSortBy()
-	                : "createdAt";
+			String sortBy = request.getSortBy() != null ? request.getSortBy() : "createdAt";
 
-	        String direction = request.getDirection() != null
-	                ? request.getDirection()
-	                : "DESC";
+			String direction = request.getDirection() != null ? request.getDirection() : "DESC";
 
-	        Sort sort = direction.equalsIgnoreCase("ASC")
-	                ? Sort.by(sortBy).ascending()
-	                : Sort.by(sortBy).descending();
+			Sort sort = direction.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
 
-	        Pageable pageable = PageRequest.of(page, size, sort);
+			Pageable pageable = PageRequest.of(page, size, sort);
 
-	        String authHeader =
-	                httpServletRequest.getHeader("Authorization");
+			String authHeader = httpServletRequest.getHeader("Authorization");
 
-	        Long userId = null;
+			Long userId = null;
 
-	        if (authHeader != null
-	                && authHeader.startsWith("Bearer ")) {
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-	            String token = authHeader.substring(7);
+				String token = authHeader.substring(7);
 
-	            userId = jwtService.extractUserId(token);
-	        }
+				userId = jwtService.extractUserId(token);
+			}
 
-	        if (userId == null) {
+			if (userId == null) {
 
-	            return ApiResponse.failure("User not found");
-	        }
+				return ApiResponse.failure("User not found");
+			}
 
-	        Integer recruiterId = userId.intValue();
+			Integer recruiterId = userId.intValue();
 
-	        // GET ALL ASSIGNMENTS
-	        List<RecruiterAssignmentEntity> allAssignments =
-	                recruiterAssignmentRepository
-	                        .findAllByUserId(recruiterId);
+			
+			List<RecruiterAssignmentEntity> allAssignments = recruiterAssignmentRepository.findAllByUserId(recruiterId);
 
-	        // GET ALL JOB IDS
-	        List<Integer> allJobIds =
-	                allAssignments.stream()
-	                        .map(RecruiterAssignmentEntity::getJobId)
-	                        .distinct()
-	                        .toList();
+			
+			List<Integer> allJobIds = allAssignments.stream().map(RecruiterAssignmentEntity::getJobId).distinct()
+					.toList();
 
-	        log.info("allJobIds : {}", allJobIds);
+			log.info("allJobIds : {}", allJobIds);
 
-	        if (allJobIds.isEmpty()) {
+			if (allJobIds.isEmpty()) {
 
-	            Map<String, Object> emptyResponse =
-	                    new HashMap<>();
+				Map<String, Object> emptyResponse = new HashMap<>();
 
-	            emptyResponse.put("counts", Map.of(
-	                    "all", 0,
-	                    "pending", 0,
-	                    "accepted", 0,
-	                    "declined", 0
-	            ));
+				emptyResponse.put("counts", Map.of("all", 0, "pending", 0, "accepted", 0, "declined", 0));
 
-	            emptyResponse.put("content", List.of());
+				emptyResponse.put("content", List.of());
 
-	            emptyResponse.put("currentPage", 0);
+				emptyResponse.put("currentPage", 0);
 
-	            emptyResponse.put("totalPages", 0);
+				emptyResponse.put("totalPages", 0);
 
-	            emptyResponse.put("totalElements", 0);
-
-	            emptyResponse.put("size", size);
+				emptyResponse.put("totalElements", 0);
 
-	            return ApiResponse.success(
-	                    ResponseCode.SUCCESS,
-	                    "No Data Found",
-	                    emptyResponse
-	            );
-	        }
+				emptyResponse.put("size", size);
 
-	        // BUILD SPECIFICATION
-	        Specification<CreateJobDetailsEntity> specification =
-	                request.buildMyRecruiterSpecification(allJobIds);
+				return ApiResponse.success(ResponseCode.SUCCESS, "No Data Found", emptyResponse);
+			}
 
-	        // FETCH FILTERED JOBS
-	        List<CreateJobDetailsEntity> filteredJobs =
-	                createJobDetailsRepository.findAll(specification);
+			Specification<CreateJobDetailsEntity> specification = request.buildMyRecruiterSpecification(allJobIds);
 
-	        // FILTERED JOB IDS
-	        Set<Integer> filteredJobIds =
-	                filteredJobs.stream()
-	                        .map(CreateJobDetailsEntity::getJobId)
-	                        .collect(Collectors.toSet());
+			List<CreateJobDetailsEntity> filteredJobs = createJobDetailsRepository.findAll(specification, sort);
 
-	        log.info("filteredJobIds : {}", filteredJobIds);
-
-	        // FILTER ASSIGNMENTS BASED ON FILTERS
-	        List<RecruiterAssignmentEntity> filteredAssignments =
-	                allAssignments.stream()
-	                        .filter(a ->
-	                                filteredJobIds.contains(
-	                                        a.getJobId()))
-	                        .toList();
-
-	        // COUNTS SHOULD IGNORE STATUS FILTER
-	        Map<String, Object> counts =
-	                new HashMap<>();
-
-	        counts.put("all",
-	                filteredAssignments.size());
-
-	        counts.put("pending",
-	                filteredAssignments.stream()
-	                        .filter(a ->
-	                                "PENDING".equalsIgnoreCase(
-	                                        a.getStatus()))
-	                        .count());
-
-	        counts.put("accepted",
-	                filteredAssignments.stream()
-	                        .filter(a ->
-	                                "ACCEPTED".equalsIgnoreCase(
-	                                        a.getStatus()))
-	                        .count());
-
-	        counts.put("rejected",
-	                filteredAssignments.stream()
-	                        .filter(a ->
-	                                "REJECTED".equalsIgnoreCase(
-	                                        a.getStatus()))
-	                        .count());
+			Map<Integer, RecruiterAssignmentEntity> assignmentMap = allAssignments.stream()
+					.collect(Collectors.toMap(RecruiterAssignmentEntity::getJobId, Function.identity(), (a, b) -> a));
 
-	        // STATUS FILTER ONLY FOR CONTENT
-	        String status = request.getStatus();
-
-	        List<RecruiterAssignmentEntity> statusFilteredAssignments;
-
-	        if (status != null
-	                && !status.isBlank()
-	                && !"ALL".equalsIgnoreCase(status)) {
-
-	            statusFilteredAssignments =
-	                    filteredAssignments.stream()
-	                            .filter(a ->
-	                                    a.getStatus() != null
-	                                            && a.getStatus()
-	                                            .equalsIgnoreCase(status))
-	                            .toList();
+			Map<String, Object> counts = new HashMap<>();
 
-	        } else {
+			counts.put("all", filteredJobs.size());
 
-	            statusFilteredAssignments =
-	                    filteredAssignments;
-	        }
+			counts.put("pending", filteredJobs.stream().map(job -> assignmentMap.get(job.getJobId()))
+					.filter(Objects::nonNull).filter(a -> "PENDING".equalsIgnoreCase(a.getStatus())).count());
 
-	        // JOB MAP
-	        Map<Integer, CreateJobDetailsEntity> jobMap =
-	                filteredJobs.stream()
-	                        .collect(Collectors.toMap(
-	                                CreateJobDetailsEntity::getJobId,
-	                                job -> job
-	                        ));
+			counts.put("accepted", filteredJobs.stream().map(job -> assignmentMap.get(job.getJobId()))
+					.filter(Objects::nonNull).filter(a -> "ACCEPTED".equalsIgnoreCase(a.getStatus())).count());
 
-	        // FINAL JOBS WITH DUPLICATES
-	        List<CreateJobDetailsEntity> finalJobs =
-	                statusFilteredAssignments.stream()
-	                        .map(a ->
-	                                jobMap.get(a.getJobId()))
-	                        .filter(Objects::nonNull)
-	                        .toList();
+			counts.put("rejected", filteredJobs.stream().map(job -> assignmentMap.get(job.getJobId()))
+					.filter(Objects::nonNull).filter(a -> "REJECTED".equalsIgnoreCase(a.getStatus())).count());
 
-	        if (finalJobs.isEmpty()) {
+		
+			String status = request.getStatus();
 
-	            Map<String, Object> emptyResponse =
-	                    new HashMap<>();
+			List<CreateJobDetailsEntity> finalJobs = filteredJobs.stream().filter(job -> {
 
-	            emptyResponse.put("counts", counts);
+				RecruiterAssignmentEntity assignment = assignmentMap.get(job.getJobId());
 
-	            emptyResponse.put("content", List.of());
+				if (assignment == null) {
+					return false;
+				}
 
-	            emptyResponse.put("currentPage", 0);
+				if (status == null || status.isBlank() || status.equalsIgnoreCase("ALL")) {
+					return true;
+				}
 
-	            emptyResponse.put("totalPages", 0);
+				return assignment.getStatus() != null && assignment.getStatus().equalsIgnoreCase(status);
 
-	            emptyResponse.put("totalElements", 0);
+			}).toList();
 
-	            emptyResponse.put("size", size);
+			if (finalJobs.isEmpty()) {
 
-	            return ApiResponse.success(
-	                    ResponseCode.SUCCESS,
-	                    "No Data Found",
-	                    emptyResponse
-	            );
-	        }
+				Map<String, Object> emptyResponse = new HashMap<>();
 
-	        // MANUAL PAGINATION
-	        int start =
-	                (int) pageable.getOffset();
+				emptyResponse.put("counts", counts);
+				emptyResponse.put("content", List.of());
+				emptyResponse.put("currentPage", 0);
+				emptyResponse.put("totalPages", 0);
+				emptyResponse.put("totalElements", 0);
+				emptyResponse.put("size", size);
 
-	        int end =
-	                Math.min(
-	                        start + pageable.getPageSize(),
-	                        finalJobs.size()
-	                );
+				return ApiResponse.success(ResponseCode.SUCCESS, "No Data Found", emptyResponse);
+			}
 
-	        List<CreateJobDetailsEntity> pagedJobs =
-	                finalJobs.subList(start, end);
+			// Manual Pagination
+			int start = (int) pageable.getOffset();
 
-	        List<RecruiterAssignmentEntity> pagedAssignments =
-	                statusFilteredAssignments.subList(start, end);
+			int end = Math.min(start + pageable.getPageSize(), finalJobs.size());
 
-	        // RESPONSE LIST
-	        List<Map<String, Object>> responseList =
-	                IntStream.range(0, pagedJobs.size())
-	                        .mapToObj(i -> {
+			List<CreateJobDetailsEntity> pagedJobs = finalJobs.subList(start, end);
 
-	                            CreateJobDetailsEntity job =
-	                                    pagedJobs.get(i);
+			// RESPONSE
+			List<Map<String, Object>> responseList = pagedJobs.stream().map(job -> {
 
-	                            RecruiterAssignmentEntity assignment =
-	                                    pagedAssignments.get(i);
+				RecruiterAssignmentEntity assignment = assignmentMap.get(job.getJobId());
 
-	                            Map<String, Object> map =
-	                                    new HashMap<>();
+				Map<String, Object> map = new HashMap<>();
 
-	                            map.put("id",
-	                                    job.getJobId());
+				map.put("id", job.getJobId());
+				map.put("jobTitle", job.getJobTitle());
 
-	                            map.put("jobTitle",
-	                                    job.getJobTitle());
+				String departmentName = departmentsRepository.findById(job.getDepartmentId())
+						.map(DepartmentsEntity::getDepartmentName).orElse("");
 
-	                            String departmentName =
-	                                    departmentsRepository
-	                                            .findById(
-	                                                    job.getDepartmentId())
-	                                            .get()
-	                                            .getDepartmentName();
+				map.put("departmentName", departmentName);
 
-	                            map.put("departmentName",
-	                                    departmentName);
+				map.put("requestedBy", assignment.getAssignedBy());
 
-	                            map.put("requestedBy",
-	                                    job.getCreatedBy());
+				map.put("openings", job.getOpenings());
 
-	                            map.put("openings",
-	                                    job.getOpenings());
+				
+				map.put("createdAt", job.getCreatedAt());
 
-	                            map.put("createdAt",
-	                                    job.getCreatedAt());
+				map.put("status", assignment.getStatus());
 
-	                            map.put("status",
-	                                    assignment.getStatus());
+				return map;
 
-	                            return map;
+			}).toList();
 
-	                        }).toList();
+			// FINAL RESPONSE
+			Map<String, Object> response = new HashMap<>();
 
-	        // FINAL RESPONSE
-	        Map<String, Object> response =
-	                new HashMap<>();
+			response.put("counts", counts);
 
-	        response.put("counts", counts);
+			response.put("content", responseList);
 
-	        response.put("content", responseList);
+			response.put("currentPage", page);
 
-	        response.put("currentPage", page);
+			response.put("totalPages", (int) Math.ceil((double) finalJobs.size() / size));
 
-	        response.put(
-	                "totalPages",
-	                (int) Math.ceil(
-	                        (double) finalJobs.size() / size
-	                )
-	        );
+			response.put("totalElements", finalJobs.size());
 
-	        response.put("totalElements",
-	                finalJobs.size());
+			response.put("size", size);
 
-	        response.put("size",
-	                size);
+			return ApiResponse.success(ResponseCode.SUCCESS, "Create Job details fetched successfully", response);
 
-	        return ApiResponse.success(
-	                ResponseCode.SUCCESS,
-	                "Create Job details fetched successfully",
-	                response
-	        );
+		} catch (Exception e) {
 
-	    } catch (Exception e) {
+			e.printStackTrace();
 
-	        e.printStackTrace();
-
-	        return ApiResponse.failure(
-	                "Failed to fetch jobs");
-	    }
+			return ApiResponse.failure("Failed to fetch jobs");
+		}
 	}
-
 
 	@Override
 	public ApiResponse<?> updateRecruiterAssignment(UpdateRecruitersAssignmentRequest request) {
@@ -697,14 +568,14 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			log.info("token userId" + userId);
 
 		}
+		Integer tokenUserId = userId.intValue();
 		RecruiterAssignmentEntity recruiterAssignmentEntity = recruiterAssignmentRepository
-				.findByJobIdAndUserId(request.getJobId(),userId.intValue());
+				.findByJobIdAndUserId(request.getJobId(), userId.intValue());
 
-		if (recruiterAssignmentEntity==null) {
+		if (recruiterAssignmentEntity == null) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "No assignment found");
 		}
 
-		
 		Long assignedUserId = recruiterAssignmentEntity.getUserId().longValue();
 
 		log.info("assigned userId is " + assignedUserId);
@@ -735,38 +606,92 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		event.setType("Recruiters");
 		event.setDeptName(departmentName);
 
-		Integer makerRoleId = createJobDetailsRepository.findById(request.getJobId()).get().getRoleId().intValue();
+		String assignedBy = recruiterAssignmentRepository.findByJobIdAndUserId(request.getJobId(), tokenUserId)
+				.getAssignedBy();
+
+		Integer assigerUserId = userRepository.findByUsername(assignedBy).getUserId();
+
+		Integer makerRoleId = assignRolesRepository.findByUserId(assigerUserId).get().getRoleId();
 
 		event.setMakerRoleId(makerRoleId);
 		event.setMakerRoleName(recruiterAssignmentEntity.getRoleName());
-		event.setMakerMessage("accepted");
-		Integer usersId = assignRolesRepository.findByRoleId(makerRoleId).get(0).getUserId();
+		event.setMakerMessage("This is maker message");
 
-		String makerEmail = userRepository.findByUserId(usersId).get().getEmail();
+		String makerEmail = userRepository.findByUsername(assignedBy).getEmail();
 		log.info("maker email is" + makerEmail);
 		event.setMakerEmailAddress(makerEmail);
 		event.setMakerEmailBody("accepted");
 		event.setMakerNotificationTitle("assignment accepted");
 		event.setCheckerNotificationTitle("assignment");
-		event.setCheckerMessage("accepted");
+		event.setCheckerMessage("This is checker message");
 		event.setCheckerEmailBody("accepted");
 		event.setRoleEmailMap(roleEmailMap);
 		event.setCheckerRoleName(roleName);
 		notificationService.callNotification(event);
 		log.info("the event is " + event);
 
-		return ApiResponse.success(ResponseCode.SUCCESS,request.getStatus(), "updated successfully");
+		return ApiResponse.success(ResponseCode.SUCCESS, request.getStatus(), "updated successfully");
 
 	}
 
 	@Override
 	public ApiResponse<?> saveRecruiterAssignments(RecuriterAssignmentRequest request) {
 		log.info("RecruiterServiceImpl :: Inside the saveRecruiterAssignments method");
-		
+		ApiResponse<?> list = assignRecruiter(request);
+		recruiterAssignmentRepository.saveAll((List<RecruiterAssignmentEntity>) list.getData());
+		log.info("RecruiterServiceImpl :: Exit from the  the saveRecruiterAssignments method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Recruiters assigned successfully");
+	}
+
+	// validations for RecruiterAssignmentRequest
+	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req, String srId) {
+
+		if (req.getRecruiterInfoDtos().isEmpty())
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
+
+		for (RecruiterInfoDto dto : req.getRecruiterInfoDtos()) {
+
+			if (dto.getUserId() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
+			}
+
+			if (!userRepository.existsByUserId(dto.getUserId())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
+						List.of("User not found for userId : " + dto.getUserId()));
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public ApiResponse<?> getAssignedRecruiterUserIds(Integer jobId) {
+
+		log.info("RecruiterDashboardServiceImpl ::Inside getAssignedRecruiterUserIds method");
+
+		try {
+			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
+			Set<Integer> userIds = assignments.stream().map(RecruiterAssignmentEntity::getUserId)
+					.collect(Collectors.toSet());
+			Map<String, Object> response = new LinkedHashMap<>();
+			response.put("jobId", jobId);
+			response.put("userIds", userIds);
+			return ApiResponse.success(ResponseCode.SUCCESS, "Recruiter userIds fetched successfully", response);
+
+		} catch (Exception e) {
+			log.error("Exception occurred while fetching recruiter userIds", e);
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch recruiter userIds",
+					List.of(e.getMessage()));
+		}
+	}
+
+	public ApiResponse<?> assignRecruiter(RecuriterAssignmentRequest request) {
 		if (request == null) {
 			return null;
 		}
-	
 
 		ApiResponse<?> error = validateRecruiterAssignmentRequest(request, request.getSrId());
 
@@ -813,60 +738,8 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			list.add(entity);
 		}
+		log.info("the list of recruiters are" + list);
 
-		if (!list.isEmpty()) {
-			recruiterAssignmentRepository.saveAll(list);
-		}
-		log.info("RecruiterServiceImpl :: Inside the saveRecruiterAssignments method");
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Recruiters assigned successfully");
-	}
-
-	// validations for RecruiterAssignmentRequest
-	public ApiResponse<?> validateRecruiterAssignmentRequest(RecuriterAssignmentRequest req, String srId) {
-
-		if (req.getRecruiterInfoDtos().isEmpty())
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("userIds cannot be empty"));
-
-		for (RecruiterInfoDto dto : req.getRecruiterInfoDtos()) {
-
-			if (dto.getUserId() == null) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid userId"));
-			}
-
-			if (!userRepository.existsByUserId(dto.getUserId())) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure",
-						List.of("User not found for userId : " + dto.getUserId()));
-			}
-		}
-
-		return null;
-	}
-
-
-	
-
-	@Override
-	public ApiResponse<?> getAssignedRecruiterUserIds(Integer jobId) {
-
-		log.info("RecruiterDashboardServiceImpl ::Inside getAssignedRecruiterUserIds method");
-
-
-		try {
-			List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository.findByJobId(jobId);
-			Set<Integer> userIds = assignments.stream().map(RecruiterAssignmentEntity::getUserId)
-					.collect(Collectors.toSet());
-			Map<String, Object> response = new LinkedHashMap<>();
-			response.put("jobId", jobId);
-			response.put("userIds", userIds);
-			return ApiResponse.success(ResponseCode.SUCCESS, "Recruiter userIds fetched successfully", response);
-
-		} catch (Exception e) {
-			log.error("Exception occurred while fetching recruiter userIds", e);
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch recruiter userIds",
-					List.of(e.getMessage()));
-		}
+		return ApiResponse.success(ResponseCode.SUCCESS, "List of Recruiters are", list);
 	}
 }
