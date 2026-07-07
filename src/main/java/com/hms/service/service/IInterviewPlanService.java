@@ -1,5 +1,6 @@
 package com.hms.service.service;
 
+import com.hms.service.request.ApplicantFeedBackRequest;
 import com.hms.service.request.InterviewCompleteRequest;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
@@ -64,6 +65,8 @@ public interface IInterviewPlanService {
 	ApiResponse<?> updateInterviewCompletionStatus(UpdateInterviewCompletionStatusRequest request);
 
 	ApiResponse<?> interviewComplete(InterviewCompleteRequest request);
+
+	ApiResponse<?> getApplicantFeedbackById(ApplicantFeedBackRequest request);
 
 
 

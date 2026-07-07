@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.common.errors.ResourceNotFoundException;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -68,6 +69,7 @@ import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.ApplicantFeedBackRequest;
 import com.hms.service.request.InterviewCompleteRequest;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
@@ -79,6 +81,7 @@ import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewCompletionStatusRequest;
 import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.AIInterviewScheduleResponse;
+import com.hms.service.response.ApplicantFeedBackResponse;
 import com.hms.service.response.CommentTimelineResponse;
 import com.hms.service.response.InterviewApplicantDetailsResponse;
 import com.hms.service.response.InterviewDashboardResponse;
@@ -2788,6 +2791,28 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "The interview is not scheduled for today");
 		}
 
+	}
+
+	@Override
+	public ApiResponse<?> getApplicantFeedbackById(ApplicantFeedBackRequest request) {
+		
+		log.info("InterviewPlanServiceImpl :: Inside the getApplicantFeedBackById");
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String token = authHeader.substring(7);
+
+		Long userId = jwtService.extractUserId(token);
+		Integer userIdFromToken = userId.intValue();
+		
+		InterviewFeedbackEntity entity=interviewFeedbackRepository.findByApplicantIdAndCurrentStageId(request.getApplicantId(),request.getCurrentStageId());
+	    ApplicantFeedBackResponse response = new ApplicantFeedBackResponse();
+		if(userIdFromToken!=entity.getUserId()) {
+			return ApiResponse.failure(ResponseCode.FAILURE,"Your are authorised person to view the details");
+		}
+		BeanUtils.copyProperties(entity, response);
+		
+		log.info("InterviewPlanServiceImpl :: Exit from the getApplicantFeedBackById");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant feedback details fetched successfully",response);
 	}
 
 }

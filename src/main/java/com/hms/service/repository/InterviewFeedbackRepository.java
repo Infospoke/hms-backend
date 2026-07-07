@@ -13,4 +13,7 @@ public interface InterviewFeedbackRepository extends JpaRepository<InterviewFeed
 	Integer countByApplicantId(Integer applicantId);
 	
     List<InterviewFeedbackEntity> findByApplicantId(Integer applicantId);
+
+	InterviewFeedbackEntity findByApplicantIdAndCurrentStageId(Integer applicantId, Integer currentStageId); 
+	
 }
