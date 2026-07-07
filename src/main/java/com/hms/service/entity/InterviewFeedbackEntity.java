@@ -51,13 +51,13 @@ public class InterviewFeedbackEntity {
 	@Column(name="cultural_fit")
 	private Integer culturalFit;
 	
-	@Column(name="strengths")
+	@Column(name="strengths",length=1000)
 	private String strengths;
 	
-	@Column(name="areas_of_improvements")
+	@Column(name="areas_of_improvements",length=1000)
 	private String areasOfImprovemnets;
 	
-	@Column(name="additional_comments")
+	@Column(name="additional_comments",length=1000)
 	private String additionalComments;
 	
 	@Column(name="decision")
