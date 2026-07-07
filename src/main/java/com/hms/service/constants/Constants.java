@@ -1254,5 +1254,6 @@ public static final String INTERVIEWER_SCHEDULE_BODY =
 + "Please ensure you are available at the scheduled time.\n\n"
 + "Regards,\n"
 + "HR Team";
+public static final String REJECT = "reject";
 
 }

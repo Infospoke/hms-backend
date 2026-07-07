@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -45,6 +46,7 @@ import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
+import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.ApplicantDetailsRepository;
@@ -98,6 +100,7 @@ import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -127,7 +130,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private JwtService jwtService;
-	
+
 	@Autowired
 	private IMailService iMailService;
 
@@ -176,10 +179,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
-	
+
 	@Autowired
 	private MailServiceImpl mailService;
-	
+
 	@Value("${spring.mail.username}")
 	private String fromEmail;
 
@@ -1091,6 +1094,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	}
 
+	@Transactional
 	@Override
 	public ApiResponse<?> interviewFeedback(InterviewFeedbackRequest request) {
 		log.info("InterviewPlanServiceImpl :: Inside interviewFeedback");
@@ -1130,7 +1134,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		currentStage.setFeedback(true);
 		interviewCurrentStageRepository.save(currentStage);
+		JobApplicationEntity applicant = jobApplicationRepository.findById(request.getApplicantId())
+				.orElseThrow(() -> new ResourceNotFoundException("Applicant not found"));
+
+		sendInterviewDecisionMail(applicant, request.getDecision());
 		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+			 sendNextRoundNotification(request, applicant, username);
 			ApiResponse<?> response = updateInterviewFeedback(request);
 			if (!response.getMessage().equalsIgnoreCase("")) {
 				return ApiResponse.failure(ResponseCode.FAILURE, response.getMessage());
@@ -1138,6 +1147,108 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Feedback Submitted successfully");
+	}
+
+	private void sendNextRoundNotification(InterviewFeedbackRequest request, JobApplicationEntity applicant,
+			String username) {
+
+		int planId = createJobDetailsRepository.findByJobId(request.getJobId()).getPlanId();
+
+// Current Round
+		InterviewRoundEntity currentRound = interviewRoundRepository.findByInterviewPlan_IdAndStageTypeId(planId,
+				request.getCurrentStageId());
+
+		if (currentRound == null) {
+			throw new ResourceNotFoundException("Current interview round not found");
+		}
+
+
+		InterviewRoundEntity nextRound = interviewRoundRepository.findByInterviewPlan_IdAndRoundOrder(planId,
+				currentRound.getRoundOrder() + 1);
+
+		if (nextRound == null) {
+
+			return;
+		}
+
+
+		Optional<InterviewerAssignmentEntity> assignment = interviewerAssignmentRepository
+				.findByJobIdAndStageTypeId(request.getJobId(), nextRound.getStageTypeId());
+
+		if (assignment == null) {
+			throw new ResourceNotFoundException("Next interviewer assignment not found");
+		}
+
+		AssignRolesEntity assignRole = assignRolesRepository.findByUserId(assignment.get().getInterviewerUserId().intValue())
+				.orElseThrow(() -> new ResourceNotFoundException("Role not assigned"));
+
+		Optional<RolesEntity> role = rolesRepository.findByRoleId(assignRole.getRoleId());
+
+		NotificationEvent event = new NotificationEvent();
+
+		event.setType("INTERVIEW");
+		event.setProcessId(applicant.getId().toString());
+
+		Integer deptId=createJobDetailsRepository.findByJobId(request.getJobId()).getDepartmentId();
+		String deptName=departmentsRepository.findById(deptId).get().getDepartmentName();
+		event.setDeptName(deptName);
+
+		event.setCheckerNotificationTitle("Interview Assigned");
+
+		event.setCheckerMessage(applicant.getFirstName() + " has been moved to " + nextRound.getStageName()
+				+ ". Please schedule/interview the candidate.");
+
+		event.setMakerNotificationTitle("Interview Feedback Submitted");
+
+		event.setMakerMessage("Interview feedback submitted successfully.");
+
+		event.setMakerRoleId(assignRole.getRoleId());
+
+		event.setMakerRoleName(role.get().getRoleName());
+
+		event.setMakerEmailAddress("");
+
+		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+		roleEmailMap.put(assignRole.getRoleId(), Collections.emptyList());
+
+		event.setRoleEmailMap(roleEmailMap);
+
+		event.setCheckerRoleName(role.get().getRoleName());
+
+		notificationService.callNotification(event);
+	}
+
+	private void sendInterviewDecisionMail(JobApplicationEntity applicant, String decision) {
+
+		String subject;
+		String body;
+
+		if (Constants.MOVE_TO_INTERVIEW.equalsIgnoreCase(decision)) {
+
+			subject = "Congratulations! You have been selected for the next interview round";
+
+			body = "<html>" + "<body>" + "<p>Dear <b>" + applicant.getFirstName() + "</b>,</p>"
+					+ "<p>Congratulations!</p>"
+					+ "<p>Based on your interview performance, you have been shortlisted for the next interview round.</p>"
+					+ "<p>Our recruitment team will contact you shortly with the schedule.</p>" + "<br>"
+					+ "<p>Regards,<br><b>HR Team</b></p>" + "</body>" + "</html>";
+
+		} else if (Constants.REJECT.equalsIgnoreCase(decision)) {
+
+			subject = "Interview Result";
+
+			body = "<html>" + "<body>" + "<p>Dear <b>" + applicant.getFirstName() + "</b>,</p>"
+					+ "<p>Thank you for attending the interview.</p>"
+					+ "<p>After careful consideration, we regret to inform you that you have not been selected for this position.</p>"
+					+ "<p>We appreciate your interest in our organization and wish you success in your future career.</p>"
+					+ "<br>" + "<p>Regards,<br><b>HR Team</b></p>" + "</body>" + "</html>";
+
+		} else {
+			return;
+		}
+
+		mailService.sendMail(fromEmail, applicant.getEmail(), null, subject, body, null);
 	}
 
 	public ApiResponse<?> scheduleInterview(InterviewScheduleRequest request) {
@@ -1171,92 +1282,71 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		interviewCurrentStageEntity.setInterviewCompleted(false);
 		interviewCurrentStageEntity.setFeedback(false);
 		interviewCurrentStageRepository.save(interviewCurrentStageEntity);
-		
 
 		// Fetch applicant
 		JobApplicationEntity applicant = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
-		
+
 		Integer jobId = applicant.getJobId();
-		
+
 		Optional<InterviewerAssignmentEntity> interviewerAssignments = interviewerAssignmentRepository
 				.findByJobIdAndStageTypeId(jobId, request.getRoundId());
-		
-		InterviewerAssignmentEntity interviewerAssignmentEntity=null;
-		
+
+		InterviewerAssignmentEntity interviewerAssignmentEntity = null;
+
 		if (interviewerAssignments.isPresent()) {
-		 interviewerAssignmentEntity=interviewerAssignments.get();
+			interviewerAssignmentEntity = interviewerAssignments.get();
 		}
 
 		// Send mail
 		try {
 
-		    if (applicant != null && applicant.getEmail() != null) {
+			if (applicant != null && applicant.getEmail() != null) {
 
-		        String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
+				String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
 
-		        String body = String.format(
-		                Constants.INTERVIEW_SCHEDULE_BODY,
-		                request.getInterviewDate(),
-		                request.getStartTime(),
-		                request.getEndTime(),
-		                request.getMeetingLink(),
-		                request.getVenueDetails());
+				String body = String.format(Constants.INTERVIEW_SCHEDULE_BODY, request.getInterviewDate(),
+						request.getStartTime(), request.getEndTime(), request.getMeetingLink(),
+						request.getVenueDetails());
 
-		        mailService.sendMail(
-		                fromEmail,
-		                applicant.getEmail(),
-		                null,
-		                subject,
-		                body,
-		                null);
+				mailService.sendMail(fromEmail, applicant.getEmail(), null, subject, body, null);
 
-		    }
+			}
 
 		} catch (Exception e) {
 
-		    log.error("InterviewPlanServiceImpl::Mail failed : {}", e.getMessage());
+			log.error("InterviewPlanServiceImpl::Mail failed : {}", e.getMessage());
 
 		}
-		
+
 		// Send mail to Interviewer
 		try {
 
-		    if (interviewerAssignmentEntity != null) {
+			if (interviewerAssignmentEntity != null) {
 
-		        Integer interviewerUserId = interviewerAssignmentEntity.getInterviewerUserId().intValue();
+				Integer interviewerUserId = interviewerAssignmentEntity.getInterviewerUserId().intValue();
 
-		        // Fetch interviewer details
-		        UserEntity interviewer = userRepository.findById(interviewerUserId).orElse(null);
+				// Fetch interviewer details
+				UserEntity interviewer = userRepository.findById(interviewerUserId).orElse(null);
 
-		        if (interviewer != null && interviewer.getEmail() != null) {
+				if (interviewer != null && interviewer.getEmail() != null) {
 
-		            String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
+					String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
 
-		            String body = String.format(
-		                    Constants.INTERVIEWER_SCHEDULE_BODY,
-		                    interviewerAssignmentEntity.getInterviewerName(),
-		                    applicant.getFirstName(),
-		                    interviewerAssignmentEntity.getJobTitle(),
-		                    request.getInterviewDate(),
-		                    request.getStartTime(),
-		                    request.getEndTime(),
-		                    request.getMeetingLink() != null ? "Online" : "Offline",
-		                    request.getMeetingLink() != null ? request.getMeetingLink() : null,
-		                    request.getVenueDetails() != null ? request.getVenueDetails() : null);
+					String body = String.format(Constants.INTERVIEWER_SCHEDULE_BODY,
+							interviewerAssignmentEntity.getInterviewerName(), applicant.getFirstName(),
+							interviewerAssignmentEntity.getJobTitle(), request.getInterviewDate(),
+							request.getStartTime(), request.getEndTime(),
+							request.getMeetingLink() != null ? "Online" : "Offline",
+							request.getMeetingLink() != null ? request.getMeetingLink() : null,
+							request.getVenueDetails() != null ? request.getVenueDetails() : null);
 
-		            mailService.sendMail(
-		                    fromEmail,
-		                    interviewer.getEmail(),
-		                    null,
-		                    subject,
-		                    body,
-		                    null);
-		        }
-		    }
+					mailService.sendMail(fromEmail, interviewer.getEmail(), null, subject, body, null);
+				}
+			}
 
 		} catch (Exception e) {
 
-		    log.error("InterviewPlanServiceImpl::Interviewer Mail failed : {}", e.getMessage());
+			log.error("InterviewPlanServiceImpl::Interviewer Mail failed : {}", e.getMessage());
 
 		}
 
@@ -1461,14 +1551,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String durationText = hours > 0 ? hours + " Hour(s) " + minutes + " Minute(s)" : minutes + " Minute(s)";
 
 		Integer currentStageId = currentStageEntity.getCurrentStageType();
-		
 
 		String currentStageName = interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
 
 		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(applicationId);
 		interviewRound = interviewRound + 1;
-		
-		String interviewMode=interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline";
+
+		String interviewMode = interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline";
 
 		response.setCandidateName(entity.getName());
 		response.setJobTitle(createJobDetailsEntity.getJobTitle());
@@ -1483,11 +1572,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setCurrentCompany(entity.getCurrentCompany());
 		response.setScheduleTime(currentStageEntity.getStartTime());
 		response.setScheduleDate(currentStageEntity.getInterviewDate());
-		if(interviewMode.equalsIgnoreCase("Online"))
-		{
+		if (interviewMode.equalsIgnoreCase("Online")) {
 			response.setMeetingPlatForm(interviewScheduleEntity.getMeetingLink());
-		}
-		else {
+		} else {
 			response.setVenueDetails(interviewScheduleEntity.getVenueDetails());
 		}
 
@@ -2048,6 +2135,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
+			log.info("Plan Id : {}", planId);
+			log.info("Stage Type Id : {}", interviewFeedbackRequest.getStageTypeId());
 			int currentOrder = interviewRoundRepository
 					.findByInterviewPlan_IdAndStageTypeId(planId, interviewFeedbackRequest.getStageTypeId())
 					.getRoundOrder();
@@ -2445,10 +2534,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		dto.setInterviewCompletedOn((LocalDateTime) obj[17]);
 
 		dto.setSalary((Integer) obj[18]);
-		
+
 		dto.setRoundId((Integer) obj[19]);
-		
-		dto.setJobId((Integer)obj[20]);
+
+		dto.setJobId((Integer) obj[20]);
 
 		return dto;
 	}
@@ -2521,15 +2610,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewCompletionStatus");
 
-		//Validations
+		// Validations
 		Integer applicationId = request.getApplicantId();
 		String status = request.getStatus();
 
-		if(applicationId == null) {
-			
+		if (applicationId == null) {
+
 			return ApiResponse.failure(ResponseCode.FAILURE, "ApplicantId is required");
 		}
-		
+
 		if (status == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Status is required");
@@ -2540,14 +2629,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Status");
 		}
-		
+
 		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
 
 		if (application == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
 		}
-		
+
 		String currentStatus = application.getInterviewCompletionStatus();
 
 		if ("ACCEPTED".equalsIgnoreCase(currentStatus) || "REJECTED".equalsIgnoreCase(currentStatus)) {
@@ -2561,35 +2650,34 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		if ("ACCEPTED".equalsIgnoreCase(request.getStatus())) {
 
-		    sendInterviewSelectedMail(application);
+			sendInterviewSelectedMail(application);
 
 		} else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
 
-		    sendInterviewRejectedMail(application);
+			sendInterviewRejectedMail(application);
 		}
 
 		log.info("InterviewPlanServiceImpl :: Exit updateInterviewCompletionStatus");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview completion status updated successfully", null);
 	}
-	
+
 	private void sendInterviewSelectedMail(JobApplicationEntity application) {
 
 		log.info("InterviewPlanServiceImpl :: Inside sendInterviewSelectedMail");
 
-		 CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
-		 
-		 if (job == null) {
-			    throw new RuntimeException("Job Title Not Found");
-			}
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+
+		if (job == null) {
+			throw new RuntimeException("Job Title Not Found");
+		}
 
 		String jobTitle = job.getJobTitle();
-		
+
 		String subject = Constants.INTERVIEW_SELECTED_SUBJECT;
-		
-		String body = String.format(Constants.INTERVIEW_SELECTED_BODY, application.getFirstName(),
-				jobTitle);
-		
+
+		String body = String.format(Constants.INTERVIEW_SELECTED_BODY, application.getFirstName(), jobTitle);
+
 		iMailService.sendMail(fromEmail, application.getEmail(), null, subject, body, null);
 	}
 
@@ -2604,11 +2692,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		String jobTitle = job.getJobTitle();
-		
+
 		String subject = Constants.INTERVIEW_REJECTED_SUBJECT;
 
-		String body = String.format(Constants.INTERVIEW_REJECTED_BODY, application.getFirstName(),
-				jobTitle);
+		String body = String.format(Constants.INTERVIEW_REJECTED_BODY, application.getFirstName(), jobTitle);
 
 		iMailService.sendMail(fromEmail, application.getEmail(), null, subject, body, null);
 	}
@@ -2616,24 +2703,23 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Override
 	public ApiResponse<?> interviewComplete(InterviewCompleteRequest request) {
 		log.info("InterviewPlanServiceImpl :: Inside InterviewCompleteMethod");
-		InterviewCurrentStageEntity currentStageEntity=interviewCurrentStageRepository.findByApplicationIdAndCurrentStageType(request.getApplicantId(),request.getCurrentStageType());
-		log.info("localDateNow is"+LocalDate.now());
-		log.info("current stage entity interview date is"+currentStageEntity.getInterviewDate());
-		if(currentStageEntity.getInterviewDate().isEqual(LocalDate.now())) {
-			
-		currentStageEntity.setInterviewCompleted(request.getInterviewCompleted());
-		currentStageEntity.setInterviewCompletedOn(request.getInterviewCompletedOn());
-		interviewCurrentStageRepository.save(currentStageEntity);
-		log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
-		return ApiResponse.success(ResponseCode.SUCCESS, "success","Interview Completed successfully");
-		
-		}
-		else
-		{
+		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
+				.findByApplicationIdAndCurrentStageType(request.getApplicantId(), request.getCurrentStageType());
+		log.info("localDateNow is" + LocalDate.now());
+		log.info("current stage entity interview date is" + currentStageEntity.getInterviewDate());
+		if (currentStageEntity.getInterviewDate().isEqual(LocalDate.now())) {
+
+			currentStageEntity.setInterviewCompleted(request.getInterviewCompleted());
+			currentStageEntity.setInterviewCompletedOn(request.getInterviewCompletedOn());
+			interviewCurrentStageRepository.save(currentStageEntity);
+			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
+			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Completed successfully");
+
+		} else {
 			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
 			return ApiResponse.failure(ResponseCode.FAILURE, "The interview is not scheduled for today");
 		}
-		
+
 	}
-	
+
 }
