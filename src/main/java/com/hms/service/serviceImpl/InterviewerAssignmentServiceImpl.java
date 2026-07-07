@@ -217,11 +217,11 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				event.setCheckerNotificationTitle("Interview Reassigned");
 
 				event.setMakerMessage("You reassigned interviewer " + dto.getInterviewerName() + " for Interview Plan '"
-						+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+						+ plan.getPlanName() + "' and Job title'" + job.getJobTitle() + "'.");
 
 				event.setCheckerMessage(
 						userName + " (" + makerRoleName + ") reassigned you as interviewer for Interview Plan '"
-								+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+								+ plan.getPlanName() + "' and Job title'" + job.getJobTitle() + "'.");
 
 			} else {
 
@@ -231,11 +231,11 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				event.setCheckerNotificationTitle("Interview Assignment");
 
 				event.setMakerMessage("You assigned interviewer " + dto.getInterviewerName() + " for Interview Plan '"
-						+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+						+ plan.getPlanName() + "' and Job title '" + job.getJobTitle() + "'.");
 
 				event.setCheckerMessage(
 						userName + " (" + makerRoleName + ") assigned you as interviewer for Interview Plan '"
-								+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+								+ plan.getPlanName() + "' and Job title '" + job.getJobTitle() + "'.");
 			}
 
 			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
@@ -701,7 +701,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			event.setMakerMessage("You accepted the interview assignment.");
 
-			event.setCheckerMessage(assignment.getInterviewerName() + " accepted the interview assignment for Job '"
+			event.setCheckerMessage(assignment.getInterviewerName() + " accepted the interview assignment for Job title '"
 					+ assignment.getJobTitle() + "'.");
 		}
 
@@ -714,7 +714,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			event.setMakerMessage("You rejected the interview assignment.");
 
-			event.setCheckerMessage(assignment.getInterviewerName() + " rejected the interview assignment for Job '"
+			event.setCheckerMessage(assignment.getInterviewerName() + " rejected the interview assignment for Job title'"
 					+ assignment.getJobTitle() + "'. Please reassign another interviewer.");
 		}
 
@@ -722,7 +722,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		log.info("InterviewerAssignmentServiceImpl :: Exit updateInterviewAssignment");
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment updated successfully", null);
+		return ApiResponse.success(ResponseCode.SUCCESS,"success","Interview assignment updated successfully");
 	}
 	@Override
 	public ApiResponse<?> getInterviewersAssignmentCounts() {
