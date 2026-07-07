@@ -391,14 +391,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				activityFeedEntity.setActivity(jobTitle +" job was posted successfully");
 				activityFeedRepository.save(activityFeedEntity);										
 				
-				NotificationEvent creatorEvent = new NotificationEvent();
-				
+				NotificationEvent makerEvent = new NotificationEvent();
+
 				List<AssignRolesEntity> makerAssignRoles =
 				        assignRolesRepository.findByRoleId(createJobDetailsEntity.getRoleId().intValue());
 
 				if (makerAssignRoles != null && !makerAssignRoles.isEmpty()) {
 
-					AssignRolesEntity makerAssignRole = makerAssignRoles.get(0);
+				    AssignRolesEntity makerAssignRole = makerAssignRoles.get(0);
 
 					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
 							.get().getDepartmentName();
@@ -406,29 +406,24 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					String makerRoleName = rolesRepository.findByRoleId(makerAssignRole.getRoleId()).get()
 							.getRoleName();
 
-					Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+				    makerEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
 
-					roleEmailMap.put(makerAssignRole.getRoleId(), List.of());
+				    makerEvent.setType("JOB CREATION");
 
-					creatorEvent.setRoleEmailMap(roleEmailMap);
+				    makerEvent.setDeptName(departmentName);
 
-					creatorEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+				    makerEvent.setMakerRoleId(makerAssignRole.getRoleId());
 
-					creatorEvent.setType("JOB CREATION");
+				    makerEvent.setMakerRoleName(makerRoleName);
 
-					creatorEvent.setDeptName(departmentName);
+				    makerEvent.setMakerNotificationTitle("New Job Created");
 
-					creatorEvent.setMakerRoleId(makerAssignRole.getRoleId());
-
-					creatorEvent.setMakerRoleName(makerRoleName);
-
-					creatorEvent.setMakerNotificationTitle("New Job Created");
-
-					creatorEvent.setMakerMessage(
-							createJobDetailsEntity.getJobTitle() + " job has been created successfully.");
-
-					notificationService.callNotification(creatorEvent);
+				    makerEvent.setMakerMessage(
+				            createJobDetailsEntity.getJobTitle()
+				                    + " job has been created successfully.");
 				}
+				
+				List<NotificationEvent> checkerEvents = new ArrayList<>();
 
 				List<RecruiterAssignmentEntity> recruiterAssignments = recruiterAssignmentRepository
 						.findByJobIdAndSrId(createJobDetailsEntity.getJobId(), createJobDetailsEntity.getSrId());
@@ -438,32 +433,35 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
 							.get().getDepartmentName();
 
-					for (RecruiterAssignmentEntity recruiter : recruiterAssignments) {
+				    for (RecruiterAssignmentEntity recruiter : recruiterAssignments) {
 
-						Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+				        NotificationEvent checkerEvent = new NotificationEvent();
 
-						roleEmailMap.put(recruiter.getRoleId(), List.of());
+				        checkerEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
 
-						NotificationEvent recruiterEvent = new NotificationEvent();
+				        checkerEvent.setType("JOB ASSIGNMENT");
 
-						recruiterEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+				        checkerEvent.setDeptName(departmentName);
 
-						recruiterEvent.setType("JOB ASSIGNMENT");
+				        checkerEvent.setCheckerRoleName(recruiter.getRoleName());
 
-						recruiterEvent.setDeptName(departmentName);
+				        checkerEvent.setCheckerNotificationTitle("New Job Assignment");
 
-						recruiterEvent.setCheckerRoleName(recruiter.getRoleName());
+				        checkerEvent.setCheckerMessage(
+				                "A new job assignment has been allocated to you for "
+				                        + createJobDetailsEntity.getJobTitle());
 
-						recruiterEvent.setCheckerNotificationTitle("New Job Assignment");
+				        Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-						recruiterEvent.setCheckerMessage("A new job assignment has been allocated to you for "
-								+ createJobDetailsEntity.getJobTitle());
+				        roleEmailMap.put(recruiter.getRoleId(), List.of(recruiter.getEmail()));
 
-						recruiterEvent.setRoleEmailMap(roleEmailMap);
+				        checkerEvent.setRoleEmailMap(roleEmailMap);
 
-						notificationService.callNotification(recruiterEvent);
-					}
+				        checkerEvents.add(checkerEvent);
+				    }
 				}
+				
+				notificationService.callInterviewerAssignmentNotification(makerEvent, checkerEvents);			
 
 			}
 		}		
