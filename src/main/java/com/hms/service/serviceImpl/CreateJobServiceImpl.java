@@ -341,7 +341,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			}
 
-			// recuriter assignment
+			// Recruiter assignment
 
 			request.getRecuriterAssignmentRequest().setJobId(createJobDetailsEntity.getJobId());
 			ApiResponse<?> recruitersList = recruiterServiceImpl
@@ -385,8 +385,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				log.info("hello");
 				activityFeedEntity.setTimeStamp(LocalDateTime.now());
 				activityFeedEntity.setActivity(jobTitle +" job was posted successfully");
-				activityFeedRepository.save(activityFeedEntity);
+				activityFeedRepository.save(activityFeedEntity);										
 				
+				NotificationEvent creatorEvent = new NotificationEvent();
 				
 				List<AssignRolesEntity> makerAssignRoles =
 				        assignRolesRepository.findByRoleId(createJobDetailsEntity.getRoleId().intValue());
@@ -404,8 +405,6 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 					
 					roleEmailMap.put(makerAssignRole.getRoleId(), List.of());
-
-					NotificationEvent creatorEvent = new NotificationEvent();
 					
 					creatorEvent.setRoleEmailMap(roleEmailMap);
 
@@ -463,15 +462,13 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				}			
 			
 			}
-		}
+		}		
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 
 	}
 
-	// Validations for createJobDetailsRequest
-
-	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {
-
+	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {		
+		
 		ApiResponse<?> error;
 
 		if (req.getJobTitle() != null) {
