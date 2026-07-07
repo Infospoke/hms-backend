@@ -40,4 +40,6 @@ public class JobOverviewResponse {
     private List<String> niceToHaveSkills;
 
     private String additionalNotes;
+    
+    private String country;
 }
