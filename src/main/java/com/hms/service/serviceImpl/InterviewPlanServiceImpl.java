@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.AIInterviewQuestionsEntity;
+import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
@@ -50,6 +51,7 @@ import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AInterviewQuestionsRepository;
+import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.ApplicantDetailsRepository;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
@@ -183,6 +185,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Autowired
 	private InterviewerAssignmentRepository interviewerAssignmentRepository;
 
+	@Autowired
+	private ActivityFeedRepository activityFeedRepository;
+	
 	@Autowired
 	private MailServiceImpl mailService;
 
@@ -1137,12 +1142,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		currentStage.setFeedback(true);
 		interviewCurrentStageRepository.save(currentStage);
-		JobApplicationEntity applicant = jobApplicationRepository.findById(request.getApplicantId())
-				.orElseThrow(() -> new ResourceNotFoundException("Applicant not found"));
-
-		sendInterviewDecisionMail(applicant, request.getDecision());
+		
 		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
-			 sendNextRoundNotification(request, applicant, username);
 			ApiResponse<?> response = updateInterviewFeedback(request);
 			if (!response.getMessage().equalsIgnoreCase("")) {
 				return ApiResponse.failure(ResponseCode.FAILURE, response.getMessage());
@@ -1152,8 +1153,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Feedback Submitted successfully");
 	}
 
-	private void sendNextRoundNotification(InterviewFeedbackRequest request, JobApplicationEntity applicant,
-			String username) {
+	private void sendNextRoundNotification(InterviewFeedbackRequest request, JobApplicationEntity applicant) {
 
 		int planId = createJobDetailsRepository.findByJobId(request.getJobId()).getPlanId();
 
@@ -1165,7 +1165,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			throw new ResourceNotFoundException("Current interview round not found");
 		}
 
-
 		InterviewRoundEntity nextRound = interviewRoundRepository.findByInterviewPlan_IdAndRoundOrder(planId,
 				currentRound.getRoundOrder() + 1);
 
@@ -1173,7 +1172,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			return;
 		}
-
 
 		Optional<InterviewerAssignmentEntity> assignment = interviewerAssignmentRepository
 				.findByJobIdAndStageTypeId(request.getJobId(), nextRound.getStageTypeId());
@@ -1535,6 +1533,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		Optional<CreateJobDetailsEntity> jobDetailsEnity = createJobDetailsRepository.findById(jobId);
 		CreateJobDetailsEntity createJobDetailsEntity = jobDetailsEnity.get();
 		Integer deptId = createJobDetailsEntity.getDepartmentId();
+      	Integer job=createJobDetailsEntity.getJobId();
 
 		InterviewDetailsResponse response = new InterviewDetailsResponse();
 		String department = departmentsRepository.findById(deptId).get().getDepartmentName();
@@ -1575,6 +1574,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setCurrentCompany(entity.getCurrentCompany());
 		response.setScheduleTime(currentStageEntity.getStartTime());
 		response.setScheduleDate(currentStageEntity.getInterviewDate());
+		response.setJobId(job);
 		if (interviewMode.equalsIgnoreCase("Online")) {
 			response.setMeetingPlatForm(interviewScheduleEntity.getMeetingLink());
 		} else {
@@ -1998,6 +1998,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				String stageName = interviewRoundDropDownRepository.findById(currentStageType).get().getRoundName();
 
 				response.put("currentStageType", stageName);
+				
+				response.put("currentStageId", stage.getCurrentStageType());
 
 				response.put("interviewDate", stage.getInterviewDate());
 
@@ -2167,12 +2169,18 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				interviewCurrentStageEntity.setToSchedule(false);
 				interviewCurrentStageEntity.setCreatedOn(LocalDate.now(ZoneId.of("Asia/Kolkata")));
 				interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+				JobApplicationEntity applicant = jobApplicationRepository.findById(interviewFeedbackRequest.getApplicantId())
+						.orElseThrow(() -> new ResourceNotFoundException("Applicant not found"));
+				sendInterviewDecisionMail(applicant,interviewFeedbackRequest.getDecision());
+				 sendNextRoundNotification(interviewFeedbackRequest, applicant);
 				log.info("InterviewPlanServiceImpl :: Applicant moved to the next Round");
 			} else {
 				JobApplicationEntity applicationEntity = jobApplicationRepository
 						.findById(interviewFeedbackRequest.getApplicantId()).get();
 				applicationEntity.setInPersonInterviews(true);
 				jobApplicationRepository.save(applicationEntity);
+				ActivityFeedEntity entity=new ActivityFeedEntity();
+				entity.setTimeStamp(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 			}
 		}
