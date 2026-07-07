@@ -937,6 +937,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				jobOverviewResponse.setEmploymentType(createJobDetailsEntity.getEmploymentType());
 				jobOverviewResponse.setMinExperience(createJobDetailsEntity.getMinExperience());
 				jobOverviewResponse.setMaxExperience(createJobDetailsEntity.getMaxExperience());
+				jobOverviewResponse.setCountry(createJobDetailsEntity.getCountry());
 
 				jobOverviewResponse.setSkillsMustHave(createJobDetailsEntity.getSkillsMustHave() != null
 						? Arrays.asList(createJobDetailsEntity.getSkillsMustHave().split(","))
