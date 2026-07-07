@@ -94,21 +94,22 @@ public class NotificationServiceImpl implements INotificationService {
 
 		// Save notification to DB (one record per SR)
 		saveNotification(event, acknowledgment);
-		
-		log.info("the event from the notification service impl is : "+event);
 
-		List<Object[]> results = notificationEngineRepository.findIdAndSentAtByProcessIdAndSentIsFalse(event.getProcessId());
-		
-		log.info("event contains the maker role id is"+event.getMakerRoleId());
+		log.info("the event from the notification service impl is : " + event);
+
+		List<Object[]> results = notificationEngineRepository
+				.findIdAndSentAtByProcessIdAndSentIsFalse(event.getProcessId());
+
+		log.info("event contains the maker role id is" + event.getMakerRoleId());
 		if (event.getMakerRoleId() != null) {
-	     	Object[] makerRow = results.get(1);
+			Object[] makerRow = results.get(1);
 			Integer makerNotificationId = (Integer) makerRow[0];
-			log.info("maker notification is is"+makerNotificationId);
+			log.info("maker notification is is" + makerNotificationId);
 			LocalDateTime makerNotificationSentAt = (LocalDateTime) makerRow[1];
 			event.setTriggeredAt(makerNotificationSentAt);
-			
+
 			event.setMakerId(makerNotificationId);
-			log.info("maker id is"+makerNotificationId);
+			log.info("maker id is" + makerNotificationId);
 		}
 		if (event.getRoleEmailMap() != null && results.size() > 1) {
 
@@ -122,7 +123,7 @@ public class NotificationServiceImpl implements INotificationService {
 
 		// Push real-time WebSocket notification to all subscribers
 		pushWebSocketNotification(event);
-		
+
 		updateNotification(event);
 
 		// Send email to every user in the roleEmailMap
@@ -148,10 +149,10 @@ public class NotificationServiceImpl implements INotificationService {
 			checkerEntity.setProcessId(event.getProcessId());
 			checkerEntity.setDeptName(event.getDeptName());
 			checkerEntity.setRoleName(event.getCheckerRoleName());
-			
-			log.info("checker role name is"+event.getCheckerRoleName());
+
+			log.info("checker role name is" + event.getCheckerRoleName());
 			checkerEntity.setNotificationSentAt(LocalDateTime.now());
-			Integer checkerRoleId = event.getRoleEmailMap().keySet().stream().findFirst().orElse(null); 
+			Integer checkerRoleId = event.getRoleEmailMap().keySet().stream().findFirst().orElse(null);
 			checkerEntity.setRoleId(checkerRoleId);
 			checkerEntity.setIsRead(false);
 
@@ -164,8 +165,8 @@ public class NotificationServiceImpl implements INotificationService {
 			makerEntity.setProcessId(event.getProcessId());
 			makerEntity.setDeptName(event.getDeptName());
 			makerEntity.setRoleName(event.getMakerRoleName());
-			log.info("maker role name is "+event.getMakerRoleName());
-			
+			log.info("maker role name is " + event.getMakerRoleName());
+
 			makerEntity.setRoleId(event.getMakerRoleId());
 
 			makerEntity.setNotificationSentAt(LocalDateTime.now());
@@ -185,22 +186,20 @@ public class NotificationServiceImpl implements INotificationService {
 					event.getProcessId(), e.getMessage());
 		}
 	}
-	
-	
+
 	private void updateNotification(NotificationEvent event) {
 		log.info("Inside update Notifications for " + event.getType() + ": {}", event.getProcessId());
-		
-		List<NotificationEngineEntity> notifications= notificationEngineRepository.findByProcessIdAndSentIsFalse(event.getProcessId());
+
+		List<NotificationEngineEntity> notifications = notificationEngineRepository
+				.findByProcessIdAndSentIsFalse(event.getProcessId());
 		List<NotificationEngineEntity> notificationsList = new ArrayList<>();
-		for(int i=0;i<notifications.size();i++)
-		{
+		for (int i = 0; i < notifications.size(); i++) {
 			NotificationEngineEntity checkerEntity = notifications.get(i);
 			checkerEntity.setSent(true);
 			notificationsList.add(checkerEntity);
 		}
 		notificationEngineRepository.saveAll(notificationsList);
-		
-		
+
 		log.info("Successfully updated Notifications for " + event.getType() + ": {}", event.getProcessId());
 
 	}
@@ -231,11 +230,28 @@ public class NotificationServiceImpl implements INotificationService {
 			}
 
 			// Sending email to maker
-			mailService.sendMail(mailFrom, event.getMakerEmailAddress(), null, makerSubject, makerBody, null);
+			// Send email to maker only if email is available
+			if (event.getMakerEmailAddress() != null && !event.getMakerEmailAddress().trim().isEmpty()) {
+
+				mailService.sendMail(mailFrom, event.getMakerEmailAddress(), null, makerSubject, makerBody, null);
+
+				log.info("Maker email sent to {}", event.getMakerEmailAddress());
+
+			} else {
+				log.info("Maker email is not available. Skipping maker email.");
+			}
 			for (String email : checkerEmails) {
 				try {
 					// Sending email to checker
-					mailService.sendMail(mailFrom, email, null, checkerSubject, checkerBody, null);
+					if (email != null && !email.trim().isEmpty()) {
+
+						mailService.sendMail(mailFrom, email, null, checkerSubject, checkerBody, null);
+
+						log.info("Checker email sent to {}", email);
+
+					} else {
+						log.info("Checker email is empty. Skipping email.");
+					}
 					log.info("NotificationServiceImpl :: Email sent to [{}] (roleId: {}) for " + event.getType()
 							+ ": {}", email, roleId, event.getProcessId());
 				} catch (Exception e) {
@@ -258,7 +274,7 @@ public class NotificationServiceImpl implements INotificationService {
 						event.getType(),
 
 						event.getMakerRoleId(), event.getTriggeredAt(), event.getMakerId());
-				log.info("maker notification is "+makerNotification);
+				log.info("maker notification is " + makerNotification);
 				messagingTemplate.convertAndSend("/topic/notifications/" + event.getMakerRoleId(), makerNotification);
 				log.info("NotificationServiceImpl :: WebSocket pushed to maker roleId: {}", event.getMakerRoleId());
 			}
@@ -270,7 +286,7 @@ public class NotificationServiceImpl implements INotificationService {
 				WebSocketNotification checkerNotification = new WebSocketNotification(event.getProcessId(),
 						event.getCheckerNotificationTitle(), event.getCheckerMessage(), event.getDeptName(),
 						event.getType(), checkerRoleId, event.getTriggeredAt(), event.getCheckerId());
-				log.info("checker notification is"+checkerNotification);
+				log.info("checker notification is" + checkerNotification);
 				messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerNotification);
 				log.info("NotificationServiceImpl :: WebSocket pushed to checker roleId: {}", checkerRoleId);
 				// }

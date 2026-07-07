@@ -1236,6 +1236,18 @@ public static final String INTERVIEW_SCHEDULE_BODY =
       + "Venue          : %s\n\n"
       + "Best of Luck!\n"
       + "Regards,\nHR Team";
+public static final String INTERVIEW_RESCHEDULE_SUBJECT = "Interview ReScheduled";
+
+public static final String INTERVIEW_RESCHEDULE_BODY =
+"Dear Candidate,\n\n"
++ "Your interview has been Rescheduled.\n\n"
++ "Interview Date : %s\n"
++ "Start Time     : %s\n"
++ "End Time       : %s\n"
++ "Meeting Link   : %s\n"
++ "Venue          : %s\n\n"
++ "Best of Luck!\n"
++ "Regards,\nHR Team";
 
 
 
@@ -1254,5 +1266,22 @@ public static final String INTERVIEWER_SCHEDULE_BODY =
 + "Please ensure you are available at the scheduled time.\n\n"
 + "Regards,\n"
 + "HR Team";
+
+public static final String INTERVIEWER_RESCHEDULE_BODY =
+"Dear %s,\n\n"
++ "An interview has been Rescheduled and assigned to you.\n\n"
++ "Interview Details:\n"
++ "Candidate Name : %s\n"
++ "Job Title      : %s\n"
++ "Interview Date : %s\n"
++ "Start Time     : %s\n"
++ "End Time       : %s\n"
++ "Interview Mode : %s\n"
++ "Meeting Link   : %s\n"
++ "Venue          : %s\n\n"
++ "Please ensure you are available at the scheduled time.\n\n"
++ "Regards,\n"
++ "HR Team";
+public static final String REJECT = "reject";
 
 }

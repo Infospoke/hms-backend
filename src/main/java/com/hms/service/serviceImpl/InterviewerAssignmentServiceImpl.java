@@ -40,6 +40,7 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.AssignInterviewerRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateInterviewAssignmentRequest;
+import com.hms.service.response.InterviewerAssignmentCountResponse;
 import com.hms.service.service.IInterviewerAssignmentService;
 import com.hms.service.service.INotificationService;
 import com.hms.service.utils.JwtService;
@@ -216,11 +217,11 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				event.setCheckerNotificationTitle("Interview Reassigned");
 
 				event.setMakerMessage("You reassigned interviewer " + dto.getInterviewerName() + " for Interview Plan '"
-						+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+						+ plan.getPlanName() + "' and Job title'" + job.getJobTitle() + "'.");
 
 				event.setCheckerMessage(
 						userName + " (" + makerRoleName + ") reassigned you as interviewer for Interview Plan '"
-								+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+								+ plan.getPlanName() + "' and Job title'" + job.getJobTitle() + "'.");
 
 			} else {
 
@@ -230,11 +231,11 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				event.setCheckerNotificationTitle("Interview Assignment");
 
 				event.setMakerMessage("You assigned interviewer " + dto.getInterviewerName() + " for Interview Plan '"
-						+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+						+ plan.getPlanName() + "' and Job title '" + job.getJobTitle() + "'.");
 
 				event.setCheckerMessage(
 						userName + " (" + makerRoleName + ") assigned you as interviewer for Interview Plan '"
-								+ plan.getPlanName() + "' and Job '" + job.getJobTitle() + "'.");
+								+ plan.getPlanName() + "' and Job title '" + job.getJobTitle() + "'.");
 			}
 
 			Map<Integer, List<String>> roleEmailMap = new HashMap<>();
@@ -700,7 +701,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			event.setMakerMessage("You accepted the interview assignment.");
 
-			event.setCheckerMessage(assignment.getInterviewerName() + " accepted the interview assignment for Job '"
+			event.setCheckerMessage(assignment.getInterviewerName() + " accepted the interview assignment for Job title '"
 					+ assignment.getJobTitle() + "'.");
 		}
 
@@ -713,7 +714,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 			event.setMakerMessage("You rejected the interview assignment.");
 
-			event.setCheckerMessage(assignment.getInterviewerName() + " rejected the interview assignment for Job '"
+			event.setCheckerMessage(assignment.getInterviewerName() + " rejected the interview assignment for Job title'"
 					+ assignment.getJobTitle() + "'. Please reassign another interviewer.");
 		}
 
@@ -721,7 +722,57 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		log.info("InterviewerAssignmentServiceImpl :: Exit updateInterviewAssignment");
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Interview assignment updated successfully", null);
+		return ApiResponse.success(ResponseCode.SUCCESS,"success","Interview assignment updated successfully");
+	}
+	@Override
+	public ApiResponse<?> getInterviewersAssignmentCounts() {
+
+	    log.info("InterviewerAssignmentServiceImpl :: Inside the getInterviewersAssignmentCounts");
+
+	    String authHeader = httpServletRequest.getHeader("Authorization");
+
+	    Long userId = null;
+
+	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+	        String token = authHeader.substring(7);
+
+	        userId = jwtService.extractUserId(token);
+	    }
+
+	    List<Object[]> statusCounts = interviewerAssignmentRepository.getStatusCounts(userId);
+
+	    int totalAssignments = 0;
+	    int acceptedCount = 0;
+	    int rejectedCount = 0;
+	    int pendingCount = 0;
+
+	    for (Object[] row : statusCounts) {
+
+	        String status = (String) row[0];
+	        int count = ((Long) row[1]).intValue();
+
+	        totalAssignments += count;
+
+	        if ("Accepted".equalsIgnoreCase(status)) {
+	            acceptedCount = count;
+	        } else if ("Rejected".equalsIgnoreCase(status)) {
+	            rejectedCount = count;
+	        } else if ("Pending".equalsIgnoreCase(status)) {
+	            pendingCount = count;
+	        }
+	    }
+
+	    InterviewerAssignmentCountResponse response = new InterviewerAssignmentCountResponse();
+
+	    response.setTotalAssignments(totalAssignments);
+	    response.setAcceptedCount(acceptedCount);
+	    response.setRejectedCount(rejectedCount);
+	    response.setPendingCount(pendingCount);
+
+	    log.info("InterviewerAssignmentServiceImpl :: Exit from the getInterviewersAssignmentCounts");
+
+	    return new ApiResponse<>(ResponseCode.SUCCESS, "Assignment counts fetched successfully", response);
 	}
 
 }
