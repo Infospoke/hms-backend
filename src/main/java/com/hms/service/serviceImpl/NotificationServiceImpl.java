@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -452,6 +454,71 @@ public class NotificationServiceImpl implements INotificationService {
 		notificationEngineRepository.saveAll(notificationEngineEntity);
 
 		return ApiResponse.success("Notifications updated successfully");
+	}
+
+	@Override
+	@Transactional
+	public void callInterviewerAssignmentNotification(NotificationEvent makerEvent,
+			List<NotificationEvent> checkerEvents) {
+
+		log.info("Inside callInterviewerAssignmentNotification()");
+
+		
+		if (makerEvent != null) {
+
+			NotificationEngineEntity makerEntity = new NotificationEngineEntity();
+
+			makerEntity.setProcessId(makerEvent.getProcessId());
+			makerEntity.setNotificationTitle(makerEvent.getMakerNotificationTitle());
+			makerEntity.setMessage(makerEvent.getMakerMessage());
+			makerEntity.setDeptName(makerEvent.getDeptName());
+			makerEntity.setRoleName(makerEvent.getMakerRoleName());
+			makerEntity.setRoleId(makerEvent.getMakerRoleId());
+			makerEntity.setNotificationSentAt(LocalDateTime.now());
+			makerEntity.setIsRead(false);
+
+			makerEntity = notificationEngineRepository.save(makerEntity);
+
+			WebSocketNotification makerSocket = new WebSocketNotification(makerEvent.getProcessId(),
+					makerEvent.getMakerNotificationTitle(), makerEvent.getMakerMessage(), makerEvent.getDeptName(),
+					makerEvent.getType(), makerEvent.getMakerRoleId(), makerEntity.getNotificationSentAt(),
+					makerEntity.getId());
+
+			messagingTemplate.convertAndSend("/topic/notifications/" + makerEvent.getMakerRoleId(), makerSocket);
+
+			log.info("Maker notification sent successfully.");
+		}
+
+		
+		for (NotificationEvent checkerEvent : checkerEvents) {
+
+			Integer checkerRoleId = checkerEvent.getRoleEmailMap().keySet().stream().findFirst().orElse(null);
+
+			NotificationEngineEntity checkerEntity = new NotificationEngineEntity();
+
+			checkerEntity.setProcessId(checkerEvent.getProcessId());
+			checkerEntity.setNotificationTitle(checkerEvent.getCheckerNotificationTitle());
+			checkerEntity.setMessage(checkerEvent.getCheckerMessage());
+			checkerEntity.setDeptName(checkerEvent.getDeptName());
+			checkerEntity.setRoleName(checkerEvent.getCheckerRoleName());
+			checkerEntity.setRoleId(checkerRoleId);
+			checkerEntity.setNotificationSentAt(LocalDateTime.now());
+			checkerEntity.setIsRead(false);
+
+			checkerEntity = notificationEngineRepository.save(checkerEntity);
+
+			WebSocketNotification checkerSocket = new WebSocketNotification(checkerEvent.getProcessId(),
+					checkerEvent.getCheckerNotificationTitle(), checkerEvent.getCheckerMessage(),
+					checkerEvent.getDeptName(), checkerEvent.getType(), checkerRoleId,
+					checkerEntity.getNotificationSentAt(), checkerEntity.getId());
+
+			messagingTemplate.convertAndSend("/topic/notifications/" + checkerRoleId, checkerSocket);
+
+			
+			sendEmailsToAllRoles(checkerEvent);
+
+			log.info("Checker notification sent successfully.");
+		}
 	}
 
 }
