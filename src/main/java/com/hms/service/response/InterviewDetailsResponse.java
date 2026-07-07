@@ -49,5 +49,7 @@ public class InterviewDetailsResponse {
     private String meetingPlatForm;
     
     private String venueDetails;
+    
+    private Integer jobId;
 
 }
