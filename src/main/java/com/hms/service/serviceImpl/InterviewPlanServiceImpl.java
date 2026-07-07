@@ -2609,6 +2609,74 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		currentStageEntity.setEndTime(request.getRescheduleEndTime());
 		interviewCurrentStageRepository.save(currentStageEntity);
 
+		// Fetch applicant
+		JobApplicationEntity applicant = jobApplicationRepository.findById(entity.getApplicantId()).orElse(null);
+
+		Integer jobId = applicant.getJobId();
+
+		Optional<InterviewerAssignmentEntity> interviewerAssignments = interviewerAssignmentRepository
+				.findByJobIdAndStageTypeId(jobId, entity.getRoundId());
+
+		InterviewerAssignmentEntity interviewerAssignmentEntity = null;
+
+		if (interviewerAssignments.isPresent()) {
+			interviewerAssignmentEntity = interviewerAssignments.get();
+		}
+
+		// Send mail
+		try {
+
+			if (applicant != null && applicant.getEmail() != null) {
+
+				String subject = Constants.INTERVIEW_RESCHEDULE_SUBJECT;
+
+				String body = String.format(Constants.INTERVIEW_RESCHEDULE_BODY, request.getRescheduleDate(),
+						request.getRescheduleStartTime(), request.getRescheduleEndTime(),
+						request.getRescheduleMeetingLink(), request.getRescheduleVenueDetails());
+
+				mailService.sendMail(fromEmail, applicant.getEmail(), null, subject, body, null);
+
+			}
+
+		} catch (Exception e) {
+
+			log.error("InterviewPlanServiceImpl::Mail failed : {}", e.getMessage());
+
+		}
+
+		// Send mail to Interviewer
+		try {
+
+			if (interviewerAssignmentEntity != null) {
+
+				Integer interviewerUserId = interviewerAssignmentEntity.getInterviewerUserId().intValue();
+
+				// Fetch interviewer details
+				UserEntity interviewer = userRepository.findById(interviewerUserId).orElse(null);
+
+				if (interviewer != null && interviewer.getEmail() != null) {
+
+					String subject = Constants.INTERVIEW_RESCHEDULE_SUBJECT;
+
+					String body = String.format(Constants.INTERVIEWER_RESCHEDULE_BODY,
+							interviewerAssignmentEntity.getInterviewerName(), applicant.getFirstName(),
+							interviewerAssignmentEntity.getJobTitle(), request.getRescheduleDate(),
+							request.getRescheduleStartTime(), request.getRescheduleEndTime(),
+							request.getRescheduleMeetingLink() != null ? "Online" : "Offline",
+							request.getRescheduleMeetingLink() != null ? request.getRescheduleMeetingLink() : null,
+							request.getRescheduleVenueDetails() != null ? request.getRescheduleVenueDetails() : null);
+
+					mailService.sendMail(fromEmail, interviewer.getEmail(), null, subject, body, null);
+				}
+			}
+
+		} catch (Exception e) {
+
+			log.error("InterviewPlanServiceImpl::Interviewer Mail failed : {}", e.getMessage());
+
+		}
+		
+
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Rescheduled successfully");
 
 	}

@@ -45,4 +45,5 @@ public class NotificationEvent implements Serializable {
     private LocalDateTime triggeredAt;
     private Integer makerId;
     private Integer checkerId;
+    private String checkerRoleIds;
 }

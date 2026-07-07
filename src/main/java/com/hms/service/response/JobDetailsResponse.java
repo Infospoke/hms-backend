@@ -10,21 +10,25 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JobDetailsResponse {
-	
+
 	private Integer jobId;
-	
+
 	private String jobCode;
-	
+
 	private String jobTitle;
-	
+
 	private Integer minExperience;
-	
+
 	private Integer maxExperience;
-	
+
 	private String Location;
-	
+
 	private List<String> skillsMustHave;
-	
+
 	private String modeType;
+
+	private Long totalApplications;
+
+	private Long completedAiInterviews;
 
 }
