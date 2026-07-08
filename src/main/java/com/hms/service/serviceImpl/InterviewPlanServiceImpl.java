@@ -188,7 +188,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
-	
+
 	@Autowired
 	private MailServiceImpl mailService;
 
@@ -1144,7 +1144,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		currentStage.setFeedback(true);
 		currentStage.setFeedbackStatus(request.getDecision());
 		interviewCurrentStageRepository.save(currentStage);
-		
+
 		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
 			ApiResponse<?> response = updateInterviewFeedback(request);
 			if (!response.getMessage().equalsIgnoreCase("")) {
@@ -1527,7 +1527,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		Optional<CreateJobDetailsEntity> jobDetailsEnity = createJobDetailsRepository.findById(jobId);
 		CreateJobDetailsEntity createJobDetailsEntity = jobDetailsEnity.get();
 		Integer deptId = createJobDetailsEntity.getDepartmentId();
-      	Integer job=createJobDetailsEntity.getJobId();
+		Integer job = createJobDetailsEntity.getJobId();
 
 		InterviewDetailsResponse response = new InterviewDetailsResponse();
 		String department = departmentsRepository.findById(deptId).get().getDepartmentName();
@@ -1992,7 +1992,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				String stageName = interviewRoundDropDownRepository.findById(currentStageType).get().getRoundName();
 
 				response.put("currentStageType", stageName);
-				
+
 				response.put("currentStageId", stage.getCurrentStageType());
 
 				response.put("interviewDate", stage.getInterviewDate());
@@ -2164,20 +2164,21 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				interviewCurrentStageEntity.setCreatedOn(LocalDate.now(ZoneId.of("Asia/Kolkata")));
 				interviewCurrentStageEntity.setFeedbackStatus("Pending");
 				interviewCurrentStageRepository.save(interviewCurrentStageEntity);
-				JobApplicationEntity applicant = jobApplicationRepository.findById(interviewFeedbackRequest.getApplicantId())
+				JobApplicationEntity applicant = jobApplicationRepository
+						.findById(interviewFeedbackRequest.getApplicantId())
 						.orElseThrow(() -> new ResourceNotFoundException("Applicant not found"));
-				sendInterviewDecisionMail(applicant,interviewFeedbackRequest.getDecision());
-				 sendNextRoundNotification(interviewFeedbackRequest, applicant);
+				sendInterviewDecisionMail(applicant, interviewFeedbackRequest.getDecision());
+				sendNextRoundNotification(interviewFeedbackRequest, applicant);
 				log.info("InterviewPlanServiceImpl :: Applicant moved to the next Round");
 			} else {
 				JobApplicationEntity applicationEntity = jobApplicationRepository
 						.findById(interviewFeedbackRequest.getApplicantId()).get();
 				applicationEntity.setInPersonInterviews(true);
 				jobApplicationRepository.save(applicationEntity);
-				ActivityFeedEntity entity=new ActivityFeedEntity();
+				ActivityFeedEntity entity = new ActivityFeedEntity();
 				entity.setTimeStamp(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-				String jobTitle=createJobDetailsRepository.findByJobId(applicationEntity.getJobId()).getJobTitle();
-				entity.setActivity(applicationEntity.getFirstName()+"finished all interview rounds for"+jobTitle);
+				String jobTitle = createJobDetailsRepository.findByJobId(applicationEntity.getJobId()).getJobTitle();
+				entity.setActivity(applicationEntity.getFirstName() + "finished all interview rounds for" + jobTitle);
 				activityFeedRepository.save(entity);
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 			}
@@ -2411,352 +2412,244 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Override
 	public ApiResponse<?> getInterviewUpcomingList(SpecificationFilterRequest request) {
 
-	    try {
+		try {
 
-	        String search = Optional.ofNullable(request.getFilter("search"))
-	                .orElse("")
-	                .trim()
-	                .toLowerCase();
+			String search = Optional.ofNullable(request.getFilter("search")).orElse("").trim().toLowerCase();
 
-	        Integer departmentId = Optional.ofNullable(request.getFilter("departmentId"))
-	                .map(Integer::parseInt)
-	                .orElse(0);
+			Integer departmentId = Optional.ofNullable(request.getFilter("departmentId")).map(Integer::parseInt)
+					.orElse(0);
 
-	        Integer roundId = Optional.ofNullable(request.getFilter("roundId"))
-	                .map(Integer::parseInt)
-	                .orElse(0);
+			Integer roundId = Optional.ofNullable(request.getFilter("roundId")).map(Integer::parseInt).orElse(0);
 
-	        String interviewMode = Optional.ofNullable(request.getFilter("interviewMode"))
-	                .orElse("")
-	                .trim()
-	                .toLowerCase();
+			String interviewMode = Optional.ofNullable(request.getFilter("interviewMode")).orElse("").trim()
+					.toLowerCase();
 
-	        LocalDate interviewDate = Optional.ofNullable(request.getFilter("interviewDate"))
-	                .map(LocalDate::parse)
-	                .orElse(null);
+			LocalDate interviewDate = Optional.ofNullable(request.getFilter("interviewDate")).map(LocalDate::parse)
+					.orElse(null);
 
-	        List<InterviewScheduleEntity> schedules =
-	                interviewScheduleRepository.findByInterviewDateAfter(LocalDate.now());
+			List<InterviewScheduleEntity> schedules = interviewScheduleRepository
+					.findByInterviewDateAfter(LocalDate.now());
 
-	        if (schedules.isEmpty()) {
-	            return ApiResponse.success(
-	                    "Upcoming Interviews fetched successfully",
-	                    Collections.emptyList(),
-	                    0);
-	        }
+			if (schedules.isEmpty()) {
+				return ApiResponse.success("Upcoming Interviews fetched successfully", Collections.emptyList(), 0);
+			}
 
+			List<Integer> applicantIds = schedules.stream().map(InterviewScheduleEntity::getApplicantId).distinct()
+					.toList();
 
-	        List<Integer> applicantIds = schedules.stream()
-	                .map(InterviewScheduleEntity::getApplicantId)
-	                .distinct()
-	                .toList();
+			List<JobApplicationEntity> applications = jobApplicationRepository.findByIdIn(applicantIds);
 
-	        List<JobApplicationEntity> applications =
-	                jobApplicationRepository.findByIdIn(applicantIds);
+			Map<Integer, JobApplicationEntity> applicationMap = applications.stream()
+					.collect(Collectors.toMap(JobApplicationEntity::getId, Function.identity()));
 
-	        Map<Integer, JobApplicationEntity> applicationMap =
-	                applications.stream()
-	                        .collect(Collectors.toMap(
-	                                JobApplicationEntity::getId,
-	                                Function.identity()));
+			List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).distinct().toList();
 
-	  
+			List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
 
-	        List<Integer> jobIds = applications.stream()
-	                .map(JobApplicationEntity::getJobId)
-	                .distinct()
-	                .toList();
+			Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
+					.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
 
-	        List<CreateJobDetailsEntity> jobs =
-	                createJobDetailsRepository.findByJobIdIn(jobIds);
+			List<Integer> departmentIds = jobs.stream().map(CreateJobDetailsEntity::getDepartmentId).distinct()
+					.toList();
 
-	        Map<Integer, CreateJobDetailsEntity> jobMap =
-	                jobs.stream()
-	                        .collect(Collectors.toMap(
-	                                CreateJobDetailsEntity::getJobId,
-	                                Function.identity()));
+			List<DepartmentsEntity> departments = departmentsRepository.findByIdIn(departmentIds);
 
+			Map<Integer, DepartmentsEntity> departmentMap = departments.stream()
+					.collect(Collectors.toMap(DepartmentsEntity::getId, Function.identity()));
 
-	        List<Integer> departmentIds = jobs.stream()
-	                .map(CreateJobDetailsEntity::getDepartmentId)
-	                .distinct()
-	                .toList();
+			List<InterviewCurrentStageEntity> currentStages = interviewCurrentStageRepository
+					.findByApplicationIdIn(applicantIds);
 
-	        List<DepartmentsEntity> departments =
-	                departmentsRepository.findByIdIn(departmentIds);
+			Map<Integer, InterviewCurrentStageEntity> currentStageMap = currentStages.stream()
+					.collect(Collectors.toMap(InterviewCurrentStageEntity::getApplicationId, Function.identity()));
 
-	        Map<Integer, DepartmentsEntity> departmentMap =
-	                departments.stream()
-	                        .collect(Collectors.toMap(
-	                                DepartmentsEntity::getId,
-	                                Function.identity()));
+			List<Integer> planIds = jobs.stream().map(CreateJobDetailsEntity::getPlanId).filter(Objects::nonNull)
+					.distinct().toList();
 
+			List<InterviewRoundEntity> rounds = interviewRoundRepository.findByInterviewPlan_IdIn(planIds);
 
-	        List<InterviewCurrentStageEntity> currentStages =
-	                interviewCurrentStageRepository.findByApplicationIdIn(applicantIds);
+			Map<RoundKey, InterviewRoundEntity> roundMap = rounds.stream().collect(Collectors
+					.toMap(r -> new RoundKey(r.getInterviewPlan().getId(), r.getStageTypeId()), Function.identity()));
 
-	        Map<Integer, InterviewCurrentStageEntity> currentStageMap =
-	                currentStages.stream()
-	                        .collect(Collectors.toMap(
-	                                InterviewCurrentStageEntity::getApplicationId,
-	                                Function.identity()));
+			List<InterviewUpcomingListResponse> response = new ArrayList<>();
 
+			for (InterviewScheduleEntity schedule : schedules) {
 
+				JobApplicationEntity application = applicationMap.get(schedule.getApplicantId());
 
-	        List<Integer> planIds = jobs.stream()
-	                .map(CreateJobDetailsEntity::getPlanId)
-	                .filter(Objects::nonNull)
-	                .distinct()
-	                .toList();
+				if (application == null)
+					continue;
 
-	        List<InterviewRoundEntity> rounds =
-	                interviewRoundRepository.findByInterviewPlan_IdIn(planIds);
+				CreateJobDetailsEntity job = jobMap.get(application.getJobId());
 
-	        Map<RoundKey, InterviewRoundEntity> roundMap =
-	                rounds.stream()
-	                        .collect(Collectors.toMap(
-	                                r -> new RoundKey(
-	                                        r.getInterviewPlan().getId(),
-	                                        r.getStageTypeId()),
-	                                Function.identity()));
+				if (job == null)
+					continue;
 
-	        List<InterviewUpcomingListResponse> response = new ArrayList<>();
+				DepartmentsEntity department = departmentMap.get(job.getDepartmentId());
 
-	        for (InterviewScheduleEntity schedule : schedules) {
+				InterviewCurrentStageEntity currentStage = currentStageMap.get(application.getId());
 
-	            JobApplicationEntity application =
-	                    applicationMap.get(schedule.getApplicantId());
+				InterviewRoundEntity round = roundMap.get(new RoundKey(job.getPlanId(), schedule.getRoundId()));
 
-	            if (application == null)
-	                continue;
+				InterviewUpcomingListResponse dto = new InterviewUpcomingListResponse();
 
-	            CreateJobDetailsEntity job =
-	                    jobMap.get(application.getJobId());
+				dto.setScheduleId(schedule.getId());
+				dto.setApplicantId(application.getId());
+				dto.setCandidateName(application.getFirstName() + " " + application.getLastName());
 
-	            if (job == null)
-	                continue;
+				dto.setJobTitle(job.getJobTitle());
 
-	            DepartmentsEntity department =
-	                    departmentMap.get(job.getDepartmentId());
+				dto.setDepartment(department != null ? department.getDepartmentName() : null);
 
-	            InterviewCurrentStageEntity currentStage =
-	                    currentStageMap.get(application.getId());
+				dto.setRound(round != null ? round.getStageName() : null);
 
-	            InterviewRoundEntity round =
-	                    roundMap.get(new RoundKey(
-	                            job.getPlanId(),
-	                            schedule.getRoundId()));
+				dto.setInterviewMode(round != null ? round.getInterviewMode() : null);
+				dto.setInterviewMode(round != null ? round.getInterviewMode() : null);
+				long totalRounds = 0;
 
-	            InterviewUpcomingListResponse dto =
-	                    new InterviewUpcomingListResponse();
+				if (job.getPlanId() != null) {
 
-	            dto.setScheduleId(schedule.getId());
-	            dto.setApplicantId(application.getId());
-	            dto.setCandidateName(
-	                    application.getFirstName() + " " + application.getLastName());
+					totalRounds = rounds.stream().filter(r -> r.getInterviewPlan().getId().equals(job.getPlanId()))
+							.count();
+				}
 
-	            dto.setJobTitle(job.getJobTitle());
+				if (currentStage != null) {
 
-	            dto.setDepartment(
-	                    department != null
-	                            ? department.getDepartmentName()
-	                            : null);
+					dto.setRoundProgress("Round " + currentStage.getRoundOrder() + " of " + totalRounds);
+				}
 
-	            dto.setRound(
-	                    round != null
-	                            ? round.getStageName()
-	                            : null);
+				dto.setInterviewDate(schedule.getInterviewDate());
+				dto.setStartTime(schedule.getStartTime());
+				dto.setEndTime(schedule.getEndTime());
+				dto.setMeetingLink(schedule.getMeetingLink());
+				dto.setVenueDetails(schedule.getVenueDetails());
 
-	            dto.setInterviewMode(
-	                    round != null
-	                            ? round.getInterviewMode()
-	                            : null);
-	            dto.setInterviewMode(
-	                    round != null
-	                            ? round.getInterviewMode()
-	                            : null);
-	            long totalRounds = 0;
+				boolean matches = true;
 
-	            if (job.getPlanId() != null) {
+				if (!search.isBlank()) {
 
-	                totalRounds = rounds.stream()
-	                        .filter(r -> r.getInterviewPlan().getId().equals(job.getPlanId()))
-	                        .count();
-	            }
+					String candidateName = dto.getCandidateName() == null ? "" : dto.getCandidateName().toLowerCase();
 
-	            if (currentStage != null) {
+					String jobTitle = dto.getJobTitle() == null ? "" : dto.getJobTitle().toLowerCase();
 
-	                dto.setRoundProgress(
-	                        "Round " + currentStage.getRoundOrder() + " of " + totalRounds);
-	            }
+					matches = candidateName.contains(search) || jobTitle.contains(search);
+				}
 
-	            dto.setInterviewDate(schedule.getInterviewDate());
-	            dto.setStartTime(schedule.getStartTime());
-	            dto.setEndTime(schedule.getEndTime());
-	            dto.setMeetingLink(schedule.getMeetingLink());
-	            dto.setVenueDetails(schedule.getVenueDetails());
+				if (!matches)
+					continue;
 
-	            boolean matches = true;
+				if (departmentId != 0) {
 
-	            if (!search.isBlank()) {
+					if (department == null || !departmentId.equals(department.getId())) {
 
-	                String candidateName =
-	                        dto.getCandidateName() == null
-	                                ? ""
-	                                : dto.getCandidateName().toLowerCase();
+						continue;
+					}
 
-	                String jobTitle =
-	                        dto.getJobTitle() == null
-	                                ? ""
-	                                : dto.getJobTitle().toLowerCase();
+				}
 
-	                matches =
-	                        candidateName.contains(search)
-	                                || jobTitle.contains(search);
-	            }
+				if (roundId != 0) {
 
-	            if (!matches)
-	                continue;
+					if (schedule.getRoundId() == null || !roundId.equals(schedule.getRoundId())) {
 
+						continue;
+					}
 
-	            if (departmentId != 0) {
+				}
 
-	                if (department == null
-	                        || !departmentId.equals(department.getId())) {
+				if (!interviewMode.isBlank()) {
 
-	                    continue;
-	                }
+					String mode = dto.getInterviewMode() == null ? "" : dto.getInterviewMode().toLowerCase();
 
-	            }
+					if (!mode.equals(interviewMode)) {
 
+						continue;
 
-	            if (roundId != 0) {
+					}
 
-	                if (schedule.getRoundId() == null
-	                        || !roundId.equals(schedule.getRoundId())) {
+				}
 
-	                    continue;
-	                }
+				if (interviewDate != null) {
 
-	            }
+					if (!interviewDate.equals(dto.getInterviewDate())) {
 
+						continue;
 
-	            if (!interviewMode.isBlank()) {
+					}
 
-	                String mode =
-	                        dto.getInterviewMode() == null
-	                                ? ""
-	                                : dto.getInterviewMode().toLowerCase();
+				}
 
-	                if (!mode.equals(interviewMode)) {
+				response.add(dto);
 
-	                    continue;
+			}
 
-	                }
+			Comparator<InterviewUpcomingListResponse> comparator;
 
-	            }
+			switch (request.getSortBy()) {
 
+			case "candidateName":
 
-	            if (interviewDate != null) {
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getCandidateName,
+						Comparator.nullsLast(String::compareToIgnoreCase));
 
-	                if (!interviewDate.equals(dto.getInterviewDate())) {
+				break;
 
-	                    continue;
+			case "jobTitle":
 
-	                }
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getJobTitle,
+						Comparator.nullsLast(String::compareToIgnoreCase));
 
-	            }
+				break;
 
-	            response.add(dto);
+			case "department":
 
-	            }
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getDepartment,
+						Comparator.nullsLast(String::compareToIgnoreCase));
 
-	            Comparator<InterviewUpcomingListResponse> comparator;
+				break;
 
-	            switch (request.getSortBy()) {
+			case "interviewDate":
 
-	            case "candidateName":
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getInterviewDate);
 
-	                comparator =
-	                        Comparator.comparing(
-	                                InterviewUpcomingListResponse::getCandidateName,
-	                                Comparator.nullsLast(String::compareToIgnoreCase));
+				break;
 
-	                break;
+			default:
 
-	            case "jobTitle":
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getScheduleId);
 
-	                comparator =
-	                        Comparator.comparing(
-	                                InterviewUpcomingListResponse::getJobTitle,
-	                                Comparator.nullsLast(String::compareToIgnoreCase));
+			}
 
-	                break;
+			if ("desc".equalsIgnoreCase(request.getDirection())) {
 
-	            case "department":
+				comparator = comparator.reversed();
 
-	                comparator =
-	                        Comparator.comparing(
-	                                InterviewUpcomingListResponse::getDepartment,
-	                                Comparator.nullsLast(String::compareToIgnoreCase));
+			}
 
-	                break;
+			response.sort(comparator);
 
-	            case "interviewDate":
+			int total = response.size();
 
-	                comparator =
-	                        Comparator.comparing(
-	                                InterviewUpcomingListResponse::getInterviewDate);
+			int start = request.getPage() * request.getSize();
 
-	                break;
+			if (start > total) {
 
-	            default:
+				start = total;
 
-	                comparator =
-	                        Comparator.comparing(
-	                                InterviewUpcomingListResponse::getScheduleId);
+			}
 
-	            }
+			int end = Math.min(start + request.getSize(), total);
 
-	            if ("desc".equalsIgnoreCase(request.getDirection())) {
+			List<InterviewUpcomingListResponse> pageData = response.subList(start, end);
 
-	                comparator = comparator.reversed();
+			return ApiResponse.success("Upcoming Interviews fetched successfully", pageData, total);
 
-	            }
+		} catch (Exception e) {
 
-	            response.sort(comparator);
+			log.error("Error while fetching interview schedules", e);
 
-
-	            int total = response.size();
-
-	            int start = request.getPage() * request.getSize();
-
-	            if (start > total) {
-
-	                start = total;
-
-	            }
-
-	            int end = Math.min(start + request.getSize(), total);
-
-	            List<InterviewUpcomingListResponse> pageData =
-	                    response.subList(start, end);
-
-
-	            return ApiResponse.success(
-	                    "Upcoming Interviews fetched successfully",
-	                    pageData,
-	                    total);
-
-	            } catch (Exception e) {
-
-	                log.error("Error while fetching interview schedules", e);
-
-	                return ApiResponse.failure(
-	                        ResponseCode.FAILURE,
-	                        List.of(e.getMessage()));
-	            }
-	          }
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
+		}
+	}
 
 	@Override
 	public ApiResponse<?> getInterviewSummary(Integer applicationId) {
@@ -3077,24 +2970,25 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Override
 	public ApiResponse<?> getApplicantFeedbackById(ApplicantFeedBackRequest request) {
-		
+
 		log.info("InterviewPlanServiceImpl :: Inside the getApplicantFeedBackById");
-		
+
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String token = authHeader.substring(7);
 
 		Long userId = jwtService.extractUserId(token);
 		Integer userIdFromToken = userId.intValue();
-		
-		InterviewFeedbackEntity entity=interviewFeedbackRepository.findByApplicantIdAndCurrentStageId(request.getApplicantId(),request.getCurrentStageId());
-	    ApplicantFeedBackResponse response = new ApplicantFeedBackResponse();
-		if(userIdFromToken!=entity.getUserId()) {
-			return ApiResponse.failure(ResponseCode.FAILURE,"Your are authorised person to view the details");
+
+		InterviewFeedbackEntity entity = interviewFeedbackRepository
+				.findByApplicantIdAndCurrentStageId(request.getApplicantId(), request.getCurrentStageId());
+		ApplicantFeedBackResponse response = new ApplicantFeedBackResponse();
+		if (userIdFromToken != entity.getUserId()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Your are authorised person to view the details");
 		}
 		BeanUtils.copyProperties(entity, response);
-		
+
 		log.info("InterviewPlanServiceImpl :: Exit from the getApplicantFeedBackById");
-		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant feedback details fetched successfully",response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant feedback details fetched successfully", response);
 	}
 
 }
