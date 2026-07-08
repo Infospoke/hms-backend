@@ -45,7 +45,6 @@ public class JobApplicantsResponse {
 	private String slaColor;
 	private String currentStage;
 	private String planName;
-	private Integer noOfRounds;
 	private String location;
 	private Integer minExperience;
 	private Integer maxExperience;
