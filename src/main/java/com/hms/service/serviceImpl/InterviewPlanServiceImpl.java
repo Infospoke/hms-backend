@@ -2017,6 +2017,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				response.put("interviewDate", stage.getInterviewDate());
 
 				response.put("endTime", stage.getEndTime());
+				
+				response.put("feedbackStatus",stage.getFeedbackStatus());
 
 				response.put("jobId", job.getJobId());
 				Integer deptId = job.getDepartmentId();

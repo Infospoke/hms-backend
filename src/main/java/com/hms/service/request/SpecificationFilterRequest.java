@@ -1456,7 +1456,7 @@ public class SpecificationFilterRequest {
 
 	        List<Predicate> predicates = new ArrayList<>();
 
-	        predicates.add(root.get("feedbackStatus").in("PENDING", "HOLD"));
+	        predicates.add(root.get("feedbackStatus").in("Pending", "Hold"));
 	        predicates.add(cb.isTrue(root.get("interviewCompleted")));
 
 	        predicates.add(cb.equal(root.get("interviewerId"), userId));
