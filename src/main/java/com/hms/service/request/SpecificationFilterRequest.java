@@ -1139,6 +1139,7 @@ public class SpecificationFilterRequest {
 			// Logged-in user filter
 			predicates.add(cb.equal(root.get("interviewerId"), userId));
 			predicates.add(cb.equal(root.get("interviewDate"), LocalDate.now()));
+			predicates.add(cb.isFalse(root.get("interviewCompleted")));
   		String interviewType = getFilter("interviewType");
 
 			if (interviewType != null && !interviewType.isBlank()) {
