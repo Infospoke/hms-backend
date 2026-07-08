@@ -1384,4 +1384,16 @@ public static final String INTERVIEWER_RESCHEDULE_BODY =
 + "</html>";
 public static final String REJECT = "reject";
 
+public static final String CANDIDATE_REJECTION_MAIL_BODY =
+"Dear %s,\n\n"
++ "Thank you for taking the time to participate in the interview process for the %s position at Nexus Hms.\n\n"
++ "We sincerely appreciate your interest in joining our team and the time you invested in the selection process.\n\n"
++ "After careful consideration, we regret to inform you that you have not been selected to move forward in the recruitment process. "
++ "This decision was a difficult one, as we received applications from many qualified candidates.\n\n"
++ "We truly appreciate your interest in Nexus Hms and encourage you to apply for future opportunities that match your skills and experience.\n\n"
++ "We wish you every success in your career and thank you again for considering Nexus Hms as a potential employer.\n\n"
++ "Best Regards,\n"
++ "HR Team";
+
+
 }
