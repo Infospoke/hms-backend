@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -303,20 +304,16 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		Sort sort = "DESC".equalsIgnoreCase(request.getDirection()) ? Sort.by(request.getSortBy()).descending()
 				: Sort.by(request.getSortBy()).ascending();
 
-		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository
+				.findAll(request.buildJobAssignmentSpecification(), sort);
 
-		Page<CreateJobDetailsEntity> page = createJobDetailsRepository
-				.findAll(request.buildJobAssignmentSpecification(), pageable);
-
-		List<Map<String, Object>> content = new ArrayList<>();
+		List<Map<String, Object>> filteredContent = new ArrayList<>();
 
 		String search = request.getFilter("search");
-
 		String deptFilter = request.getFilter("deptName");
-
 		String planFilter = request.getFilter("planName");
 
-		for (CreateJobDetailsEntity job : page.getContent()) {
+		for (CreateJobDetailsEntity job : jobs) {
 
 			InterviewPlanEntity plan = interviewPlanRepository.findById(job.getPlanId()).orElse(null);
 
@@ -327,22 +324,21 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			String deptName = departmentsRepository.findById(job.getDepartmentId())
 					.map(DepartmentsEntity::getDepartmentName).orElse("");
 
-			if (deptFilter != null && !deptFilter.equalsIgnoreCase(deptName)) {
-
+			if (deptFilter != null && !deptFilter.isBlank() && !deptName.equalsIgnoreCase(deptFilter)) {
 				continue;
 			}
 
-			if (planFilter != null && !planFilter.equalsIgnoreCase(plan.getPlanName())) {
-
+			if (planFilter != null && !planFilter.isBlank() && !plan.getPlanName().equalsIgnoreCase(planFilter)) {
 				continue;
 			}
 
-			if (search != null) {
+			if (search != null && !search.isBlank()) {
 
 				String value = search.toLowerCase();
 
-				boolean matches = job.getJobTitle().toLowerCase().contains(value)
-						|| deptName.toLowerCase().contains(value) || plan.getPlanName().toLowerCase().contains(value);
+				boolean matches = (job.getJobTitle() != null && job.getJobTitle().toLowerCase().contains(value))
+						|| (deptName != null && deptName.toLowerCase().contains(value))
+						|| (plan.getPlanName() != null && plan.getPlanName().toLowerCase().contains(value));
 
 				if (!matches) {
 					continue;
@@ -355,19 +351,16 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			List<Map<String, Object>> assignmentStatus = new ArrayList<>();
 
 			for (InterviewRoundEntity round : rounds) {
+
 				InterviewerAssignmentEntity assignment = interviewerAssignmentRepository
 						.findTopByJobIdAndStageTypeIdOrderByIdDesc(job.getJobId(), round.getStageTypeId()).orElse(null);
 
 				Map<String, Object> roundMap = new LinkedHashMap<>();
 
 				roundMap.put("roundId", round.getId());
-
 				roundMap.put("roundName", round.getStageName());
-
 				roundMap.put("roundType", round.getStageType());
-
 				roundMap.put("roundTypeId", round.getStageTypeId());
-
 				roundMap.put("stageTypeId", round.getStageTypeId());
 
 				roundMap.put("status", assignment != null ? assignment.getStatus() : "NOT_SENT");
@@ -378,33 +371,42 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 			Map<String, Object> row = new LinkedHashMap<>();
 
 			row.put("jobId", job.getJobId());
-
 			row.put("jobTitle", job.getJobTitle());
-
 			row.put("deptName", deptName);
-
 			row.put("planId", job.getPlanId());
-
 			row.put("planName", plan.getPlanName());
-
 			row.put("rounds", rounds.size());
-
 			row.put("createdAt", job.getCreatedAt());
-
 			row.put("assignmentStatus", assignmentStatus);
 
-			content.add(row);
+			filteredContent.add(row);
+		}
+
+		int currentPage = request.getPage();
+		int pageSize = request.getSize();
+
+		int totalElements = filteredContent.size();
+
+		int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / pageSize);
+
+		int start = currentPage * pageSize;
+		int end = Math.min(start + pageSize, totalElements);
+
+		List<Map<String, Object>> pagedContent;
+
+		if (start >= totalElements) {
+			pagedContent = Collections.emptyList();
+		} else {
+			pagedContent = filteredContent.subList(start, end);
 		}
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
-		response.put("content", content);
-
-		response.put("currentPage", page.getNumber());
-
-		response.put("totalPages", page.getTotalPages());
-
-		response.put("totalElements", page.getTotalElements());
+		response.put("content", pagedContent);
+		response.put("currentPage", currentPage);
+		response.put("pageSize", pageSize);
+		response.put("totalPages", totalPages);
+		response.put("totalElements", totalElements);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Assignments fetched successfully", response);
 	}
@@ -414,9 +416,6 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		Map<Integer, List<InterviewerAssignmentEntity>> roundWise = assignments.stream().collect(Collectors
 				.groupingBy(InterviewerAssignmentEntity::getStageTypeId, LinkedHashMap::new, Collectors.toList()));
 
-//		List<Integer> roundIds = roundWise.keySet().stream().map(Integer::intValue).toList();
-//		Map<Integer, InterviewRoundEntity> roundMap = interviewRoundRepository.findByStageTypeIdIn(roundIds).stream()
-//				.collect(Collectors.toMap(InterviewRoundEntity::getStageTypeId, Function.identity()));
 		List<Map<String, Object>> rounds = new ArrayList<>();
 
 		for (Map.Entry<Integer, List<InterviewerAssignmentEntity>> entry : roundWise.entrySet()) {
