@@ -52,6 +52,8 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 	InterviewCurrentStageEntity findByApplicationIdAndToScheduleFalse(String valueOf);
 
 	InterviewCurrentStageEntity findByApplicationIdAndCurrentStageType(Integer applicationId, Integer roundId);
+	
+	InterviewCurrentStageEntity findTopByApplicationIdOrderByIdDesc(Integer applicationId);
 
 
 

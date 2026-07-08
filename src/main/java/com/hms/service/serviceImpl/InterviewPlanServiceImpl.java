@@ -2293,8 +2293,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return null;
 		}
 
-		InterviewCurrentStageEntity currentStage = interviewCurrentStageRepository
-				.findByApplicationIdAndToScheduleFalse(String.valueOf(applicant.getApplicationId()));
+		Integer appId = applicant.getApplicationId();
+
+		InterviewCurrentStageEntity currentStage = interviewCurrentStageRepository.findTopByApplicationIdOrderByIdDesc(applicant.getApplicationId());
 
 		if (currentStage == null) {
 			return null;
