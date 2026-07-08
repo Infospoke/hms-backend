@@ -1145,7 +1145,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		currentStage.setFeedbackStatus(request.getDecision());
 		interviewCurrentStageRepository.save(currentStage);
 
-		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND)) {
 			ApiResponse<?> response = updateInterviewFeedback(request);
 			if (!response.getMessage().equalsIgnoreCase("")) {
 				return ApiResponse.failure(ResponseCode.FAILURE, response.getMessage());
@@ -2144,7 +2144,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Your are not authorised person to update the details");
 		}
 
-		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND)) {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
 			log.info("Plan Id : {}", planId);
@@ -2198,7 +2198,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 
-		if ((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW))
+		if ((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND))
 				|| (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.REJECTED))) {
 			InterviewFeedbackEntity interviewFeedbackEntity = interviewFeedbackRepository
 					.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(),
