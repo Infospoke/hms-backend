@@ -189,7 +189,7 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 	
-	@PostMapping("/applicant-feedback-by-id/{applicantId}")
+	@PostMapping("/applicant-feedback-by-id")
 	public ResponseEntity<ApiResponse<?>> getApplicantFeedbackById(@RequestBody ApplicantFeedBackRequest request){
 	ApiResponse<?> response = interviewPlanService.getApplicantFeedbackById(request);
 	return new ResponseEntity<>(response,HttpStatus.OK);
