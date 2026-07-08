@@ -1277,6 +1277,8 @@ public class SpecificationFilterRequest {
 			predicates.add(cb.equal(root.get("status"), "upcoming"));
 
 			predicates.add(cb.or(cb.isFalse(root.get("isDeleted")), cb.isNull(root.get("isDeleted"))));
+			
+			predicates.add(cb.greaterThanOrEqualTo(root.get("scheduledTime"), LocalDateTime.now()));
 
 			String search = getFilter("search");
 
