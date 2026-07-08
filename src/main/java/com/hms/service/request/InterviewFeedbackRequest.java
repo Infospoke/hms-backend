@@ -40,7 +40,7 @@ public class InterviewFeedbackRequest {
 
 	private int jobId;
 	
-	private int stageTypeId;
+//	private int stageTypeId;
 
 	private String interviewMode;
 
