@@ -1,5 +1,6 @@
 package com.hms.service.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,4 +61,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 			 GROUP BY j.jobId
 			""")
 	List<Object[]> getApplicationCountByJobId();
+
+	List<JobApplicationEntity> findByIdIn(Collection<Integer> ids);
 }
