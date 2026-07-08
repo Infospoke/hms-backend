@@ -2190,6 +2190,17 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 			}
 		}
+		if((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW))||(interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.REJECTED)))
+		{
+			InterviewFeedbackEntity interviewFeedbackEntity= interviewFeedbackRepository.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
+			interviewFeedbackEntity.setDecision(interviewFeedbackRequest.getDecision());
+			interviewFeedbackRepository.save(interviewFeedbackEntity);
+			log.info("The decision is changed for the existing record and the new status is : "+interviewFeedbackEntity.getDecision());
+			
+			InterviewCurrentStageEntity interviewCurrentStageEntity=interviewCurrentStageRepository.findByApplicationIdAndCurrentStageType(interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
+//			interviewCurrentStageEntity.
+		}
+		
 		log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant moved to next round");
 	}
