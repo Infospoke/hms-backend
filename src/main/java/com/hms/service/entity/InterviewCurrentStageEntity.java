@@ -65,6 +65,9 @@ public class InterviewCurrentStageEntity {
 	    
 	    @Column(name="created_on")
 	    private LocalDate createdOn;
+	    
+	    @Column(name="feedback_status")
+	    private String feedbackStatus;
 	  
 
 }
