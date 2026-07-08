@@ -101,9 +101,9 @@ public class InterviewPlanController {
 
 	}
 
-	@GetMapping("/get-interview-details/{applicationId}")
-	public ResponseEntity<ApiResponse<?>> getInterviewDetails(@PathVariable("applicationId") Integer applicationId) {
-		ApiResponse<?> response = interviewPlanService.getInterviewDetails(applicationId);
+	@GetMapping("/get-interview-details")
+	public ResponseEntity<ApiResponse<?>> getInterviewDetails(@RequestBody ApplicantFeedBackRequest request) {
+		ApiResponse<?> response = interviewPlanService.getInterviewDetails(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

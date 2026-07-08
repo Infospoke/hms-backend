@@ -1529,11 +1529,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	@Override
-	public ApiResponse<?> getInterviewDetails(Integer applicationId) {
+	public ApiResponse<?> getInterviewDetails(ApplicantFeedBackRequest request) {
 
 		log.info("InterviewPlanServiceImpl :: getInterviewDetails");
 
-		Optional<ApplicanDetailsEntity> optional = applicantDetailsRepository.findByApplicationId(applicationId);
+		Optional<ApplicanDetailsEntity> optional = applicantDetailsRepository.findByApplicationId(request.getApplicantId());
 
 		if (optional.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview details not found");
@@ -1552,10 +1552,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String department = departmentsRepository.findById(deptId).get().getDepartmentName();
 
 		InterviewScheduleEntity interviewScheduleEntity = interviewScheduleRepository
-				.findByApplicantIdAndInterviewDate(applicationId, LocalDate.now());
+				.findByApplicantIdAndInterviewDateAndRoundId(request.getApplicantId(), LocalDate.now(),request.getCurrentStageId());
 
 		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
-				.findByApplicationIdAndFeedbackFalse(applicationId);
+				.findByApplicationIdAndFeedbackFalse(request.getApplicantId());
 
 		Duration duration = Duration.between(interviewScheduleEntity.getStartTime(),
 				interviewScheduleEntity.getEndTime());
@@ -1569,7 +1569,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		String currentStageName = interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
 
-		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(applicationId);
+		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(request.getApplicantId());
 		interviewRound = interviewRound + 1;
 
 		String interviewMode = interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline";

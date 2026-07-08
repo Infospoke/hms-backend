@@ -16,9 +16,6 @@ import com.hms.service.entity.InterviewScheduleEntity;
 @Repository
 public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity, Integer> {
 
-	InterviewScheduleEntity findByApplicantIdAndInterviewDate(Integer applicationId, LocalDate now);
-
-
 	@Query(value = """
 			SELECT
 			    j.job_title,
@@ -81,5 +78,9 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 	Optional<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
 
 	List<InterviewScheduleEntity> findByInterviewDateAfter(LocalDate now);
+
+
+	InterviewScheduleEntity findByApplicantIdAndInterviewDateAndRoundId(Integer applicantId, LocalDate now,
+			Integer currentStageId);
 
 }
