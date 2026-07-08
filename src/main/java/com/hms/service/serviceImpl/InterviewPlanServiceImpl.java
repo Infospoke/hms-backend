@@ -1145,7 +1145,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		currentStage.setFeedbackStatus(request.getDecision());
 		interviewCurrentStageRepository.save(currentStage);
 
-		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND)) {
 			ApiResponse<?> response = updateInterviewFeedback(request);
 			if (!response.getMessage().equalsIgnoreCase("")) {
 				return ApiResponse.failure(ResponseCode.FAILURE, response.getMessage());
@@ -1506,11 +1506,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	@Override
-	public ApiResponse<?> getInterviewDetails(Integer applicationId) {
+	public ApiResponse<?> getInterviewDetails(ApplicantFeedBackRequest request) {
 
 		log.info("InterviewPlanServiceImpl :: getInterviewDetails");
 
-		Optional<ApplicanDetailsEntity> optional = applicantDetailsRepository.findByApplicationId(applicationId);
+		Optional<ApplicanDetailsEntity> optional = applicantDetailsRepository.findByApplicationId(request.getApplicantId());
 
 		if (optional.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview details not found");
@@ -1529,10 +1529,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String department = departmentsRepository.findById(deptId).get().getDepartmentName();
 
 		InterviewScheduleEntity interviewScheduleEntity = interviewScheduleRepository
-				.findByApplicantIdAndInterviewDate(applicationId, LocalDate.now());
+				.findByApplicantIdAndInterviewDateAndRoundId(request.getApplicantId(), LocalDate.now(),request.getCurrentStageId());
 
 		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
-				.findByApplicationIdAndFeedbackFalse(applicationId);
+				.findByApplicationIdAndFeedbackFalse(request.getApplicantId());
 
 		Duration duration = Duration.between(interviewScheduleEntity.getStartTime(),
 				interviewScheduleEntity.getEndTime());
@@ -1546,7 +1546,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		String currentStageName = interviewRoundDropDownRepository.findById(currentStageId).get().getRoundName();
 
-		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(applicationId);
+		Integer interviewRound = interviewCurrentStageRepository.countByApplicationId(request.getApplicantId());
 		interviewRound = interviewRound + 1;
 
 		String interviewMode = interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline";
@@ -2144,7 +2144,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Your are not authorised person to update the details");
 		}
 
-		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
+		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND)) {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
 			log.info("Plan Id : {}", planId);
@@ -2198,7 +2198,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 
-		if ((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW))
+		if ((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND))
 				|| (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.REJECTED))) {
 			InterviewFeedbackEntity interviewFeedbackEntity = interviewFeedbackRepository
 					.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(),
