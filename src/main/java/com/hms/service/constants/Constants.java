@@ -1227,61 +1227,161 @@ public static final String INTERVIEW_SELECTED_BODY = """
 public static final String INTERVIEW_SCHEDULE_SUBJECT = "Interview Scheduled";
 
 public static final String INTERVIEW_SCHEDULE_BODY =
-        "Dear Candidate,\n\n"
-      + "Your interview has been scheduled.\n\n"
-      + "Interview Date : %s\n"
-      + "Start Time     : %s\n"
-      + "End Time       : %s\n"
-      + "Meeting Link   : %s\n"
-      + "Venue          : %s\n\n"
-      + "Best of Luck!\n"
-      + "Regards,\nHR Team";
+"<html>"
++ "<body>"
++ "<p>Dear <b>%s</b>,</p>"
+
++ "<p>Thank you for taking the time to participate in the initial interview for the <b>%s</b> position.</p>"
+
++ "<p>We are pleased to inform you that you have been shortlisted for the next round of the selection process, which will be a <b>%s</b>.</p>"
+
++ "<p><b>Please find the interview details below:</b></p>"
+
++ "<table border='1' cellpadding='6' cellspacing='0'>"
++ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
++ "<tr><td><b>Date</b></td><td>%s</td></tr>"
++ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
++ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
++ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
++ "</table>"
+
++ "<br>"
+
++ "<p>If you have any questions or require any assistance, please feel free to contact us.</p>"
+
++ "<p>We look forward to speaking with you and wish you the very best for the upcoming interview.</p>"
+
++ "<br>"
+
++ "<p>Best regards,<br>"
++ "<b>HR Team</b>"
++ "</p>"
+
++ "</body>"
++ "</html>";
 public static final String INTERVIEW_RESCHEDULE_SUBJECT = "Interview ReScheduled";
 
 public static final String INTERVIEW_RESCHEDULE_BODY =
-"Dear Candidate,\n\n"
-+ "Your interview has been Rescheduled.\n\n"
-+ "Interview Date : %s\n"
-+ "Start Time     : %s\n"
-+ "End Time       : %s\n"
-+ "Meeting Link   : %s\n"
-+ "Venue          : %s\n\n"
-+ "Best of Luck!\n"
-+ "Regards,\nHR Team";
+"<html>"
++ "<body>"
++ "<p>Dear <b>%s</b>,</p>"
+
++ "<p>Your interview for the <b>%s</b> position has been <b>rescheduled</b>.</p>"
+
++ "<p>Please find the updated interview details below:</p>"
+
++ "<table border='1' cellpadding='6' cellspacing='0'>"
++ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
++ "<tr><td><b>Date</b></td><td>%s</td></tr>"
++ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
++ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
++ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
++ "</table>"
+
++ "<br>"
+
++ "<p>We apologize for any inconvenience caused. If you have any questions, please feel free to contact us.</p>"
+
++ "<p>We look forward to meeting you on the rescheduled date.</p>"
+
++ "<br>"
+
++ "<p>Best regards,<br>"
++ "<b>HR Team</b>"
++ "</p>"
+
++ "</body>"
++ "</html>";
 
 
 
 public static final String INTERVIEWER_SCHEDULE_BODY =
-"Dear %s,\n\n"
-+ "An interview has been scheduled and assigned to you.\n\n"
-+ "Interview Details:\n"
-+ "Candidate Name : %s\n"
-+ "Job Title      : %s\n"
-+ "Interview Date : %s\n"
-+ "Start Time     : %s\n"
-+ "End Time       : %s\n"
-+ "Interview Mode : %s\n"
-+ "Meeting Link   : %s\n"
-+ "Venue          : %s\n\n"
-+ "Please ensure you are available at the scheduled time.\n\n"
-+ "Regards,\n"
-+ "HR Team";
+"<html>"
++ "<body>"
++ "<p>Dear <b>%s</b>,</p>"
+
++ "<p>You have been assigned to conduct the <b>%s</b> for the following candidate.</p>"
+
++ "<table border='1' cellpadding='6' cellspacing='0'>"
+
++ "<tr><td><b>Candidate Name</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Job Title</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Date</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
+
++ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
+
++ "</table>"
+
++ "<br>"
+
++ "<p>Please review the candidate's profile before the interview and conduct the interview as scheduled.</p>"
+
++ "<p>After completing the interview, kindly submit your feedback through the recruitment portal to enable further processing of the candidate's application.</p>"
+
++ "<p>If you are unable to attend the interview or require any assistance, please inform the recruitment team at the earliest.</p>"
+
++ "<br>"
+
++ "<p>Thank you for your support and cooperation.</p>"
+
++ "<p>Best regards,<br>"
++ "<b>HR Team</b>"
++ "</p>"
+
++ "</body>"
++ "</html>";
 
 public static final String INTERVIEWER_RESCHEDULE_BODY =
-"Dear %s,\n\n"
-+ "An interview has been Rescheduled and assigned to you.\n\n"
-+ "Interview Details:\n"
-+ "Candidate Name : %s\n"
-+ "Job Title      : %s\n"
-+ "Interview Date : %s\n"
-+ "Start Time     : %s\n"
-+ "End Time       : %s\n"
-+ "Interview Mode : %s\n"
-+ "Meeting Link   : %s\n"
-+ "Venue          : %s\n\n"
-+ "Please ensure you are available at the scheduled time.\n\n"
-+ "Regards,\n"
-+ "HR Team";
+"<html>"
++ "<body>"
++ "<p>Dear <b>%s</b>,</p>"
+
++ "<p>The interview assigned to you has been <b>rescheduled</b>. Please find the updated details below.</p>"
+
++ "<table border='1' cellpadding='6' cellspacing='0'>"
+
++ "<tr><td><b>Candidate Name</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Job Title</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Date</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
+
++ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
+
++ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
+
++ "</table>"
+
++ "<br>"
+
++ "<p>Please ensure your availability for the updated interview schedule and submit your feedback after completing the interview.</p>"
+
++ "<p>If you are unable to attend the interview at the rescheduled time, please inform the recruitment team as soon as possible.</p>"
+
++ "<br>"
+
++ "<p>Thank you for your cooperation.</p>"
+
++ "<br>"
+
++ "<p>Best regards,<br>"
++ "<b>HR Team</b>"
++ "</p>"
+
++ "</body>"
++ "</html>";
 public static final String REJECT = "reject";
 
 }

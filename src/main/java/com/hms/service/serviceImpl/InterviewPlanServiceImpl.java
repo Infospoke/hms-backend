@@ -1305,9 +1305,20 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
 
-				String body = String.format(Constants.INTERVIEW_SCHEDULE_BODY, request.getInterviewDate(),
-						request.getStartTime(), request.getEndTime(), request.getMeetingLink(),
-						request.getVenueDetails());
+				String body = String.format(
+				        Constants.INTERVIEW_SCHEDULE_BODY,
+				        applicant.getFirstName(),
+				        interviewerAssignmentEntity.getJobTitle(),
+				        interviewerAssignmentEntity.getStageName(),
+				        interviewerAssignmentEntity.getStageName(),
+				        request.getInterviewDate(),
+				        request.getStartTime(),
+				        request.getEndTime(),
+				        request.getMeetingLink() != null ? "Online" : "Offline",
+				        request.getMeetingLink() != null
+				                ? request.getMeetingLink()
+				                : request.getVenueDetails()
+				);
 
 				mailService.sendMail(fromEmail, applicant.getEmail(), null, subject, body, null);
 
@@ -1333,13 +1344,21 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 					String subject = Constants.INTERVIEW_SCHEDULE_SUBJECT;
 
-					String body = String.format(Constants.INTERVIEWER_SCHEDULE_BODY,
-							interviewerAssignmentEntity.getInterviewerName(), applicant.getFirstName(),
-							interviewerAssignmentEntity.getJobTitle(), request.getInterviewDate(),
-							request.getStartTime(), request.getEndTime(),
-							request.getMeetingLink() != null ? "Online" : "Offline",
-							request.getMeetingLink() != null ? request.getMeetingLink() : null,
-							request.getVenueDetails() != null ? request.getVenueDetails() : null);
+					String body = String.format(
+					        Constants.INTERVIEWER_SCHEDULE_BODY,
+					        interviewerAssignmentEntity.getInterviewerName(),                 
+					        interviewerAssignmentEntity.getStageName(),                       
+					        applicant.getFirstName(),                                         
+					        interviewerAssignmentEntity.getJobTitle(),                        
+					        interviewerAssignmentEntity.getStageName(),                       
+					        request.getInterviewDate(),                                       
+					        request.getStartTime(),                                           
+					        request.getEndTime(),                                             
+					        request.getMeetingLink() != null ? "Online" : "Offline",      
+					        request.getMeetingLink() != null
+					                ? request.getMeetingLink()
+					                : request.getVenueDetails()                               
+					);
 
 					mailService.sendMail(fromEmail, interviewer.getEmail(), null, subject, body, null);
 				}
@@ -2633,10 +2652,19 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				String subject = Constants.INTERVIEW_RESCHEDULE_SUBJECT;
 
-				String body = String.format(Constants.INTERVIEW_RESCHEDULE_BODY, request.getRescheduleDate(),
-						request.getRescheduleStartTime(), request.getRescheduleEndTime(),
-						request.getRescheduleMeetingLink(), request.getRescheduleVenueDetails());
-
+				String body = String.format(
+				        Constants.INTERVIEW_RESCHEDULE_BODY,
+				        applicant.getFirstName(),
+				        interviewerAssignmentEntity.getJobTitle(),
+				        interviewerAssignmentEntity.getStageName(),
+				        request.getRescheduleDate(),
+				        request.getRescheduleStartTime(),
+				        request.getRescheduleEndTime(),
+				        request.getRescheduleMeetingLink() != null ? "Online" : "Offline",
+				        request.getRescheduleMeetingLink() != null
+				                ? request.getRescheduleMeetingLink()
+				                : request.getRescheduleVenueDetails()
+				);
 				mailService.sendMail(fromEmail, applicant.getEmail(), null, subject, body, null);
 
 			}
@@ -2661,13 +2689,20 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 					String subject = Constants.INTERVIEW_RESCHEDULE_SUBJECT;
 
-					String body = String.format(Constants.INTERVIEWER_RESCHEDULE_BODY,
-							interviewerAssignmentEntity.getInterviewerName(), applicant.getFirstName(),
-							interviewerAssignmentEntity.getJobTitle(), request.getRescheduleDate(),
-							request.getRescheduleStartTime(), request.getRescheduleEndTime(),
-							request.getRescheduleMeetingLink() != null ? "Online" : "Offline",
-							request.getRescheduleMeetingLink() != null ? request.getRescheduleMeetingLink() : null,
-							request.getRescheduleVenueDetails() != null ? request.getRescheduleVenueDetails() : null);
+					String body = String.format(
+					        Constants.INTERVIEWER_RESCHEDULE_BODY,
+					        interviewerAssignmentEntity.getInterviewerName(),
+					        applicant.getFirstName(),
+					        interviewerAssignmentEntity.getJobTitle(),
+					        interviewerAssignmentEntity.getStageName(),
+					        request.getRescheduleDate(),
+					        request.getRescheduleStartTime(),
+					        request.getRescheduleEndTime(),
+					        request.getRescheduleMeetingLink() != null ? "Online" : "Offline",
+					        request.getRescheduleMeetingLink() != null
+					                ? request.getRescheduleMeetingLink()
+					                : request.getRescheduleVenueDetails()
+					);
 
 					mailService.sendMail(fromEmail, interviewer.getEmail(), null, subject, body, null);
 				}
@@ -2817,6 +2852,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		if(userIdFromToken!=entity.getUserId()) {
 			return ApiResponse.failure(ResponseCode.FAILURE,"Your are authorised person to view the details");
 		}
+		
 		BeanUtils.copyProperties(entity, response);
 		
 		log.info("InterviewPlanServiceImpl :: Exit from the getApplicantFeedBackById");
