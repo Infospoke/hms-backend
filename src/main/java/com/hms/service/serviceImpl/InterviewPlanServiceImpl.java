@@ -1142,6 +1142,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		log.info("enter into interview current satge" + currentStage);
 
 		currentStage.setFeedback(true);
+		currentStage.setFeedbackStatus(request.getDecision());
 		interviewCurrentStageRepository.save(currentStage);
 
 		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
@@ -1158,7 +1159,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		int planId = createJobDetailsRepository.findByJobId(request.getJobId()).getPlanId();
 
-// Current Round
+
 		InterviewRoundEntity currentRound = interviewRoundRepository.findByInterviewPlan_IdAndStageTypeId(planId,
 				request.getCurrentStageId());
 
@@ -1225,33 +1226,24 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	private void sendInterviewDecisionMail(JobApplicationEntity applicant, String decision) {
 
 		String subject;
-		String body;
+		String mailBody;
+		String jobTitle=createJobDetailsRepository.findByJobId(applicant.getJobId()).getJobTitle();
 
-		if (Constants.MOVE_TO_INTERVIEW.equalsIgnoreCase(decision)) {
-
-			subject = "Congratulations! You have been selected for the next interview round";
-
-			body = "<html>" + "<body>" + "<p>Dear <b>" + applicant.getFirstName() + "</b>,</p>"
-					+ "<p>Congratulations!</p>"
-					+ "<p>Based on your interview performance, you have been shortlisted for the next interview round.</p>"
-					+ "<p>Our recruitment team will contact you shortly with the schedule.</p>" + "<br>"
-					+ "<p>Regards,<br><b>HR Team</b></p>" + "</body>" + "</html>";
-
-		} else if (Constants.REJECT.equalsIgnoreCase(decision)) {
+           if (Constants.REJECT.equalsIgnoreCase(decision)) {
 
 			subject = "Interview Result";
 
-			body = "<html>" + "<body>" + "<p>Dear <b>" + applicant.getFirstName() + "</b>,</p>"
-					+ "<p>Thank you for attending the interview.</p>"
-					+ "<p>After careful consideration, we regret to inform you that you have not been selected for this position.</p>"
-					+ "<p>We appreciate your interest in our organization and wish you success in your future career.</p>"
-					+ "<br>" + "<p>Regards,<br><b>HR Team</b></p>" + "</body>" + "</html>";
-
+			 mailBody = String.format(
+			        Constants.CANDIDATE_REJECTION_MAIL_BODY,
+			        applicant.getFirstName(),
+			        jobTitle
+			        
+			);
 		} else {
 			return;
 		}
 
-		mailService.sendMail(fromEmail, applicant.getEmail(), null, subject, body, null);
+		mailService.sendMail(fromEmail, applicant.getEmail(), null, subject,mailBody , null);
 	}
 
 	public ApiResponse<?> scheduleInterview(InterviewScheduleRequest request) {
@@ -1321,7 +1313,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		}
 
-		// Send mail to Interviewer
+		
 		try {
 
 			if (interviewerAssignmentEntity != null) {
@@ -2170,6 +2162,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				interviewCurrentStageEntity.setInterviewerId(interviewerId);
 				interviewCurrentStageEntity.setToSchedule(false);
 				interviewCurrentStageEntity.setCreatedOn(LocalDate.now(ZoneId.of("Asia/Kolkata")));
+				interviewCurrentStageEntity.setFeedbackStatus("Pending");
 				interviewCurrentStageRepository.save(interviewCurrentStageEntity);
 				JobApplicationEntity applicant = jobApplicationRepository
 						.findById(interviewFeedbackRequest.getApplicantId())
@@ -2190,6 +2183,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 			}
 		}
+
 		if((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW))||(interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.REJECTED)))
 		{
 			InterviewFeedbackEntity interviewFeedbackEntity= interviewFeedbackRepository.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
