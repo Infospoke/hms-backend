@@ -1159,7 +1159,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		int planId = createJobDetailsRepository.findByJobId(request.getJobId()).getPlanId();
 
-
 		InterviewRoundEntity currentRound = interviewRoundRepository.findByInterviewPlan_IdAndStageTypeId(planId,
 				request.getCurrentStageId());
 
@@ -1227,23 +1226,20 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		String subject;
 		String mailBody;
-		String jobTitle=createJobDetailsRepository.findByJobId(applicant.getJobId()).getJobTitle();
+		String jobTitle = createJobDetailsRepository.findByJobId(applicant.getJobId()).getJobTitle();
 
-           if (Constants.REJECT.equalsIgnoreCase(decision)) {
+		if (Constants.REJECT.equalsIgnoreCase(decision)) {
 
 			subject = "Interview Result";
 
-			 mailBody = String.format(
-			        Constants.CANDIDATE_REJECTION_MAIL_BODY,
-			        applicant.getFirstName(),
-			        jobTitle
-			        
+			mailBody = String.format(Constants.CANDIDATE_REJECTION_MAIL_BODY, applicant.getFirstName(), jobTitle
+
 			);
 		} else {
 			return;
 		}
 
-		mailService.sendMail(fromEmail, applicant.getEmail(), null, subject,mailBody , null);
+		mailService.sendMail(fromEmail, applicant.getEmail(), null, subject, mailBody, null);
 	}
 
 	public ApiResponse<?> scheduleInterview(InterviewScheduleRequest request) {
@@ -1313,7 +1309,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		}
 
-		
 		try {
 
 			if (interviewerAssignmentEntity != null) {
@@ -2127,17 +2122,32 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 	}
-
+	
+	@Transactional
 	@Override
 	public ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest) {
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewFeedback");
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String token = authHeader.substring(7);
+
+		Long userId = jwtService.extractUserId(token);
+		Integer userIdFromToken = userId.intValue();
+	
+		InterviewFeedbackEntity entity = interviewFeedbackRepository
+				.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
+			
+		ApplicantFeedBackResponse response = new ApplicantFeedBackResponse();
+		if (userIdFromToken != entity.getUserId()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Your are not authorised person to update the details");
+		}
+
 		if (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW)) {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
 			log.info("Plan Id : {}", planId);
-			log.info("Stage Type Id : {}", interviewFeedbackRequest.getStageTypeId());
+		
 			int currentOrder = interviewRoundRepository
-					.findByInterviewPlan_IdAndStageTypeId(planId, interviewFeedbackRequest.getStageTypeId())
+					.findByInterviewPlan_IdAndStageTypeId(planId, interviewFeedbackRequest.getCurrentStageId())
 					.getRoundOrder();
 
 			List<InterviewRoundEntity> interviewRoundEntities = interviewRoundRepository
@@ -2175,26 +2185,34 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 						.findById(interviewFeedbackRequest.getApplicantId()).get();
 				applicationEntity.setInPersonInterviews(true);
 				jobApplicationRepository.save(applicationEntity);
-				ActivityFeedEntity entity = new ActivityFeedEntity();
-				entity.setTimeStamp(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+				ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
+				activityFeedEntity.setTimeStamp(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				String jobTitle = createJobDetailsRepository.findByJobId(applicationEntity.getJobId()).getJobTitle();
-				entity.setActivity(applicationEntity.getFirstName() + "finished all interview rounds for" + jobTitle);
-				activityFeedRepository.save(entity);
+				activityFeedEntity.setActivity(applicationEntity.getFirstName() + "finished all interview rounds for" + jobTitle);
+				activityFeedRepository.save(activityFeedEntity);
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 			}
 		}
 
-		if((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW))||(interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.REJECTED)))
-		{
-			InterviewFeedbackEntity interviewFeedbackEntity= interviewFeedbackRepository.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
+		if ((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_INTERVIEW))
+				|| (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.REJECTED))) {
+			InterviewFeedbackEntity interviewFeedbackEntity = interviewFeedbackRepository
+					.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(),
+							interviewFeedbackRequest.getCurrentStageId());
 			interviewFeedbackEntity.setDecision(interviewFeedbackRequest.getDecision());
 			interviewFeedbackRepository.save(interviewFeedbackEntity);
-			log.info("The decision is changed for the existing record and the new status is : "+interviewFeedbackEntity.getDecision());
-			
-			InterviewCurrentStageEntity interviewCurrentStageEntity=interviewCurrentStageRepository.findByApplicationIdAndCurrentStageType(interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
-//			interviewCurrentStageEntity.
+			log.info("The decision is changed for the existing record and the new status is : "
+					+ interviewFeedbackEntity.getDecision());
+
+			InterviewCurrentStageEntity interviewCurrentStageEntity = interviewCurrentStageRepository
+					.findByApplicationIdAndCurrentStageType(interviewFeedbackRequest.getApplicantId(),
+							interviewFeedbackRequest.getCurrentStageId());
+			interviewCurrentStageEntity.setFeedbackStatus(interviewFeedbackRequest.getDecision());
+			interviewCurrentStageRepository.save(interviewCurrentStageEntity);
+			log.info("The decision is updated in the interview cuurent stage and now the current stage as : "+interviewCurrentStageEntity.getFeedbackStatus());
+
 		}
-		
+
 		log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant moved to next round");
 	}
@@ -2994,7 +3012,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				.findByApplicantIdAndCurrentStageId(request.getApplicantId(), request.getCurrentStageId());
 		ApplicantFeedBackResponse response = new ApplicantFeedBackResponse();
 		if (userIdFromToken != entity.getUserId()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Your are authorised person to view the details");
+			return ApiResponse.failure(ResponseCode.FAILURE, "Your are not authorised person to view the details");
 		}
 		BeanUtils.copyProperties(entity, response);
 
