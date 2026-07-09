@@ -1,4 +1,4 @@
-package com.hms.service.request;
+package com.hms.service.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,40 +7,34 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class InterviewFeedbackRequest {
 
+public class ApplicantFeedBackResponse {
 
 	private Integer applicantId;
 
 	private String interviewType;
 
-	private String roundType;
-
-	private String decision;
+	private Integer currentStageId;
 
 	private Integer overallRating;
 
 	private Integer technicalKnowledge;
 
-	private Integer culturalFit;
-
-	private Integer analyticalThinking;
+	private Integer communication;
 
 	private Integer problemSolving;
 
-	private Integer communication;
+	private Integer analyticalThinking;
+
+	private Integer culturalFit;
 
 	private String strengths;
 
 	private String areasOfImprovemnets;
 
 	private String additionalComments;
-	
-	private Integer currentStageId;
 
-	private int jobId;
-	
-//	private int stageTypeId;
+	private String decision;
 
 	private String interviewMode;
 

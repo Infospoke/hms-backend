@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
+import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
@@ -144,10 +146,11 @@ public class JobServiceImpl implements IJobService {
 		InterviewPlanEntity interview = interviewPlanRepository.findById(jobs.getPlanId())
 				.orElseThrow(() -> new CustomSystemErrorException("Interview plan not found"));
 
-		InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantId(entity.getId()).orElse(null);
+		InterviewScheduleEntity schedule = interviewScheduleRepository.findTopByApplicantIdOrderByIdDesc(entity.getId())
+				.orElse(null);
 
-		InterviewCurrentStageEntity current = interviewCurrentStageRepository.findByApplicationId(entity.getId());
-
+		InterviewCurrentStageEntity current = interviewCurrentStageRepository
+				.findTopByApplicationIdOrderByIdDesc(entity.getId());
 		DepartmentsEntity department = departmentsRepository.findById(jobs.getDepartmentId()).orElse(null);
 
 		JobApplicantsResponse response = new JobApplicantsResponse();
@@ -179,12 +182,9 @@ public class JobServiceImpl implements IJobService {
 
 		int totalStages = interview.getRounds() != null ? interview.getRounds().size() : 0;
 
-		response.setNoOfRounds(totalStages);
 		response.setNoOfStages(totalStages);
 
 		List<InterviewFeedbackEntity> feedbackList = interviewFeedbackRepository.findByApplicantId(entity.getId());
-
-		response.setCompletedStages(feedbackList.size());
 
 		List<CompletedStageDto> completedStageDetails = new ArrayList<>();
 
@@ -202,6 +202,19 @@ public class JobServiceImpl implements IJobService {
 			completedStageDetails.add(dto);
 		}
 
+		Optional<InterviewSessionEntity> interviewSessionOpt = interviewSessionRepository
+				.findFirstByApplicationIdAndStatusIgnoreCase(entity.getId(), "COMPLETED");
+
+		if (interviewSessionOpt.isPresent()) {
+
+			CompletedStageDto aiStage = new CompletedStageDto();
+			aiStage.setStageTypeId(1);
+			aiStage.setStageName("AI Interview");
+
+			completedStageDetails.add(aiStage);
+		}
+
+		response.setCompletedStages(completedStageDetails.size());
 		response.setCompletedStageDetails(completedStageDetails);
 
 		log.info("JobServiceImpl: Exit from getApplicantDetailsById method");

@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,115 +13,6 @@ import com.hms.service.entity.InterviewScheduleEntity;
 
 @Repository
 public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity, Integer> {
-
-	InterviewScheduleEntity findByApplicantIdAndInterviewDate(Integer applicationId, LocalDate now);
-
-	@Query(value = """
-			SELECT
-			    s.id,
-			    ja.id,
-			    CONCAT(ja.first_name,' ',ja.last_name) AS candidateName,
-			    j.job_title,
-			    d.department_name,
-			    ir.stage_name,
-			    ir.interview_mode,
-			    cs.round_order,
-			    (
-			        SELECT COUNT(*)
-			        FROM tb_interview_round ir2
-			        WHERE ir2.interview_plan_id = j.plan_id
-			    ) AS totalRounds,
-			    s.interview_date,
-			    s.start_time,
-			    s.end_time,
-			    s.meeting_link,
-			    s.venue_details
-			FROM tb_interview_schedule s
-			INNER JOIN tb_job_applications ja
-			    ON ja.id = s.applicant_id
-			INNER JOIN tb_create_job_details j
-			    ON j.job_id = ja.job_id
-			LEFT JOIN tb_departments d
-			    ON d.id = j.department
-			INNER JOIN tb_interview_round ir
-			    ON ir.interview_plan_id = j.plan_id
-			   AND ir.stage_type_id = s.round_id
-			INNER JOIN tb_interview_current_stage cs
-			    ON cs.application_id = ja.id
-			WHERE
-			    s.interview_date > CURRENT_DATE
-			AND (
-			    :search = ''
-			    OR LOWER(CONCAT(ja.first_name,' ',ja.last_name))
-			        LIKE LOWER(CONCAT('%',:search,'%'))
-			    OR LOWER(j.job_title)
-			        LIKE LOWER(CONCAT('%',:search,'%'))
-			)
-			AND (
-			    :departmentId = 0
-			    OR d.id = :departmentId
-			)
-			AND (
-			    :roundId = 0
-			    OR ir.stage_type_id = :roundId
-			)
-			AND (
-			    :interviewMode = ''
-			    OR LOWER(ir.interview_mode) = LOWER(:interviewMode)
-			)
-			AND (
-			    :interviewDate = DATE '1900-01-01'
-			    OR s.interview_date = :interviewDate
-			)
-			""",
-			countQuery = """
-			SELECT COUNT(*)
-			FROM tb_interview_schedule s
-			INNER JOIN tb_job_applications ja
-			    ON ja.id = s.applicant_id
-			INNER JOIN tb_create_job_details j
-			    ON j.job_id = ja.job_id
-			LEFT JOIN tb_departments d
-			    ON d.id = j.department
-			INNER JOIN tb_interview_round ir
-			    ON ir.interview_plan_id = j.plan_id
-			   AND ir.stage_type_id = s.round_id
-			INNER JOIN tb_interview_current_stage cs
-			    ON cs.application_id = ja.id
-			WHERE
-			    s.interview_date > CURRENT_DATE
-			AND (
-			    :search = ''
-			    OR LOWER(CONCAT(ja.first_name,' ',ja.last_name))
-			        LIKE LOWER(CONCAT('%',:search,'%'))
-			    OR LOWER(j.job_title)
-			        LIKE LOWER(CONCAT('%',:search,'%'))
-			)
-			AND (
-			    :departmentId = 0
-			    OR d.id = :departmentId
-			)
-			AND (
-			    :roundId = 0
-			    OR ir.stage_type_id = :roundId
-			)
-			AND (
-			    :interviewMode = ''
-			    OR LOWER(ir.interview_mode) = LOWER(:interviewMode)
-			)
-			AND (
-			    :interviewDate = DATE '1900-01-01'
-			    OR s.interview_date = :interviewDate
-			)
-			""",
-			nativeQuery = true)
-			Page<Object[]> getUpcomingInterviews(
-			        @Param("search") String search,
-			        @Param("departmentId") Integer departmentId,
-			        @Param("roundId") Integer roundId,
-			        @Param("interviewMode") String interviewMode,
-			        @Param("interviewDate") LocalDate interviewDate,
-			        Pageable pageable);
 
 	@Query(value = """
 			SELECT
@@ -184,6 +73,14 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 			""", nativeQuery = true)
 	List<Object[]> getInterviewSummary(@Param("applicationId") Integer applicationId);
 
-	Optional<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
+	List<InterviewScheduleEntity> findByInterviewDateAfter(LocalDate now);
+	
+	List<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
+	
+	Optional<InterviewScheduleEntity> findTopByApplicantIdOrderByIdDesc(Integer applicantId);
+
+
+	InterviewScheduleEntity findByApplicantIdAndInterviewDateAndRoundId(Integer applicantId, LocalDate now,
+			Integer currentStageId);
 
 }

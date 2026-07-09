@@ -1,7 +1,9 @@
 package com.hms.service.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -25,5 +27,7 @@ public interface InterviewRoundRepository extends JpaRepository<InterviewRoundEn
 	Integer findByInterviewPlanIdAndStageType(Integer planId, Integer currentStageType);
 
 	InterviewRoundEntity findByInterviewPlan_IdAndRoundOrder(int planId, int i);
+
+	List<InterviewRoundEntity> findByInterviewPlan_IdIn(Collection<Integer> planIds);
 
 }

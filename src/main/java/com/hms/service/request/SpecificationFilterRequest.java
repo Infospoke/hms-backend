@@ -1139,6 +1139,7 @@ public class SpecificationFilterRequest {
 			// Logged-in user filter
 			predicates.add(cb.equal(root.get("interviewerId"), userId));
 			predicates.add(cb.equal(root.get("interviewDate"), LocalDate.now()));
+			predicates.add(cb.isFalse(root.get("interviewCompleted")));
   		String interviewType = getFilter("interviewType");
 
 			if (interviewType != null && !interviewType.isBlank()) {
@@ -1453,7 +1454,12 @@ public class SpecificationFilterRequest {
 
 	        List<Predicate> predicates = new ArrayList<>();
 
-	        predicates.add(cb.isFalse(root.get("feedback")));
+	        Predicate feedbackStatusPredicate = cb.or(
+	        	    cb.equal(cb.lower(root.get("feedbackStatus")), "pending"),
+	        	    cb.equal(cb.lower(root.get("feedbackStatus")), "hold")
+	        	);
+
+	        	predicates.add(feedbackStatusPredicate);
 	        predicates.add(cb.isTrue(root.get("interviewCompleted")));
 
 	        predicates.add(cb.equal(root.get("interviewerId"), userId));

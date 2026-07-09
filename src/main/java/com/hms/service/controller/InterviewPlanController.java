@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.ApplicantFeedBackRequest;
 import com.hms.service.request.InterviewCompleteRequest;
 import com.hms.service.request.InterviewFeedbackRequest;
 import com.hms.service.request.InterviewPlanRequest;
@@ -100,9 +101,9 @@ public class InterviewPlanController {
 
 	}
 
-	@GetMapping("/get-interview-details/{applicationId}")
-	public ResponseEntity<ApiResponse<?>> getInterviewDetails(@PathVariable("applicationId") Integer applicationId) {
-		ApiResponse<?> response = interviewPlanService.getInterviewDetails(applicationId);
+	@PostMapping("/today-interview-details")
+	public ResponseEntity<ApiResponse<?>> getInterviewDetails(@RequestBody ApplicantFeedBackRequest request) {
+		ApiResponse<?> response = interviewPlanService.getInterviewDetails(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -188,4 +189,9 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 	
+	@PostMapping("/applicant-feedback-by-id")
+	public ResponseEntity<ApiResponse<?>> getApplicantFeedbackById(@RequestBody ApplicantFeedBackRequest request){
+	ApiResponse<?> response = interviewPlanService.getApplicantFeedbackById(request);
+	return new ResponseEntity<>(response,HttpStatus.OK);
+}
 }
