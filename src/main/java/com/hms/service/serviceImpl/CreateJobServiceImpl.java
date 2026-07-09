@@ -447,9 +447,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				        checkerEvent.setCheckerNotificationTitle("New Job Assignment");
 
-				        checkerEvent.setCheckerMessage(
-				                "A new job assignment has been allocated to you for "
-				                        + createJobDetailsEntity.getJobTitle());
+						checkerEvent.setCheckerMessage("A new job assignment has been allocated to you for "
+								+ createJobDetailsEntity.getJobTitle());
 
 				        Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
