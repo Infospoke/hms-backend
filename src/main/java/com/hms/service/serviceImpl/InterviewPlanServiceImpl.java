@@ -1147,12 +1147,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND)) {
 			ApiResponse<?> response = updateInterviewFeedback(request);
-			if (!response.getMessage().equalsIgnoreCase("")) {
+			if (!response.getMessage().equalsIgnoreCase("All Rounds of the Applicant are Completed")&&!response.getMessage().equalsIgnoreCase("Applicant moved to next round")) {
 				return ApiResponse.failure(ResponseCode.FAILURE, response.getMessage());
 			}
 		}
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Feedback Submitted successfully");
+        return ApiResponse.success(ResponseCode.SUCCESS,"Applicant Feedback submitted successfully","success");
 	}
 
 	private void sendNextRoundNotification(InterviewFeedbackRequest request, JobApplicationEntity applicant) {
@@ -2194,6 +2193,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				activityFeedEntity.setActivity(applicationEntity.getFirstName() + "finished all interview rounds for" + jobTitle);
 				activityFeedRepository.save(activityFeedEntity);
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
+				log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
+				return ApiResponse.success(ResponseCode.SUCCESS,"All Rounds of the Applicant are Completed","Success");
+				
 			}
 		}
 
@@ -2219,7 +2221,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 
 		log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
-		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant moved to next round");
+		return ApiResponse.success(ResponseCode.SUCCESS,"Applicant moved to next round","Success");
 	}
 
 	@Override
