@@ -1177,8 +1177,6 @@ public class SpecificationFilterRequest {
 
 			predicates.add(cb.equal(root.get("interviewerUserId"), userId.longValue()));
 
-			predicates.add(cb.isNull(root.get("respondedAt")));
-
 			 // Search Filter
 	        String search = getFilter("search");
 
