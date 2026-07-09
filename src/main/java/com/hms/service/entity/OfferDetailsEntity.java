@@ -44,4 +44,59 @@ public class OfferDetailsEntity {
     
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
+    
+    @Column(name="approver1")
+    private Boolean approver1=false;
+    
+    @Column(name="approver1_by")
+    private String approver1By;
+    
+    @Column(name="approver1_role")
+    private String approver1Role;
+    
+    @Column(name="approver1_comments")
+    private Boolean approver1_comments;
+    
+    @Column(name="approver2")
+    private Boolean approver2=false;
+    
+    @Column(name="approver2_by")
+    private String approver2By;
+    
+    @Column(name="approver2_role")
+    private String approver2Role;
+    
+    @Column(name="approver2_comments")
+    private Boolean approver2_comments;
+    
+    @Column(name="approver3")
+    private Boolean approver3=false;
+    
+    @Column(name="approver3_by")
+    private String approver3By;
+    
+    @Column(name="approver3_role")
+    private String approver3Role;
+    
+    @Column(name="approver3_comments")
+    private Boolean approver3_comments;
+    
+    @Column(name="reject")
+    private Boolean reject=false;
+    
+    
+    @Column(name="approve")
+    private Boolean approve=false;
+    
+    @Column(name="final_approval_time")
+    private LocalDateTime finalApprovalTime;
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }

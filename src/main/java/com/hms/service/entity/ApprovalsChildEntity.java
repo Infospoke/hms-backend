@@ -52,8 +52,6 @@ public class ApprovalsChildEntity {
 
 	@Column(name="department")
 	private Integer department;
-
-	
 	
 	@Column(name="date_of_approval")
 	private LocalDateTime dateOfApproval;
