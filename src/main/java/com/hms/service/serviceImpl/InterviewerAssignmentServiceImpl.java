@@ -706,7 +706,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		NotificationEvent event = new NotificationEvent();
 
-		event.setProcessId(assignment.getJobId().toString());
+		event.setProcessId(assignment.getJobId() + "-" + LocalDateTime.now().toString());
 
 		event.setMakerRoleId(makerRoleId);
 		event.setMakerRoleName(makerRoleName);

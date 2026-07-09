@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,9 +13,6 @@ import com.hms.service.entity.InterviewScheduleEntity;
 
 @Repository
 public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity, Integer> {
-
-	InterviewScheduleEntity findByApplicantIdAndInterviewDate(Integer applicationId, LocalDate now);
-
 
 	@Query(value = """
 			SELECT
@@ -78,8 +73,14 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 			""", nativeQuery = true)
 	List<Object[]> getInterviewSummary(@Param("applicationId") Integer applicationId);
 
-	Optional<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
-
 	List<InterviewScheduleEntity> findByInterviewDateAfter(LocalDate now);
+	
+	List<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
+	
+	Optional<InterviewScheduleEntity> findTopByApplicantIdOrderByIdDesc(Integer applicantId);
+
+
+	InterviewScheduleEntity findByApplicantIdAndInterviewDateAndRoundId(Integer applicantId, LocalDate now,
+			Integer currentStageId);
 
 }

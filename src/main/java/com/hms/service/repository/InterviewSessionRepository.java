@@ -30,4 +30,5 @@ public interface InterviewSessionRepository
 			""")
 	List<Object[]> getCompletedInterviewCountByJobId();
 
+	Optional<InterviewSessionEntity> findFirstByApplicationIdAndStatusIgnoreCase(Integer applicationId, String status);
 }

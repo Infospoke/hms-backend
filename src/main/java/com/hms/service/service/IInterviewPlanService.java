@@ -38,7 +38,7 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> getFeedbackList(SpecificationFilterRequest request);
 
-	ApiResponse<?> getInterviewDetails(Integer applicationId);
+	ApiResponse<?> getInterviewDetails(ApplicantFeedBackRequest request);
 
 	ApiResponse<?> getScheduleList(SpecificationFilterRequest request);
 
