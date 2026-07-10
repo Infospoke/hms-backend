@@ -4,19 +4,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import java.util.Comparator;
-import java.util.HashMap;
-
 import java.util.Objects;
-
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,58 +24,44 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.hms.service.entity.BudgetAndCompensationEntity;
-
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
-
 import com.hms.service.entity.AssignRolesEntity;
-
+import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
-
+import com.hms.service.entity.UserEntity;
+import com.hms.service.repository.ApprovalChainRepository;
+import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
-import com.hms.service.repository.JobApplicationRepository;
-
-import com.hms.service.entity.UserEntity;
-
-import com.hms.service.repository.ApprovalChainRepository;
-import com.hms.service.repository.AssignRolesRepository;
-
 import com.hms.service.repository.FunctionalityRepository;
+import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferDeatilsChildRepository;
-
 import com.hms.service.repository.OfferDetailsRepository;
-
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
 import com.hms.service.request.LevelConfig;
+import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.response.OfferCommentsResponse;
 import com.hms.service.response.OfferDetailsResponse;
-
-import com.hms.service.service.INotificationService;
-
-import com.hms.service.request.ReleaseOfferRequest;
-
 import com.hms.service.response.RaiseOfferRequestResponse;
-
+import com.hms.service.service.INotificationService;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
 import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -318,68 +302,83 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
 	}
+
 	@Override
 	public ApiResponse<?> getOfferComments(Integer applicantId) {
-		  log.info("OfferDetailsServiceImpl ::Inside the getOfferComments");
-	    try {
+		log.info("OfferDetailsServiceImpl ::Inside the getOfferComments");
+		try {
 
-	        Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository.findByJobApplicationId(applicantId);
+			Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository
+					.findByJobApplicationId(applicantId);
+			
+			Optional<OfferDetailsChildEntity> offerDetailsChildEntity=offerDeatilsChildRepository.findByJobApplication_Id(applicantId);
 
-	        if (offerDetailsEntity == null) {
-	            return ApiResponse.failure(ResponseCode.FAILURE, "Offer details not found");
-	        }
-	        OfferDetailsEntity offer =offerDetailsEntity.get();
-	        List<OfferCommentsResponse> responseList = new ArrayList<>();
+			if (offerDetailsEntity == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Offer details not found");
+			}
+			OfferDetailsEntity offerDetails = offerDetailsEntity.get();
+			List<OfferCommentsResponse> responseList = new ArrayList<>();
 
-	        // Approver 1
-	        if (offer.getApprover1By() != null) {
+			OfferDetailsChildEntity childEntity =offerDetailsChildEntity.get();
+			
+			List<Integer> roleIds = Arrays.asList(
+			        childEntity.getRole1(),
+			        childEntity.getRole2(),
+			        childEntity.getRole3()
+			);
 
-	            OfferCommentsResponse response = new OfferCommentsResponse();
-	            response.setRole(offer.getApprover1Role());
-	            response.setApproverName(offer.getApprover1By());
-	            response.setApproved(offer.getApprover1());
-	            response.setApprovedOn(offer.getFinalApprovalTime());
-	            response.setComments(offer.getApprover1Comments());
+			List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
+			
+			Map<Integer, String> roleMap = roles.stream()
+			        .collect(Collectors.toMap(
+			                r -> (Integer) r[0],
+			                r -> (String) r[1]
+			        ));
+			// Approver 1
 
-	            responseList.add(response);
-	        }
+			OfferCommentsResponse response = new OfferCommentsResponse();
+			response.setApproverSequence("1");
+			response.setRole(roleMap.get(childEntity.getRole1()));
+			response.setApproverName(offerDetails.getApprover1By());
+			response.setApproved(offerDetails.getApprover1());
+			response.setApprovedOn(offerDetails.getDateOfApproval1());
+			response.setComments(offerDetails.getApprover1Comments());
 
-	        // Approver 2
-	        if (offer.getApprover2By() != null) {
+			responseList.add(response);
 
-	            OfferCommentsResponse response = new OfferCommentsResponse();
-	            response.setRole(offer.getApprover2Role());
-	            response.setApproverName(offer.getApprover2By());
-	            response.setApproved(offer.getApprover2());
-	            response.setApprovedOn(offer.getFinalApprovalTime());
-	            response.setComments(offer.getApprover2Comments());
+			// Approver 2
 
-	            responseList.add(response);
-	        }
+			response = new OfferCommentsResponse();
+			response.setApproverSequence("2");
+			response.setRole(offerDetails.getApprover2Role());
+			response.setApproverName(roleMap.get(childEntity.getRole1()));
+			response.setApproved(offerDetails.getApprover2());
+			response.setApprovedOn(offerDetails.getDateOfApproval2());
+			response.setComments(offerDetails.getApprover2Comments());
 
-	        // Approver 3
-	        if (offer.getApprover3By() != null) {
+			responseList.add(response);
 
-	            OfferCommentsResponse response = new OfferCommentsResponse();
-	            response.setRole(offer.getApprover3Role());
-	            response.setApproverName(offer.getApprover3By());
-	            response.setApproved(offer.getApprover3());
-	            response.setApprovedOn(offer.getFinalApprovalTime());
-	            response.setComments(offer.getApprover3Comments());
+			// Approver 3
 
-	            responseList.add(response);
-	        }
-	        log.info("OfferDetailsServiceImpl ::Exit from the getOfferComments");
+		    response = new OfferCommentsResponse();
+			response.setApproverSequence("3");
+			response.setRole(offerDetails.getApprover3Role());
+			response.setApproverName(roleMap.get(childEntity.getRole1()));
+			response.setApproved(offerDetails.getApprover3());
+			response.setApprovedOn(offerDetails.getDateOfApproval3());
+			response.setComments(offerDetails.getApprover3Comments());
 
-	        return ApiResponse.success(ResponseCode.SUCCESS,
-	                "Offer comments fetched successfully", responseList);
+			responseList.add(response);
 
-	    } catch (Exception e) {
-	        log.error("OfferDetailsServiceImpl :: getOfferComments", e);
-	        return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
-	    }
+			log.info("OfferDetailsServiceImpl ::Exit from the getOfferComments");
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Offer comments fetched successfully", responseList);
+
+		} catch (Exception e) {
+			log.error("OfferDetailsServiceImpl :: getOfferComments", e);
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
 	}
-
 
 	@Override
 
