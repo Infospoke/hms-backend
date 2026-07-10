@@ -1,6 +1,10 @@
 package com.hms.service.repository;
 
+
+import java.util.Optional;
+
 import java.util.List;
+
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -13,7 +17,12 @@ import com.hms.service.entity.OfferDetailsEntity;
 public interface OfferDetailsRepository
 		extends JpaRepository<OfferDetailsEntity, Integer>, JpaSpecificationExecutor<OfferDetailsEntity> {
 
+
+	Optional<OfferDetailsEntity> findByJobApplication_Id(Integer applicantId);
+
+
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
 
 	OfferDetailsEntity findTopByJobApplicationOrderByIdDesc(JobApplicationEntity application);
+
 }

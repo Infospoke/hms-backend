@@ -54,8 +54,11 @@ public class OfferDetailsEntity {
     @Column(name="approver1_role")
     private String approver1Role;
     
+    @Column(name="date_of_approval1")
+	private LocalDateTime dateOfApproval1;
+	
     @Column(name="approver1_comments")
-    private Boolean approver1_comments;
+    private String approver1Comments;
     
     @Column(name="approver2")
     private Boolean approver2=false;
@@ -67,7 +70,11 @@ public class OfferDetailsEntity {
     private String approver2Role;
     
     @Column(name="approver2_comments")
-    private Boolean approver2_comments;
+    private String approver2Comments;
+    
+    
+    @Column(name="date_of_approval2")
+	private LocalDateTime dateOfApproval2;
     
     @Column(name="approver3")
     private Boolean approver3=false;
@@ -79,7 +86,10 @@ public class OfferDetailsEntity {
     private String approver3Role;
     
     @Column(name="approver3_comments")
-    private Boolean approver3_comments;
+    private String approver3Comments;
+   
+    @Column(name="date_of_approval3")
+	private LocalDateTime dateOfApproval3;
     
     @Column(name="reject")
     private Boolean reject=false;
@@ -94,8 +104,16 @@ public class OfferDetailsEntity {
     @Column(name="offer_released")
     private Boolean offerReleased=false;
     
+    @Column(name="in_progress")
+    private Boolean inProgress;
+    
+    @Column(name="submitted_by_user_id")
+    private Integer submittedByUserId;
+    
+
     @Column(name="offer_released_by")
     private Long offerReleasedBy;
+
     
     @Column(name="offer_released_at")
     private LocalDateTime offerReleasedAt;

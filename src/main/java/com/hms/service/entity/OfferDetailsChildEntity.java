@@ -51,6 +51,9 @@ public class OfferDetailsChildEntity {
     @Column(name="role3")
     private Integer role3;
     
+    @Column(name="offer_submitted_by")
+    private Integer offerSubmittedBy;
+    
     
 	
 
