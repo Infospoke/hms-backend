@@ -133,7 +133,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		map.put("department", department != null ? department.getDepartmentName() : "");
 
-		map.put("recruiterName", application.getRecruitedBy());
+		map.put("recruiterName", offer.getRecruitedBy());
 
 		map.put("finalApprovalTime", offer.getFinalApprovalTime());
 
