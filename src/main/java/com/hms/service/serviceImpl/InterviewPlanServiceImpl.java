@@ -2944,7 +2944,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Status is required");
 		}
 
-		if (!(status.equalsIgnoreCase("HOLD") || status.equalsIgnoreCase("ACCEPTED")
+		if (!(status.equalsIgnoreCase("HOLD") || status.equalsIgnoreCase("HIRED")
 				|| status.equalsIgnoreCase("REJECTED"))) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Status");
@@ -2961,7 +2961,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		String currentStatus = offerDetails.getInterviewCompletionStatus();
 
-		if ("ACCEPTED".equalsIgnoreCase(currentStatus) || "REJECTED".equalsIgnoreCase(currentStatus)) {
+		if ("HIRED".equalsIgnoreCase(currentStatus) || "REJECTED".equalsIgnoreCase(currentStatus)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview completion status cannot be modified.");
 		}
@@ -2974,7 +2974,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		offerDetailsRepository.save(offerDetails);
 
-		if ("ACCEPTED".equalsIgnoreCase(request.getStatus())) {
+		if ("HIRED".equalsIgnoreCase(request.getStatus())) {
 
 			sendInterviewSelectedMail(application);
 

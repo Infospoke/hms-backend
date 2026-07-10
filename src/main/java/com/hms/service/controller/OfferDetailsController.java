@@ -27,5 +27,11 @@ public class OfferDetailsController {
 		return ResponseEntity.ok(iOfferDetailsService.getReadyToRelease(request));
 
 	}
+	
+	@PostMapping("/get-all-raise-offer-requests")
+	public ResponseEntity<ApiResponse<?>> getAllRaiseOfferRequests(@RequestBody SpecificationFilterRequest request) {
+
+		return ResponseEntity.ok(iOfferDetailsService.getAllRaiseOfferRequests(request));
+	}
 
 }

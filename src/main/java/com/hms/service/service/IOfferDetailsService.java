@@ -7,4 +7,6 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> getReadyToRelease(SpecificationFilterRequest request);
 
+	ApiResponse<?> getAllRaiseOfferRequests(SpecificationFilterRequest request);
+
 }

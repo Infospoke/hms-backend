@@ -3,6 +3,8 @@ package com.hms.service.serviceImpl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,7 @@ import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.response.RaiseOfferRequestResponse;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -156,5 +159,87 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 		return "Low";
+	}
+
+	@Override
+	public ApiResponse<?> getAllRaiseOfferRequests(SpecificationFilterRequest request) {
+
+	    log.info("OfferDetailsServiceImpl :: Inside getAllRaiseOfferRequests");
+
+		Sort sort = Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy());
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Specification<OfferDetailsEntity> specification = request.buildRaiseOfferRequestSpecification();
+
+		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(specification, pageable);
+
+	    List<RaiseOfferRequestResponse> responseList = new ArrayList<>();
+
+	    for (OfferDetailsEntity offer : offerPage.getContent()) {
+
+	        JobApplicationEntity application = offer.getJobApplication();
+
+	        CreateJobDetailsEntity job =
+	                createJobDetailsRepository.findByJobId(application.getJobId());
+
+	        DepartmentsEntity department = null;
+
+	        if(job != null){
+
+	            department = departmentsRepository
+	                    .findById(job.getDepartmentId())
+	                    .orElse(null);
+	        }
+
+			RaiseOfferRequestResponse response = new RaiseOfferRequestResponse();
+
+	        response.setOfferId(offer.getId());
+
+	        response.setApplicantId(application.getId());
+
+			response.setCandidateName(application.getFirstName() + " " + application.getLastName());
+
+	        response.setCandidateEmail(application.getEmail());
+
+	        response.setPhoneNumber(application.getPhNo());
+
+	        if(job != null){
+
+	            response.setJobId(job.getJobId());
+
+	            response.setJobTitle(job.getJobTitle());
+
+	        }
+			if (department != null) {
+
+				response.setDepartmentName(department.getDepartmentName());
+
+			}
+			response.setMovedToHireOn(offer.getInterviewCompletionDate());
+
+			response.setRecruiter(offer.getRecruitedBy());
+
+			responseList.add(response);
+
+	    }
+
+	    Map<String, Object> response = new HashMap<>();
+
+	    response.put("content", responseList);
+	    
+	    response.put("page", offerPage.getNumber());
+	    
+	    response.put("size", offerPage.getSize());
+	    
+	    response.put("totalElements", offerPage.getTotalElements());
+	    
+	    response.put("totalPages", offerPage.getTotalPages());
+	    
+	    response.put("last", offerPage.isLast());
+
+	    log.info("OfferDetailsServiceImpl :: Exit getAllRaiseOfferRequests");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Requests fetched successfully", response);
 	}
 }

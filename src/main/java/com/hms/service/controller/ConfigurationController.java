@@ -44,8 +44,7 @@ public class ConfigurationController {
 	@GetMapping("/departments/{businessUnitId}")
 	public ResponseEntity<ApiResponse<List<?>>> getDepartments(@PathVariable("businessUnitId") Integer businessUnitId) {
 
-		ApiResponse<List<?>> response = iConfigurationService
-				.getDepartmentsByBusinessUnit(businessUnitId);
+		ApiResponse<List<?>> response = iConfigurationService.getDepartmentsByBusinessUnit(businessUnitId);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

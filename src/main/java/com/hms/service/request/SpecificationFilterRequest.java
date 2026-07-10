@@ -1625,5 +1625,79 @@ public class SpecificationFilterRequest {
 		return spec;
 
 	}
+	
+	public Specification<OfferDetailsEntity> buildRaiseOfferRequestSpecification() {
+
+		return (root, query, cb) -> {
+
+			query.distinct(true);
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication", JoinType.INNER);
+
+			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
+
+			predicates.add(cb.equal(application.get("jobId"), job.get("jobId")));
+
+			// Candidate should be hired/accepted
+			predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")), "hired"));
+
+			// Search
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.toLowerCase().trim() + "%";
+
+				Predicate candidateName = cb.like(
+						cb.lower(cb.concat(cb.concat(application.get("firstName"), " "), application.get("lastName"))),
+						keyword);
+
+				Predicate email = cb.like(cb.lower(application.get("email")), keyword);
+
+				predicates.add(cb.or(candidateName, email));
+			}
+
+			// Job Filter
+			String jobId = getFilter("jobId");
+
+			if (jobId != null) {
+
+				predicates.add(cb.equal(job.get("jobId"), Integer.parseInt(jobId)));
+			}
+
+			// Department Filter
+			String departmentId = getFilter("departmentId");
+
+			if (departmentId != null) {
+
+				predicates.add(cb.equal(job.get("departmentId"), Integer.parseInt(departmentId)));
+			}
+
+			// Priority Filter
+			String priority = getFilter("priority");
+
+			if (priority != null && !priority.isBlank()) {
+
+				predicates.add(cb.equal(cb.lower(job.get("priority")), priority.toLowerCase()));
+			}
+
+			// Date Filter
+			Specification<OfferDetailsEntity> dateSpecification = dateSpec("interviewCompletionDate");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
 
 }
