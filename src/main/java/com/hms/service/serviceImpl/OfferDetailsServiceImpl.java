@@ -781,6 +781,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setMovedToHireOn(offer.getInterviewCompletionDate());
 
 			response.setRecruiter(offer.getRecruitedBy());
+			
+			response.setPriority(calculatedOfferRaiseRequestPriority(offer.getInterviewCompletionDate()));
 
 			responseList.add(response);
 
@@ -803,6 +805,21 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    log.info("OfferDetailsServiceImpl :: Exit getAllRaiseOfferRequests");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Requests fetched successfully", response);
+	}
+	
+	private String calculatedOfferRaiseRequestPriority(LocalDateTime interviewCompletionDate) {
+
+		long days = ChronoUnit.DAYS.between(interviewCompletionDate.toLocalDate(), LocalDate.now());
+
+		if (days >= 3) {
+			return "High";
+		}
+
+		if (days >= 2) {
+			return "Medium";
+		}
+
+		return "Low";
 	}
 
 		
