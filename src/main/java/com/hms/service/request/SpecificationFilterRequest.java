@@ -1616,7 +1616,7 @@ public class SpecificationFilterRequest {
 
 				spec = spec.and((root, query, cb) ->
 
-				cb.lessThanOrEqualTo(root.get("finalApprovalTime"), now.minusDays(5)));
+				cb.lessThanOrEqualTo(root.get("dateOfApproval3"), now.minusDays(5)));
 
 				break;
 
@@ -1626,9 +1626,9 @@ public class SpecificationFilterRequest {
 
 				cb.and(
 
-						cb.greaterThan(root.get("finalApprovalTime"), now.minusDays(5)),
+						cb.greaterThan(root.get("dateOfApproval3"), now.minusDays(5)),
 
-						cb.lessThanOrEqualTo(root.get("finalApprovalTime"), now.minusDays(3))
+						cb.lessThanOrEqualTo(root.get("dateOfApproval3"), now.minusDays(3))
 
 				));
 
@@ -1638,7 +1638,7 @@ public class SpecificationFilterRequest {
 
 				spec = spec.and((root, query, cb) ->
 
-				cb.greaterThan(root.get("finalApprovalTime"), now.minusDays(3)));
+				cb.greaterThan(root.get("dateOfApproval3"), now.minusDays(3)));
 
 				break;
 
@@ -1646,7 +1646,7 @@ public class SpecificationFilterRequest {
 
 		}
 
-		Specification<OfferDetailsEntity> dateSpecification = dateSpec("finalApprovalTime");
+		Specification<OfferDetailsEntity> dateSpecification = dateSpec("dateOfApproval3");
 
 		if (dateSpecification != null) {
 			spec = spec.and(dateSpecification);

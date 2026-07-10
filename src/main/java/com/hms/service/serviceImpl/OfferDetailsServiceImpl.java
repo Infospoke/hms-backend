@@ -149,7 +149,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 						? request.getSortBy()
 
-						: "finalApprovalTime"
+						: "dateOfApproval3"
 
 		);
 
@@ -209,9 +209,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		map.put("recruiterName", offer.getRecruitedBy());
 
-		map.put("finalApprovalTime", offer.getFinalApprovalTime());
+		map.put("finalApprovalTime", offer.getDateOfApproval3());
 
-		map.put("priority", calculatePriority(offer.getFinalApprovalTime()));
+		map.put("priority", calculatePriority(offer.getDateOfApproval3()));
 
 		map.put("totalCtc", offer.getTotalCtc());
 
@@ -219,9 +219,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	}
 
-	private String calculatePriority(LocalDateTime finalApprovalTime) {
+	private String calculatePriority(LocalDateTime dateOfApproval3) {
 
-		long days = ChronoUnit.DAYS.between(finalApprovalTime.toLocalDate(), LocalDate.now());
+		long days = ChronoUnit.DAYS.between(dateOfApproval3.toLocalDate(), LocalDate.now());
 
 		if (days >= 5) {
 			return "High";
