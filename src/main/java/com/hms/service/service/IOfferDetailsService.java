@@ -7,4 +7,8 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> getReadyToRelease(SpecificationFilterRequest request);
 
+	ApiResponse<?> getOfferDetailsByApplicantId(Integer applicantId);
+
+	ApiResponse<?> getOfferComments(Integer applicantId);
+
 }

@@ -50,5 +50,6 @@ public interface CreateJobDetailsRepository
 	CreateJobDetailsEntity findByJobId(Integer jobId);
 
 	List<CreateJobDetailsEntity> findByJobIdIn(List<Integer> jobIds);
+
 	
 }

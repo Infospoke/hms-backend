@@ -3,9 +3,11 @@ package com.hms.service.serviceImpl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,14 +17,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsEntity;
+import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.response.OfferCommentsResponse;
+import com.hms.service.response.OfferDetailsResponse;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -37,9 +44,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
+	
+	@Autowired
+	private JobApplicationRepository jobApplicationRepository;
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
+	
+	@Autowired
+	private BudgetAndCompensationRepository budgetAndCompensationRepository;
 
 	@Override
 	public ApiResponse<?> getReadyToRelease(SpecificationFilterRequest request) {
@@ -156,5 +169,149 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 		return "Low";
+	}
+	
+	@Override
+	public ApiResponse<?> getOfferDetailsByApplicantId(Integer applicantId) {
+
+		try {
+
+			Optional<JobApplicationEntity> applicantOptional = jobApplicationRepository.findById(applicantId);
+
+			if (applicantOptional.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Applicant not found");
+			}
+
+			JobApplicationEntity applicant = applicantOptional.get();
+
+			OfferDetailsResponse response = new OfferDetailsResponse();
+
+			// Applicant Details
+			response.setApplicantId(applicant.getId());
+			response.setCandidateName(applicant.getFirstName());
+			response.setEmail(applicant.getEmail());
+
+			// Job Details
+			CreateJobDetailsEntity jobDetails = createJobDetailsRepository.findByJobId(applicant.getJobId());
+
+			response.setJobTitle(jobDetails.getJobTitle());
+			response.setEmploymentType(jobDetails.getEmploymentType());
+			response.setWorkLocation(jobDetails.getLocation());
+			// Department
+			Optional<DepartmentsEntity> departmentOptional = departmentsRepository.findById(jobDetails.getDepartmentId());
+
+			if (departmentOptional.isPresent()) {
+				response.setDepartment(departmentOptional.get().getDepartmentName());
+			}
+
+			// Budget & Compensation
+			Optional<BudgetAndCompensationEntity> budgetAndCompensationEntity = budgetAndCompensationRepository
+					.findBySrId(jobDetails.getSrId());
+
+			if (budgetAndCompensationEntity.isPresent()) {
+
+				BudgetAndCompensationEntity budget = budgetAndCompensationEntity.get();
+
+				response.setBasicSalary(budget.getProposedTotalCompensation());
+
+				response.setSigningBonus(
+						Boolean.TRUE.equals(budget.getSigningBonus()) ? budget.getSigningBonusAmount() : 0);
+
+				response.setAnnualRsuEsopValue(Boolean.TRUE.equals(budget.getEquity()) ? budget.getEquityAmount() : 0);
+
+				response.setOtherBenefits(
+						Boolean.TRUE.equals(budget.getRelocationBudget()) ? budget.getRelocationBudgetAmount() : 0);
+
+				response.setTotalCtc(budget.getProposedTotalCompensation());
+
+				response.setOfferedCtc(budget.getAnnualHiringCost());
+				response.setMinSalary(budget.getMinimumSalary());
+				response.setMaxSalary(budget.getMaximumSalary());
+			}
+
+			// Offer Details
+			Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplicationId(applicantId);
+
+			if (offerOptional.isPresent()) {
+
+				OfferDetailsEntity offer = offerOptional.get();
+
+				response.setRecruiter(offer.getRecruitedBy());
+				response.setRequestedOn(
+						offer.getInterviewCompletionDate() != null ? offer.getInterviewCompletionDate().toLocalDate()
+								: null);
+
+				response.setProbationPeriod(offer.getProbationPeriod());
+				response.setNoticePeriod(offer.getNoticePeriod());
+
+			
+			}
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Offer details fetched successfully", response);
+
+		} catch (Exception e) {
+			log.error("OfferDetailsServiceImpl :: Error while fetching offer details", e);
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+	@Override
+	public ApiResponse<?> getOfferComments(Integer applicantId) {
+
+	    try {
+
+	        Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository.findByJobApplicationId(applicantId);
+
+	        if (offerDetailsEntity == null) {
+	            return ApiResponse.failure(ResponseCode.FAILURE, "Offer details not found");
+	        }
+	        OfferDetailsEntity offer =offerDetailsEntity.get();
+	        List<OfferCommentsResponse> responseList = new ArrayList<>();
+
+	        // Approver 1
+	        if (offer.getApprover1By() != null) {
+
+	            OfferCommentsResponse response = new OfferCommentsResponse();
+	            response.setRole(offer.getApprover1Role());
+	            response.setApproverName(offer.getApprover1By());
+	            response.setApproved(offer.getApprover1());
+	            response.setApprovedOn(offer.getFinalApprovalTime());
+	            response.setComments(offer.getApprover1_comments());
+
+	            responseList.add(response);
+	        }
+
+	        // Approver 2
+	        if (offer.getApprover2By() != null) {
+
+	            OfferCommentsResponse response = new OfferCommentsResponse();
+	            response.setRole(offer.getApprover2Role());
+	            response.setApproverName(offer.getApprover2By());
+	            response.setApproved(offer.getApprover2());
+	            response.setApprovedOn(offer.getFinalApprovalTime());
+	            response.setComments(offer.getApprover2_comments());
+
+	            responseList.add(response);
+	        }
+
+	        // Approver 3
+	        if (offer.getApprover3By() != null) {
+
+	            OfferCommentsResponse response = new OfferCommentsResponse();
+	            response.setRole(offer.getApprover3Role());
+	            response.setApproverName(offer.getApprover3By());
+	            response.setApproved(offer.getApprover3());
+	            response.setApprovedOn(offer.getFinalApprovalTime());
+	            response.setComments(offer.getApprover3_comments());
+
+	            responseList.add(response);
+	        }
+
+	        return ApiResponse.success(ResponseCode.SUCCESS,
+	                "Offer comments fetched successfully", responseList);
+
+	    } catch (Exception e) {
+	        log.error("OfferDetailsServiceImpl :: getOfferComments", e);
+	        return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+	    }
 	}
 }

@@ -55,7 +55,7 @@ public class OfferDetailsEntity {
     private String approver1Role;
     
     @Column(name="approver1_comments")
-    private Boolean approver1_comments;
+    private String approver1_comments;
     
     @Column(name="approver2")
     private Boolean approver2=false;
@@ -67,7 +67,7 @@ public class OfferDetailsEntity {
     private String approver2Role;
     
     @Column(name="approver2_comments")
-    private Boolean approver2_comments;
+    private String approver2_comments;
     
     @Column(name="approver3")
     private Boolean approver3=false;
@@ -79,7 +79,7 @@ public class OfferDetailsEntity {
     private String approver3Role;
     
     @Column(name="approver3_comments")
-    private Boolean approver3_comments;
+    private String approver3_comments;
     
     @Column(name="reject")
     private Boolean reject=false;
