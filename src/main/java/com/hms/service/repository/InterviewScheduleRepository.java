@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import com.hms.service.entity.InterviewScheduleEntity;
 
 @Repository
-public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity, Integer> {
+public interface InterviewScheduleRepository extends JpaRepository<InterviewScheduleEntity, Integer>, JpaSpecificationExecutor<InterviewScheduleEntity> {
 
 	@Query(value = """
 			SELECT
@@ -74,11 +75,10 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 	List<Object[]> getInterviewSummary(@Param("applicationId") Integer applicationId);
 
 	List<InterviewScheduleEntity> findByInterviewDateAfter(LocalDate now);
-	
-	List<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
-	
-	Optional<InterviewScheduleEntity> findTopByApplicantIdOrderByIdDesc(Integer applicantId);
 
+	List<InterviewScheduleEntity> findByApplicantId(Integer applicantId);
+
+	Optional<InterviewScheduleEntity> findTopByApplicantIdOrderByIdDesc(Integer applicantId);
 
 	InterviewScheduleEntity findByApplicantIdAndInterviewDateAndRoundId(Integer applicantId, LocalDate now,
 			Integer currentStageId);

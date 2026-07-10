@@ -90,7 +90,16 @@ public class OfferDetailsEntity {
     
     @Column(name="final_approval_time")
     private LocalDateTime finalApprovalTime;
+
+    @Column(name="offer_released")
+    private Boolean offerReleased=false;
     
+    @Column(name="offer_released_by")
+    private Long offerReleasedBy;
+    
+    @Column(name="offer_released_at")
+    private LocalDateTime offerReleasedAt;
+
     @Column(name="interview_completion_status")
 	private String interviewCompletionStatus;
     
@@ -100,9 +109,8 @@ public class OfferDetailsEntity {
     @Column(name = "recruited_by")
     private String recruitedBy;
     
-    
-    
-    
-    
+    @Column(name="total_ctc")
+    private Long totalCtc;
+
     
 }

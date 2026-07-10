@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +25,16 @@ import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.OfferDetailsRepository;
+import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.RaiseOfferRequestResponse;
 import com.hms.service.service.IOfferDetailsService;
+import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -43,6 +48,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
+
+	@Autowired
+	private JwtService jwtService;
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
 
 	@Override
 	public ApiResponse<?> getReadyToRelease(SpecificationFilterRequest request) {
@@ -79,17 +90,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		List<Map<String, Object>> offers = page.getContent().stream().map(this::convertToMap).toList();
 
-		String priorityFilter = request.getFilter("priority");
-
-		if (priorityFilter != null) {
-
-			offers = offers.stream()
-
-					.filter(x -> x.get("priority").toString().equalsIgnoreCase(priorityFilter))
-
-					.toList();
-		}
-
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("offers", offers);
@@ -106,7 +106,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				ResponseCode.SUCCESS,
 
-				"Ready To Release fetched successfully",
+				"Ready To Release Offer letters list fetched successfully",
 
 				response
 
@@ -136,11 +136,13 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		map.put("department", department != null ? department.getDepartmentName() : "");
 
-//	map.put("recruiterName", application.getRecuriterName());
+		map.put("recruiterName", offer.getRecruitedBy());
 
-		map.put("approvedOn", offer.getFinalApprovalTime());
+		map.put("finalApprovalTime", offer.getFinalApprovalTime());
 
 		map.put("priority", calculatePriority(offer.getFinalApprovalTime()));
+		
+		map.put("totalCtc", offer.getTotalCtc());
 
 		return map;
 
@@ -241,5 +243,42 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    log.info("OfferDetailsServiceImpl :: Exit getAllRaiseOfferRequests");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Requests fetched successfully", response);
+	}
+
+		
+	@Transactional
+	public ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request) {
+
+		log.info("OfferDetailsServiceImpl :: releaseOfferLetters");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			userId = jwtService.extractUserId(token);
+		}
+
+		if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure",
+					Collections.singletonList("Application Ids are required"));
+		}
+
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(request.getApplicationIds());
+
+		if (offers.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
+		}
+
+		for (OfferDetailsEntity offer : offers) {
+			offer.setOfferReleased(true);
+			offer.setOfferReleasedBy(userId);
+			offer.setOfferReleasedAt(LocalDateTime.now());
+		}
+
+		offerDetailsRepository.saveAll(offers);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
 	}
 }

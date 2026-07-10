@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
@@ -1152,11 +1153,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		if (request.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND)) {
 			ApiResponse<?> response = updateInterviewFeedback(request);
-			if (!response.getMessage().equalsIgnoreCase("All Rounds of the Applicant are Completed")&&!response.getMessage().equalsIgnoreCase("Applicant moved to next round")) {
+			if (!response.getMessage().equalsIgnoreCase("All Rounds of the Applicant are Completed")
+					&& !response.getMessage().equalsIgnoreCase("Applicant moved to next round")) {
 				return ApiResponse.failure(ResponseCode.FAILURE, response.getMessage());
 			}
 		}
-        return ApiResponse.success(ResponseCode.SUCCESS,"Applicant Feedback submitted successfully","success");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant Feedback submitted successfully", "success");
 	}
 
 	private void sendNextRoundNotification(InterviewFeedbackRequest request, JobApplicationEntity applicant) {
@@ -1514,7 +1516,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		log.info("InterviewPlanServiceImpl :: getInterviewDetails");
 
-		Optional<ApplicanDetailsEntity> optional = applicantDetailsRepository.findByApplicationId(request.getApplicantId());
+		Optional<ApplicanDetailsEntity> optional = applicantDetailsRepository
+				.findByApplicationId(request.getApplicantId());
 
 		if (optional.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview details not found");
@@ -1533,7 +1536,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String department = departmentsRepository.findById(deptId).get().getDepartmentName();
 
 		InterviewScheduleEntity interviewScheduleEntity = interviewScheduleRepository
-				.findByApplicantIdAndInterviewDateAndRoundId(request.getApplicantId(), LocalDate.now(),request.getCurrentStageId());
+				.findByApplicantIdAndInterviewDateAndRoundId(request.getApplicantId(), LocalDate.now(),
+						request.getCurrentStageId());
 
 		InterviewCurrentStageEntity currentStageEntity = interviewCurrentStageRepository
 				.findByApplicationIdAndFeedbackFalse(request.getApplicantId());
@@ -2129,7 +2133,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 	}
-	
+
 	@Transactional
 	@Override
 	public ApiResponse<?> updateInterviewFeedback(InterviewFeedbackRequest interviewFeedbackRequest) {
@@ -2139,10 +2143,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		Long userId = jwtService.extractUserId(token);
 		Integer userIdFromToken = userId.intValue();
-	
-		InterviewFeedbackEntity entity = interviewFeedbackRepository
-				.findByApplicantIdAndCurrentStageId(interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
-			
+
+		InterviewFeedbackEntity entity = interviewFeedbackRepository.findByApplicantIdAndCurrentStageId(
+				interviewFeedbackRequest.getApplicantId(), interviewFeedbackRequest.getCurrentStageId());
+
 		ApplicantFeedBackResponse response = new ApplicantFeedBackResponse();
 		if (userIdFromToken != entity.getUserId()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Your are not authorised person to update the details");
@@ -2152,7 +2156,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			int planId = createJobDetailsRepository.findByJobId(interviewFeedbackRequest.getJobId()).getPlanId();
 			log.info("Plan Id : {}", planId);
-		
+
 			int currentOrder = interviewRoundRepository
 					.findByInterviewPlan_IdAndStageTypeId(planId, interviewFeedbackRequest.getCurrentStageId())
 					.getRoundOrder();
@@ -2195,15 +2199,16 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
 				activityFeedEntity.setTimeStamp(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				String jobTitle = createJobDetailsRepository.findByJobId(applicationEntity.getJobId()).getJobTitle();
-				activityFeedEntity.setActivity(applicationEntity.getFirstName() + "finished all interview rounds for" + jobTitle);
+				activityFeedEntity
+						.setActivity(applicationEntity.getFirstName() + "finished all interview rounds for" + jobTitle);
 				activityFeedRepository.save(activityFeedEntity);
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 				log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
-				return ApiResponse.success(ResponseCode.SUCCESS,"All Rounds of the Applicant are Completed","Success");
-				
+				return ApiResponse.success(ResponseCode.SUCCESS, "All Rounds of the Applicant are Completed",
+						"Success");
+
 			}
 		}
-
 
 		if ((interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.MOVE_TO_NEXT_ROUND))
 				|| (interviewFeedbackRequest.getDecision().equalsIgnoreCase(Constants.REJECTED))) {
@@ -2220,13 +2225,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 							interviewFeedbackRequest.getCurrentStageId());
 			interviewCurrentStageEntity.setFeedbackStatus(interviewFeedbackRequest.getDecision());
 			interviewCurrentStageRepository.save(interviewCurrentStageEntity);
-			log.info("The decision is updated in the interview cuurent stage and now the current stage as : "+interviewCurrentStageEntity.getFeedbackStatus());
+			log.info("The decision is updated in the interview cuurent stage and now the current stage as : "
+					+ interviewCurrentStageEntity.getFeedbackStatus());
 
 		}
 
-
 		log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
-		return ApiResponse.success(ResponseCode.SUCCESS,"Applicant moved to next round","Success");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant moved to next round", "Success");
 	}
 
 	@Override
@@ -2482,29 +2487,31 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 					.orElse(null);
 
 			List<InterviewScheduleEntity> schedules = interviewScheduleRepository
-					.findByInterviewDateAfter(LocalDate.now());
+					.findAll(request.buildUpcomingInterviewSpecification());
 
-			if (schedules.isEmpty()) {
+			if (CollectionUtils.isEmpty(schedules)) {
+
 				return ApiResponse.success("Upcoming Interviews fetched successfully", Collections.emptyList(), 0);
 			}
 
-			List<Integer> applicantIds = schedules.stream().map(InterviewScheduleEntity::getApplicantId).distinct()
-					.toList();
+			List<Integer> applicantIds = schedules.stream().map(InterviewScheduleEntity::getApplicantId)
+					.filter(Objects::nonNull).distinct().toList();
 
 			List<JobApplicationEntity> applications = jobApplicationRepository.findByIdIn(applicantIds);
 
 			Map<Integer, JobApplicationEntity> applicationMap = applications.stream()
 					.collect(Collectors.toMap(JobApplicationEntity::getId, Function.identity()));
 
-			List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).distinct().toList();
+			List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).filter(Objects::nonNull)
+					.distinct().toList();
 
 			List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
 
 			Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
 					.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
 
-			List<Integer> departmentIds = jobs.stream().map(CreateJobDetailsEntity::getDepartmentId).distinct()
-					.toList();
+			List<Integer> departmentIds = jobs.stream().map(CreateJobDetailsEntity::getDepartmentId)
+					.filter(Objects::nonNull).distinct().toList();
 
 			List<DepartmentsEntity> departments = departmentsRepository.findByIdIn(departmentIds);
 
@@ -2522,8 +2529,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			List<InterviewRoundEntity> rounds = interviewRoundRepository.findByInterviewPlan_IdIn(planIds);
 
-			Map<RoundKey, InterviewRoundEntity> roundMap = rounds.stream().collect(Collectors
-					.toMap(r -> new RoundKey(r.getInterviewPlan().getId(), r.getStageTypeId()), Function.identity()));
+			Map<RoundKey, InterviewRoundEntity> roundMap = rounds.stream()
+					.collect(Collectors.toMap(
+							round -> new RoundKey(round.getInterviewPlan().getId(), round.getStageTypeId()),
+							Function.identity()));
+
+			Map<Integer, Long> totalRoundsMap = rounds.stream()
+					.collect(Collectors.groupingBy(round -> round.getInterviewPlan().getId(), Collectors.counting()));
 
 			List<InterviewUpcomingListResponse> response = new ArrayList<>();
 
@@ -2531,13 +2543,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				JobApplicationEntity application = applicationMap.get(schedule.getApplicantId());
 
-				if (application == null)
+				if (application == null) {
 					continue;
+				}
 
 				CreateJobDetailsEntity job = jobMap.get(application.getJobId());
 
-				if (job == null)
+				if (job == null) {
 					continue;
+				}
 
 				DepartmentsEntity department = departmentMap.get(job.getDepartmentId());
 
@@ -2558,13 +2572,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				dto.setRound(round != null ? round.getStageName() : null);
 
 				dto.setInterviewMode(round != null ? round.getInterviewMode() : null);
-				dto.setInterviewMode(round != null ? round.getInterviewMode() : null);
-				long totalRounds = 0;
+
+				long totalRounds = 0L;
 
 				if (job.getPlanId() != null) {
 
-					totalRounds = rounds.stream().filter(r -> r.getInterviewPlan().getId().equals(job.getPlanId()))
-							.count();
+					totalRounds = totalRoundsMap.getOrDefault(job.getPlanId(), 0L);
 				}
 
 				if (currentStage != null) {
@@ -2572,25 +2585,34 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 					dto.setRoundProgress("Round " + currentStage.getRoundOrder() + " of " + totalRounds);
 				}
 
-				dto.setInterviewDate(schedule.getInterviewDate());
-				dto.setStartTime(schedule.getStartTime());
-				dto.setEndTime(schedule.getEndTime());
-				dto.setMeetingLink(schedule.getMeetingLink());
-				dto.setVenueDetails(schedule.getVenueDetails());
+				if (schedule.getRescheduleDate() != null) {
 
-				boolean matches = true;
+					dto.setInterviewDate(schedule.getRescheduleDate());
+					dto.setStartTime(schedule.getRescheduleStartTime());
+					dto.setEndTime(schedule.getRescheduleEndTime());
+					dto.setMeetingLink(schedule.getRescheduleMeetingLink());
+					dto.setVenueDetails(schedule.getRescheduleVenueDetails());
+
+				} else {
+
+					dto.setInterviewDate(schedule.getInterviewDate());
+					dto.setStartTime(schedule.getStartTime());
+					dto.setEndTime(schedule.getEndTime());
+					dto.setMeetingLink(schedule.getMeetingLink());
+					dto.setVenueDetails(schedule.getVenueDetails());
+				}
 
 				if (!search.isBlank()) {
 
-					String candidateName = dto.getCandidateName() == null ? "" : dto.getCandidateName().toLowerCase();
+					String candidateName = Optional.ofNullable(dto.getCandidateName()).orElse("").toLowerCase();
 
-					String jobTitle = dto.getJobTitle() == null ? "" : dto.getJobTitle().toLowerCase();
+					String jobTitle = Optional.ofNullable(dto.getJobTitle()).orElse("").toLowerCase();
 
-					matches = candidateName.contains(search) || jobTitle.contains(search);
+					if (!candidateName.contains(search) && !jobTitle.contains(search)) {
+
+						continue;
+					}
 				}
-
-				if (!matches)
-					continue;
 
 				if (departmentId != 0) {
 
@@ -2598,100 +2620,92 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						continue;
 					}
-
 				}
 
 				if (roundId != 0) {
 
-					if (schedule.getRoundId() == null || !roundId.equals(schedule.getRoundId())) {
+					if (!roundId.equals(schedule.getRoundId())) {
 
 						continue;
 					}
-
 				}
 
 				if (!interviewMode.isBlank()) {
 
-					String mode = dto.getInterviewMode() == null ? "" : dto.getInterviewMode().toLowerCase();
+					String mode = Optional.ofNullable(dto.getInterviewMode()).orElse("").toLowerCase();
 
 					if (!mode.equals(interviewMode)) {
 
 						continue;
-
 					}
-
 				}
 
-				if (interviewDate != null) {
+				if (interviewDate != null && !interviewDate.equals(dto.getInterviewDate())) {
 
-					if (!interviewDate.equals(dto.getInterviewDate())) {
-
-						continue;
-
-					}
-
+					continue;
 				}
 
 				response.add(dto);
-
 			}
-
 			Comparator<InterviewUpcomingListResponse> comparator;
 
-			switch (request.getSortBy()) {
+			switch (Optional.ofNullable(request.getSortBy()).orElse("scheduleId")) {
 
 			case "candidateName":
 
 				comparator = Comparator.comparing(InterviewUpcomingListResponse::getCandidateName,
-						Comparator.nullsLast(String::compareToIgnoreCase));
-
+						Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
 				break;
 
 			case "jobTitle":
 
 				comparator = Comparator.comparing(InterviewUpcomingListResponse::getJobTitle,
-						Comparator.nullsLast(String::compareToIgnoreCase));
-
+						Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
 				break;
 
 			case "department":
 
 				comparator = Comparator.comparing(InterviewUpcomingListResponse::getDepartment,
-						Comparator.nullsLast(String::compareToIgnoreCase));
-
+						Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
 				break;
 
 			case "interviewDate":
 
-				comparator = Comparator.comparing(InterviewUpcomingListResponse::getInterviewDate);
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getInterviewDate,
+						Comparator.nullsLast(LocalDate::compareTo));
+				break;
 
+			case "round":
+
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getRound,
+						Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
 				break;
 
 			default:
 
-				comparator = Comparator.comparing(InterviewUpcomingListResponse::getScheduleId);
-
+				comparator = Comparator.comparing(InterviewUpcomingListResponse::getScheduleId,
+						Comparator.nullsLast(Integer::compareTo));
 			}
 
-			if ("desc".equalsIgnoreCase(request.getDirection())) {
-
+			if ("DESC".equalsIgnoreCase(request.getDirection())) {
 				comparator = comparator.reversed();
-
 			}
 
 			response.sort(comparator);
 
 			int total = response.size();
 
-			int start = request.getPage() * request.getSize();
+			int page = Math.max(request.getPage(), 0);
+			int size = Math.max(request.getSize(), 1);
 
-			if (start > total) {
+			int start = page * size;
 
-				start = total;
+			if (start >= total) {
 
+				return ApiResponse.success("Upcoming Interviews fetched successfully", Collections.emptyList(), total);
 			}
 
-			int end = Math.min(start + request.getSize(), total);
+			int end = Math.min(start + size, total);
 
 			List<InterviewUpcomingListResponse> pageData = response.subList(start, end);
 
@@ -2699,12 +2713,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		} catch (Exception e) {
 
-			log.error("Error while fetching interview schedules", e);
+			log.error("InterviewPlanServiceImpl :: Error while fetching Upcoming Interviews", e);
 
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
 	}
-
+	
 	@Override
 	public ApiResponse<?> getInterviewSummary(Integer applicationId) {
 
@@ -2794,9 +2808,20 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			response.setStartTime(interviewScheduleEntity.getStartTime());
 
 			response.setEndTime(interviewScheduleEntity.getEndTime());
-
+			
 			response.setInterviewType(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
-
+			
+			response.setRescheduleDate(interviewScheduleEntity.getRescheduleDate());
+			
+			response.setRescheduleStartTime(interviewScheduleEntity.getRescheduleStartTime());
+			
+			response.setRescheduleEndTime(interviewScheduleEntity.getRescheduleEndTime());			
+			
+			if(interviewScheduleEntity.getRescheduleDate()!=null)
+			{
+			response.setReScheduleInterviewType(interviewScheduleEntity.getRescheduleMeetingLink()!=null ?"Online":"Offline");
+			}
+			
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview schedule details fetched successfully",
 					response);
 
