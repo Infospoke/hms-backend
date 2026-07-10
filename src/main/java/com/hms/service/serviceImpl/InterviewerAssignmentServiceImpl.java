@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.common.errors.ResourceNotFoundException;
@@ -515,6 +516,10 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		InterviewerAssignmentEntity assignment = interviewerAssignmentRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Interview Assignment Not Found"));
+		
+		log.info("Assignment Id : {}", assignment.getId());
+		log.info("Plan Id : {}", assignment.getPlanId());
+		log.info("Stage Type Id : {}", assignment.getStageTypeId());
 
 		InterviewRoundEntity round = interviewRoundRepository
 				.findByInterviewPlan_IdAndStageTypeId(assignment.getPlanId(), assignment.getStageTypeId());
