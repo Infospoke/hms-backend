@@ -40,7 +40,7 @@ public class OfferDetailsEntity {
     private String createdByRoleId;
 
     @Column(name = "submit_financial_approval")
-    private Boolean submitFinancialApproval;
+    private Boolean submitFinancialApproval=false;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;
@@ -62,6 +62,7 @@ public class OfferDetailsEntity {
 	
     @Column(name="approver1_comments")
     private String approver1Comments;
+
     
     @Column(name="approver2")
     private Boolean approver2=false;
@@ -77,6 +78,7 @@ public class OfferDetailsEntity {
       
     @Column(name="date_of_approval2")
 	private LocalDateTime dateOfApproval2;
+
     
     @Column(name="approver3")
     private Boolean approver3=false;
@@ -92,6 +94,7 @@ public class OfferDetailsEntity {
    
     @Column(name="date_of_approval3")
 	private LocalDateTime dateOfApproval3;
+
     
     @Column(name="reject")
     private Boolean reject=false;

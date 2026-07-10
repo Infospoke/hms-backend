@@ -525,9 +525,9 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 				.findByInterviewPlan_IdAndStageTypeId(assignment.getPlanId(), assignment.getStageTypeId());
 
 		if (round == null) {
-		    throw new ResourceNotFoundException("Interview stage Not Found");
+			throw new ResourceNotFoundException("Interview stage Not Found");
 		}
-
+		
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("jobTitle", assignment.getJobTitle());

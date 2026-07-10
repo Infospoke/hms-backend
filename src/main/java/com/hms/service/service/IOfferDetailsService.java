@@ -1,6 +1,5 @@
 package com.hms.service.service;
 
-
 import com.hms.service.request.ApproveOfferRequest;
 
 import com.hms.service.request.ReleaseOfferRequest;
@@ -12,6 +11,9 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> getReadyToRelease(SpecificationFilterRequest request);
 
+	ApiResponse<?> getOfferDetailsByApplicantId(Integer applicantId);
+
+	ApiResponse<?> getOfferComments(Integer applicantId);
 
 	ApiResponse<?> approveOffer(ApproveOfferRequest request);
 
@@ -19,6 +21,7 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request);
 
+	ApiResponse<?> getOfferDashboardCounts();
 
 
 }

@@ -5,17 +5,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
-import java.util.Comparator;
-import java.util.HashMap;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Collections;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import java.util.Comparator;
+import java.util.HashMap;
+
 import java.util.Objects;
+
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,26 +26,34 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.entity.BudgetAndCompensationEntity;
+
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
-import com.hms.service.entity.ApprovalsChildEntity;
+
 import com.hms.service.entity.AssignRolesEntity;
+
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
-import com.hms.service.entity.SRPositionBasicsEntity;
-import com.hms.service.entity.UserEntity;
-import com.hms.service.enums.FunctionalityTypes;
-import com.hms.service.repository.ApprovalChainRepository;
-import com.hms.service.repository.AssignRolesRepository;
+
+import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.JobApplicationRepository;
+
+import com.hms.service.entity.UserEntity;
+
+import com.hms.service.repository.ApprovalChainRepository;
+import com.hms.service.repository.AssignRolesRepository;
+
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.OfferDeatilsChildRepository;
+
 import com.hms.service.repository.OfferDetailsRepository;
 
 import com.hms.service.repository.RolesRepository;
@@ -53,10 +61,14 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
+
+import com.hms.service.response.OfferCommentsResponse;
+import com.hms.service.response.OfferDetailsResponse;
+
 import com.hms.service.service.INotificationService;
 
 import com.hms.service.request.ReleaseOfferRequest;
-import com.hms.service.request.SpecificationFilterRequest;
+
 import com.hms.service.response.RaiseOfferRequestResponse;
 
 import com.hms.service.service.IOfferDetailsService;
@@ -77,34 +89,39 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
+	
+	@Autowired
+	private JobApplicationRepository jobApplicationRepository;
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
 	
 	@Autowired
+	private BudgetAndCompensationRepository budgetAndCompensationRepository;
+
+	@Autowired
 	private ApprovalChainRepository approvalChainRepository;
-	
+
 	@Autowired
 	private FunctionalityRepository functionalityRepository;
-	
+
 	@Autowired
 	private OfferDeatilsChildRepository offerDeatilsChildRepository;
-	
+
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
-	
+
 	@Autowired
 	private UserRepository userRepository;
-	
+
 	@Autowired
 	private HttpServletRequest httpServletRequest;
-	
+
 	@Autowired
 	private JwtService jwtService;
-	
+
 	@Autowired
 	private RolesRepository rolesRepository;
-	
 
 	@Autowired
 	private INotificationService notificationService;
@@ -132,7 +149,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 						? request.getSortBy()
 
-						: "finalApprovalTime"
+						: "dateOfApproval3"
 
 		);
 
@@ -192,19 +209,19 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		map.put("recruiterName", offer.getRecruitedBy());
 
-		map.put("finalApprovalTime", offer.getFinalApprovalTime());
+		map.put("finalApprovalTime", offer.getDateOfApproval3());
 
-		map.put("priority", calculatePriority(offer.getFinalApprovalTime()));
-		
+		map.put("priority", calculatePriority(offer.getDateOfApproval3()));
+
 		map.put("totalCtc", offer.getTotalCtc());
 
 		return map;
 
 	}
 
-	private String calculatePriority(LocalDateTime finalApprovalTime) {
+	private String calculatePriority(LocalDateTime dateOfApproval3) {
 
-		long days = ChronoUnit.DAYS.between(finalApprovalTime.toLocalDate(), LocalDate.now());
+		long days = ChronoUnit.DAYS.between(dateOfApproval3.toLocalDate(), LocalDate.now());
 
 		if (days >= 5) {
 			return "High";
@@ -217,22 +234,168 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return "Low";
 	}
 
+	
+	@Override
+	public ApiResponse<?> getOfferDetailsByApplicantId(Integer applicantId) {
+		log.info("OfferDetailsServiceImpl ::Inside the getOfferDetailsByApplicantId");
+		try {
+
+			Optional<JobApplicationEntity> applicantOptional = jobApplicationRepository.findById(applicantId);
+
+			if (applicantOptional.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Applicant not found");
+			}
+
+			JobApplicationEntity applicant = applicantOptional.get();
+
+			OfferDetailsResponse response = new OfferDetailsResponse();
+
+			// Applicant Details
+			response.setApplicantId(applicant.getId());
+			response.setCandidateName(applicant.getFirstName());
+			response.setEmail(applicant.getEmail());
+
+			// Job Details
+			CreateJobDetailsEntity jobDetails = createJobDetailsRepository.findByJobId(applicant.getJobId());
+
+			response.setJobTitle(jobDetails.getJobTitle());
+			response.setEmploymentType(jobDetails.getEmploymentType());
+			response.setWorkLocation(jobDetails.getLocation());
+			// Department
+			Optional<DepartmentsEntity> departmentOptional = departmentsRepository.findById(jobDetails.getDepartmentId());
+
+			if (departmentOptional.isPresent()) {
+				response.setDepartment(departmentOptional.get().getDepartmentName());
+			}
+
+			// Budget & Compensation
+			Optional<BudgetAndCompensationEntity> budgetAndCompensationEntity = budgetAndCompensationRepository
+					.findBySrId(jobDetails.getSrId());
+
+			if (budgetAndCompensationEntity.isPresent()) {
+
+				BudgetAndCompensationEntity budget = budgetAndCompensationEntity.get();
+
+				response.setBasicSalary(budget.getProposedTotalCompensation());
+
+				response.setSigningBonus(
+						Boolean.TRUE.equals(budget.getSigningBonus()) ? budget.getSigningBonusAmount() : 0);
+
+				response.setAnnualRsuEsopValue(Boolean.TRUE.equals(budget.getEquity()) ? budget.getEquityAmount() : 0);
+
+				response.setOtherBenefits(
+						Boolean.TRUE.equals(budget.getRelocationBudget()) ? budget.getRelocationBudgetAmount() : 0);
+
+				response.setTotalCtc(budget.getProposedTotalCompensation());
+
+				response.setOfferedCtc(budget.getAnnualHiringCost());
+				response.setMinSalary(budget.getMinimumSalary());
+				response.setMaxSalary(budget.getMaximumSalary());
+			}
+
+			// Offer Details
+			Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplicationId(applicantId);
+
+			if (offerOptional.isPresent()) {
+
+				OfferDetailsEntity offer = offerOptional.get();
+
+				response.setRecruiter(offer.getRecruitedBy());
+				response.setRequestedOn(
+						offer.getInterviewCompletionDate() != null ? offer.getInterviewCompletionDate().toLocalDate()
+								: null);
+
+				response.setProbationPeriod(offer.getProbationPeriod());
+				response.setNoticePeriod(offer.getNoticePeriod());
+
+			
+			}
+			 log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
+			return ApiResponse.success(ResponseCode.SUCCESS, "Offer details fetched successfully", response);
+
+		} catch (Exception e) {
+			log.error("OfferDetailsServiceImpl :: Error while fetching offer details", e);
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+	@Override
+	public ApiResponse<?> getOfferComments(Integer applicantId) {
+		  log.info("OfferDetailsServiceImpl ::Inside the getOfferComments");
+	    try {
+
+	        Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository.findByJobApplicationId(applicantId);
+
+	        if (offerDetailsEntity == null) {
+	            return ApiResponse.failure(ResponseCode.FAILURE, "Offer details not found");
+	        }
+	        OfferDetailsEntity offer =offerDetailsEntity.get();
+	        List<OfferCommentsResponse> responseList = new ArrayList<>();
+
+	        // Approver 1
+	        if (offer.getApprover1By() != null) {
+
+	            OfferCommentsResponse response = new OfferCommentsResponse();
+	            response.setRole(offer.getApprover1Role());
+	            response.setApproverName(offer.getApprover1By());
+	            response.setApproved(offer.getApprover1());
+	            response.setApprovedOn(offer.getFinalApprovalTime());
+	            response.setComments(offer.getApprover1Comments());
+
+	            responseList.add(response);
+	        }
+
+	        // Approver 2
+	        if (offer.getApprover2By() != null) {
+
+	            OfferCommentsResponse response = new OfferCommentsResponse();
+	            response.setRole(offer.getApprover2Role());
+	            response.setApproverName(offer.getApprover2By());
+	            response.setApproved(offer.getApprover2());
+	            response.setApprovedOn(offer.getFinalApprovalTime());
+	            response.setComments(offer.getApprover2Comments());
+
+	            responseList.add(response);
+	        }
+
+	        // Approver 3
+	        if (offer.getApprover3By() != null) {
+
+	            OfferCommentsResponse response = new OfferCommentsResponse();
+	            response.setRole(offer.getApprover3Role());
+	            response.setApproverName(offer.getApprover3By());
+	            response.setApproved(offer.getApprover3());
+	            response.setApprovedOn(offer.getFinalApprovalTime());
+	            response.setComments(offer.getApprover3Comments());
+
+	            responseList.add(response);
+	        }
+	        log.info("OfferDetailsServiceImpl ::Exit from the getOfferComments");
+
+	        return ApiResponse.success(ResponseCode.SUCCESS,
+	                "Offer comments fetched successfully", responseList);
+
+	    } catch (Exception e) {
+	        log.error("OfferDetailsServiceImpl :: getOfferComments", e);
+	        return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+	    }
+	}
+
+
 	@Override
 
 	public ApiResponse<?> approveOffer(ApproveOfferRequest request) {
-		Optional<OfferDetailsChildEntity> optional = offerDeatilsChildRepository.findByJobApplication_Id(request.getApplicantId());
+		Optional<OfferDetailsChildEntity> optional = offerDeatilsChildRepository
+				.findByJobApplication_Id(request.getApplicantId());
 
 		NotificationEvent event = new NotificationEvent();
 
 		if (optional.isEmpty()) {
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "No approval record found", List.of("Invalid Applicant Id"));
+			return ApiResponse.failure(ResponseCode.FAILURE, "No approval record found",
+					List.of("Invalid Applicant Id"));
 		}
 
 		OfferDetailsChildEntity entity = optional.get();
-		
-		
-		
 
 		// FIND CURRENT LEVEL
 
@@ -258,7 +421,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		String roleName = getRoleNameFromToken();
 		String username = getUsernameFromToken();
-
 
 		// ROLE VALIDATION
 
@@ -287,7 +449,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		// MAKER CHECKER VALIDATION
 
-		Integer submittedBy =entity.getOfferSubmittedBy();
+		Integer submittedBy = entity.getOfferSubmittedBy();
 
 		if (submittedBy != null) {
 
@@ -307,7 +469,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		// FETCH SR
 
-		Optional<OfferDetailsEntity> posOpt =offerDetailsRepository.findByJobApplication_Id(request.getApplicantId());
+		Optional<OfferDetailsEntity> posOpt = offerDetailsRepository.findByJobApplication_Id(request.getApplicantId());
 
 		if (posOpt.isEmpty()) {
 
@@ -317,7 +479,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		OfferDetailsEntity pos = posOpt.get();
 
 		Integer applicantId = pos.getJobApplication().getId();
-	Long userId = null;
+		Long userId = null;
 		String makerRoleName = null;
 		Integer makerRoleId = null;
 
@@ -446,7 +608,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		String checkerRoleName = rolesRepository.findByRoleId(roleId).get().getRoleName();
 //		Integer deptId = pos.getDepartmentId();
 
-		//String deptName = departmentsRepository.findById(deptId).get().getDepartmentName();
+		// String deptName =
+		// departmentsRepository.findById(deptId).get().getDepartmentName();
 
 		event.setProcessId(pos.getId().toString());
 //		event.setDeptName(deptName);
@@ -474,15 +637,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				makerSubject = "Your Staffing Requisition has been approved by Level 1 (Department Head) and is now under Level 2 approval flow";
 
-				makerTitle = "Level 1 Approved — "+ roleName;
+				makerTitle = "Level 1 Approved — " + roleName;
 
-				makerMailBody ="hgertyuiuoiuy";
+				makerMailBody = "hgertyuiuoiuy";
 
 			} else if (approvalLevel == 2) {
 
 				makerSubject = "Your Staffing Requisition has been approved by Level 2 (HRBP) and is now under Level 3 approval flow";
 
-				makerTitle = "Level 2 Approved — "+ roleName;
+				makerTitle = "Level 2 Approved — " + roleName;
 
 				makerMailBody = "sadfegfrdhyjgkui";
 
@@ -490,9 +653,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				makerSubject = "Your Staffing Requisition has been fully approved successfully and is now ready for Recruiter Assignment and Job Creation";
 
-				makerTitle = "Level 3 Approved — "+ roleName;
+				makerTitle = "Level 3 Approved — " + roleName;
 
-				makerMailBody ="ttretyuio";
+				makerMailBody = "ttretyuio";
 			}
 
 //			sendMakerMail(applicantId, userId, makerRoleId, makerSubject, makerRoleName, makerTitle, makerMailBody, event);
@@ -518,13 +681,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			return ApiResponse.success("Rejected successfully at level " + approvalLevel);
 		}
 	}
-	
+
 	private Map<Integer, List<String>> processApprovalChain(Integer applicantId) {
 
 		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-		FunctionalityEntity functionality = functionalityRepository
-				.findByFunctionalityName(Constants.OFFER_PLAN)
+		FunctionalityEntity functionality = functionalityRepository.findByFunctionalityName(Constants.OFFER_PLAN)
 				.orElseThrow(() -> new RuntimeException("Functionality not found"));
 
 		Integer functionalityId = functionality.getId();
@@ -540,14 +702,13 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		}
 
-
-
 		List<LevelConfig> levels = approvalChainEntity.getLevelConfig();
 
 		// sort levels
 		levels.sort(Comparator.comparing(LevelConfig::getLevel));
 
-		Optional<OfferDetailsChildEntity> optionalChild = offerDeatilsChildRepository.findByJobApplication_Id(applicantId);
+		Optional<OfferDetailsChildEntity> optionalChild = offerDeatilsChildRepository
+				.findByJobApplication_Id(applicantId);
 
 		OfferDetailsChildEntity childEntity;
 
@@ -567,7 +728,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		for (LevelConfig lvl : levels) {
 
 			Integer roleId = lvl.getRoleId();
-
 
 			if (lvl.getLevel() == 1) {
 
@@ -607,7 +767,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		}
 
-		// approver2 true  send role2 mails
+		// approver2 true send role2 mails
 		else if (Boolean.TRUE.equals(childEntity.getApprover2()) && !Boolean.TRUE.equals(childEntity.getApprover3())) {
 
 			roleId = childEntity.getRole2();
@@ -616,7 +776,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		}
 
-		// approver3 true  send role3 mails
+		// approver3 true send role3 mails
 		else if (Boolean.TRUE.equals(childEntity.getApprover3())) {
 
 			roleId = childEntity.getRole3();
@@ -640,6 +800,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		return roleEmailMap;
 	}
+
 	private String getRoleNameFromToken() {
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
@@ -678,7 +839,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			throw new RuntimeException("Invalid or missing Authorization header");
 		}
 	}
-	
+
 	private void sendMakerMail(String srId, Long userId, Integer makerRoleId, String makerMessage, String makerRoleName,
 			String notificationTitle, String body, NotificationEvent event) {
 
@@ -699,7 +860,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		notificationService.callNotification(event);
 	}
-	
+
 	private String getUsernameFromToken() {
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
@@ -723,10 +884,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 	}
 
-
 	public ApiResponse<?> getAllRaiseOfferRequests(SpecificationFilterRequest request) {
 
-	    log.info("OfferDetailsServiceImpl :: Inside getAllRaiseOfferRequests");
+		log.info("OfferDetailsServiceImpl :: Inside getAllRaiseOfferRequests");
 
 		Sort sort = Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy());
 
@@ -736,43 +896,40 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(specification, pageable);
 
-	    List<RaiseOfferRequestResponse> responseList = new ArrayList<>();
+		List<RaiseOfferRequestResponse> responseList = new ArrayList<>();
 
-	    for (OfferDetailsEntity offer : offerPage.getContent()) {
+		for (OfferDetailsEntity offer : offerPage.getContent()) {
 
-	        JobApplicationEntity application = offer.getJobApplication();
+			JobApplicationEntity application = offer.getJobApplication();
 
-	        CreateJobDetailsEntity job =
-	                createJobDetailsRepository.findByJobId(application.getJobId());
+			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
-	        DepartmentsEntity department = null;
+			DepartmentsEntity department = null;
 
-	        if(job != null){
+			if (job != null) {
 
-	            department = departmentsRepository
-	                    .findById(job.getDepartmentId())
-	                    .orElse(null);
-	        }
+				department = departmentsRepository.findById(job.getDepartmentId()).orElse(null);
+			}
 
 			RaiseOfferRequestResponse response = new RaiseOfferRequestResponse();
 
-	        response.setOfferId(offer.getId());
+			response.setOfferId(offer.getId());
 
-	        response.setApplicantId(application.getId());
+			response.setApplicantId(application.getId());
 
 			response.setCandidateName(application.getFirstName() + " " + application.getLastName());
 
-	        response.setCandidateEmail(application.getEmail());
+			response.setCandidateEmail(application.getEmail());
 
-	        response.setPhoneNumber(application.getPhNo());
+			response.setPhoneNumber(application.getPhNo());
 
-	        if(job != null){
+			if (job != null) {
 
-	            response.setJobId(job.getJobId());
+				response.setJobId(job.getJobId());
 
-	            response.setJobTitle(job.getJobTitle());
+				response.setJobTitle(job.getJobTitle());
 
-	        }
+			}
 			if (department != null) {
 
 				response.setDepartmentName(department.getDepartmentName());
@@ -786,23 +943,23 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			responseList.add(response);
 
-	    }
+		}
 
-	    Map<String, Object> response = new HashMap<>();
+		Map<String, Object> response = new HashMap<>();
 
-	    response.put("content", responseList);
-	    
-	    response.put("page", offerPage.getNumber());
-	    
-	    response.put("size", offerPage.getSize());
-	    
-	    response.put("totalElements", offerPage.getTotalElements());
-	    
-	    response.put("totalPages", offerPage.getTotalPages());
-	    
-	    response.put("last", offerPage.isLast());
+		response.put("content", responseList);
 
-	    log.info("OfferDetailsServiceImpl :: Exit getAllRaiseOfferRequests");
+		response.put("page", offerPage.getNumber());
+
+		response.put("size", offerPage.getSize());
+
+		response.put("totalElements", offerPage.getTotalElements());
+
+		response.put("totalPages", offerPage.getTotalPages());
+
+		response.put("last", offerPage.isLast());
+
+		log.info("OfferDetailsServiceImpl :: Exit getAllRaiseOfferRequests");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Requests fetched successfully", response);
 	}
@@ -822,7 +979,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return "Low";
 	}
 
-		
 	@Transactional
 	public ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request) {
 
@@ -858,5 +1014,29 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
 	}
+
+	@Override
+	public ApiResponse<?> getOfferDashboardCounts() {
+
+		log.info("OfferDetailsServiceImpl :: getOfferDashboardCounts");
+
+		Long raiseOfferRequest = offerDetailsRepository.countBySubmitFinancialApprovalFalse();
+
+		Long pendingApprovals = offerDetailsRepository
+				.countBySubmitFinancialApprovalTrueAndApproveFalseAndRejectFalse();
+
+		Long readyToRelease = offerDetailsRepository.countByApproveTrueAndOfferReleasedFalse();
+
+
+		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("raiseOfferRequest", raiseOfferRequest);
+		response.put("pendingApprovals", pendingApprovals);
+		response.put("readyToRelease", readyToRelease);
+		response.put("releaseOfferLetter",pendingApprovals+readyToRelease );
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Offer dashboard counts fetched successfully", response);
+	}
+
 
 }
