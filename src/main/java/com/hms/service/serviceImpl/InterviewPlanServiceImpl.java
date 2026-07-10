@@ -2907,6 +2907,23 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	public ApiResponse<?> updateInterviewCompletionStatus(UpdateInterviewCompletionStatusRequest request) {
 
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewCompletionStatus");
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Integer userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+		    String token = authHeader.substring(7);
+
+		    userId = jwtService.extractUserId(token).intValue();
+		}
+		
+		UserEntity user = userRepository.findByUserId(userId).orElse(null);
+
+		if (user == null) {
+		    return ApiResponse.failure(ResponseCode.FAILURE, "User not found");
+		}
 
 		// Validations
 		Integer applicationId = request.getApplicantId();
@@ -2943,6 +2960,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		application.setInterviewCompletionStatus(request.getStatus());
+		
+		application.setInterviewCompletionDate(LocalDateTime.now());
+
+		application.setRecruitedBy(user.getFirstName() + " " + user.getLastName());
 
 		jobApplicationRepository.save(application);
 

@@ -77,5 +77,11 @@ public class JobApplicationEntity {
 	
 	@Column(name="interview_completion_status")
 	private String interviewCompletionStatus;
+	
+	@Column(name = "interview_completion_date")
+	private LocalDateTime interviewCompletionDate;
+
+	@Column(name = "recruited_by")
+	private String recruitedBy;
 
 }
