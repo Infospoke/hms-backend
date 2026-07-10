@@ -35,6 +35,9 @@ public class OfferDetailsEntity {
 
     @Column(name = "probation_period")
     private String probationPeriod;
+    
+    @Column(name = "created_by_roleId")
+    private String createdByRoleId;
 
     @Column(name = "submit_financial_approval")
     private Boolean submitFinancialApproval;
@@ -71,8 +74,7 @@ public class OfferDetailsEntity {
     
     @Column(name="approver2_comments")
     private String approver2Comments;
-    
-    
+      
     @Column(name="date_of_approval2")
 	private LocalDateTime dateOfApproval2;
     
@@ -94,7 +96,6 @@ public class OfferDetailsEntity {
     @Column(name="reject")
     private Boolean reject=false;
     
-    
     @Column(name="approve")
     private Boolean approve=false;
     
@@ -110,11 +111,9 @@ public class OfferDetailsEntity {
     @Column(name="submitted_by_user_id")
     private Integer submittedByUserId;
     
-
     @Column(name="offer_released_by")
     private Long offerReleasedBy;
-
-    
+ 
     @Column(name="offer_released_at")
     private LocalDateTime offerReleasedAt;
 
