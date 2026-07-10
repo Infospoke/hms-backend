@@ -100,6 +100,9 @@ public class OfferDetailsEntity {
     
     @Column(name="final_approval_time")
     private LocalDateTime finalApprovalTime;
+
+    @Column(name="offer_released")
+    private Boolean offerReleased=false;
     
     @Column(name="in_progress")
     private Boolean inProgress;
@@ -107,12 +110,25 @@ public class OfferDetailsEntity {
     @Column(name="submitted_by_user_id")
     private Integer submittedByUserId;
     
+
+    @Column(name="offer_released_by")
+    private Long offerReleasedBy;
+
     
+    @Column(name="offer_released_at")
+    private LocalDateTime offerReleasedAt;
+
+    @Column(name="interview_completion_status")
+	private String interviewCompletionStatus;
     
+    @Column(name = "interview_completion_date")
+    private LocalDateTime interviewCompletionDate;
+
+    @Column(name = "recruited_by")
+    private String recruitedBy;
     
-    
-    
-    
-    
+    @Column(name="total_ctc")
+    private Long totalCtc;
+
     
 }
