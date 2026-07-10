@@ -11,9 +11,9 @@ public class ApproveOfferRequest {
 	
 	private Integer applicantId;
 	
-	private String approve;
+	private Boolean approve;
 	
-	private String reject;
+	private Boolean reject;
 	
 	private String comments;
 	
