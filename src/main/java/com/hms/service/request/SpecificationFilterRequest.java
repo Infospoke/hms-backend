@@ -1709,7 +1709,28 @@ public class SpecificationFilterRequest {
 
 			if (priority != null && !priority.isBlank()) {
 
-				predicates.add(cb.equal(cb.lower(job.get("priority")), priority.toLowerCase()));
+			    LocalDate today = LocalDate.now();
+
+			    switch (priority.toUpperCase()) {
+
+				case "LOW":
+
+					predicates.add(cb.between(root.get("interviewCompletionDate"), today.minusDays(1).atStartOfDay(),
+							today.atStartOfDay()));
+					break;
+
+				case "MEDIUM":
+
+					predicates.add(cb.between(root.get("interviewCompletionDate"), today.minusDays(2).atStartOfDay(),
+							today.minusDays(1).atStartOfDay()));
+					break;
+
+				case "HIGH":
+
+					predicates.add(cb.lessThanOrEqualTo(root.get("interviewCompletionDate"),
+							today.minusDays(3).atStartOfDay()));
+					break;
+			    }
 			}
 
 			// Date Filter
