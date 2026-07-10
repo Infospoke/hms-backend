@@ -37,7 +37,7 @@ public class OfferDetailsEntity {
     private String probationPeriod;
 
     @Column(name = "submit_financial_approval")
-    private Boolean submitFinancialApproval;
+    private Boolean submitFinancialApproval=false;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;

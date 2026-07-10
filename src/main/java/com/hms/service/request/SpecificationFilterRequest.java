@@ -1572,57 +1572,34 @@ public class SpecificationFilterRequest {
 				return cb.and(jobJoin, cb.or(candidateName, firstName, lastName, email, jobTitle));
 			});
 		}
+		String jobId = getFilter("jobId");
 
-		String jobTitle = getFilter("jobTitle");
+		if (jobId != null) {
 
-		if (jobTitle != null) {
-
-			String like = "%" + jobTitle.toLowerCase() + "%";
+			Integer id = Integer.valueOf(jobId);
 
 			spec = spec.and((root, query, cb) -> {
 
-				query.distinct(true);
-
 				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
-				Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
-
-				return cb.and(
-
-						cb.equal(application.get("jobId"), job.get("jobId")),
-
-						cb.like(cb.lower(job.get("jobTitle")), like)
-
-				);
+				return cb.equal(application.get("jobId"), id);
 
 			});
 		}
+		String departmentId = getFilter("departmentId");
 
-		String department = getFilter("department");
+		if (departmentId != null) {
 
-		if (department != null) {
-
-			String like = "%" + department.toLowerCase() + "%";
+			Integer id = Integer.valueOf(departmentId);
 
 			spec = spec.and((root, query, cb) -> {
-
-				query.distinct(true);
 
 				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
 				Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
 
-				Root<DepartmentsEntity> dept = query.from(DepartmentsEntity.class);
-
-				return cb.and(
-
-						cb.equal(application.get("jobId"), job.get("jobId")),
-
-						cb.equal(job.get("departmentId"), dept.get("id")),
-
-						cb.like(cb.lower(dept.get("departmentName")), like)
-
-				);
+				return cb.and(cb.equal(application.get("jobId"), job.get("jobId")),
+						cb.equal(job.get("departmentId"), id));
 
 			});
 		}
@@ -1751,7 +1728,7 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
-	
+
 	public Specification<InterviewScheduleEntity> buildUpcomingInterviewSpecification() {
 
 		return (root, query, cb) -> {
