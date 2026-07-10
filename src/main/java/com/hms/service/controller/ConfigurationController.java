@@ -164,7 +164,13 @@ public class ConfigurationController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
+	
+	@GetMapping("/offer-letter-templates")
+	public ResponseEntity<ApiResponse<List<?>>> getOfferLetterTemplates() {
+		ApiResponse<List<?>> response = iConfigurationService.getOfferLetterTemplates();
+		return new ResponseEntity<>(response, HttpStatus.OK);
 
+	}
 
 
 }

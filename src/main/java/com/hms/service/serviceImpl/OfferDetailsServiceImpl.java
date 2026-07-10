@@ -61,7 +61,7 @@ import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.SpecificationFilterRequest;
-
+import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.response.OfferCommentsResponse;
 import com.hms.service.response.OfferDetailsResponse;
 
@@ -1036,6 +1036,69 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		response.put("releaseOfferLetter",pendingApprovals+readyToRelease );
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Offer dashboard counts fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> UpdateRaiseOffer(UpdateRaiseOfferRequest request) {
+
+		log.info("OfferDetailsServiceImpl :: Inside UpdateRaiseOffer");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Integer userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+			String token = authHeader.substring(7);
+
+			userId = jwtService.extractUserId(token).intValue();
+		}
+
+		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
+
+		if (application == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
+		}
+
+		OfferDetailsEntity offerDetails = offerDetailsRepository.findByJobApplication(application).orElse(null);
+
+		if (offerDetails == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Details Not Found");
+		}
+
+		AssignRolesEntity assignRole = assignRolesRepository.findByUserId(userId).orElse(null);
+
+		if (assignRole == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Assigned Role Not Found");
+		}
+
+		offerDetails.setTotalCtc(request.getTotalCtc());
+
+		offerDetails.setNoticePeriod(request.getNoticePeriod());
+
+		offerDetails.setProbationPeriod(request.getProbationPeriod());
+
+		offerDetails.setOfferLetterTemplate(request.getOfferLetterTemplate());
+
+		offerDetails.setCompensation(request.getCompensation());
+
+		offerDetails.setSubmitFinancialApproval(request.getSubmitFinancialApproval());
+
+		offerDetails.setCreatedDate(LocalDateTime.now());
+
+		offerDetails.setSubmittedByUserId(userId);
+
+		offerDetails.setCreatedByRoleId(assignRole.getRoleId());
+
+		offerDetailsRepository.save(offerDetails);
+
+		log.info("OfferDetailsServiceImpl :: Exit UpdateRaiseOffer");
+
+		return ApiResponse.success(ResponseCode.SUCCESS,
+				"Raise Offer Request Updated Successfully", null);
 	}
 
 

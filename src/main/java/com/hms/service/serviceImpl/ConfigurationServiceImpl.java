@@ -26,6 +26,7 @@ import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.ModuleRepository;
+import com.hms.service.repository.OfferLetterTemplateRepository;
 import com.hms.service.repository.PermissionRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesRepository;
@@ -53,6 +54,10 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	@Autowired
 	private DepartmentsRepository departmentsRepository;
 
+	@Autowired
+	private OfferLetterTemplateRepository offerLetterTemplateRepository;
+
+	
 	@Autowired
 	private RolesRepository rolesRepository;
 	
@@ -371,6 +376,20 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		log.info("ConfigurationServiceImpl::Exit from the getInterviewRounds method");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview rounds fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<List<?>> getOfferLetterTemplates() {
+
+	    log.info("ConfigurationServiceImpl :: Inside getOfferLetterTemplates");
+
+		List<DropDownResponse> response = offerLetterTemplateRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
+				.stream().map(template -> new DropDownResponse(template.getId(), template.getOfferLetterTemplate()))
+				.toList();
+
+		log.info("ConfigurationServiceImpl :: Exit getOfferLetterTemplates");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Offer Letter Templates fetched successfully", response);
 	}
 
 }

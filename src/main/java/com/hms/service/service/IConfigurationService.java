@@ -44,6 +44,8 @@ public interface IConfigurationService {
 
 	ApiResponse<List<?>> getInterviewRounds();
 	
+	ApiResponse<List<?>> getOfferLetterTemplates();
+	
 	
 
 }

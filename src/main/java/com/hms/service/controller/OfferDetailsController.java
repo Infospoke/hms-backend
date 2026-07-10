@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hms.service.request.ApproveOfferRequest;
 import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -73,5 +74,13 @@ public class OfferDetailsController {
 		return ResponseEntity.ok(iOfferDetailsService.getOfferDashboardCounts());
 
 	}
+	
+	@PostMapping("/update-raise-offer-request")
+	public ResponseEntity<ApiResponse<?>> submitFinancialApproval(@RequestBody UpdateRaiseOfferRequest request) {
+
+		return ResponseEntity.ok(iOfferDetailsService.UpdateRaiseOffer(request));
+	}
+	
+	
 
 }

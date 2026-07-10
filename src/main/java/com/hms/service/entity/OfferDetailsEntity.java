@@ -37,7 +37,7 @@ public class OfferDetailsEntity {
     private String probationPeriod;
     
     @Column(name = "created_by_roleId")
-    private String createdByRoleId;
+    private Integer createdByRoleId;
 
     @Column(name = "submit_financial_approval")
     private Boolean submitFinancialApproval=false;
@@ -131,6 +131,12 @@ public class OfferDetailsEntity {
     
     @Column(name="total_ctc")
     private Long totalCtc;
+
+    @Column(name = "offer_letter_template")
+    private String offerLetterTemplate;
+
+    @Column(name = "compensation")
+    private String compensation;
 
     
 }

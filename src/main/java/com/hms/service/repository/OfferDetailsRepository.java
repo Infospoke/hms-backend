@@ -28,6 +28,8 @@ public interface OfferDetailsRepository
 	Long countBySubmitFinancialApprovalTrueAndApproveFalseAndRejectFalse();
 
 	Long countByApproveTrueAndOfferReleasedFalse();
+	
+	Optional<OfferDetailsEntity> findByJobApplication(JobApplicationEntity jobApplication);
 
 
 }
