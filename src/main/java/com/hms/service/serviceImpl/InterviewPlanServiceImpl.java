@@ -47,6 +47,7 @@ import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
@@ -68,6 +69,7 @@ import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.InterviewerAssignmentRepository;
 import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
@@ -188,6 +190,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
+	
+	@Autowired
+	private OfferDetailsRepository offerDetailsRepository;
 
 	@Autowired
 	private MailServiceImpl mailService;
@@ -2946,26 +2951,28 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
+		
+		OfferDetailsEntity offerDetails = offerDetailsRepository.findTopByJobApplicationOrderByIdDesc(application);
 
 		if (application == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
 		}
 
-		String currentStatus = application.getInterviewCompletionStatus();
+		String currentStatus = offerDetails.getInterviewCompletionStatus();
 
 		if ("ACCEPTED".equalsIgnoreCase(currentStatus) || "REJECTED".equalsIgnoreCase(currentStatus)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview completion status cannot be modified.");
 		}
 
-		application.setInterviewCompletionStatus(request.getStatus());
+		offerDetails.setInterviewCompletionStatus(request.getStatus());
 		
-		application.setInterviewCompletionDate(LocalDateTime.now());
+		offerDetails.setInterviewCompletionDate(LocalDateTime.now());
 
-		application.setRecruitedBy(user.getFirstName() + " " + user.getLastName());
+		offerDetails.setRecruitedBy(user.getFirstName() + " " + user.getLastName());
 
-		jobApplicationRepository.save(application);
+		offerDetailsRepository.save(offerDetails);
 
 		if ("ACCEPTED".equalsIgnoreCase(request.getStatus())) {
 

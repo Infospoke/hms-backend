@@ -91,8 +91,14 @@ public class OfferDetailsEntity {
     @Column(name="final_approval_time")
     private LocalDateTime finalApprovalTime;
     
+    @Column(name="interview_completion_status")
+	private String interviewCompletionStatus;
     
-    
+    @Column(name = "interview_completion_date")
+    private LocalDateTime interviewCompletionDate;
+
+    @Column(name = "recruited_by")
+    private String recruitedBy;
     
     
     
