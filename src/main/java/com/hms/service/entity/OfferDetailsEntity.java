@@ -108,6 +108,9 @@ public class OfferDetailsEntity {
 
     @Column(name = "recruited_by")
     private String recruitedBy;
+    
+    @Column(name="total_ctc")
+    private Long totalCtc;
 
     
 }

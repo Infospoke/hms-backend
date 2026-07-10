@@ -1538,7 +1538,8 @@ public class SpecificationFilterRequest {
 
 		Specification<OfferDetailsEntity> spec = (root, query, cb) -> cb.conjunction();
 
-		spec = spec.and((root, query, cb) -> cb.isTrue(root.get("approve")));
+		spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
+				cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased")))));
 
 		String search = getFilter("search");
 		if (search != null) {

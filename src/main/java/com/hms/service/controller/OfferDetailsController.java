@@ -22,7 +22,7 @@ public class OfferDetailsController {
 	@Autowired
 	private IOfferDetailsService iOfferDetailsService;
 
-	@PostMapping("/ready-to-release")
+	@PostMapping("/ready-to-release-list")
 	public ResponseEntity<ApiResponse<?>> getReadyToRelease(@RequestBody SpecificationFilterRequest request) {
 
 		return ResponseEntity.ok(iOfferDetailsService.getReadyToRelease(request));

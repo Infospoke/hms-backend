@@ -103,7 +103,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				ResponseCode.SUCCESS,
 
-				"Ready To Release fetched successfully",
+				"Ready To Release Offer letters list fetched successfully",
 
 				response
 
@@ -138,6 +138,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		map.put("finalApprovalTime", offer.getFinalApprovalTime());
 
 		map.put("priority", calculatePriority(offer.getFinalApprovalTime()));
+		
+		map.put("totalCtc", offer.getTotalCtc());
 
 		return map;
 
