@@ -2789,9 +2789,20 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			response.setStartTime(interviewScheduleEntity.getStartTime());
 
 			response.setEndTime(interviewScheduleEntity.getEndTime());
-
+			
 			response.setInterviewType(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
-
+			
+			response.setRescheduleDate(interviewScheduleEntity.getRescheduleDate());
+			
+			response.setRescheduleStartTime(interviewScheduleEntity.getRescheduleStartTime());
+			
+			response.setRescheduleEndTime(interviewScheduleEntity.getRescheduleEndTime());			
+			
+			if(interviewScheduleEntity.getRescheduleDate()!=null)
+			{
+			response.setReScheduleInterviewType(interviewScheduleEntity.getRescheduleMeetingLink()!=null ?"Online":"Offline");
+			}
+			
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview schedule details fetched successfully",
 					response);
 
