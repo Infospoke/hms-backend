@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OfferCommentsResponse {
-
+    
+	private String approverSequence;
     private String role;
     private String approverName;
     private Boolean approved;

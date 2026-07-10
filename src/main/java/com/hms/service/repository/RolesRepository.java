@@ -33,5 +33,6 @@ public interface RolesRepository extends JpaRepository<RolesEntity, Integer> {
 
 	List<RolesEntity> findByDepartmentIdIn(List<Integer> departmentIds);
 
+
 	
 }
