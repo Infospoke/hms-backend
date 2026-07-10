@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 
 @Repository
@@ -29,5 +30,8 @@ public interface InterviewRoundRepository extends JpaRepository<InterviewRoundEn
 	InterviewRoundEntity findByInterviewPlan_IdAndRoundOrder(int planId, int i);
 
 	List<InterviewRoundEntity> findByInterviewPlan_IdIn(Collection<Integer> planIds);
+	
+	Optional<InterviewRoundEntity> findByStageTypeId(Integer stageTypeId);
+
 
 }

@@ -35,9 +35,12 @@ public class OfferDetailsEntity {
 
     @Column(name = "probation_period")
     private String probationPeriod;
+    
+    @Column(name = "created_by_roleId")
+    private String createdByRoleId;
 
     @Column(name = "submit_financial_approval")
-    private Boolean submitFinancialApproval;
+    private Boolean submitFinancialApproval=false;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;
@@ -54,8 +57,12 @@ public class OfferDetailsEntity {
     @Column(name="approver1_role")
     private String approver1Role;
     
+    @Column(name="date_of_approval1")
+	private LocalDateTime dateOfApproval1;
+	
     @Column(name="approver1_comments")
-    private String approver1_comments;
+    private String approver1Comments;
+
     
     @Column(name="approver2")
     private Boolean approver2=false;
@@ -67,7 +74,11 @@ public class OfferDetailsEntity {
     private String approver2Role;
     
     @Column(name="approver2_comments")
-    private String approver2_comments;
+    private String approver2Comments;
+      
+    @Column(name="date_of_approval2")
+	private LocalDateTime dateOfApproval2;
+
     
     @Column(name="approver3")
     private Boolean approver3=false;
@@ -79,18 +90,36 @@ public class OfferDetailsEntity {
     private String approver3Role;
     
     @Column(name="approver3_comments")
-    private String approver3_comments;
+    private String approver3Comments;
+   
+    @Column(name="date_of_approval3")
+	private LocalDateTime dateOfApproval3;
+
     
     @Column(name="reject")
     private Boolean reject=false;
-    
     
     @Column(name="approve")
     private Boolean approve=false;
     
     @Column(name="final_approval_time")
     private LocalDateTime finalApprovalTime;
+
+    @Column(name="offer_released")
+    private Boolean offerReleased=false;
     
+    @Column(name="in_progress")
+    private Boolean inProgress;
+    
+    @Column(name="submitted_by_user_id")
+    private Integer submittedByUserId;
+    
+    @Column(name="offer_released_by")
+    private Long offerReleasedBy;
+ 
+    @Column(name="offer_released_at")
+    private LocalDateTime offerReleasedAt;
+
     @Column(name="interview_completion_status")
 	private String interviewCompletionStatus;
     
@@ -100,9 +129,8 @@ public class OfferDetailsEntity {
     @Column(name = "recruited_by")
     private String recruitedBy;
     
-    
-    
-    
-    
+    @Column(name="total_ctc")
+    private Long totalCtc;
+
     
 }

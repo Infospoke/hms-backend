@@ -516,9 +516,13 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		InterviewerAssignmentEntity assignment = interviewerAssignmentRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Interview Assignment Not Found"));
 
-		InterviewRoundEntity round = interviewRoundRepository.findById(assignment.getStageTypeId())
-				.orElseThrow(() -> new ResourceNotFoundException("Interview stage Not Found"));
+		InterviewRoundEntity round = interviewRoundRepository
+				.findByInterviewPlan_IdAndStageTypeId(assignment.getPlanId(), assignment.getStageTypeId());
 
+		if (round == null) {
+			throw new ResourceNotFoundException("Interview stage Not Found");
+		}
+		
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("jobTitle", assignment.getJobTitle());

@@ -20,6 +20,7 @@ import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.JobApplicationEntity;
@@ -1538,13 +1539,17 @@ public class SpecificationFilterRequest {
 
 		Specification<OfferDetailsEntity> spec = (root, query, cb) -> cb.conjunction();
 
-		spec = spec.and((root, query, cb) -> cb.isTrue(root.get("approve")));
+		spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
+				cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased")))));
 
-		if (getFilter("search") != null) {
+		String search = getFilter("search");
+		if (search != null) {
 
-			String search = "%" + getFilter("search").toLowerCase() + "%";
+			String like = "%" + search.toLowerCase() + "%";
 
 			spec = spec.and((root, query, cb) -> {
+
+				query.distinct(true);
 
 				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
@@ -1552,23 +1557,40 @@ public class SpecificationFilterRequest {
 
 				Predicate jobJoin = cb.equal(application.get("jobId"), job.get("jobId"));
 
-				Predicate candidate = cb.like(
+				Predicate candidateName = cb.like(
 						cb.lower(cb.concat(cb.concat(application.get("firstName"), " "), application.get("lastName"))),
-						search);
+						like);
 
-				Predicate email = cb.like(cb.lower(application.get("email")), search);
+				Predicate firstName = cb.like(cb.lower(application.get("firstName")), like);
 
-				Predicate title = cb.like(cb.lower(job.get("jobTitle")), search);
+				Predicate lastName = cb.like(cb.lower(application.get("lastName")), like);
 
-				return cb.and(jobJoin, cb.or(candidate, email, title));
+				Predicate email = cb.like(cb.lower(application.get("email")), like);
+
+				Predicate jobTitle = cb.like(cb.lower(job.get("jobTitle")), like);
+
+				return cb.and(jobJoin, cb.or(candidateName, firstName, lastName, email, jobTitle));
+			});
+		}
+		String jobId = getFilter("jobId");
+
+		if (jobId != null) {
+
+			Integer id = Integer.valueOf(jobId);
+
+			spec = spec.and((root, query, cb) -> {
+
+				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
+
+				return cb.equal(application.get("jobId"), id);
 
 			});
-
 		}
+		String departmentId = getFilter("departmentId");
 
-		if (getFilter("jobTitle") != null) {
+		if (departmentId != null) {
 
-			String title = "%" + getFilter("jobTitle").toLowerCase() + "%";
+			Integer id = Integer.valueOf(departmentId);
 
 			spec = spec.and((root, query, cb) -> {
 
@@ -1576,54 +1598,175 @@ public class SpecificationFilterRequest {
 
 				Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
 
-				return cb.and(
-
-						cb.equal(application.get("jobId"), job.get("jobId")),
-
-						cb.like(cb.lower(job.get("jobTitle")), title)
-
-				);
+				return cb.and(cb.equal(application.get("jobId"), job.get("jobId")),
+						cb.equal(job.get("departmentId"), id));
 
 			});
+		}
+
+		String priority = getFilter("priority");
+
+		if (priority != null) {
+
+			LocalDateTime now = LocalDateTime.now();
+
+			switch (priority.toLowerCase()) {
+
+			case "high":
+
+				spec = spec.and((root, query, cb) ->
+
+				cb.lessThanOrEqualTo(root.get("finalApprovalTime"), now.minusDays(5)));
+
+				break;
+
+			case "medium":
+
+				spec = spec.and((root, query, cb) ->
+
+				cb.and(
+
+						cb.greaterThan(root.get("finalApprovalTime"), now.minusDays(5)),
+
+						cb.lessThanOrEqualTo(root.get("finalApprovalTime"), now.minusDays(3))
+
+				));
+
+				break;
+
+			case "low":
+
+				spec = spec.and((root, query, cb) ->
+
+				cb.greaterThan(root.get("finalApprovalTime"), now.minusDays(3)));
+
+				break;
+
+			}
 
 		}
 
-		if (getFilter("department") != null) {
+		Specification<OfferDetailsEntity> dateSpecification = dateSpec("finalApprovalTime");
 
-			String department = "%" + getFilter("department").toLowerCase() + "%";
-
-			spec = spec.and((root, query, cb) -> {
-
-				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
-
-				Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
-
-				Root<DepartmentsEntity> dept = query.from(DepartmentsEntity.class);
-
-				return cb.and(
-
-						cb.equal(application.get("jobId"), job.get("jobId")),
-
-						cb.equal(job.get("departmentId"), dept.get("id")),
-
-						cb.like(cb.lower(dept.get("departmentName")), department)
-
-				);
-
-			});
-
-		}
-
-		Specification<OfferDetailsEntity> dateSpec = dateSpec("approvedAt");
-
-		if (dateSpec != null) {
-
-			spec = spec.and(dateSpec);
-
+		if (dateSpecification != null) {
+			spec = spec.and(dateSpecification);
 		}
 
 		return spec;
-
 	}
 
+	public Specification<OfferDetailsEntity> buildRaiseOfferRequestSpecification() {
+
+		return (root, query, cb) -> {
+
+			query.distinct(true);
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication", JoinType.INNER);
+
+			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
+
+			predicates.add(cb.equal(application.get("jobId"), job.get("jobId")));
+
+			// Candidate should be hired/accepted
+			predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")), "hired"));
+
+			// Search
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.toLowerCase().trim() + "%";
+
+				Predicate candidateName = cb.like(
+						cb.lower(cb.concat(cb.concat(application.get("firstName"), " "), application.get("lastName"))),
+						keyword);
+
+				Predicate email = cb.like(cb.lower(application.get("email")), keyword);
+
+				predicates.add(cb.or(candidateName, email));
+			}
+
+			// Job Filter
+			String jobId = getFilter("jobId");
+
+			if (jobId != null) {
+
+				predicates.add(cb.equal(job.get("jobId"), Integer.parseInt(jobId)));
+			}
+
+			// Department Filter
+			String departmentId = getFilter("departmentId");
+
+			if (departmentId != null) {
+
+				predicates.add(cb.equal(job.get("departmentId"), Integer.parseInt(departmentId)));
+			}
+
+			// Priority Filter
+			String priority = getFilter("priority");
+
+			if (priority != null && !priority.isBlank()) {
+
+			    LocalDate today = LocalDate.now();
+
+			    switch (priority.toUpperCase()) {
+
+				case "LOW":
+
+					predicates.add(cb.between(root.get("interviewCompletionDate"), today.minusDays(1).atStartOfDay(),
+							today.atStartOfDay()));
+					break;
+
+				case "MEDIUM":
+
+					predicates.add(cb.between(root.get("interviewCompletionDate"), today.minusDays(2).atStartOfDay(),
+							today.minusDays(1).atStartOfDay()));
+					break;
+
+				case "HIGH":
+
+					predicates.add(cb.lessThanOrEqualTo(root.get("interviewCompletionDate"),
+							today.minusDays(3).atStartOfDay()));
+					break;
+			    }
+			}
+
+			// Date Filter
+			Specification<OfferDetailsEntity> dateSpecification = dateSpec("interviewCompletionDate");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
+	public Specification<InterviewScheduleEntity> buildUpcomingInterviewSpecification() {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			LocalDate today = LocalDate.now();
+
+			Predicate rescheduledInterview = cb.and(cb.isNotNull(root.get("rescheduleDate")),
+					cb.greaterThan(root.get("rescheduleDate"), today));
+
+			Predicate scheduledInterview = cb.and(cb.isNull(root.get("rescheduleDate")),
+					cb.greaterThan(root.get("interviewDate"), today));
+
+			predicates.add(cb.or(rescheduledInterview, scheduledInterview));
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
 }
