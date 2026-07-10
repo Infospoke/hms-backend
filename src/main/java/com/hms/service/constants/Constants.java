@@ -1384,6 +1384,8 @@ public static final String INTERVIEWER_RESCHEDULE_BODY =
 + "</html>";
 public static final String REJECT = "reject";
 
+public static final String OFFER_PLAN="Offer_Plan";
+
 public static final String CANDIDATE_REJECTION_MAIL_BODY =
 "Dear %s,\n\n"
 + "Thank you for taking the time to participate in the interview process for the %s position at Nexus Hms.\n\n"
@@ -1394,6 +1396,7 @@ public static final String CANDIDATE_REJECTION_MAIL_BODY =
 + "We wish you every success in your career and thank you again for considering Nexus Hms as a potential employer.\n\n"
 + "Best Regards,\n"
 + "HR Team";
+
 
 
 }

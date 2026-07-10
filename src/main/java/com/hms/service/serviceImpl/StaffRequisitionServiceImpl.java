@@ -606,15 +606,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		}
 
-		// CHECK ACTIVE STATUS
-//		if (!"ACTIVE".equalsIgnoreCase(approvalChainEntity.getStatus())) {
-//
-//			throw new RuntimeException("Approval chain is inactive");
-//
-//		}
 
-		// REMAINING CODE WILL RUN
-		// ONLY IF STATUS IS ACTIVE
 
 		List<LevelConfig> levels = approvalChainEntity.getLevelConfig();
 
