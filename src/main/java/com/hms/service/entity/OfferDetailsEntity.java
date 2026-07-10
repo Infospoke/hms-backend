@@ -91,6 +91,16 @@ public class OfferDetailsEntity {
     @Column(name="final_approval_time")
     private LocalDateTime finalApprovalTime;
     
+    @Column(name="offer_released")
+    private Boolean offerReleased=false;
+    
+    @Column(name="offer_released_by")
+    private Long offerReleasedBy;
+    
+    @Column(name="offer_released_at")
+    private LocalDateTime offerReleasedAt;
+    
+    
     
     
     

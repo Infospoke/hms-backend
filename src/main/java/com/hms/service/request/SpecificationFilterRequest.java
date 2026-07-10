@@ -1540,11 +1540,14 @@ public class SpecificationFilterRequest {
 
 		spec = spec.and((root, query, cb) -> cb.isTrue(root.get("approve")));
 
-		if (getFilter("search") != null) {
+		String search = getFilter("search");
+		if (search != null) {
 
-			String search = "%" + getFilter("search").toLowerCase() + "%";
+			String like = "%" + search.toLowerCase() + "%";
 
 			spec = spec.and((root, query, cb) -> {
+
+				query.distinct(true);
 
 				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
@@ -1552,25 +1555,31 @@ public class SpecificationFilterRequest {
 
 				Predicate jobJoin = cb.equal(application.get("jobId"), job.get("jobId"));
 
-				Predicate candidate = cb.like(
+				Predicate candidateName = cb.like(
 						cb.lower(cb.concat(cb.concat(application.get("firstName"), " "), application.get("lastName"))),
-						search);
+						like);
 
-				Predicate email = cb.like(cb.lower(application.get("email")), search);
+				Predicate firstName = cb.like(cb.lower(application.get("firstName")), like);
 
-				Predicate title = cb.like(cb.lower(job.get("jobTitle")), search);
+				Predicate lastName = cb.like(cb.lower(application.get("lastName")), like);
 
-				return cb.and(jobJoin, cb.or(candidate, email, title));
+				Predicate email = cb.like(cb.lower(application.get("email")), like);
 
+				Predicate jobTitle = cb.like(cb.lower(job.get("jobTitle")), like);
+
+				return cb.and(jobJoin, cb.or(candidateName, firstName, lastName, email, jobTitle));
 			});
-
 		}
 
-		if (getFilter("jobTitle") != null) {
+		String jobTitle = getFilter("jobTitle");
 
-			String title = "%" + getFilter("jobTitle").toLowerCase() + "%";
+		if (jobTitle != null) {
+
+			String like = "%" + jobTitle.toLowerCase() + "%";
 
 			spec = spec.and((root, query, cb) -> {
+
+				query.distinct(true);
 
 				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
@@ -1580,19 +1589,22 @@ public class SpecificationFilterRequest {
 
 						cb.equal(application.get("jobId"), job.get("jobId")),
 
-						cb.like(cb.lower(job.get("jobTitle")), title)
+						cb.like(cb.lower(job.get("jobTitle")), like)
 
 				);
 
 			});
-
 		}
 
-		if (getFilter("department") != null) {
+		String department = getFilter("department");
 
-			String department = "%" + getFilter("department").toLowerCase() + "%";
+		if (department != null) {
+
+			String like = "%" + department.toLowerCase() + "%";
 
 			spec = spec.and((root, query, cb) -> {
+
+				query.distinct(true);
 
 				Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
@@ -1606,24 +1618,61 @@ public class SpecificationFilterRequest {
 
 						cb.equal(job.get("departmentId"), dept.get("id")),
 
-						cb.like(cb.lower(dept.get("departmentName")), department)
+						cb.like(cb.lower(dept.get("departmentName")), like)
 
 				);
 
 			});
+		}
+
+		String priority = getFilter("priority");
+
+		if (priority != null) {
+
+			LocalDateTime now = LocalDateTime.now();
+
+			switch (priority.toLowerCase()) {
+
+			case "high":
+
+				spec = spec.and((root, query, cb) ->
+
+				cb.lessThanOrEqualTo(root.get("finalApprovalTime"), now.minusDays(5)));
+
+				break;
+
+			case "medium":
+
+				spec = spec.and((root, query, cb) ->
+
+				cb.and(
+
+						cb.greaterThan(root.get("finalApprovalTime"), now.minusDays(5)),
+
+						cb.lessThanOrEqualTo(root.get("finalApprovalTime"), now.minusDays(3))
+
+				));
+
+				break;
+
+			case "low":
+
+				spec = spec.and((root, query, cb) ->
+
+				cb.greaterThan(root.get("finalApprovalTime"), now.minusDays(3)));
+
+				break;
+
+			}
 
 		}
 
-		Specification<OfferDetailsEntity> dateSpec = dateSpec("approvedAt");
+		Specification<OfferDetailsEntity> dateSpecification = dateSpec("finalApprovalTime");
 
-		if (dateSpec != null) {
-
-			spec = spec.and(dateSpec);
-
+		if (dateSpecification != null) {
+			spec = spec.and(dateSpecification);
 		}
 
 		return spec;
-
 	}
-
 }

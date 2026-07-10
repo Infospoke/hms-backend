@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.wrappers.ApiResponse;
@@ -28,4 +29,10 @@ public class OfferDetailsController {
 
 	}
 
+	@PostMapping("/release-offers")
+	public ResponseEntity<ApiResponse<?>> releaseOfferLetters(@RequestBody ReleaseOfferRequest request) {
+
+		return ResponseEntity.ok(iOfferDetailsService.releaseOfferLetters(request));
+
+	}
 }
