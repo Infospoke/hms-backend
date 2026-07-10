@@ -19,6 +19,7 @@ import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewPlanEntity;
+import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.NotificationEngineEntity;
@@ -1548,5 +1549,25 @@ public class SpecificationFilterRequest {
 
 	        return cb.and(predicates.toArray(new Predicate[0]));
 	    };
+	}
+	
+	public Specification<InterviewScheduleEntity> buildUpcomingInterviewSpecification() {
+
+		return (root, query, cb) -> {
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			LocalDate today = LocalDate.now();
+
+			Predicate rescheduledInterview = cb.and(cb.isNotNull(root.get("rescheduleDate")),
+					cb.greaterThan(root.get("rescheduleDate"), today));
+
+			Predicate scheduledInterview = cb.and(cb.isNull(root.get("rescheduleDate")),
+					cb.greaterThan(root.get("interviewDate"), today));
+
+			predicates.add(cb.or(rescheduledInterview, scheduledInterview));
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
 }
