@@ -75,10 +75,11 @@ public class OfferDetailsController {
 
 	}
 
-	@PostMapping("/update-raise-offer-request")
+	@PostMapping("/submit-raise-offer-request")
+
 	public ResponseEntity<ApiResponse<?>> submitFinancialApproval(@RequestBody UpdateRaiseOfferRequest request) {
 
-		return ResponseEntity.ok(iOfferDetailsService.UpdateRaiseOffer(request));
+		return ResponseEntity.ok(iOfferDetailsService.submitFinancialApproval(request));
 	}
 
 	@GetMapping("/download/{type}")

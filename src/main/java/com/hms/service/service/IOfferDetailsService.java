@@ -25,10 +25,9 @@ public interface IOfferDetailsService {
 	ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request);
 
 	ApiResponse<?> getOfferDashboardCounts();
-	
-	ApiResponse<?> UpdateRaiseOffer(UpdateRaiseOfferRequest request);
+
+	ApiResponse<?> submitFinancialApproval(UpdateRaiseOfferRequest request);
 
 	void downloadFile(Integer appId, String type, String action, HttpServletResponse response);
-
 
 }

@@ -17,7 +17,7 @@ public class UpdateRaiseOfferRequest {
 
 	    private String probationPeriod;
 
-	    private String offerLetterTemplate;
+	    private Integer offerLetterTemplateId;
 
 	    private String compensation;
 

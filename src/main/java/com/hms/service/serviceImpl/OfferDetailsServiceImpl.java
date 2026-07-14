@@ -41,6 +41,7 @@ import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
+import com.hms.service.entity.OfferLetterTemplateEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
@@ -52,6 +53,7 @@ import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferDeatilsChildRepository;
 import com.hms.service.repository.OfferDetailsRepository;
+import com.hms.service.repository.OfferLetterTemplateRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
@@ -90,6 +92,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
 
+	@Autowired
+	private OfferLetterTemplateRepository offerLetterTemplateRepository;
+	
 	@Autowired
 	private BudgetAndCompensationRepository budgetAndCompensationRepository;
 
@@ -393,23 +398,21 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 	}
 
+	@Transactional
 	@Override
-
 	public ApiResponse<?> approveOffer(ApproveOfferRequest request) {
-		Optional<OfferDetailsChildEntity> optional = offerDeatilsChildRepository
-				.findByJobApplication_Id(request.getApplicantId());
 
 		NotificationEvent event = new NotificationEvent();
 
-		if (optional.isEmpty()) {
+		Optional<OfferDetailsChildEntity> optional = offerDeatilsChildRepository
+				.findByJobApplication_Id(request.getApplicantId());
 
+		if (optional.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "No approval record found",
 					List.of("Invalid Applicant Id"));
 		}
 
 		OfferDetailsChildEntity entity = optional.get();
-
-		// FIND CURRENT LEVEL
 
 		int currentLevel;
 
@@ -434,24 +437,29 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		String roleName = getRoleNameFromToken();
 		String username = getUsernameFromToken();
 
-		// ROLE VALIDATION
+		Integer expectedRole;
 
-		Integer expectedRole = null;
+		switch (currentLevel) {
 
-		if (currentLevel == 1) {
-
+		case 1:
 			expectedRole = entity.getRole1();
+			break;
 
-		} else if (currentLevel == 2) {
-
+		case 2:
 			expectedRole = entity.getRole2();
+			break;
 
-		} else if (currentLevel == 3) {
-
+		case 3:
 			expectedRole = entity.getRole3();
+			break;
+
+		default:
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid approval level",
+					List.of("Unable to determine approval level"));
 		}
 
-		String expectedRoleName = rolesRepository.findByRoleId(expectedRole).get().getRoleName();
+		String expectedRoleName = rolesRepository.findByRoleId(expectedRole)
+				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
 
 		if (!roleName.equalsIgnoreCase(expectedRoleName)) {
 
@@ -459,45 +467,60 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 					List.of("You are not authorized to approve this level"));
 		}
 
-		// MAKER CHECKER VALIDATION
-
 		Integer submittedBy = entity.getOfferSubmittedBy();
 
 		if (submittedBy != null) {
 
-			Optional<UserEntity> submittedUserOpt = userRepository.findByUserId(submittedBy);
+			Optional<UserEntity> makerOpt = userRepository.findByUserId(submittedBy);
 
-			if (submittedUserOpt.isPresent()) {
+			if (makerOpt.isPresent() && username.equalsIgnoreCase(makerOpt.get().getUsername())) {
 
-				UserEntity submittedUser = submittedUserOpt.get();
-
-				if (username.equalsIgnoreCase(submittedUser.getUsername())) {
-
-					return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
-							List.of("You created this SR, so you cannot approve it"));
-				}
+				return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
+						List.of("You created this Offer, so you cannot approve it"));
 			}
 		}
-
-		// FETCH SR
 
 		Optional<OfferDetailsEntity> posOpt = offerDetailsRepository.findByJobApplication_Id(request.getApplicantId());
 
 		if (posOpt.isEmpty()) {
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "SR not found", List.of("Invalid SR Id"));
+			return ApiResponse.failure(ResponseCode.FAILURE, "Offer not found", List.of("Invalid Applicant Id"));
 		}
 
 		OfferDetailsEntity pos = posOpt.get();
 
-		Integer applicantId = pos.getJobApplication().getId();
+		String applicantId = pos.getJobApplication().getId().toString();
+
 		Long userId = null;
 		String makerRoleName = null;
 		Integer makerRoleId = null;
 
-		// FIND APPROVAL LEVEL
+		Integer submitteBy = entity.getOfferSubmittedBy();
 
-		int approvalLevel = 0;
+		if (submittedBy != null) {
+
+			Optional<UserEntity> maker = userRepository.findByUserId(submittedBy);
+			UserEntity userEntity = maker.get();
+
+			if (userEntity == null) {
+				throw new RuntimeException("Maker not found");
+			}
+
+			userId = userEntity.getUserId().longValue();
+			Integer roleId = assignRolesRepository.findByUserId(submitteBy).get().getRoleId();
+
+			Optional<RolesEntity> role = rolesRepository.findByRoleId(roleId);
+
+			
+			RolesEntity roles = role.get();
+			if (roles == null) {
+				throw new RuntimeException("Maker Role not found");
+			}
+
+			makerRoleName = roles.getRoleName();
+		}
+
+		int approvalLevel;
 
 		if (!Boolean.TRUE.equals(pos.getApprover1())) {
 
@@ -518,18 +541,25 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		boolean approved = Boolean.TRUE.equals(request.getApprove());
 
-		LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+//		if (approvalLevel == 3 && approved) {
+//
+//			if (request.getESignature() == null || request.getESignature().trim().isEmpty()) {
+//
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Approval Failed",
+//						List.of("HR Head e-signature is mandatory for Level 3 approval."));
+//			}
+//		}
 
-		// COMMON VARIABLES
+		LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 
 		String levelName = "";
 		String approverName = "";
 		LocalDateTime approvedDate = null;
 		Object approvalStatus = null;
 
-		// LEVEL BASED DATA
+		switch (approvalLevel) {
 
-		if (approvalLevel == 1) {
+		case 1:
 
 			levelName = roleName;
 
@@ -547,10 +577,13 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				approvalStatus = pos.getApprover1();
 
+				// Activate next approver
 				entity.setApprover2(true);
 			}
 
-		} else if (approvalLevel == 2) {
+			break;
+
+		case 2:
 
 			levelName = roleName;
 
@@ -568,10 +601,13 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				approvalStatus = pos.getApprover2();
 
+				// Activate next approver
 				entity.setApprover3(true);
 			}
 
-		} else if (approvalLevel == 3) {
+			break;
+
+		case 3:
 
 			levelName = roleName;
 
@@ -588,13 +624,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				pos.setApprover3(true);
 
 				approvalStatus = pos.getApprover3();
-
-				pos.setApprove(true);
-				pos.setInProgress(true);
 			}
-		}
 
-		// COMMON SAVE
+			break;
+
+		default:
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Approval Level",
+					List.of("Unable to process approval"));
+		}
 
 		if (approved) {
 
@@ -609,89 +647,84 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		offerDetailsRepository.save(pos);
 		offerDeatilsChildRepository.save(entity);
 
-		// COMMON MAIL DATA
-
 		Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getApplicantId());
+
 		Integer roleId = null;
+
 		for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
+
 			roleId = entry.getKey();
 		}
 
 		String checkerRoleName = rolesRepository.findByRoleId(roleId).get().getRoleName();
-//		Integer deptId = pos.getDepartmentId();
-
-		// String deptName =
-		// departmentsRepository.findById(deptId).get().getDepartmentName();
 
 		event.setProcessId(pos.getId().toString());
-//		event.setDeptName(deptName);
 		event.setType("SR");
 		event.setCheckerRoleName(checkerRoleName);
 		event.setRoleEmailMap(roleEmailMap);
-
-		// APPROVED FLOW
 
 		if (approved) {
 
 			event.setCheckerNotificationTitle("Level " + approvalLevel + " Approved — " + levelName);
 
-			event.setCheckerMessage("A Staffing Requisition is now under your approval flow for review and approval");
-
-//			event.setCheckerEmailBody(String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, pos.getSrId(),
-//					pos.getJobTitle(), deptName, pos.getCreatedBy(), pos.getOpenings(), pos.getLocation(),
-//					pos.getEmploymentType(), pos.getPriority(), pos.getCreatedOn()));
+			event.setCheckerMessage("A offer is now under your approval flow for review and approval");
 
 			String makerSubject = "";
 			String makerTitle = "";
 			String makerMailBody = "";
 
-			if (approvalLevel == 1) {
+			switch (approvalLevel) {
 
-				makerSubject = "Your Staffing Requisition has been approved by Level 1 (Department Head) and is now under Level 2 approval flow";
+			case 1:
+
+				makerSubject = "Your offer has been approved by Level 1 (Finance Analyst) and is now under Level 2 approval flow";
 
 				makerTitle = "Level 1 Approved — " + roleName;
 
 				makerMailBody = "hgertyuiuoiuy";
 
-			} else if (approvalLevel == 2) {
+				break;
 
-				makerSubject = "Your Staffing Requisition has been approved by Level 2 (HRBP) and is now under Level 3 approval flow";
+			case 2:
+
+				makerSubject = "Your offer has been approved by Level 2 (Finance Head) and is now under Level 3 approval flow";
 
 				makerTitle = "Level 2 Approved — " + roleName;
 
 				makerMailBody = "sadfegfrdhyjgkui";
 
-			} else if (approvalLevel == 3) {
+				break;
 
-				makerSubject = "Your Staffing Requisition has been fully approved successfully and is now ready for Recruiter Assignment and Job Creation";
+			case 3:
+
+				makerSubject = "Your offer has been fully approved successfully and is now ready to release";
 
 				makerTitle = "Level 3 Approved — " + roleName;
 
 				makerMailBody = "ttretyuio";
+
+				break;
 			}
 
-//			sendMakerMail(applicantId, userId, makerRoleId, makerSubject, makerRoleName, makerTitle, makerMailBody, event);
+			sendMakerMail(applicantId, userId, makerRoleId, makerSubject, makerRoleName, makerTitle, makerMailBody,
+					event);
 
 			return ApiResponse.success("Approved successfully at level " + approvalLevel);
 		}
 
-		// REJECT FLOW
+		String rejectedMailBody = "gfdhkjsl;jf";
 
-		else {
+		event.setCheckerNotificationTitle("Level " + approvalLevel + " Rejected — " + levelName);
 
-			String rejectedMailBody = "gfdhkjsl;jf";
-			event.setCheckerNotificationTitle("Level " + approvalLevel + " Rejected — " + levelName);
+		event.setCheckerMessage("A Offer has been rejected in the approval flow.");
 
-			event.setCheckerMessage("A Staffing Requisition has been rejected in the approval flow.");
+		event.setCheckerEmailBody(rejectedMailBody);
 
-			event.setCheckerEmailBody(rejectedMailBody);
-//
-//			sendMakerMail(applicantId, userId, makerRoleId,
-//					"Your Staffing Requisition has been rejected by Level " + approvalLevel + " (" + levelName + ")",
-//					makerRoleName, "SR Rejected", rejectedMailBody, event);
+		sendMakerMail(applicantId, userId, makerRoleId,
+				"Your Offer  has been rejected by Level " + approvalLevel + " (" + levelName + ")", makerRoleName,
+				"OFFER Rejected", rejectedMailBody, event);
 
-			return ApiResponse.success("Rejected successfully at level " + approvalLevel);
-		}
+		return ApiResponse.success("Rejected successfully at level " + approvalLevel);
 	}
 
 	private Map<Integer, List<String>> processApprovalChain(Integer applicantId) {
@@ -1109,7 +1142,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	}
 
 	@Override
-	public ApiResponse<?> UpdateRaiseOffer(UpdateRaiseOfferRequest request) {
+	public ApiResponse<?>submitFinancialApproval(UpdateRaiseOfferRequest request) {
 
 		log.info("OfferDetailsServiceImpl :: Inside UpdateRaiseOffer");
 
@@ -1144,6 +1177,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Assigned Role Not Found");
 		}
+		
+		OfferLetterTemplateEntity template = offerLetterTemplateRepository.findById(request.getOfferLetterTemplateId())
+				.orElse(null);
+
+		if (template == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Letter Template Not Found");
+		}
 
 		offerDetails.setTotalCtc(request.getTotalCtc());
 
@@ -1151,7 +1192,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		offerDetails.setProbationPeriod(request.getProbationPeriod());
 
-		offerDetails.setOfferLetterTemplate(request.getOfferLetterTemplate());
+		offerDetails.setOfferLetterTemplate(template);
 
 		offerDetails.setCompensation(request.getCompensation());
 
@@ -1166,9 +1207,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		offerDetailsRepository.save(offerDetails);
 
 		log.info("OfferDetailsServiceImpl :: Exit UpdateRaiseOffer");
+		
+		
+		processApprovalChain(offerDetails.getJobApplication().getId());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Request Updated Successfully", null);
 	}
+	
+	
 
 	@Override
 	public void downloadFile(Integer appId, String type, String action, HttpServletResponse response) {
