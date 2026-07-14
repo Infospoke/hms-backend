@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.compress.utils.IOUtils;
@@ -31,6 +32,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.ApprovalStatusDto;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
@@ -63,6 +65,7 @@ import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.response.OfferCommentsResponse;
 import com.hms.service.response.OfferDetailsResponse;
+import com.hms.service.response.PendingApprovalsResponse;
 import com.hms.service.response.RaiseOfferRequestResponse;
 import com.hms.service.service.INotificationService;
 import com.hms.service.service.IOfferDetailsService;
@@ -1286,6 +1289,147 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			throw new RuntimeException("Error downloading file from MinIO", e);
 		}
+	}
+
+	@Override
+	public ApiResponse<?> getPendingApprovals(SpecificationFilterRequest request) {
+
+		log.info("OfferDetailsServiceImpl :: getPendingApprovals");
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+		Specification<OfferDetailsEntity> specification = request.buildOfferApprovalSpecification();
+
+		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(specification, pageable);
+
+		if (offerPage.isEmpty()) {
+
+			Map<String, Object> response = new HashMap<>();
+
+			response.put("pendingApprovals", Collections.emptyList());
+			response.put("currentPage", offerPage.getNumber());
+			response.put("totalPages", offerPage.getTotalPages());
+			response.put("totalElements", offerPage.getTotalElements());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "No pending approvals found", response);
+		}
+
+		List<OfferDetailsEntity> offers = offerPage.getContent();
+
+		List<Integer> applicationIds = offers.stream().map(offer -> offer.getJobApplication().getId()).distinct()
+				.toList();
+
+		List<JobApplicationEntity> applications = jobApplicationRepository.findByIdIn(applicationIds);
+
+		Map<Integer, JobApplicationEntity> applicationMap = applications.stream()
+				.collect(Collectors.toMap(JobApplicationEntity::getId, Function.identity()));
+
+		List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).distinct().toList();
+
+		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
+
+		Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
+				.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+
+		List<Integer> departmentIds = jobs.stream().map(CreateJobDetailsEntity::getDepartmentId).distinct().toList();
+
+		List<DepartmentsEntity> departments = departmentsRepository.findByIdIn(departmentIds);
+
+		Map<Integer, DepartmentsEntity> departmentMap = departments.stream()
+				.collect(Collectors.toMap(DepartmentsEntity::getId, Function.identity()));
+                                                                               
+		List<Integer> offerIds = offers.stream().map(OfferDetailsEntity::getId).toList();
+
+		List<OfferDetailsChildEntity> childEntities = offerDeatilsChildRepository.findByOffer_IdIn(offerIds);
+
+		Map<Integer, OfferDetailsChildEntity> childMap = childEntities.stream()
+				.collect(Collectors.toMap(child -> child.getOffer().getId(), Function.identity()));
+
+		List<PendingApprovalsResponse> responseList = new ArrayList<>();
+		for (OfferDetailsEntity offer : offers) {
+
+			PendingApprovalsResponse response = new PendingApprovalsResponse();
+
+			response.setOfferId(offer.getId());
+
+			JobApplicationEntity application = applicationMap.get(offer.getJobApplication().getId());
+
+			if (application != null) {
+
+				response.setApplicationId(application.getId());
+
+				response.setApplicantName((application.getFirstName() == null ? "" : application.getFirstName()) + " "
+						+ (application.getLastName() == null ? "" : application.getLastName()));
+
+				response.setApplicantEmail(application.getEmail());
+
+				CreateJobDetailsEntity job = jobMap.get(application.getJobId());
+
+				if (job != null) {
+
+					response.setJobTitle(job.getJobTitle());
+
+					DepartmentsEntity department = departmentMap.get(job.getDepartmentId());
+
+					if (department != null) {
+						response.setDepartment(department.getDepartmentName());
+					}
+				}
+			}
+
+			response.setRequestedOn(offer.getCreatedDate());
+
+			response.setPriority(calculatePendingApprovalPriority(offer.getCreatedDate()));
+
+			OfferDetailsChildEntity child = childMap.get(offer.getId());
+
+			List<ApprovalStatusDto> approvals = new ArrayList<>();
+
+			if (child != null) {
+
+				approvals.add(
+						new ApprovalStatusDto(offer.getApprover1Role(), Boolean.TRUE.equals(child.getApprover1())));
+
+				approvals.add(
+						new ApprovalStatusDto(offer.getApprover2Role(), Boolean.TRUE.equals(child.getApprover2())));
+
+				approvals.add(
+						new ApprovalStatusDto(offer.getApprover3Role(), Boolean.TRUE.equals(child.getApprover3())));
+			}
+
+			response.setApprovals(approvals);
+
+			responseList.add(response);
+		}
+
+		Map<String, Object> response = new HashMap<>();
+
+		response.put("pendingApprovals", responseList);
+		response.put("currentPage", offerPage.getNumber());
+		response.put("totalPages", offerPage.getTotalPages());
+		response.put("totalElements", offerPage.getTotalElements());
+
+		log.info("OfferDetailsServiceImpl :: Exit from getPendingApprovals");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Pending approvals fetched successfully", response);
+	}
+
+	private String calculatePendingApprovalPriority(LocalDateTime createdDate) {
+
+		LocalDate dueDate = createdDate.toLocalDate().plusDays(7);
+
+		long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
+
+		if (remainingDays > 3) {
+			return "Low";
+		}
+
+		if (remainingDays >= 1) {
+			return "Medium";
+		}
+
+		return "High";
 	}
 
 }
