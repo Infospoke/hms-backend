@@ -4,12 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-
 import org.springframework.web.bind.annotation.PathVariable;
-
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.ApproveOfferRequest;
@@ -18,6 +17,8 @@ import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.wrappers.ApiResponse;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/hms/offer-details")
@@ -32,7 +33,6 @@ public class OfferDetailsController {
 		return ResponseEntity.ok(iOfferDetailsService.getReadyToRelease(request));
 
 	}
-
 
 	@GetMapping("/get-offer-details-by-applicant-id/{applicantId}")
 	public ResponseEntity<ApiResponse<?>> getOfferDetailsByApplicantId(
@@ -74,13 +74,17 @@ public class OfferDetailsController {
 		return ResponseEntity.ok(iOfferDetailsService.getOfferDashboardCounts());
 
 	}
-	
+
 	@PostMapping("/update-raise-offer-request")
 	public ResponseEntity<ApiResponse<?>> submitFinancialApproval(@RequestBody UpdateRaiseOfferRequest request) {
 
 		return ResponseEntity.ok(iOfferDetailsService.UpdateRaiseOffer(request));
 	}
-	
-	
 
+	@GetMapping("/download/{type}")
+	public void downloadFile(@PathVariable("type") String type, @RequestParam("action") String action,
+			@RequestParam("appId") Integer appId, HttpServletResponse response) {
+
+		iOfferDetailsService.downloadFile(appId, type, action, response);
+	}
 }

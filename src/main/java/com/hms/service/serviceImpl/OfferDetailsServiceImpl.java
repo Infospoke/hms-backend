@@ -1,5 +1,9 @@
 package com.hms.service.serviceImpl;
 
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -16,7 +20,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +41,7 @@ import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
+import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
@@ -61,7 +68,10 @@ import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,13 +83,13 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
-	
+
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-	
+
 	@Autowired
 	private BudgetAndCompensationRepository budgetAndCompensationRepository;
 
@@ -109,6 +119,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private INotificationService notificationService;
+
+	@Autowired
+	private MailServiceImpl mailServiceImpl;
+
+	@Autowired
+	private MinioClient minioClient;
+
+	@Value("${minio.bucketName}")
+	private String bucketName;
 
 	@Override
 	public ApiResponse<?> getReadyToRelease(SpecificationFilterRequest request) {
@@ -218,7 +237,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return "Low";
 	}
 
-	
 	@Override
 	public ApiResponse<?> getOfferDetailsByApplicantId(Integer applicantId) {
 		log.info("OfferDetailsServiceImpl ::Inside the getOfferDetailsByApplicantId");
@@ -246,7 +264,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setEmploymentType(jobDetails.getEmploymentType());
 			response.setWorkLocation(jobDetails.getLocation());
 			// Department
-			Optional<DepartmentsEntity> departmentOptional = departmentsRepository.findById(jobDetails.getDepartmentId());
+			Optional<DepartmentsEntity> departmentOptional = departmentsRepository
+					.findById(jobDetails.getDepartmentId());
 
 			if (departmentOptional.isPresent()) {
 				response.setDepartment(departmentOptional.get().getDepartmentName());
@@ -292,9 +311,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				response.setProbationPeriod(offer.getProbationPeriod());
 				response.setNoticePeriod(offer.getNoticePeriod());
 
-			
 			}
-			 log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
+			log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
 			return ApiResponse.success(ResponseCode.SUCCESS, "Offer details fetched successfully", response);
 
 		} catch (Exception e) {
@@ -310,8 +328,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository
 					.findByJobApplicationId(applicantId);
-			
-			Optional<OfferDetailsChildEntity> offerDetailsChildEntity=offerDeatilsChildRepository.findByJobApplication_Id(applicantId);
+
+			Optional<OfferDetailsChildEntity> offerDetailsChildEntity = offerDeatilsChildRepository
+					.findByJobApplication_Id(applicantId);
 
 			if (offerDetailsEntity == null) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Offer details not found");
@@ -319,21 +338,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			OfferDetailsEntity offerDetails = offerDetailsEntity.get();
 			List<OfferCommentsResponse> responseList = new ArrayList<>();
 
-			OfferDetailsChildEntity childEntity =offerDetailsChildEntity.get();
-			
-			List<Integer> roleIds = Arrays.asList(
-			        childEntity.getRole1(),
-			        childEntity.getRole2(),
-			        childEntity.getRole3()
-			);
+			OfferDetailsChildEntity childEntity = offerDetailsChildEntity.get();
+
+			List<Integer> roleIds = Arrays.asList(childEntity.getRole1(), childEntity.getRole2(),
+					childEntity.getRole3());
 
 			List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
-			
+
 			Map<Integer, String> roleMap = roles.stream()
-			        .collect(Collectors.toMap(
-			                r -> (Integer) r[0],
-			                r -> (String) r[1]
-			        ));
+					.collect(Collectors.toMap(r -> (Integer) r[0], r -> (String) r[1]));
 			// Approver 1
 
 			OfferCommentsResponse response = new OfferCommentsResponse();
@@ -360,7 +373,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			// Approver 3
 
-		    response = new OfferCommentsResponse();
+			response = new OfferCommentsResponse();
 			response.setApproverSequence("3");
 			response.setRole(offerDetails.getApprover3Role());
 			response.setApproverName(roleMap.get(childEntity.getRole1()));
@@ -937,7 +950,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setMovedToHireOn(offer.getInterviewCompletionDate());
 
 			response.setRecruiter(offer.getRecruitedBy());
-			
+
 			response.setPriority(calculatedOfferRaiseRequestPriority(offer.getInterviewCompletionDate()));
 
 			responseList.add(response);
@@ -962,7 +975,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Requests fetched successfully", response);
 	}
-	
+
 	private String calculatedOfferRaiseRequestPriority(LocalDateTime interviewCompletionDate) {
 
 		long days = ChronoUnit.DAYS.between(interviewCompletionDate.toLocalDate(), LocalDate.now());
@@ -978,6 +991,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return "Low";
 	}
 
+	@Override
 	@Transactional
 	public ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request) {
 
@@ -1003,13 +1017,71 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
 		}
 
+		List<String> releasedCandidateNames = new ArrayList<>();
+
 		for (OfferDetailsEntity offer : offers) {
+
+			JobApplicationEntity application = offer.getJobApplication();
+
+			releasedCandidateNames.add(application.getFirstName() + " " + application.getLastName());
+
 			offer.setOfferReleased(true);
 			offer.setOfferReleasedBy(userId);
 			offer.setOfferReleasedAt(LocalDateTime.now());
+
+//			try {
+//
+//				String objectName = "upload-documents/" + application.getId() + "_offerLetter.pdf";
+//
+//				InputStream inputStream = minioClient
+//						.getObject(GetObjectArgs.builder().bucket(bucketName).object(objectName).build());
+//
+//				byte[] pdf = inputStream.readAllBytes();
+//
+//				MultipartFile offerLetter = new MockMultipartFile(application.getId() + "_offerLetter.pdf",
+//						application.getId() + "_offerLetter.pdf", "application/pdf", pdf);
+//
+//				CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+//
+//				String body = String.format(Constants.OFFER_LETTER_MAIL_BODY, application.getFirstName(),
+//						job.getJobTitle());
+//
+//				mailServiceImpl.sendMail(Constants.NOREPLY_INDIA, application.getEmail(), null, "Offer Letter", body,
+//						offerLetter);
+//
+//			} catch (Exception e) {
+//				log.error("Failed to send offer letter mail for application {}", application.getId(), e);
+//			}
 		}
 
 		offerDetailsRepository.saveAll(offers);
+
+		NotificationEvent event = new NotificationEvent();
+
+		OfferDetailsEntity firstOffer = offers.get(0);
+
+		event.setMakerRoleId(firstOffer.getCreatedByRoleId());
+
+		event.setMakerNotificationTitle("Offer Letter Released Successfully");
+
+		event.setMakerMessage("Offer letter released successfully.");
+
+		RolesEntity checkerRole = rolesRepository.findByRoleNameIgnoreCase(firstOffer.getApprover3Role());
+
+		if (checkerRole != null) {
+			event.setCheckerId(checkerRole.getRoleId());
+		}
+
+		event.setCheckerRoleName(firstOffer.getApprover3Role());
+
+		event.setCheckerNotificationTitle("Offer Letter Released");
+
+		event.setCheckerMessage(
+				"Offer letters have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
+
+		event.setProcessId("OFFER_RELEASE_" + System.currentTimeMillis());
+
+		notificationService.callNotification(event);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
 	}
@@ -1026,13 +1098,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Long readyToRelease = offerDetailsRepository.countByApproveTrueAndOfferReleasedFalse();
 
-
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("raiseOfferRequest", raiseOfferRequest);
 		response.put("pendingApprovals", pendingApprovals);
 		response.put("readyToRelease", readyToRelease);
-		response.put("releaseOfferLetter",pendingApprovals+readyToRelease );
+		response.put("releaseOfferLetter", pendingApprovals + readyToRelease);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Offer dashboard counts fetched successfully", response);
 	}
@@ -1096,9 +1167,79 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		log.info("OfferDetailsServiceImpl :: Exit UpdateRaiseOffer");
 
-		return ApiResponse.success(ResponseCode.SUCCESS,
-				"Raise Offer Request Updated Successfully", null);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Request Updated Successfully", null);
 	}
 
+	@Override
+	public void downloadFile(Integer appId, String type, String action, HttpServletResponse response) {
+
+		log.info("OfferDetailsServiceImpl :: Inside downloadFile");
+
+		String objectKey;
+		String fileName;
+
+		try {
+
+			if (Constants.OFFER_LETTER.equalsIgnoreCase(type)) {
+
+				// Offer Letter stored in MinIO
+				objectKey = "upload-documents/" + appId + "_offerLetter.pdf";
+				fileName = appId + "_offerLetter.pdf";
+
+			} else {
+
+				JobApplicationEntity app = jobApplicationRepository.findById(appId)
+						.orElseThrow(() -> new RuntimeException(Constants.APPLICATION_NOT_FOUND));
+
+				if (Constants.RESUME.equalsIgnoreCase(type)) {
+
+					objectKey = app.getResume();
+
+				} else if (Constants.ADDITIONAL.equalsIgnoreCase(type)) {
+
+					objectKey = app.getAdditionalFile();
+
+				} else {
+
+					throw new RuntimeException(Constants.INVALID_FILE_TYPE);
+				}
+
+				if (objectKey == null) {
+					throw new RuntimeException(Constants.FILE_NOT_UPLOADED);
+				}
+
+				fileName = Paths.get(objectKey).getFileName().toString();
+			}
+
+			InputStream minioStream = minioClient
+					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
+
+			String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+
+			if (fileName.toLowerCase().endsWith(".pdf")) {
+				response.setContentType("application/pdf");
+			} else {
+				response.setContentType("application/octet-stream");
+			}
+
+			response.setCharacterEncoding("UTF-8");
+
+			response.setHeader("Content-Disposition",
+					(Constants.VIEW.equalsIgnoreCase(action) ? "inline" : "attachment") + "; filename*=UTF-8''"
+							+ encodedFileName);
+
+			IOUtils.copy(minioStream, response.getOutputStream());
+
+			response.flushBuffer();
+
+			minioStream.close();
+
+		} catch (Exception e) {
+
+			log.error("Exception occurred while downloading file", e);
+
+			throw new RuntimeException("Error downloading file from MinIO", e);
+		}
+	}
 
 }
