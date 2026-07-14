@@ -17,6 +17,8 @@ public class ApproveOfferRequest {
 	
 	private String comments;
 	
+	private String eSignature;
+	
 	
 
 }
