@@ -35,6 +35,7 @@ import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
+import com.hms.service.entity.OfferLetterTemplateEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
@@ -45,6 +46,7 @@ import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferDeatilsChildRepository;
 import com.hms.service.repository.OfferDetailsRepository;
+import com.hms.service.repository.OfferLetterTemplateRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
@@ -79,6 +81,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
+	
+	@Autowired
+	private OfferLetterTemplateRepository offerLetterTemplateRepository;
 	
 	@Autowired
 	private BudgetAndCompensationRepository budgetAndCompensationRepository;
@@ -1038,7 +1043,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	}
 
 	@Override
-	public ApiResponse<?> UpdateRaiseOffer(UpdateRaiseOfferRequest request) {
+	public ApiResponse<?>submitFinancialApproval(UpdateRaiseOfferRequest request) {
 
 		log.info("OfferDetailsServiceImpl :: Inside UpdateRaiseOffer");
 
@@ -1073,6 +1078,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Assigned Role Not Found");
 		}
+		
+		OfferLetterTemplateEntity template = offerLetterTemplateRepository.findById(request.getOfferLetterTemplateId())
+				.orElse(null);
+
+		if (template == null) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Letter Template Not Found");
+		}
 
 		offerDetails.setTotalCtc(request.getTotalCtc());
 
@@ -1080,7 +1093,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		offerDetails.setProbationPeriod(request.getProbationPeriod());
 
-		offerDetails.setOfferLetterTemplate(request.getOfferLetterTemplate());
+		offerDetails.setOfferLetterTemplate(template);
 
 		offerDetails.setCompensation(request.getCompensation());
 
@@ -1099,6 +1112,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return ApiResponse.success(ResponseCode.SUCCESS,
 				"Raise Offer Request Updated Successfully", null);
 	}
+	
+	
 
 
 }

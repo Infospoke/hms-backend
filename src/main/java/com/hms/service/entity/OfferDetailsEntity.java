@@ -132,11 +132,12 @@ public class OfferDetailsEntity {
     @Column(name="total_ctc")
     private Long totalCtc;
 
-    @Column(name = "offer_letter_template")
-    private String offerLetterTemplate;
-
     @Column(name = "compensation")
     private String compensation;
+    
+    @ManyToOne
+    @JoinColumn(name = "offer_letter_template_id")
+    private OfferLetterTemplateEntity offerLetterTemplate;
 
     
 }

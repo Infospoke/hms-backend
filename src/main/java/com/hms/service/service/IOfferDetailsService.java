@@ -26,7 +26,7 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> getOfferDashboardCounts();
 
-	ApiResponse<?> UpdateRaiseOffer(UpdateRaiseOfferRequest request);
+	ApiResponse<?> submitFinancialApproval(UpdateRaiseOfferRequest request);
 
 
 }
