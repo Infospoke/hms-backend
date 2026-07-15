@@ -88,4 +88,11 @@ public class OfferDetailsController {
 
 		iOfferDetailsService.downloadFile(appId, type, action, response);
 	}
+	
+	@PostMapping("/get-pending-approvals")
+	public ResponseEntity<ApiResponse<?>>getPendingApprovals(@RequestBody SpecificationFilterRequest request) {
+	    ApiResponse<?> response = iOfferDetailsService.getPendingApprovals(request);
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 }

@@ -30,4 +30,6 @@ public interface IOfferDetailsService {
 
 	void downloadFile(Integer appId, String type, String action, HttpServletResponse response);
 
+	ApiResponse<?> getPendingApprovals(SpecificationFilterRequest request);
+
 }

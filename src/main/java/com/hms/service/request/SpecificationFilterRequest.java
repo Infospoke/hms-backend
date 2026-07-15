@@ -1768,4 +1768,79 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
+	
+	public Specification<OfferDetailsEntity> buildOfferApprovalSpecification() {
+
+		return (root, query, cb) -> {
+			query.distinct(true);
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication", JoinType.INNER);
+
+			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
+
+			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
+
+			predicates.add(cb.equal(application.get("jobId"), job.get("jobId")));
+			predicates.add(cb.equal(job.get("departmentId"), department.get("id")));
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.trim().toLowerCase() + "%";
+
+				Predicate applicantName = cb
+						.like(cb.lower(cb.concat(cb.concat(cb.coalesce(application.get("firstName"), ""), " "),
+								cb.coalesce(application.get("lastName"), ""))), keyword);
+
+				Predicate firstName = cb.like(cb.lower(cb.coalesce(application.get("firstName"), "")), keyword);
+
+				Predicate lastName = cb.like(cb.lower(cb.coalesce(application.get("lastName"), "")), keyword);
+
+				Predicate email = cb.like(cb.lower(cb.coalesce(application.get("email"), "")), keyword);
+
+				predicates.add(cb.or(applicantName, firstName, lastName, email));
+			}
+
+			String jobId = getFilter("jobId");
+
+			if (jobId != null && !jobId.isBlank()) {
+				predicates.add(cb.equal(job.get("jobId"), Integer.valueOf(jobId)));
+			}
+
+			String departmentId = getFilter("departmentId");
+
+			if (departmentId != null && !departmentId.isBlank()) {
+				predicates.add(cb.equal(department.get("id"), Integer.valueOf(departmentId)));
+			}
+
+			String approvalStatus = getFilter("approvalStatus");
+
+			if (approvalStatus != null && !approvalStatus.isBlank()) {
+
+				if ("APPROVED".equalsIgnoreCase(approvalStatus)) {
+
+					predicates.add(cb.isTrue(root.get("approve")));
+
+				} else if ("PENDING".equalsIgnoreCase(approvalStatus)) {
+
+					predicates.add(cb.isFalse(root.get("approve")));
+				}
+			}
+
+			Specification<OfferDetailsEntity> dateSpecification = dateSpec("createdDate");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
 }
