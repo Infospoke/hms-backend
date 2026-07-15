@@ -1,9 +1,6 @@
 package com.hms.service.serviceImpl;
 
 import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -1332,27 +1329,33 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			try {
 
-				String candidateName = (application.getFirstName() + "_" + application.getLastName()).replace(" ", "_");
+				String candidateName = application.getFirstName().trim() + "_" + application.getLastName().trim();
 
 				String objectName = "offer-letters/" + application.getId() + "/" + candidateName + "_Offer_Letter.pdf";
 
-				try (InputStream inputStream = minioClient
-						.getObject(GetObjectArgs.builder().bucket(bucketName).object(objectName).build())) {
+				log.info("Bucket Name : {}", bucketName.trim());
+				log.info("Object Name : {}", objectName);
 
-					byte[] pdf = inputStream.readAllBytes();
+				InputStream inputStream = minioClient
+						.getObject(GetObjectArgs.builder().bucket(bucketName.trim()).object(objectName).build());
 
-					CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+				byte[] pdfBytes = inputStream.readAllBytes();
+				inputStream.close();
 
-					String body = String.format(Constants.OFFER_LETTER_MAIL_BODY, application.getFirstName(),
-							job.getJobTitle());
+				CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
-					mailServiceImpl.sendMailWithAttachment(Constants.NOREPLY_INDIA, application.getEmail(), null,
-							"Offer Letter", body, pdf, candidateName + "_Offer_Letter.pdf");
-				}
+				String body = String.format(Constants.OFFER_LETTER_MAIL_BODY, application.getFirstName(),
+						job.getJobTitle());
+
+				mailServiceImpl.sendMailWithAttachment(Constants.NOREPLY_INDIA, application.getEmail(), null,
+						"Offer Letter", body, pdfBytes, candidateName + "_Offer_Letter.pdf");
+
+				log.info("Offer letter mail sent successfully to {}", application.getEmail());
 
 			} catch (Exception e) {
 
-				log.error("Failed to send offer letter mail for application {}", application.getId(), e);
+				log.error("Unable to send offer letter for application {}", application.getId(), e);
+
 			}
 		}
 
@@ -1366,25 +1369,40 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		event.setProcessId("OFFER_RELEASE_" + System.currentTimeMillis());
 
-		// Maker
 		event.setMakerRoleId(firstOffer.getCreatedByRoleId());
+
+		event.setMakerRoleName(
+				rolesRepository.findById(firstOffer.getCreatedByRoleId()).map(RolesEntity::getRoleName).orElse(null));
+
 		event.setMakerNotificationTitle("Offer Letter Released Successfully");
+
 		event.setMakerMessage("Offer letter(s) released successfully.");
 
-		// Checker
 		RolesEntity checkerRole = rolesRepository.findByRoleNameIgnoreCase(firstOffer.getApprover3Role());
 
 		if (checkerRole != null) {
+
 			event.setCheckerId(checkerRole.getRoleId());
+
+			event.setCheckerRoleName(checkerRole.getRoleName());
 		}
 
-		event.setCheckerRoleName(firstOffer.getApprover3Role());
 		event.setCheckerNotificationTitle("Offer Letter Released");
+
 		event.setCheckerMessage(
 				"Offer letter(s) have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
 
-		notificationService.callNotification(event);
+		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
+		roleEmailMap.put(firstOffer.getCreatedByRoleId(), Collections.emptyList());
+
+		if (checkerRole != null) {
+			roleEmailMap.put(checkerRole.getRoleId(), Collections.emptyList());
+		}
+
+		event.setRoleEmailMap(roleEmailMap);
+
+		notificationService.callNotification(event);
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
 	}
 

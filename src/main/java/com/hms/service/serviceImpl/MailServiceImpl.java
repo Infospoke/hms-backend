@@ -88,30 +88,31 @@ public class MailServiceImpl implements IMailService {
 		log.info("MailServiceImpl::Exit sendMailToMultiple");
 	}
 
-	public void sendMailWithAttachment(String from, String to, String cc, String subject, String body, byte[] file,
-			String fileName) {
+	public void sendMailWithAttachment(String from, String to, String cc, String subject, String body,
+			byte[] attachment, String fileName) {
 
 		try {
 
 			MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
 
 			helper.setFrom(from);
 			helper.setTo(to);
 
-			if (cc != null) {
+			if (cc != null && !cc.isBlank()) {
 				helper.setCc(cc);
 			}
 
 			helper.setSubject(subject);
 			helper.setText(body, true);
 
-			helper.addAttachment(fileName, new ByteArrayResource(file));
+			helper.addAttachment(fileName, new ByteArrayResource(attachment));
 
 			javaMailSender.send(mimeMessage);
 
 		} catch (Exception e) {
-			throw new CustomSystemErrorException(Constants.MAIL_FAILURE);
+			throw new RuntimeException("Failed to send mail", e);
 		}
 	}
 
