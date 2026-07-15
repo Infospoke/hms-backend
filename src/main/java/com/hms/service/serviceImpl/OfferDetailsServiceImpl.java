@@ -30,6 +30,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.ApprovalStatusDto;
@@ -97,7 +98,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private OfferLetterTemplateRepository offerLetterTemplateRepository;
-	
+
 	@Autowired
 	private BudgetAndCompensationRepository budgetAndCompensationRepository;
 
@@ -514,7 +515,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			Optional<RolesEntity> role = rolesRepository.findByRoleId(roleId);
 
-			
 			RolesEntity roles = role.get();
 			if (roles == null) {
 				throw new RuntimeException("Maker Role not found");
@@ -1028,101 +1028,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	}
 
 	@Override
-	@Transactional
-	public ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request) {
-
-		log.info("OfferDetailsServiceImpl :: releaseOfferLetters");
-
-		String authHeader = httpServletRequest.getHeader("Authorization");
-
-		Long userId = null;
-
-		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-			String token = authHeader.substring(7);
-			userId = jwtService.extractUserId(token);
-		}
-
-		if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure",
-					Collections.singletonList("Application Ids are required"));
-		}
-
-		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(request.getApplicationIds());
-
-		if (offers.isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
-		}
-
-		List<String> releasedCandidateNames = new ArrayList<>();
-
-		for (OfferDetailsEntity offer : offers) {
-
-			JobApplicationEntity application = offer.getJobApplication();
-
-			releasedCandidateNames.add(application.getFirstName() + " " + application.getLastName());
-
-			offer.setOfferReleased(true);
-			offer.setOfferReleasedBy(userId);
-			offer.setOfferReleasedAt(LocalDateTime.now());
-
-//			try {
-//
-//				String objectName = "upload-documents/" + application.getId() + "_offerLetter.pdf";
-//
-//				InputStream inputStream = minioClient
-//						.getObject(GetObjectArgs.builder().bucket(bucketName).object(objectName).build());
-//
-//				byte[] pdf = inputStream.readAllBytes();
-//
-//				MultipartFile offerLetter = new MockMultipartFile(application.getId() + "_offerLetter.pdf",
-//						application.getId() + "_offerLetter.pdf", "application/pdf", pdf);
-//
-//				CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
-//
-//				String body = String.format(Constants.OFFER_LETTER_MAIL_BODY, application.getFirstName(),
-//						job.getJobTitle());
-//
-//				mailServiceImpl.sendMail(Constants.NOREPLY_INDIA, application.getEmail(), null, "Offer Letter", body,
-//						offerLetter);
-//
-//			} catch (Exception e) {
-//				log.error("Failed to send offer letter mail for application {}", application.getId(), e);
-//			}
-		}
-
-		offerDetailsRepository.saveAll(offers);
-
-		NotificationEvent event = new NotificationEvent();
-
-		OfferDetailsEntity firstOffer = offers.get(0);
-
-		event.setMakerRoleId(firstOffer.getCreatedByRoleId());
-
-		event.setMakerNotificationTitle("Offer Letter Released Successfully");
-
-		event.setMakerMessage("Offer letter released successfully.");
-
-		RolesEntity checkerRole = rolesRepository.findByRoleNameIgnoreCase(firstOffer.getApprover3Role());
-
-		if (checkerRole != null) {
-			event.setCheckerId(checkerRole.getRoleId());
-		}
-
-		event.setCheckerRoleName(firstOffer.getApprover3Role());
-
-		event.setCheckerNotificationTitle("Offer Letter Released");
-
-		event.setCheckerMessage(
-				"Offer letters have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
-
-		event.setProcessId("OFFER_RELEASE_" + System.currentTimeMillis());
-
-		notificationService.callNotification(event);
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
-	}
-
-	@Override
 	public ApiResponse<?> getOfferDashboardCounts() {
 
 		log.info("OfferDetailsServiceImpl :: getOfferDashboardCounts");
@@ -1145,7 +1050,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	}
 
 	@Override
-	public ApiResponse<?>submitFinancialApproval(UpdateRaiseOfferRequest request) {
+	public ApiResponse<?> submitFinancialApproval(UpdateRaiseOfferRequest request) {
 
 		log.info("OfferDetailsServiceImpl :: Inside UpdateRaiseOffer");
 
@@ -1180,7 +1085,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Assigned Role Not Found");
 		}
-		
+
 		OfferLetterTemplateEntity template = offerLetterTemplateRepository.findById(request.getOfferLetterTemplateId())
 				.orElse(null);
 
@@ -1210,84 +1115,39 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		offerDetailsRepository.save(offerDetails);
 
 		log.info("OfferDetailsServiceImpl :: Exit UpdateRaiseOffer");
-		
-		
+
 		processApprovalChain(offerDetails.getJobApplication().getId());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Request Updated Successfully", null);
 	}
-	
-	
 
 	@Override
-	public void downloadFile(Integer appId, String type, String action, HttpServletResponse response) {
+	public void viewOfferLetter(Integer appId, String action, HttpServletResponse response) {
 
-		log.info("OfferDetailsServiceImpl :: Inside downloadFile");
+		log.info("Inside viewOfferLetter");
 
-		String objectKey;
-		String fileName;
+		JobApplicationEntity application = jobApplicationRepository.findById(appId)
+				.orElseThrow(() -> new RuntimeException("Application not found"));
 
-		try {
+		String candidateName = application.getFirstName() + "_" + application.getLastName();
 
-			if (Constants.OFFER_LETTER.equalsIgnoreCase(type)) {
+		String objectKey = "offer-letters/" + appId + "/" + candidateName + "_Offer_Letter.pdf";
 
-				// Offer Letter stored in MinIO
-				objectKey = "upload-documents/" + appId + "_offerLetter.pdf";
-				fileName = appId + "_offerLetter.pdf";
+		try (InputStream inputStream = minioClient.getObject(
+				GetObjectArgs.builder().bucket("infospokejobapplicationsbucket").object(objectKey).build())) {
 
-			} else {
+			response.setContentType("application/pdf");
 
-				JobApplicationEntity app = jobApplicationRepository.findById(appId)
-						.orElseThrow(() -> new RuntimeException(Constants.APPLICATION_NOT_FOUND));
+			response.setHeader("Content-Disposition", ("view".equalsIgnoreCase(action) ? "inline" : "attachment")
+					+ "; filename=\"" + candidateName + "_Offer_Letter.pdf\"");
 
-				if (Constants.RESUME.equalsIgnoreCase(type)) {
-
-					objectKey = app.getResume();
-
-				} else if (Constants.ADDITIONAL.equalsIgnoreCase(type)) {
-
-					objectKey = app.getAdditionalFile();
-
-				} else {
-
-					throw new RuntimeException(Constants.INVALID_FILE_TYPE);
-				}
-
-				if (objectKey == null) {
-					throw new RuntimeException(Constants.FILE_NOT_UPLOADED);
-				}
-
-				fileName = Paths.get(objectKey).getFileName().toString();
-			}
-
-			InputStream minioStream = minioClient
-					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
-
-			String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
-
-			if (fileName.toLowerCase().endsWith(".pdf")) {
-				response.setContentType("application/pdf");
-			} else {
-				response.setContentType("application/octet-stream");
-			}
-
-			response.setCharacterEncoding("UTF-8");
-
-			response.setHeader("Content-Disposition",
-					(Constants.VIEW.equalsIgnoreCase(action) ? "inline" : "attachment") + "; filename*=UTF-8''"
-							+ encodedFileName);
-
-			IOUtils.copy(minioStream, response.getOutputStream());
+			IOUtils.copy(inputStream, response.getOutputStream());
 
 			response.flushBuffer();
 
-			minioStream.close();
-
 		} catch (Exception e) {
-
-			log.error("Exception occurred while downloading file", e);
-
-			throw new RuntimeException("Error downloading file from MinIO", e);
+			log.error("Error while viewing offer letter", e);
+			throw new RuntimeException("Unable to fetch offer letter from MinIO");
 		}
 	}
 
@@ -1338,7 +1198,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Map<Integer, DepartmentsEntity> departmentMap = departments.stream()
 				.collect(Collectors.toMap(DepartmentsEntity::getId, Function.identity()));
-                                                                               
+
 		List<Integer> offerIds = offers.stream().map(OfferDetailsEntity::getId).toList();
 
 		List<OfferDetailsChildEntity> childEntities = offerDeatilsChildRepository.findByOffer_IdIn(offerIds);
@@ -1430,6 +1290,102 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 		return "High";
+	}
+
+	@Override
+	@Transactional
+	public ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request) {
+
+		log.info("OfferDetailsServiceImpl :: releaseOfferLetters");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			userId = jwtService.extractUserId(token);
+		}
+
+		if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure",
+					Collections.singletonList("Application Ids are required"));
+		}
+
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(request.getApplicationIds());
+
+		if (offers.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
+		}
+
+		List<String> releasedCandidateNames = new ArrayList<>();
+
+		for (OfferDetailsEntity offer : offers) {
+
+			JobApplicationEntity application = offer.getJobApplication();
+
+			releasedCandidateNames.add(application.getFirstName() + " " + application.getLastName());
+
+			offer.setOfferReleased(true);
+			offer.setOfferReleasedBy(userId);
+			offer.setOfferReleasedAt(LocalDateTime.now());
+
+			try {
+
+				String candidateName = (application.getFirstName() + "_" + application.getLastName()).replace(" ", "_");
+
+				String objectName = "offer-letters/" + application.getId() + "/" + candidateName + "_Offer_Letter.pdf";
+
+				try (InputStream inputStream = minioClient
+						.getObject(GetObjectArgs.builder().bucket(bucketName).object(objectName).build())) {
+
+					byte[] pdf = inputStream.readAllBytes();
+
+					CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+
+					String body = String.format(Constants.OFFER_LETTER_MAIL_BODY, application.getFirstName(),
+							job.getJobTitle());
+
+					mailServiceImpl.sendMailWithAttachment(Constants.NOREPLY_INDIA, application.getEmail(), null,
+							"Offer Letter", body, pdf, candidateName + "_Offer_Letter.pdf");
+				}
+
+			} catch (Exception e) {
+
+				log.error("Failed to send offer letter mail for application {}", application.getId(), e);
+			}
+		}
+
+		// Save all released offers
+		offerDetailsRepository.saveAll(offers);
+
+		// Send Notification
+		OfferDetailsEntity firstOffer = offers.get(0);
+
+		NotificationEvent event = new NotificationEvent();
+
+		event.setProcessId("OFFER_RELEASE_" + System.currentTimeMillis());
+
+		// Maker
+		event.setMakerRoleId(firstOffer.getCreatedByRoleId());
+		event.setMakerNotificationTitle("Offer Letter Released Successfully");
+		event.setMakerMessage("Offer letter(s) released successfully.");
+
+		// Checker
+		RolesEntity checkerRole = rolesRepository.findByRoleNameIgnoreCase(firstOffer.getApprover3Role());
+
+		if (checkerRole != null) {
+			event.setCheckerId(checkerRole.getRoleId());
+		}
+
+		event.setCheckerRoleName(firstOffer.getApprover3Role());
+		event.setCheckerNotificationTitle("Offer Letter Released");
+		event.setCheckerMessage(
+				"Offer letter(s) have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
+
+		notificationService.callNotification(event);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
 	}
 
 }

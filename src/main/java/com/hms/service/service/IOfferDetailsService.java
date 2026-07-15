@@ -28,8 +28,8 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> submitFinancialApproval(UpdateRaiseOfferRequest request);
 
-	void downloadFile(Integer appId, String type, String action, HttpServletResponse response);
-
 	ApiResponse<?> getPendingApprovals(SpecificationFilterRequest request);
+
+	void viewOfferLetter(Integer appId, String action, HttpServletResponse response);
 
 }

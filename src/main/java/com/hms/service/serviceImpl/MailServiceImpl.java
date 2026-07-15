@@ -37,60 +37,82 @@ public class MailServiceImpl implements IMailService {
 			mimeMessageHelper.setText(body, true);
 			try {
 				if (files != null && !files.isEmpty()) {
-					mimeMessageHelper.addAttachment(files.getOriginalFilename(), new ByteArrayResource(files.getBytes()));
+					mimeMessageHelper.addAttachment(files.getOriginalFilename(),
+							new ByteArrayResource(files.getBytes()));
 				}
 			} catch (Exception e) {
-				log.info("MailServiceImpl::exception occured in sendMail method"+e.getMessage());
+				log.info("MailServiceImpl::exception occured in sendMail method" + e.getMessage());
 				throw new CustomSystemErrorException(Constants.COULD_NOT_ATTACH_FILE);
-				
+
 			}
 			javaMailSender.send(mimeMessage);
 			log.info("MailServiceImpl::Email sent successfully");
 		} catch (Exception e) {
-			log.info("MailServiceImpl::exception occured in sendMail method"+e.getMessage());
+			log.info("MailServiceImpl::exception occured in sendMail method" + e.getMessage());
 			throw new CustomSystemErrorException(Constants.MAIL_FAILURE);
-			
-					}
+
+		}
 		log.info("MailServiceImpl::Exit from the sendMail method");
 	}
 
 	@Override
-	public void sendMailToMultiple(String from,String toEmails, List<String> ccEmails, String subject,
-			String body, MultipartFile file) {
-		
-	    log.info("MailServiceImpl::Inside sendMailToMultiple");
+	public void sendMailToMultiple(String from, String toEmails, List<String> ccEmails, String subject, String body,
+			MultipartFile file) {
 
-	    try {
-	        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-	        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-	        helper.setFrom(from);
-	        
-	        if (toEmails != null && !toEmails.isEmpty()) {
-	        	helper.setTo(toEmails);
-	        }        
-	        if (file != null) {
-	        }        
-	        if (ccEmails != null && !ccEmails.isEmpty()) {
-	            helper.setCc(ccEmails.toArray(new String[0]));
-	        }
-	        helper.setSubject(subject);
-	        helper.setText(body, true);       
-	        if (file != null && !file.isEmpty()) {
-	            helper.addAttachment(
-	                    file.getOriginalFilename(),
-	                    new ByteArrayResource(file.getBytes())
-	            );
-	        }
-	        javaMailSender.send(mimeMessage);
-	        log.info("MailServiceImpl::Email sent successfully");
-	    } catch (Exception e) {
-	    	log.info("MailServiceImpl::exception occured in sendMailToMultiple method"+e.getMessage());
-	        throw new CustomSystemErrorException(Constants.MAIL_FAILURE);
-	    }
-	    log.info("MailServiceImpl::Exit sendMailToMultiple");
+		log.info("MailServiceImpl::Inside sendMailToMultiple");
+
+		try {
+			MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+			helper.setFrom(from);
+
+			if (toEmails != null && !toEmails.isEmpty()) {
+				helper.setTo(toEmails);
+			}
+			if (file != null) {
+			}
+			if (ccEmails != null && !ccEmails.isEmpty()) {
+				helper.setCc(ccEmails.toArray(new String[0]));
+			}
+			helper.setSubject(subject);
+			helper.setText(body, true);
+			if (file != null && !file.isEmpty()) {
+				helper.addAttachment(file.getOriginalFilename(), new ByteArrayResource(file.getBytes()));
+			}
+			javaMailSender.send(mimeMessage);
+			log.info("MailServiceImpl::Email sent successfully");
+		} catch (Exception e) {
+			log.info("MailServiceImpl::exception occured in sendMailToMultiple method" + e.getMessage());
+			throw new CustomSystemErrorException(Constants.MAIL_FAILURE);
+		}
+		log.info("MailServiceImpl::Exit sendMailToMultiple");
 	}
 
-		
+	public void sendMailWithAttachment(String from, String to, String cc, String subject, String body, byte[] file,
+			String fileName) {
+
+		try {
+
+			MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+
+			helper.setFrom(from);
+			helper.setTo(to);
+
+			if (cc != null) {
+				helper.setCc(cc);
+			}
+
+			helper.setSubject(subject);
+			helper.setText(body, true);
+
+			helper.addAttachment(fileName, new ByteArrayResource(file));
+
+			javaMailSender.send(mimeMessage);
+
+		} catch (Exception e) {
+			throw new CustomSystemErrorException(Constants.MAIL_FAILURE);
+		}
+	}
+
 }
-
-

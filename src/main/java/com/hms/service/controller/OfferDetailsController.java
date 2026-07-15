@@ -82,17 +82,17 @@ public class OfferDetailsController {
 		return ResponseEntity.ok(iOfferDetailsService.submitFinancialApproval(request));
 	}
 
-	@GetMapping("/download/{type}")
-	public void downloadFile(@PathVariable("type") String type, @RequestParam("action") String action,
-			@RequestParam("appId") Integer appId, HttpServletResponse response) {
+	@GetMapping("/download/offerLetter")
+	public void viewOfferLetter(@RequestParam("appId") Integer appId,
+			@RequestParam(value = "action", defaultValue = "view") String action, HttpServletResponse response) {
 
-		iOfferDetailsService.downloadFile(appId, type, action, response);
+		iOfferDetailsService.viewOfferLetter(appId, action, response);
 	}
-	
+
 	@PostMapping("/get-pending-approvals")
-	public ResponseEntity<ApiResponse<?>>getPendingApprovals(@RequestBody SpecificationFilterRequest request) {
-	    ApiResponse<?> response = iOfferDetailsService.getPendingApprovals(request);
-	    return new ResponseEntity<>(response, HttpStatus.OK);
+	public ResponseEntity<ApiResponse<?>> getPendingApprovals(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iOfferDetailsService.getPendingApprovals(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 }
