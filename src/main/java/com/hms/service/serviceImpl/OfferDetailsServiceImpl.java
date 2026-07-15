@@ -1,5 +1,6 @@
 package com.hms.service.serviceImpl;
 
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -14,17 +15,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.ApprovalStatusDto;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
@@ -57,6 +63,7 @@ import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.response.OfferCommentsResponse;
 import com.hms.service.response.OfferDetailsResponse;
+import com.hms.service.response.PendingApprovalsResponse;
 import com.hms.service.response.RaiseOfferRequestResponse;
 import com.hms.service.service.INotificationService;
 import com.hms.service.service.IOfferDetailsService;
@@ -64,7 +71,10 @@ import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -76,16 +86,16 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
-	
+
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-	
+
 	@Autowired
 	private OfferLetterTemplateRepository offerLetterTemplateRepository;
-	
+
 	@Autowired
 	private BudgetAndCompensationRepository budgetAndCompensationRepository;
 
@@ -115,6 +125,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private INotificationService notificationService;
+
+	@Autowired
+	private MailServiceImpl mailServiceImpl;
+
+	@Autowired
+	private MinioClient minioClient;
+
+	@Value("${minio.bucketName}")
+	private String bucketName;
 
 	@Override
 	public ApiResponse<?> getReadyToRelease(SpecificationFilterRequest request) {
@@ -224,7 +243,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return "Low";
 	}
 
-	
 	@Override
 	public ApiResponse<?> getOfferDetailsByApplicantId(Integer applicantId) {
 		log.info("OfferDetailsServiceImpl ::Inside the getOfferDetailsByApplicantId");
@@ -252,7 +270,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setEmploymentType(jobDetails.getEmploymentType());
 			response.setWorkLocation(jobDetails.getLocation());
 			// Department
-			Optional<DepartmentsEntity> departmentOptional = departmentsRepository.findById(jobDetails.getDepartmentId());
+			Optional<DepartmentsEntity> departmentOptional = departmentsRepository
+					.findById(jobDetails.getDepartmentId());
 
 			if (departmentOptional.isPresent()) {
 				response.setDepartment(departmentOptional.get().getDepartmentName());
@@ -298,9 +317,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				response.setProbationPeriod(offer.getProbationPeriod());
 				response.setNoticePeriod(offer.getNoticePeriod());
 
-			
 			}
-			 log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
+			log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
 			return ApiResponse.success(ResponseCode.SUCCESS, "Offer details fetched successfully", response);
 
 		} catch (Exception e) {
@@ -316,8 +334,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository
 					.findByJobApplicationId(applicantId);
-			
-			Optional<OfferDetailsChildEntity> offerDetailsChildEntity=offerDeatilsChildRepository.findByJobApplication_Id(applicantId);
+
+			Optional<OfferDetailsChildEntity> offerDetailsChildEntity = offerDeatilsChildRepository
+					.findByJobApplication_Id(applicantId);
 
 			if (offerDetailsEntity == null) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Offer details not found");
@@ -325,21 +344,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			OfferDetailsEntity offerDetails = offerDetailsEntity.get();
 			List<OfferCommentsResponse> responseList = new ArrayList<>();
 
-			OfferDetailsChildEntity childEntity =offerDetailsChildEntity.get();
-			
-			List<Integer> roleIds = Arrays.asList(
-			        childEntity.getRole1(),
-			        childEntity.getRole2(),
-			        childEntity.getRole3()
-			);
+			OfferDetailsChildEntity childEntity = offerDetailsChildEntity.get();
+
+			List<Integer> roleIds = Arrays.asList(childEntity.getRole1(), childEntity.getRole2(),
+					childEntity.getRole3());
 
 			List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
-			
+
 			Map<Integer, String> roleMap = roles.stream()
-			        .collect(Collectors.toMap(
-			                r -> (Integer) r[0],
-			                r -> (String) r[1]
-			        ));
+					.collect(Collectors.toMap(r -> (Integer) r[0], r -> (String) r[1]));
 			// Approver 1
 
 			OfferCommentsResponse response = new OfferCommentsResponse();
@@ -366,7 +379,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			// Approver 3
 
-		    response = new OfferCommentsResponse();
+			response = new OfferCommentsResponse();
 			response.setApproverSequence("3");
 			response.setRole(offerDetails.getApprover3Role());
 			response.setApproverName(roleMap.get(childEntity.getRole1()));
@@ -499,7 +512,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			Optional<RolesEntity> role = rolesRepository.findByRoleId(roleId);
 
-			
 			RolesEntity roles = role.get();
 			if (roles == null) {
 				throw new RuntimeException("Maker Role not found");
@@ -971,7 +983,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setMovedToHireOn(offer.getInterviewCompletionDate());
 
 			response.setRecruiter(offer.getRecruitedBy());
-			
+
 			response.setPriority(calculatedOfferRaiseRequestPriority(offer.getInterviewCompletionDate()));
 
 			responseList.add(response);
@@ -996,7 +1008,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Requests fetched successfully", response);
 	}
-	
+
 	private String calculatedOfferRaiseRequestPriority(LocalDateTime interviewCompletionDate) {
 
 		long days = ChronoUnit.DAYS.between(interviewCompletionDate.toLocalDate(), LocalDate.now());
@@ -1010,42 +1022,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 		return "Low";
-	}
-
-	@Transactional
-	public ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request) {
-
-		log.info("OfferDetailsServiceImpl :: releaseOfferLetters");
-
-		String authHeader = httpServletRequest.getHeader("Authorization");
-
-		Long userId = null;
-
-		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-			String token = authHeader.substring(7);
-			userId = jwtService.extractUserId(token);
-		}
-
-		if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure",
-					Collections.singletonList("Application Ids are required"));
-		}
-
-		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(request.getApplicationIds());
-
-		if (offers.isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
-		}
-
-		for (OfferDetailsEntity offer : offers) {
-			offer.setOfferReleased(true);
-			offer.setOfferReleasedBy(userId);
-			offer.setOfferReleasedAt(LocalDateTime.now());
-		}
-
-		offerDetailsRepository.saveAll(offers);
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
 	}
 
 	@Override
@@ -1065,13 +1041,13 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		response.put("raiseOfferRequest", raiseOfferRequest);
 		response.put("pendingApprovals", pendingApprovals);
 		response.put("readyToRelease", readyToRelease);
-		response.put("releaseOfferLetter",pendingApprovals+readyToRelease );
+		response.put("releaseOfferLetter", pendingApprovals + readyToRelease);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Offer dashboard counts fetched successfully", response);
 	}
 
 	@Override
-	public ApiResponse<?>submitFinancialApproval(UpdateRaiseOfferRequest request) {
+	public ApiResponse<?> submitFinancialApproval(UpdateRaiseOfferRequest request) {
 
 		log.info("OfferDetailsServiceImpl :: Inside UpdateRaiseOffer");
 
@@ -1106,7 +1082,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Assigned Role Not Found");
 		}
-		
+
 		OfferLetterTemplateEntity template = offerLetterTemplateRepository.findById(request.getOfferLetterTemplateId())
 				.orElse(null);
 
@@ -1136,10 +1112,298 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		offerDetailsRepository.save(offerDetails);
 
 		log.info("OfferDetailsServiceImpl :: Exit UpdateRaiseOffer");
-				
 		processApprovalChain(offerDetails.getJobApplication().getId());
 
-		return ApiResponse.success(ResponseCode.SUCCESS,
-				"Raise Offer Request Updated Successfully", null);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Request Updated Successfully", null);
 	}
+
+	@Override
+	public void viewOfferLetter(Integer appId, String action, HttpServletResponse response) {
+
+		log.info("Inside viewOfferLetter");
+
+		JobApplicationEntity application = jobApplicationRepository.findById(appId)
+				.orElseThrow(() -> new RuntimeException("Application not found"));
+
+		String candidateName = application.getFirstName() + "_" + application.getLastName();
+
+		String objectKey = "offer-letters/" + appId + "/" + candidateName + "_Offer_Letter.pdf";
+
+		try (InputStream inputStream = minioClient.getObject(
+				GetObjectArgs.builder().bucket("infospokejobapplicationsbucket").object(objectKey).build())) {
+
+			response.setContentType("application/pdf");
+
+			response.setHeader("Content-Disposition", ("view".equalsIgnoreCase(action) ? "inline" : "attachment")
+					+ "; filename=\"" + candidateName + "_Offer_Letter.pdf\"");
+
+			IOUtils.copy(inputStream, response.getOutputStream());
+
+			response.flushBuffer();
+
+		} catch (Exception e) {
+			log.error("Error while viewing offer letter", e);
+			throw new RuntimeException("Unable to fetch offer letter from MinIO");
+		}
+	}
+
+
+	@Override
+	public ApiResponse<?> getPendingApprovals(SpecificationFilterRequest request) {
+
+		log.info("OfferDetailsServiceImpl :: getPendingApprovals");
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+		Specification<OfferDetailsEntity> specification = request.buildOfferApprovalSpecification();
+
+		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(specification, pageable);
+
+		if (offerPage.isEmpty()) {
+
+			Map<String, Object> response = new HashMap<>();
+
+			response.put("pendingApprovals", Collections.emptyList());
+			response.put("currentPage", offerPage.getNumber());
+			response.put("totalPages", offerPage.getTotalPages());
+			response.put("totalElements", offerPage.getTotalElements());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "No pending approvals found", response);
+		}
+
+		List<OfferDetailsEntity> offers = offerPage.getContent();
+
+		List<Integer> applicationIds = offers.stream().map(offer -> offer.getJobApplication().getId()).distinct()
+				.toList();
+
+		List<JobApplicationEntity> applications = jobApplicationRepository.findByIdIn(applicationIds);
+
+		Map<Integer, JobApplicationEntity> applicationMap = applications.stream()
+				.collect(Collectors.toMap(JobApplicationEntity::getId, Function.identity()));
+
+		List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).distinct().toList();
+
+		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
+
+		Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
+				.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+
+		List<Integer> departmentIds = jobs.stream().map(CreateJobDetailsEntity::getDepartmentId).distinct().toList();
+
+		List<DepartmentsEntity> departments = departmentsRepository.findByIdIn(departmentIds);
+
+		Map<Integer, DepartmentsEntity> departmentMap = departments.stream()
+				.collect(Collectors.toMap(DepartmentsEntity::getId, Function.identity()));
+
+		List<Integer> offerIds = offers.stream().map(OfferDetailsEntity::getId).toList();
+
+		List<OfferDetailsChildEntity> childEntities = offerDeatilsChildRepository.findByOffer_IdIn(offerIds);
+
+		Map<Integer, OfferDetailsChildEntity> childMap = childEntities.stream()
+				.collect(Collectors.toMap(child -> child.getOffer().getId(), Function.identity()));
+
+		List<PendingApprovalsResponse> responseList = new ArrayList<>();
+		for (OfferDetailsEntity offer : offers) {
+
+			PendingApprovalsResponse response = new PendingApprovalsResponse();
+
+			response.setOfferId(offer.getId());
+
+			JobApplicationEntity application = applicationMap.get(offer.getJobApplication().getId());
+
+			if (application != null) {
+
+				response.setApplicationId(application.getId());
+
+				response.setApplicantName((application.getFirstName() == null ? "" : application.getFirstName()) + " "
+						+ (application.getLastName() == null ? "" : application.getLastName()));
+
+				response.setApplicantEmail(application.getEmail());
+
+				CreateJobDetailsEntity job = jobMap.get(application.getJobId());
+
+				if (job != null) {
+
+					response.setJobTitle(job.getJobTitle());
+
+					DepartmentsEntity department = departmentMap.get(job.getDepartmentId());
+
+					if (department != null) {
+						response.setDepartment(department.getDepartmentName());
+					}
+				}
+			}
+
+			response.setRequestedOn(offer.getCreatedDate());
+
+			response.setPriority(calculatePendingApprovalPriority(offer.getCreatedDate()));
+
+			OfferDetailsChildEntity child = childMap.get(offer.getId());
+
+			List<ApprovalStatusDto> approvals = new ArrayList<>();
+
+			if (child != null) {
+
+				approvals.add(
+						new ApprovalStatusDto(offer.getApprover1Role(), Boolean.TRUE.equals(child.getApprover1())));
+
+				approvals.add(
+						new ApprovalStatusDto(offer.getApprover2Role(), Boolean.TRUE.equals(child.getApprover2())));
+
+				approvals.add(
+						new ApprovalStatusDto(offer.getApprover3Role(), Boolean.TRUE.equals(child.getApprover3())));
+			}
+
+			response.setApprovals(approvals);
+
+			responseList.add(response);
+		}
+
+		Map<String, Object> response = new HashMap<>();
+
+		response.put("pendingApprovals", responseList);
+		response.put("currentPage", offerPage.getNumber());
+		response.put("totalPages", offerPage.getTotalPages());
+		response.put("totalElements", offerPage.getTotalElements());
+
+		log.info("OfferDetailsServiceImpl :: Exit from getPendingApprovals");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Pending approvals fetched successfully", response);
+	}
+
+	private String calculatePendingApprovalPriority(LocalDateTime createdDate) {
+
+		LocalDate dueDate = createdDate.toLocalDate().plusDays(7);
+
+		long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
+
+		if (remainingDays > 3) {
+			return "Low";
+		}
+
+		if (remainingDays >= 1) {
+			return "Medium";
+		}
+
+		return "High";
+	}
+
+	@Override
+	@Transactional
+	public ApiResponse<?> releaseOfferLetters(ReleaseOfferRequest request) {
+
+		log.info("OfferDetailsServiceImpl :: releaseOfferLetters");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			userId = jwtService.extractUserId(token);
+		}
+
+		if (request.getApplicationIds() == null || request.getApplicationIds().isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure",
+					Collections.singletonList("Application Ids are required"));
+		}
+
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(request.getApplicationIds());
+
+		if (offers.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
+		}
+
+		List<String> releasedCandidateNames = new ArrayList<>();
+
+		for (OfferDetailsEntity offer : offers) {
+
+			JobApplicationEntity application = offer.getJobApplication();
+
+			releasedCandidateNames.add(application.getFirstName() + " " + application.getLastName());
+
+			offer.setOfferReleased(true);
+			offer.setOfferReleasedBy(userId);
+			offer.setOfferReleasedAt(LocalDateTime.now());
+
+			try {
+
+				String candidateName = application.getFirstName().trim() + "_" + application.getLastName().trim();
+
+				String objectName = "offer-letters/" + application.getId() + "/" + candidateName + "_Offer_Letter.pdf";
+
+				log.info("Bucket Name : {}", bucketName.trim());
+				log.info("Object Name : {}", objectName);
+
+				InputStream inputStream = minioClient
+						.getObject(GetObjectArgs.builder().bucket(bucketName.trim()).object(objectName).build());
+
+				byte[] pdfBytes = inputStream.readAllBytes();
+				inputStream.close();
+
+				CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+
+				String body = String.format(Constants.OFFER_LETTER_MAIL_BODY, application.getFirstName(),
+						job.getJobTitle());
+
+				mailServiceImpl.sendMailWithAttachment(Constants.NOREPLY_INDIA, application.getEmail(), null,
+						"Offer Letter", body, pdfBytes, candidateName + "_Offer_Letter.pdf");
+
+				log.info("Offer letter mail sent successfully to {}", application.getEmail());
+
+			} catch (Exception e) {
+
+				log.error("Unable to send offer letter for application {}", application.getId(), e);
+
+			}
+		}
+
+		// Save all released offers
+		offerDetailsRepository.saveAll(offers);
+
+		// Send Notification
+		OfferDetailsEntity firstOffer = offers.get(0);
+
+		NotificationEvent event = new NotificationEvent();
+
+		event.setProcessId("OFFER_RELEASE_" + System.currentTimeMillis());
+
+		event.setMakerRoleId(firstOffer.getCreatedByRoleId());
+
+		event.setMakerRoleName(
+				rolesRepository.findById(firstOffer.getCreatedByRoleId()).map(RolesEntity::getRoleName).orElse(null));
+
+		event.setMakerNotificationTitle("Offer Letter Released Successfully");
+
+		event.setMakerMessage("Offer letter(s) released successfully.");
+
+		RolesEntity checkerRole = rolesRepository.findByRoleNameIgnoreCase(firstOffer.getApprover3Role());
+
+		if (checkerRole != null) {
+
+			event.setCheckerId(checkerRole.getRoleId());
+
+			event.setCheckerRoleName(checkerRole.getRoleName());
+		}
+
+		event.setCheckerNotificationTitle("Offer Letter Released");
+
+		event.setCheckerMessage(
+				"Offer letter(s) have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
+
+		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+
+		roleEmailMap.put(firstOffer.getCreatedByRoleId(), Collections.emptyList());
+
+		if (checkerRole != null) {
+			roleEmailMap.put(checkerRole.getRoleId(), Collections.emptyList());
+		}
+
+		event.setRoleEmailMap(roleEmailMap);
+
+		notificationService.callNotification(event);
+		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
+	}
+
 }
