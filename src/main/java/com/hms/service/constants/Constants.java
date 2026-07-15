@@ -1169,61 +1169,107 @@ public static final String INTERVIEW_SELECTED_SUBJECT = "Congratulations! Interv
 public static final String INTERVIEW_REJECTED_SUBJECT = "Interview Result";
 
 public static final String INTERVIEW_REJECTED_BODY = """
-
 		<html>
 		<body>
 
 		<p>Dear %s,</p>
 
-		<p>Thank you for taking the time to participate in our interview process for the <b>%s</b> position.</p>
+		<p>
+		Thank you for taking the time to participate in our interview process for the below position in
+		Nexus Hiring Management System (HMS).
+		</p>
 
-		<p>After carefully evaluating your overall performance throughout all stages of the interview process, we regret to inform you that your application has not been selected to move forward in the hiring process.</p>
+		<p><b>Interview Details:</b></p>
 
-		<p>This decision was made after thorough consideration of all candidates. We sincerely appreciate the time, effort, and interest you showed in joining our organization.</p>
-
-		<p>We wish you every success in your future career and encourage you to apply for suitable opportunities with us in the future.</p>
-
-		<br>
+		<p><b>Position:</b> %s</p>
 
 		<p>
-		Regards,<br>
-		Hiring Management System
+		After carefully evaluating your overall performance throughout all stages of the interview process,
+		we regret to inform you that your application has not been selected to move forward in the hiring process.
+		</p>
+
+		<p>
+		This decision was made after thorough consideration of all candidates.
+		We sincerely appreciate the time, effort, and interest you showed in joining our organization.
+		</p>
+
+		<p>
+		We wish you every success in your future career and encourage you to apply for suitable opportunities with us in the future.
+		</p>
+
+		<br/>
+
+		<p>
+		Please log in to the Nexus HMS portal for additional details.
+		</p>
+
+		<br/>
+
+		<p>
+		Regards,<br/>
+		Nexus Hiring Management System (HMS)
+		</p>
+
+		<br/>
+
+		<p>
+		This is a system-generated email. Please do not reply to this email.
 		</p>
 
 		</body>
 		</html>
-
 		""";
 
 public static final String INTERVIEW_SELECTED_BODY = """
-
 		<html>
 		<body>
 
 		<p>Dear %s,</p>
 
-		<p>Congratulations!</p>
+		<p>
+		Congratulations! We are delighted to inform you that you have successfully completed all stages of the interview process for the below position in Nexus Hiring Management System (HMS).
+		</p>
 
-		<p>We are delighted to inform you that you have successfully completed all stages of the interview process for the <b>%s</b> position.</p>
+		<p><b>Interview Details:</b></p>
 
-		<p>Based on your overall performance throughout the interview process, you have been selected to move forward in our hiring process.</p>
-
-		<p>Our recruitment team will reach out to you shortly with the next steps and further details.</p>
-
-		<p>Thank you for your interest in joining our organization. We look forward to welcoming you onboard.</p>
-
-		<br>
+		<p><b>Position:</b> %s</p>
 
 		<p>
-		Regards,<br>
-		Hiring Management System
+		Based on your overall performance throughout the interview process,
+		you have been selected to move forward in our hiring process.
+		</p>
+
+		<p>
+		Our recruitment team will reach out to you shortly with the next steps and further details.
+		</p>
+
+		<p>
+		Thank you for your interest in joining our organization.
+		We look forward to welcoming you onboard.
+		</p>
+
+		<br/>
+
+		<p>
+		Please log in to the Nexus HMS portal for additional details.
+		</p>
+
+		<br/>
+
+		<p>
+		Regards,<br/>
+		Nexus Hiring Management System (HMS)
+		</p>
+
+		<br/>
+
+		<p>
+		This is a system-generated email. Please do not reply to this email.
 		</p>
 
 		</body>
 		</html>
-
 		""";
-
 public static final String INTERVIEW_SCHEDULE_SUBJECT = "Interview Scheduled";
 
 public static final String INTERVIEW_SCHEDULE_BODY =

@@ -1060,7 +1060,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Long readyToRelease = offerDetailsRepository.countByApproveTrueAndOfferReleasedFalse();
 
-
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("raiseOfferRequest", raiseOfferRequest);
@@ -1137,15 +1136,10 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		offerDetailsRepository.save(offerDetails);
 
 		log.info("OfferDetailsServiceImpl :: Exit UpdateRaiseOffer");
-		
-		
+				
 		processApprovalChain(offerDetails.getJobApplication().getId());
 
 		return ApiResponse.success(ResponseCode.SUCCESS,
 				"Raise Offer Request Updated Successfully", null);
 	}
-	
-	
-
-
 }
