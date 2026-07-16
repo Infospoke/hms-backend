@@ -1586,6 +1586,153 @@ public static final String OFFER_TO_BE_APPROVED_MAIL_BODY = "<html><body>"
 
         + "</body></html>";
 
+public static final String RECRUITER_ASSIGNMENT_ACCEPTED_MAIL_BODY =
+"<html><body>"
 
++ "<p>Dear %s,</p>"
 
++ "<p>"
++ "This is to inform you that the recruiter has accepted the assigned job requirement."
++ "</p>"
+
++ "<p><b>Assignment Details:</b></p>"
+
++ "<p><b>Job Title:</b> %s</p>"
++ "<p><b>Recruiter:</b> %s</p>"
++ "<p><b>Status:</b> Accepted</p>"
++ "<p><b>Comments:</b> %s</p>"
++ "<p><b>Responded On:</b> %s</p>"
+
++ "<br/>"
+
++ "<p>"
++ "The recruiter has confirmed ownership of this requirement and will proceed with the recruitment process."
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Regards,<br/>"
++ "Nexus Hiring Management System(HMS)"
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "This is a system-generated email. Please do not reply to this email."
++ "</p>"
+
++ "</body></html>";
+
+public static final String RECRUITER_ASSIGNMENT_REJECTED_MAIL_BODY =
+"<html><body>"
+
++ "<p>Dear %s,</p>"
+
++ "<p>"
++ "This is to inform you that the recruiter has declined the assigned job requirement."
++ "</p>"
+
++ "<p><b>Assignment Details:</b></p>"
+
++ "<p><b>Job Title:</b> %s</p>"
++ "<p><b>Recruiter:</b> %s</p>"
++ "<p><b>Status:</b> Rejected</p>"
++ "<p><b>Comments:</b> %s</p>"
++ "<p><b>Responded On:</b> %s</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Please review the assignment and assign another recruiter if required."
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Regards,<br/>"
++ "Nexus Hiring Management System(HMS)"
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "This is a system-generated email. Please do not reply to this email."
++ "</p>"
+
++ "</body></html>";
+
+public static final String RECRUITER_ASSIGNMENT_ACCEPTED_CHECKER_MAIL_BODY =
+"<html><body>"
+
++ "<p>Dear %s,</p>"
+
++ "<p>"
++ "You have successfully accepted the assigned job requirement."
++ "</p>"
+
++ "<p><b>Assignment Details:</b></p>"
+
++ "<p><b>Job Title:</b> %s</p>"
++ "<p><b>Status:</b> Accepted</p>"
++ "<p><b>Comments:</b> %s</p>"
++ "<p><b>Responded On:</b> %s</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Thank you for accepting this assignment. You may now proceed with the recruitment activities."
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Regards,<br/>"
++ "Nexus Hiring Management System(HMS)"
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "This is a system-generated email. Please do not reply to this email."
++ "</p>"
+
++ "</body></html>";
+
+public static final String RECRUITER_ASSIGNMENT_REJECTED_CHECKER_MAIL_BODY =
+"<html><body>"
+
++ "<p>Dear %s,</p>"
+
++ "<p>"
++ "You have declined the assigned job requirement."
++ "</p>"
+
++ "<p><b>Assignment Details:</b></p>"
+
++ "<p><b>Job Title:</b> %s</p>"
++ "<p><b>Status:</b> Rejected</p>"
++ "<p><b>Comments:</b> %s</p>"
++ "<p><b>Responded On:</b> %s</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Your response has been recorded successfully. The assignment owner will be notified accordingly."
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Regards,<br/>"
++ "Nexus Hiring Management System(HMS)"
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "This is a system-generated email. Please do not reply to this email."
++ "</p>"
+
++ "</body></html>";
 }
