@@ -1430,7 +1430,7 @@ public static final String INTERVIEWER_RESCHEDULE_BODY =
 + "</html>";
 public static final String REJECT = "reject";
 
-public static final String OFFER_PLAN="Offer_Plan";
+public static final String OFFER_PLAN="Offer Plan";
 
 public static final String CANDIDATE_REJECTION_MAIL_BODY =
 "Dear %s,\n\n"

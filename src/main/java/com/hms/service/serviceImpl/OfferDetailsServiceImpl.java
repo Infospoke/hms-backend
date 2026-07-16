@@ -1371,8 +1371,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		event.setMakerRoleId(firstOffer.getCreatedByRoleId());
 
-		event.setMakerRoleName(
-				rolesRepository.findById(firstOffer.getCreatedByRoleId()).map(RolesEntity::getRoleName).orElse(null));
+		event.setMakerRoleName(rolesRepository.findById(firstOffer.getCreatedByRoleId()).map(RolesEntity::getRoleName).orElse(null));
 
 		event.setMakerNotificationTitle("Offer Letter Released Successfully");
 
@@ -1389,8 +1388,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		event.setCheckerNotificationTitle("Offer Letter Released");
 
-		event.setCheckerMessage(
-				"Offer letter(s) have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
+		event.setCheckerMessage("Offer letter(s) have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
 
 		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
