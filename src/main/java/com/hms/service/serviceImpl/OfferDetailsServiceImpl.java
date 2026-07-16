@@ -1059,12 +1059,22 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		Integer userId = null;
+		
+		String roleName = null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
 
 			userId = jwtService.extractUserId(token).intValue();
+			
+			roleName = jwtService.extractRole(token);
+		}
+		
+		if (!"Recruiting Operations".equalsIgnoreCase(roleName)) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
+					List.of("Only Recruiting Operations can Submit Raise offer Request."));
 		}
 
 		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
