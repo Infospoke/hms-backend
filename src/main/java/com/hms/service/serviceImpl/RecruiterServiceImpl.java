@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.constants.Constants;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.dto.RecruiterCardsCountDto;
 import com.hms.service.dto.RecruiterInfoDto;
@@ -588,9 +590,74 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			recruiterAssignmentRepository.save(recruiterAssignmentEntity);
 		}
-		Integer departmentId = createJobDetailsRepository.findById(request.getJobId()).get().getDepartmentId();
+		Optional<CreateJobDetailsEntity> createJobDetails = createJobDetailsRepository.findById(request.getJobId());
+		CreateJobDetailsEntity jobDetailsEntity=createJobDetails.get();
+		Integer departmentId=jobDetailsEntity.getDepartmentId();
+		String jobTitle=jobDetailsEntity.getJobTitle();
 		String departmentName = departmentsRepository.findById(departmentId).get().getDepartmentName();
+		String assignedBy = recruiterAssignmentRepository.findByJobIdAndUserId(request.getJobId(), tokenUserId)
+				.getAssignedBy();
 
+		Integer assigerUserId = userRepository.findByUsername(assignedBy).getUserId();
+
+		Integer makerRoleId = assignRolesRepository.findByUserId(assigerUserId).get().getRoleId();
+		
+		String recruiter = userRepository.findByUserId(tokenUserId).get().getUsername();
+		
+	
+		
+		
+		//emails 
+		
+		String makerEmailBody = "";
+		String checkerEmailBody = "";
+		String makerNotificationTitle = "";
+		String checkerNotificationTitle = "";
+
+		if ("ACCEPTED".equalsIgnoreCase(request.getStatus())) {
+
+		    makerNotificationTitle = "Recruiter Assignment Accepted";
+		    checkerNotificationTitle = "Recruiter Assignment Accepted";
+
+		    makerEmailBody = String.format(
+		            Constants.RECRUITER_ASSIGNMENT_ACCEPTED_MAIL_BODY,
+		            assignedBy,
+		            jobTitle,
+		            recruiter,
+		            request.getComments() == null ? "-" : request.getComments(),
+		            LocalDateTime.now());
+
+		    checkerEmailBody = String.format(
+		            Constants.RECRUITER_ASSIGNMENT_ACCEPTED_CHECKER_MAIL_BODY,
+		            recruiter,
+		            jobTitle,
+		            request.getComments() == null ? "-" : request.getComments(),
+		            LocalDateTime.now());
+
+		} else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
+
+		    makerNotificationTitle = "Recruiter Assignment Rejected";
+		    checkerNotificationTitle = "Recruiter Assignment Rejected";
+
+		    makerEmailBody = String.format(
+		            Constants.RECRUITER_ASSIGNMENT_REJECTED_MAIL_BODY,
+		            assignedBy,
+		            jobTitle,
+		            recruiter,
+		            request.getComments() == null ? "-" : request.getComments(),
+		            LocalDateTime.now());
+
+		    checkerEmailBody = String.format(
+		            Constants.RECRUITER_ASSIGNMENT_REJECTED_CHECKER_MAIL_BODY,
+		            recruiter,
+		            jobTitle,
+		            request.getComments() == null ? "-" : request.getComments(),
+		            LocalDateTime.now());
+		}
+
+		
+
+         // set to notifications
 		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 		Integer roleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
@@ -606,12 +673,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		event.setType("Recruiters");
 		event.setDeptName(departmentName);
 
-		String assignedBy = recruiterAssignmentRepository.findByJobIdAndUserId(request.getJobId(), tokenUserId)
-				.getAssignedBy();
-
-		Integer assigerUserId = userRepository.findByUsername(assignedBy).getUserId();
-
-		Integer makerRoleId = assignRolesRepository.findByUserId(assigerUserId).get().getRoleId();
+		
 
 		event.setMakerRoleId(makerRoleId);
 		event.setMakerRoleName(recruiterAssignmentEntity.getRoleName());
@@ -620,12 +682,12 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		String makerEmail = userRepository.findByUsername(assignedBy).getEmail();
 		log.info("maker email is" + makerEmail);
 		event.setMakerEmailAddress(makerEmail);
-		event.setMakerEmailBody("accepted");
-		event.setMakerNotificationTitle("assignment accepted");
-		event.setCheckerNotificationTitle("assignment");
+		event.setMakerNotificationTitle(makerNotificationTitle);
+		event.setMakerEmailBody(makerEmailBody);
+		event.setCheckerNotificationTitle(checkerNotificationTitle);
+		event.setCheckerEmailBody(checkerEmailBody);
 		event.setCheckerMessage("This is checker message");
-		event.setCheckerEmailBody("accepted");
-		event.setRoleEmailMap(roleEmailMap);
+        event.setRoleEmailMap(roleEmailMap);
 		event.setCheckerRoleName(roleName);
 		notificationService.callNotification(event);
 		log.info("the event is " + event);
