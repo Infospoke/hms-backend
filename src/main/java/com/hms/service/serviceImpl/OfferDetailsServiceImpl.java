@@ -672,6 +672,11 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			event.setCheckerNotificationTitle("Level " + approvalLevel + " Approved — " + levelName);
 
 			event.setCheckerMessage("A offer is now under your approval flow for review and approval");
+			
+			event.setCheckerEmailBody(String.format(Constants.OFFER_TO_BE_APPROVED_MAIL_BODY, applicantId,
+					pos.getJobApplication().getFirstName() + " " + pos.getJobApplication().getLastName(),
+					pos.getJobApplication().getEmail(), pos.getTotalCtc(), pos.getNoticePeriod(),
+					pos.getProbationPeriod(), pos.getSubmittedByUserId(), pos.getCreatedDate()));
 
 			event.setCheckerEmailBody("hdfdgfhjkl");
 
@@ -687,7 +692,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				makerTitle = "Level 1 Approved — " + roleName;
 
-				makerMailBody = "hgertyuiuoiuy";
+				makerMailBody = Constants.OFFER_LEVEL1_APPROVED_MAIL_BODY;
 
 				break;
 
@@ -697,7 +702,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				makerTitle = "Level 2 Approved — " + roleName;
 
-				makerMailBody = "sadfegfrdhyjgkui";
+				makerMailBody = Constants.OFFER_LEVEL2_APPROVED_MAIL_BODY;;
 
 				break;
 
@@ -707,7 +712,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				makerTitle = "Level 3 Approved — " + roleName;
 
-				makerMailBody = "ttretyuio";
+				makerMailBody = Constants.OFFER_LEVEL3_APPROVED_MAIL_BODY;;
 
 				break;
 			}
@@ -718,7 +723,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			return ApiResponse.success("Approved successfully at level " + approvalLevel);
 		}
 
-		String rejectedMailBody = "gfdhkjsl;jf";
+		String rejectedMailBody = Constants.OFFER_REJECTED_MAIL_BODY;
 
 		event.setCheckerNotificationTitle("Level " + approvalLevel + " Rejected — " + levelName);
 
@@ -1060,12 +1065,22 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		Integer userId = null;
+		
+		String roleName = null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
 
 			userId = jwtService.extractUserId(token).intValue();
+			
+			roleName = jwtService.extractRole(token);
+		}
+		
+		if (!"Recruiting Operations".equalsIgnoreCase(roleName)) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
+					List.of("Only Recruiting Operations can Submit Raise offer Request."));
 		}
 
 		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
