@@ -94,5 +94,11 @@ public class OfferDetailsController {
 		ApiResponse<?> response = iOfferDetailsService.getPendingApprovals(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@PostMapping("/get-all-pending-approvals")
+	public ResponseEntity<ApiResponse<?>> getAllPendingApprovals(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iOfferDetailsService.getAllPendingApprovals(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }

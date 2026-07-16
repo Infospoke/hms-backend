@@ -5,12 +5,16 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
+import com.hms.service.entity.OfferDetailsEntity;
 
 public interface OfferDeatilsChildRepository extends JpaRepository<OfferDetailsChildEntity,Integer>{
 
 	Optional<OfferDetailsChildEntity> findByJobApplication_Id(Integer applicantId);
 	
 	List<OfferDetailsChildEntity> findByOffer_IdIn(List<Integer> offerIds);
+
+	Optional<OfferDetailsChildEntity> findByOfferId(Integer offerId);
 
 }
