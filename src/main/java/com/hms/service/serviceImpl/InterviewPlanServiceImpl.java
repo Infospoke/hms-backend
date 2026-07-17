@@ -2989,9 +2989,22 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		
 		OfferDetailsEntity offerDetails = offerDetailsRepository.findTopByJobApplicationOrderByIdDesc(application);
 
+		if (offerDetails == null) {
+
+			offerDetails = new OfferDetailsEntity();
+
+			offerDetails.setJobApplication(application);
+		}
+
 		if (application == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
+		}
+		
+		if (!application.isInPersonInterviews()) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE,
+					"Interview completion status can be updated only if all rounds are completed.");
 		}
 
 		String currentStatus = offerDetails.getInterviewCompletionStatus();
