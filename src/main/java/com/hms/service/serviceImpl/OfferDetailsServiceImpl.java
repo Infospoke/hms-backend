@@ -1478,6 +1478,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		response.setApplicantEmail(entities.getEmail());
 		response.setApplicationId(entity.getJobApplication().getId());
 		CreateJobDetailsEntity createJob = createJobDetailsRepository.findByJobId(entities.getJobId());
+		response.setJobTitle(createJob.getJobTitle());
 		Integer deptId = createJob.getDepartmentId();
 		String srId = createJob.getSrId();
 		String deptName = departmentsRepository.findById(deptId).get().getDepartmentName();
@@ -1539,4 +1540,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		return "High";
 	}
+
+
 }
