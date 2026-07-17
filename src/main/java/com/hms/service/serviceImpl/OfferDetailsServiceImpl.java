@@ -1449,6 +1449,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Page<OfferDetailsEntity> page = offerDetailsRepository.findAll(specification, pageable);
 		List<PendingApprovalsResponse> response = new ArrayList<>();
+		
+		Map<String, Object> data = new HashMap<>();
+		data.put("pendingApprovals", response);
+		data.put("currentPage", page.getNumber());
+		data.put("totalPages", page.getTotalPages());
+		data.put("totalElements", page.getTotalElements());
+		data.put("pageSize", page.getSize());
+		
 
 		for (OfferDetailsEntity entity : page.getContent()) {
 
@@ -1457,7 +1465,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			response.add(mapToResponse(entity, roleId.intValue(), childEntity));
 		}
-		return ApiResponse.success(ResponseCode.SUCCESS, "Pending approvals fetched successfully", response);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Pending approvals fetched successfully",data);
 
 	}
 
