@@ -16,6 +16,7 @@ import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.service.IOfferDetailsService;
+import com.hms.service.serviceImpl.OfferDetailsServiceImpl;
 import com.hms.service.wrappers.ApiResponse;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,6 +27,9 @@ public class OfferDetailsController {
 
 	@Autowired
 	private IOfferDetailsService iOfferDetailsService;
+	
+	@Autowired
+	private OfferDetailsServiceImpl offerDetailsServiceImpl;
 
 	@PostMapping("/ready-to-release-list")
 	public ResponseEntity<ApiResponse<?>> getReadyToRelease(@RequestBody SpecificationFilterRequest request) {
@@ -70,23 +74,17 @@ public class OfferDetailsController {
 
 	@GetMapping("/dashboard-counts")
 	public ResponseEntity<ApiResponse<?>> getOfferDashboardCounts() {
-
 		return ResponseEntity.ok(iOfferDetailsService.getOfferDashboardCounts());
-
 	}
 
 	@PostMapping("/submit-raise-offer-request")
-
 	public ResponseEntity<ApiResponse<?>> submitFinancialApproval(@RequestBody UpdateRaiseOfferRequest request) {
-
 		return ResponseEntity.ok(iOfferDetailsService.submitFinancialApproval(request));
 	}
 
 	@GetMapping("/download/offerLetter")
-	public void viewOfferLetter(@RequestParam("appId") Integer appId,
-			@RequestParam(value = "action", defaultValue = "view") String action, HttpServletResponse response) {
-
-		iOfferDetailsService.viewOfferLetter(appId, action, response);
+	public void viewOfferLetter(@RequestParam("appId") Integer appId,@RequestParam(value = "action", defaultValue = "view") String action, HttpServletResponse response) {
+	iOfferDetailsService.viewOfferLetter(appId, action, response);
 	}
 
 	@PostMapping("/get-pending-approvals")
@@ -94,5 +92,11 @@ public class OfferDetailsController {
 		ApiResponse<?> response = iOfferDetailsService.getPendingApprovals(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
+	
+	@PostMapping("/get-all-pending-approvals")
+	public ResponseEntity<ApiResponse<?>> getAllPendingApprovals(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iOfferDetailsService.getAllPendingApprovals(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 }

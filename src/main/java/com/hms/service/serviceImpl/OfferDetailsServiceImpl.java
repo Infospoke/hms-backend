@@ -27,7 +27,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.ApprovalStatusDto;
@@ -43,6 +42,7 @@ import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.OfferLetterTemplateEntity;
 import com.hms.service.entity.RolesEntity;
+import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;
@@ -54,6 +54,7 @@ import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferDeatilsChildRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.OfferLetterTemplateRepository;
+import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
@@ -128,6 +129,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private MailServiceImpl mailServiceImpl;
+
+	@Autowired
+	private PositionBasicsRepository positionBasicsRepository;
 
 	@Autowired
 	private MinioClient minioClient;
@@ -674,6 +678,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 					pos.getJobApplication().getEmail(), pos.getTotalCtc(), pos.getNoticePeriod(),
 					pos.getProbationPeriod(), pos.getSubmittedByUserId(), pos.getCreatedDate()));
 
+			event.setCheckerEmailBody("hdfdgfhjkl");
+
 			String makerSubject = "";
 			String makerTitle = "";
 			String makerMailBody = "";
@@ -1162,7 +1168,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 	}
 
-
 	@Override
 	public ApiResponse<?> getPendingApprovals(SpecificationFilterRequest request) {
 
@@ -1386,7 +1391,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		event.setMakerRoleId(firstOffer.getCreatedByRoleId());
 
-		event.setMakerRoleName(rolesRepository.findById(firstOffer.getCreatedByRoleId()).map(RolesEntity::getRoleName).orElse(null));
+		event.setMakerRoleName(
+				rolesRepository.findById(firstOffer.getCreatedByRoleId()).map(RolesEntity::getRoleName).orElse(null));
 
 		event.setMakerNotificationTitle("Offer Letter Released Successfully");
 
@@ -1403,7 +1409,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		event.setCheckerNotificationTitle("Offer Letter Released");
 
-		event.setCheckerMessage("Offer letter(s) have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
+		event.setCheckerMessage(
+				"Offer letter(s) have been released for candidate(s): " + String.join(", ", releasedCandidateNames));
 
 		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
@@ -1418,5 +1425,129 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		notificationService.callNotification(event);
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Offer letters released successfully");
 	}
+
+	@Override
+	public ApiResponse<?> getAllPendingApprovals(SpecificationFilterRequest request) {
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		Long userId = null;
+		Long roleId = null;
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			roleId = jwtService.extractRoleId(token);
+			userId = jwtService.extractUserId(token);
+		}
+
+		System.out.println("User Id : " + userId);
+		System.out.println("Role Id : " + roleId);
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
+				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+		Specification<OfferDetailsEntity> specification = request.buildPendingApprovalSpecification(roleId);
+
+		Page<OfferDetailsEntity> page = offerDetailsRepository.findAll(specification, pageable);
+		List<PendingApprovalsResponse> response = new ArrayList<>();
+		
+		Map<String, Object> data = new HashMap<>();
+		data.put("pendingApprovals", response);
+		data.put("currentPage", page.getNumber());
+		data.put("totalPages", page.getTotalPages());
+		data.put("totalElements", page.getTotalElements());
+		data.put("pageSize", page.getSize());
+		
+
+		for (OfferDetailsEntity entity : page.getContent()) {
+
+			OfferDetailsChildEntity childEntity =
+			        offerDeatilsChildRepository.findByOfferId(entity.getId()).orElse(null);
+
+			response.add(mapToResponse(entity, roleId.intValue(), childEntity));
+		}
+		return ApiResponse.success(ResponseCode.SUCCESS, "Pending approvals fetched successfully",data);
+
+	}
+
+	private PendingApprovalsResponse mapToResponse(OfferDetailsEntity entity, Integer roleId,
+			OfferDetailsChildEntity childEntity) {
+
+		PendingApprovalsResponse response = new PendingApprovalsResponse();
+
+		response.setOfferId(entity.getId());
+
+		Optional<JobApplicationEntity> jobApplicationEntity = jobApplicationRepository
+				.findById(entity.getJobApplication().getId());
+
+		JobApplicationEntity entities = jobApplicationEntity.get();
+		String applicantName = entities.getFirstName() + " " + entities.getLastName();
+
+		response.setApplicantName(applicantName);
+		response.setApplicantEmail(entities.getEmail());
+		response.setApplicationId(entity.getJobApplication().getId());
+		CreateJobDetailsEntity createJob = createJobDetailsRepository.findByJobId(entities.getJobId());
+		response.setJobTitle(createJob.getJobTitle());
+		Integer deptId = createJob.getDepartmentId();
+		String srId = createJob.getSrId();
+		String deptName = departmentsRepository.findById(deptId).get().getDepartmentName();
+		response.setDepartment(deptName);
+		LocalDateTime requestedOn = null;
+
+		if (roleId.equals(childEntity.getRole1())) {
+		    requestedOn = entity.getCreatedDate();
+		} else if (roleId.equals(childEntity.getRole2())) {
+		    requestedOn = entity.getDateOfApproval1();
+		} else if (roleId.equals(childEntity.getRole3())) {
+		    requestedOn = entity.getDateOfApproval2();
+		}
+
+		response.setRequestedOn(requestedOn);
+		response.setPriority(calculatePendingApprovalPriority(entity, roleId, childEntity));
+		String employementType = positionBasicsRepository.findBySrId(srId).get().getEmploymentType();
+		String userName = userRepository.findByUserId(entity.getSubmittedByUserId()).get().getUsername();
+		response.setUserName(userName);
+		response.setEmployementType(employementType);
+
+		return response;
+	}
+
+	private String calculatePendingApprovalPriority(OfferDetailsEntity offer, Integer loginRoleId,
+			OfferDetailsChildEntity child) {
+
+		LocalDateTime slaStartDate = null;
+
+		if (loginRoleId.equals(child.getRole1())) {
+
+			slaStartDate = offer.getCreatedDate();
+
+		} else if (loginRoleId.equals(child.getRole2())) {
+
+			slaStartDate = offer.getDateOfApproval1();
+
+		} else if (loginRoleId.equals(child.getRole3())) {
+
+			slaStartDate = offer.getDateOfApproval2();
+
+		}
+
+		if (slaStartDate == null) {
+			return "Low";
+		}
+
+		LocalDate dueDate = slaStartDate.toLocalDate().plusDays(7);
+
+		long remainingDays = ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
+
+		if (remainingDays > 3) {
+			return "Low";
+		}
+
+		if (remainingDays >= 1) {
+			return "Medium";
+		}
+
+		return "High";
+	}
+
 
 }

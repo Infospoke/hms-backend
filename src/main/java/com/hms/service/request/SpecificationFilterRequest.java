@@ -25,6 +25,7 @@ import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.InterviewerAssignmentEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.NotificationEngineEntity;
+import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
@@ -1709,9 +1710,9 @@ public class SpecificationFilterRequest {
 
 			if (priority != null && !priority.isBlank()) {
 
-			    LocalDate today = LocalDate.now();
+				LocalDate today = LocalDate.now();
 
-			    switch (priority.toUpperCase()) {
+				switch (priority.toUpperCase()) {
 
 				case "LOW":
 
@@ -1730,7 +1731,7 @@ public class SpecificationFilterRequest {
 					predicates.add(cb.lessThanOrEqualTo(root.get("interviewCompletionDate"),
 							today.minusDays(3).atStartOfDay()));
 					break;
-			    }
+				}
 			}
 
 			// Date Filter
@@ -1769,7 +1770,7 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
-	
+
 	public Specification<OfferDetailsEntity> buildOfferApprovalSpecification() {
 
 		return (root, query, cb) -> {
@@ -1828,6 +1829,88 @@ public class SpecificationFilterRequest {
 
 					predicates.add(cb.isFalse(root.get("approve")));
 				}
+			}
+
+			Specification<OfferDetailsEntity> dateSpecification = dateSpec("createdDate");
+
+			if (dateSpecification != null) {
+
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
+
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
+
+	public Specification<OfferDetailsEntity> buildPendingApprovalSpecification(Long loginRoleId) {
+
+		return (root, query, cb) -> {
+
+			query.distinct(true);
+
+			List<Predicate> predicates = new ArrayList<>();
+
+			Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication", JoinType.INNER);
+
+			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
+			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
+			Root<OfferDetailsChildEntity> child = query.from(OfferDetailsChildEntity.class);
+
+			predicates.add(cb.equal(application.get("jobId"), job.get("jobId")));
+			predicates.add(cb.equal(job.get("departmentId"), department.get("id")));
+
+			// Join OfferDetailsEntity with OfferDetailsChildEntity
+			predicates.add(cb.equal(child.get("offer").get("id"), root.get("id")));
+
+			// Pending with Approver 1
+			Predicate approver1 = cb.and(cb.equal(child.get("role1"), loginRoleId), cb.isTrue(child.get("approver1")),
+					cb.isFalse(root.get("approver1")));
+
+			// Pending with Approver 2
+			Predicate approver2 = cb.and(cb.equal(child.get("role2"), loginRoleId), cb.isTrue(child.get("approver2")),
+					cb.isFalse(root.get("approver2")));
+
+			// Pending with Approver 3
+			Predicate approver3 = cb.and(cb.equal(child.get("role3"), loginRoleId), cb.isTrue(child.get("approver3")),
+					cb.isFalse(root.get("approver3")));
+
+			predicates.add(cb.or(approver1, approver2, approver3));
+
+			String search = getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				String keyword = "%" + search.trim().toLowerCase() + "%";
+
+				Predicate applicantName = cb
+						.like(cb.lower(cb.concat(cb.concat(cb.coalesce(application.get("firstName"), ""), " "),
+								cb.coalesce(application.get("lastName"), ""))), keyword);
+
+				Predicate firstName = cb.like(cb.lower(cb.coalesce(application.get("firstName"), "")), keyword);
+
+				Predicate lastName = cb.like(cb.lower(cb.coalesce(application.get("lastName"), "")), keyword);
+
+				Predicate email = cb.like(cb.lower(cb.coalesce(application.get("email"), "")), keyword);
+
+				Predicate jobTitle = cb.like(cb.lower(cb.coalesce(job.get("jobTitle"), "")), keyword);
+
+				predicates.add(cb.or(applicantName, firstName, lastName, email, jobTitle));
+			}
+
+			String jobId = getFilter("jobId");
+
+			if (jobId != null && !jobId.isBlank()) {
+				predicates.add(cb.equal(job.get("jobId"), Integer.valueOf(jobId)));
+			}
+
+			String departmentId = getFilter("departmentId");
+
+			if (departmentId != null && !departmentId.isBlank()) {
+				predicates.add(cb.equal(department.get("id"), Integer.valueOf(departmentId)));
 			}
 
 			Specification<OfferDetailsEntity> dateSpecification = dateSpec("createdDate");
