@@ -2941,18 +2941,28 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		Integer userId = null;
+		
+		String roleName = null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 		    String token = authHeader.substring(7);
 
 		    userId = jwtService.extractUserId(token).intValue();
+		    
+		    roleName = jwtService.extractRole(token);
 		}
 		
 		UserEntity user = userRepository.findByUserId(userId).orElse(null);
 
 		if (user == null) {
 		    return ApiResponse.failure(ResponseCode.FAILURE, "User not found");
+		}
+		
+		if (!"HR".equalsIgnoreCase(roleName)) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
+					List.of("Only HR can update the interview completion status."));
 		}
 
 		// Validations
@@ -2979,9 +2989,22 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		
 		OfferDetailsEntity offerDetails = offerDetailsRepository.findTopByJobApplicationOrderByIdDesc(application);
 
+		if (offerDetails == null) {
+
+			offerDetails = new OfferDetailsEntity();
+
+			offerDetails.setJobApplication(application);
+		}
+
 		if (application == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
+		}
+		
+		if (!application.isInPersonInterviews()) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE,
+					"Interview completion status can be updated only if all rounds are completed.");
 		}
 
 		String currentStatus = offerDetails.getInterviewCompletionStatus();

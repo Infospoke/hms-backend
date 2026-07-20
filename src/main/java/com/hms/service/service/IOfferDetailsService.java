@@ -32,4 +32,6 @@ public interface IOfferDetailsService {
 
 	void viewOfferLetter(Integer appId, String action, HttpServletResponse response);
 
+	ApiResponse<?> getAllPendingApprovals(SpecificationFilterRequest request);
+
 }

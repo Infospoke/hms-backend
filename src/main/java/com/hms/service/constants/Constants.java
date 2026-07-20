@@ -1014,8 +1014,7 @@ public class Constants {
 	public static final String CREATED_AT = "createdAt";
 	
 	//Approval
-	public static final String INTERVIEW_PLAN_APPROVED_MAIL_SUBJECT =
-	        "Interview Plan Approved";
+	public static final String INTERVIEW_PLAN_APPROVED_MAIL_SUBJECT = "Interview Plan Approved";
 
 	public static final String INTERVIEW_PLAN_APPROVED_MAKER_BODY =
 			"Your Interview Plan has been approved.\n\n"
@@ -1025,8 +1024,7 @@ public class Constants {
 			+ "Approved On : %s";
 	
 	//Approval Confirmation (Checker)
-	public static final String INTERVIEW_PLAN_APPROVER_CONFIRMATION_SUBJECT =
-	        "Interview Plan Approval Confirmation";
+	public static final String INTERVIEW_PLAN_APPROVER_CONFIRMATION_SUBJECT = "Interview Plan Approval Confirmation";
 
 	public static final String INTERVIEW_PLAN_APPROVED_CHECKER_BODY =
 			"You have approved the Interview Plan.\n\n"
@@ -1036,8 +1034,7 @@ public class Constants {
 			+ "Approved On : %s";
 	
 	//Rejected
-	public static final String INTERVIEW_PLAN_REJECTED_MAIL_SUBJECT =
-	        "Interview Plan Rejected";
+	public static final String INTERVIEW_PLAN_REJECTED_MAIL_SUBJECT = "Interview Plan Rejected";
 
 	public static final String INTERVIEW_PLAN_REJECTED_MAKER_BODY =
 			"Your Interview Plan has been rejected.\n\n"
@@ -1047,8 +1044,7 @@ public class Constants {
 			+ "Rejected On : %s";
 	
 	//Rejected Confirmation
-	public static final String INTERVIEW_PLAN_REJECTION_CONFIRMATION_SUBJECT =
-	        "Interview Plan Rejection Confirmation";
+	public static final String INTERVIEW_PLAN_REJECTION_CONFIRMATION_SUBJECT = "Interview Plan Rejection Confirmation";
 
 	public static final String INTERVIEW_PLAN_REJECTED_CHECKER_BODY =
 			"You have rejected the Interview Plan.\n\n"
@@ -1151,8 +1147,7 @@ public class Constants {
 			+ "Approved By : %s\n"
 			+ "Approved On : %s";
 	
-	//Deactivation Rejected
-	
+	//Deactivation Rejected	
 
 	public static final String INTERVIEW_PLAN_DEACTIVATION_REJECTED_MAIL_SUBJECT =
         "Interview Plan Deactivation Request Rejected";
@@ -1286,161 +1281,135 @@ public static final String INTERVIEW_SELECTED_BODY = """
 public static final String INTERVIEW_SCHEDULE_SUBJECT = "Interview Scheduled";
 
 public static final String INTERVIEW_SCHEDULE_BODY =
-"<html>"
-+ "<body>"
-+ "<p>Dear <b>%s</b>,</p>"
+		"<html>" + "<body>" + "<p>Dear <b>%s</b>,</p>"
 
-+ "<p>Thank you for taking the time to participate in the initial interview for the <b>%s</b> position.</p>"
+				+ "<p>Thank you for taking the time to participate in the initial interview for the <b>%s</b> position.</p>"
 
-+ "<p>We are pleased to inform you that you have been shortlisted for the next round of the selection process, which will be a <b>%s</b>.</p>"
+				+ "<p>We are pleased to inform you that you have been shortlisted for the next round of the selection process, which will be a <b>%s</b>.</p>"
 
-+ "<p><b>Please find the interview details below:</b></p>"
+				+ "<p><b>Please find the interview details below:</b></p>"
 
-+ "<table border='1' cellpadding='6' cellspacing='0'>"
-+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
-+ "<tr><td><b>Date</b></td><td>%s</td></tr>"
-+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
-+ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
-+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
-+ "</table>"
+				+ "<table border='1' cellpadding='6' cellspacing='0'>"
+				+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>" + "<tr><td><b>Date</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>" + "<tr><td><b>Mode</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>" + "</table>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>If you have any questions or require any assistance, please feel free to contact us.</p>"
+				+ "<p>If you have any questions or require any assistance, please feel free to contact us.</p>"
 
-+ "<p>We look forward to speaking with you and wish you the very best for the upcoming interview.</p>"
+				+ "<p>We look forward to speaking with you and wish you the very best for the upcoming interview.</p>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>Best regards,<br>"
-+ "<b>HR Team</b>"
-+ "</p>"
+				+ "<p>Best regards,<br>" + "<b>HR Team</b>" + "</p>"
 
-+ "</body>"
-+ "</html>";
+				+ "</body>" + "</html>";
 public static final String INTERVIEW_RESCHEDULE_SUBJECT = "Interview ReScheduled";
 
 public static final String INTERVIEW_RESCHEDULE_BODY =
-"<html>"
-+ "<body>"
-+ "<p>Dear <b>%s</b>,</p>"
+		"<html>" + "<body>" + "<p>Dear <b>%s</b>,</p>"
 
-+ "<p>Your interview for the <b>%s</b> position has been <b>rescheduled</b>.</p>"
+				+ "<p>Your interview for the <b>%s</b> position has been <b>rescheduled</b>.</p>"
 
-+ "<p>Please find the updated interview details below:</p>"
+				+ "<p>Please find the updated interview details below:</p>"
 
-+ "<table border='1' cellpadding='6' cellspacing='0'>"
-+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
-+ "<tr><td><b>Date</b></td><td>%s</td></tr>"
-+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
-+ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
-+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
-+ "</table>"
+				+ "<table border='1' cellpadding='6' cellspacing='0'>"
+				+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>" + "<tr><td><b>Date</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>" + "<tr><td><b>Mode</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>" + "</table>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>We apologize for any inconvenience caused. If you have any questions, please feel free to contact us.</p>"
+				+ "<p>We apologize for any inconvenience caused. If you have any questions, please feel free to contact us.</p>"
 
-+ "<p>We look forward to meeting you on the rescheduled date.</p>"
+				+ "<p>We look forward to meeting you on the rescheduled date.</p>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>Best regards,<br>"
-+ "<b>HR Team</b>"
-+ "</p>"
+				+ "<p>Best regards,<br>" + "<b>HR Team</b>" + "</p>"
 
-+ "</body>"
-+ "</html>";
+				+ "</body>" + "</html>";
 
 
 
 public static final String INTERVIEWER_SCHEDULE_BODY =
-"<html>"
-+ "<body>"
-+ "<p>Dear <b>%s</b>,</p>"
+		"<html>" + "<body>" + "<p>Dear <b>%s</b>,</p>"
 
-+ "<p>You have been assigned to conduct the <b>%s</b> for the following candidate.</p>"
+				+ "<p>You have been assigned to conduct the <b>%s</b> for the following candidate.</p>"
 
-+ "<table border='1' cellpadding='6' cellspacing='0'>"
+				+ "<table border='1' cellpadding='6' cellspacing='0'>"
 
-+ "<tr><td><b>Candidate Name</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Candidate Name</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Job Title</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Job Title</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Date</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Date</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
+				+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
 
-+ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
 
-+ "</table>"
+				+ "</table>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>Please review the candidate's profile before the interview and conduct the interview as scheduled.</p>"
+				+ "<p>Please review the candidate's profile before the interview and conduct the interview as scheduled.</p>"
 
-+ "<p>After completing the interview, kindly submit your feedback through the recruitment portal to enable further processing of the candidate's application.</p>"
+				+ "<p>After completing the interview, kindly submit your feedback through the recruitment portal to enable further processing of the candidate's application.</p>"
 
-+ "<p>If you are unable to attend the interview or require any assistance, please inform the recruitment team at the earliest.</p>"
+				+ "<p>If you are unable to attend the interview or require any assistance, please inform the recruitment team at the earliest.</p>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>Thank you for your support and cooperation.</p>"
+				+ "<p>Thank you for your support and cooperation.</p>"
 
-+ "<p>Best regards,<br>"
-+ "<b>HR Team</b>"
-+ "</p>"
+				+ "<p>Best regards,<br>" + "<b>HR Team</b>" + "</p>"
 
-+ "</body>"
-+ "</html>";
+				+ "</body>" + "</html>";
 
 public static final String INTERVIEWER_RESCHEDULE_BODY =
-"<html>"
-+ "<body>"
-+ "<p>Dear <b>%s</b>,</p>"
+		"<html>" + "<body>" + "<p>Dear <b>%s</b>,</p>"
 
-+ "<p>The interview assigned to you has been <b>rescheduled</b>. Please find the updated details below.</p>"
+				+ "<p>The interview assigned to you has been <b>rescheduled</b>. Please find the updated details below.</p>"
 
-+ "<table border='1' cellpadding='6' cellspacing='0'>"
+				+ "<table border='1' cellpadding='6' cellspacing='0'>"
 
-+ "<tr><td><b>Candidate Name</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Candidate Name</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Job Title</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Job Title</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Interview Round</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Date</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Date</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
+				+ "<tr><td><b>Time</b></td><td>%s - %s</td></tr>"
 
-+ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Mode</b></td><td>%s</td></tr>"
 
-+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
+				+ "<tr><td><b>Venue / Meeting Link</b></td><td>%s</td></tr>"
 
-+ "</table>"
+				+ "</table>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>Please ensure your availability for the updated interview schedule and submit your feedback after completing the interview.</p>"
+				+ "<p>Please ensure your availability for the updated interview schedule and submit your feedback after completing the interview.</p>"
 
-+ "<p>If you are unable to attend the interview at the rescheduled time, please inform the recruitment team as soon as possible.</p>"
+				+ "<p>If you are unable to attend the interview at the rescheduled time, please inform the recruitment team as soon as possible.</p>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>Thank you for your cooperation.</p>"
+				+ "<p>Thank you for your cooperation.</p>"
 
-+ "<br>"
+				+ "<br>"
 
-+ "<p>Best regards,<br>"
-+ "<b>HR Team</b>"
-+ "</p>"
+				+ "<p>Best regards,<br>" + "<b>HR Team</b>" + "</p>"
 
-+ "</body>"
-+ "</html>";
+				+ "</body>" + "</html>";
 public static final String REJECT = "reject";
 
 public static final String OFFER_PLAN="Offer Plan";
@@ -1455,6 +1424,180 @@ public static final String CANDIDATE_REJECTION_MAIL_BODY =
 + "We wish you every success in your career and thank you again for considering Nexus Hms as a potential employer.\n\n"
 + "Best Regards,\n"
 + "HR Team";
+
+public static final String OFFER_LEVEL1_APPROVED_MAIL_BODY = "<html><body>"
+
+		+ "<p>Dear %s,</p>"
+
+		+ "<p>"
+		+ "Your Offer Request has been approved by <b>Level 1 Approver (%s)</b> "
+		+ "in the Nexus Hiring Management System (HMS)."
+		+ "</p>"
+
+		+ "<p><b>Offer Approval Details:</b></p>"
+
+		+ "<p><b>Applicant ID:</b> %s</p>"
+		+ "<p><b>Approved By:</b> %s</p>"
+		+ "<p><b>Approved On:</b> %s</p>"
+		+ "<p><b>Status:</b> Level 1 Approved</p>"
+
+		+ "<br/>"
+
+		+ "<p>"
+		+ "The Offer Request has now been forwarded to the Level 2 Approver for further review."
+		+ "</p>"
+
+		+ "<br/>"
+
+		+ "<p>Regards,<br/>"
+		+ "Nexus Hiring Management System (HMS)</p>"
+
+		+ "<br/>"
+
+		+ "<p>This is a system-generated email. Please do not reply to this email.</p>"
+
+		+ "</body></html>";
+
+public static final String OFFER_LEVEL2_APPROVED_MAIL_BODY = "<html><body>"
+
+		+ "<p>Dear %s,</p>"
+
+		+ "<p>"
+		+ "Your Offer Request has been approved by <b>Level 2 Approver (%s)</b> "
+		+ "in the Nexus Hiring Management System (HMS)."
+		+ "</p>"
+
+		+ "<p><b>Offer Approval Details:</b></p>"
+
+		+ "<p><b>Applicant ID:</b> %s</p>"
+		+ "<p><b>Approved By:</b> %s</p>"
+		+ "<p><b>Approved On:</b> %s</p>"
+		+ "<p><b>Status:</b> Level 2 Approved</p>"
+
+		+ "<br/>"
+
+		+ "<p>"
+		+ "The Offer Request has now been forwarded to the Level 3 Approver for final approval."
+		+ "</p>"
+
+		+ "<br/>"
+
+		+ "<p>Regards,<br/>"
+		+ "Nexus Hiring Management System (HMS)</p>"
+
+		+ "<br/>"
+
+		+ "<p>This is a system-generated email. Please do not reply to this email.</p>"
+
+		+ "</body></html>";
+
+public static final String OFFER_LEVEL3_APPROVED_MAIL_BODY = "<html><body>"
+
+		+ "<p>Dear %s,</p>"
+
+		+ "<p>"
+		+ "Your Offer Request has been approved by <b>Level 3 Approver (%s)</b> "
+		+ "in the Nexus Hiring Management System (HMS)."
+		+ "</p>"
+
+		+ "<p><b>Offer Approval Details:</b></p>"
+
+		+ "<p><b>Applicant ID:</b> %s</p>"
+		+ "<p><b>Approved By:</b> %s</p>"
+		+ "<p><b>Approved On:</b> %s</p>"
+		+ "<p><b>Status:</b> Fully Approved</p>"
+
+		+ "<br/>"
+
+		+ "<p>"
+		+ "Congratulations! Your Offer Request has completed the approval process "
+		+ "and is now Ready to Release."
+		+ "</p>"
+
+		+ "<br/>"
+
+		+ "<p>Regards,<br/>"
+		+ "Nexus Hiring Management System (HMS)</p>"
+
+		+ "<br/>"
+
+		+ "<p>This is a system-generated email. Please do not reply to this email.</p>"
+
+		+ "</body></html>";
+
+public static final String OFFER_REJECTED_MAIL_BODY = "<html><body>"
+
+		+ "<p>Dear %s,</p>"
+
+		+ "<p>"
+		+ "Your Offer Request has been <b>Rejected</b> by "
+		+ "<b>Level %s Approver (%s)</b> in the Nexus Hiring Management System (HMS)."
+		+ "</p>"
+
+		+ "<p><b>Offer Rejection Details:</b></p>"
+
+		+ "<p><b>Applicant ID:</b> %s</p>"
+		+ "<p><b>Rejected By:</b> %s</p>"
+		+ "<p><b>Rejected On:</b> %s</p>"
+		+ "<p><b>Comments:</b> %s</p>"
+
+		+ "<br/>"
+
+		+ "<p>"
+		+ "Please review the comments, make the necessary changes, "
+		+ "and resubmit the Offer Request for approval."
+		+ "</p>"
+
+		+ "<br/>"
+
+		+ "<p>Regards,<br/>"
+		+ "Nexus Hiring Management System (HMS)</p>"
+
+		+ "<br/>"
+
+		+ "<p>This is a system-generated email. Please do not reply to this email.</p>"
+
+		+ "</body></html>";
+public static final String OFFER_TO_BE_APPROVED_MAIL_BODY = "<html><body>"
+
+        + "<p>Dear %s,</p>"
+
+        + "<p>"
+        + "An Offer Request has been submitted in the Nexus Hiring Management System (HMS) "
+        + "and is awaiting your approval."
+        + "</p>"
+
+        + "<p><b>Offer Request Details:</b></p>"
+
+        + "<p><b>Applicant ID:</b> %s</p>"
+        + "<p><b>Candidate Name:</b> %s</p>"
+        + "<p><b>Candidate Email:</b> %s</p>"
+        + "<p><b>Total CTC:</b> %s</p>"
+        + "<p><b>Notice Period:</b> %s</p>"
+        + "<p><b>Probation Period:</b> %s</p>"
+        + "<p><b>Submitted By:</b> %s</p>"
+        + "<p><b>Submitted On:</b> %s</p>"
+
+        + "<br/>"
+
+        + "<p>"
+        + "Please review the Offer Request and take the necessary action."
+        + "</p>"
+
+        + "<br/>"
+
+        + "<p>"
+        + "Regards,<br/>"
+        + "Nexus Hiring Management System (HMS)"
+        + "</p>"
+
+        + "<br/>"
+
+        + "<p>"
+        + "This is a system-generated email. Please do not reply to this email."
+        + "</p>"
+
+        + "</body></html>";
 
 public static final String RECRUITER_ASSIGNMENT_ACCEPTED_MAIL_BODY =
 "<html><body>"
