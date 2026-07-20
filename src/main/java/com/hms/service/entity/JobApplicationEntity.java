@@ -69,6 +69,9 @@ public class JobApplicationEntity {
 	@Column(name = "job_status")
 	private String jobStatus;
 	
+	@Column(name="recruiter_id")
+	private Integer recruiterId;
+	
 	@Column(name = "rejected")
 	private Boolean rejected;
 	

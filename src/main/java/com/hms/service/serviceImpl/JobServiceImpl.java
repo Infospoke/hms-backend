@@ -1,5 +1,7 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,11 +13,16 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.CompletedStageDto;
+import com.hms.service.entity.ActivityFeedEntity;
+import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
@@ -27,6 +34,8 @@ import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
+import com.hms.service.repository.ActivityFeedRepository;
+import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CandidateCreationRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
@@ -40,12 +49,19 @@ import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
+import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
 import com.hms.service.service.IJobService;
+import com.hms.service.service.IMailService;
+import com.hms.service.utils.JwtService;
+import com.hms.service.utils.PasswordGenerator;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -91,9 +107,38 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private OfferRepository offerRepository;
+	
+	@Autowired
+	private JwtService jwtService;
+	
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+	
+
+	@Autowired
+	private HttpServletRequest httpServletRequest;
 
 	@Autowired
 	private InterviewSessionRepository interviewSessionRepository;
+
+	@Autowired
+	private MinioClient minioClient;  
+	
+	@Autowired
+	private ActivityFeedRepository activityFeedRepository;
+	
+	@Autowired
+	private IMailService iMailService;
+	
+	@Autowired
+	private CandidateCreationDetailsRepository candidateCreationDetailsRepository;
+
+	@Autowired
+	private MailServiceImpl mailService;
+	
+	@Value("${spring.mail.username}")
+	private String fromEmail;
 
 //	@Autowired
 //	private UserServiceImpl userService;
@@ -409,6 +454,188 @@ public class JobServiceImpl implements IJobService {
 		default:
 			return false;
 		}
+	}	
+	
+	
+	
+//	// upload to s3 bucket
+//	private String uploadToS3(MultipartFile file, Integer jobId, JobApplicationRequest request) throws IOException {
+//		log.info("Uploading to S3 for job ID: {}", jobId);
+//		String originalFileName = file.getOriginalFilename();
+//
+//		String fileKey = Constants.BUCKET_FOLDER + jobId + "_" + request.getFirstName() + "_" + originalFileName;
+//
+//		PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(Constants.BUCKET).key(fileKey)
+//				.contentType(file.getContentType()).contentLength(file.getSize()).build();
+//
+//		s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+//
+//		return fileKey;
+//
+//	}
+	
+	
+	@Override
+	public ApiResponse<?> jobApplication(JobApplicationRequest request,
+	        MultipartFile cv,
+	        MultipartFile additionalFile) {
+
+	    log.info("JobsServiceImpl : Inside jobApplication");
+
+	    try {
+
+	        String authHeader = httpServletRequest.getHeader("Authorization");
+	        String token = authHeader.substring(7);
+	        Long userId = jwtService.extractUserId(token);
+
+	        // Upload files first
+	        String resumeKey = null;
+	        String additionalFileKey = null;
+
+	        if (cv != null && !cv.isEmpty()) {
+	            resumeKey = uploadToMinio(cv, request.getJobId(), request);
+	        }
+
+	        if (additionalFile != null && !additionalFile.isEmpty()) {
+	            additionalFileKey = uploadToMinio(additionalFile, request.getJobId(), request);
+	        }
+
+	        CandidateCreationDetailsEntity candidate =
+	                candidateCreationDetailsRepository.findByEmail(request.getEmail());
+
+	        String username = request.getEmail();
+	        String temporaryPassword = null;
+
+	        // Candidate Exists
+	        if (candidate != null) {
+
+	            Optional<JobApplicationEntity> existingApplication =
+	                    jobApplicationRepository.findByPhNoAndEmailAndJobId(
+	                            request.getPhNo(),
+	                            request.getEmail(),
+	                            request.getJobId());
+
+	            if (existingApplication.isPresent()) {
+	                return ApiResponse.failure(
+	                        ResponseCode.FAILURE,
+	                        Constants.JOB_ALREADY_APPLIED_WITH_THE_SAME_EMAIL_AND_NUMBER);
+	            }
+
+	            return createJobApplication(request,
+	                    resumeKey,
+	                    additionalFileKey,
+	                    userId,
+	                    username,
+	                    null);
+
+	        }
+
+	        // Candidate Doesn't Exist
+	        temporaryPassword = PasswordGenerator.generatePassword(8);
+
+	        candidate = new CandidateCreationDetailsEntity();
+	        candidate.setFirstName(request.getFirstName());
+	        candidate.setLastName(request.getLastName());
+	        candidate.setEmail(request.getEmail());
+	        candidate.setPhoneNumber(request.getPhNo());
+	        candidate.setPassword(temporaryPassword);
+	        candidate.setResume(resumeKey);
+	        candidate.setAdditionalFile(additionalFileKey);
+
+	        candidateCreationDetailsRepository.save(candidate);
+
+	        return createJobApplication(request,
+	                resumeKey,
+	                additionalFileKey,
+	                userId,
+	                username,
+	                temporaryPassword);
+
+	    } catch (Exception e) {
+
+	        log.error("Exception while applying job", e);
+
+	        return ApiResponse.failure(
+	                ResponseCode.FAILURE,
+	                Constants.FAILED_TO_SUBMIT_APPLICATION);
+	    }
 	}
+	
+	
+	private ApiResponse<?> createJobApplication(JobApplicationRequest request, String resumeKey,
+			String additionalFileKey, Long recruiterId, String username, String temporaryPassword) {
+
+		try {
+
+			CreateJobDetailsEntity job = createJobDetailsRepository.findById(request.getJobId())
+					.orElseThrow(() -> new RuntimeException("Job not found"));
+
+			JobApplicationEntity entity = new JobApplicationEntity();
+
+			entity.setJobId(request.getJobId());
+			entity.setFirstName(request.getFirstName());
+			entity.setLastName(request.getLastName());
+			entity.setEmail(request.getEmail());
+			entity.setPhNo(request.getPhNo());
+			entity.setReferral(request.getReferral());
+			entity.setRecruiterId(recruiterId.intValue());
+			entity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+			entity.setCurrentStage(Constants.APPLIED);
+			entity.setStageEntryDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+
+			entity.setResume(resumeKey);
+			entity.setAdditionalFile(additionalFileKey);
+
+			entity = jobApplicationRepository.save(entity);
+
+			String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + job.getJobTitle() + " ("
+					+ job.getJobCode() + ")";
+
+			String body = String.format(Constants.JOB_APPLICATION_CANDIDATE_MAIL_BODY, request.getFirstName(), // Dear
+					job.getJobTitle(), // Job Title
+					LocalDateTime.now(ZoneId.of(Constants.REGION)), // Registered On
+				
+					username, // Username
+					temporaryPassword == null ? "" : temporaryPassword // Temporary Password
+			);
+
+			mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
+
+			ActivityFeedEntity activity = new ActivityFeedEntity();
+			activity.setTimeStamp(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+			activity.setActivity(Constants.APPLICATION_RECEIVED_FROM + request.getFirstName() + Constants.FOR_THE_JOB
+					+ job.getJobTitle());
+
+			activityFeedRepository.save(activity);
+
+			log.info("Job application submitted successfully");
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Success", Constants.JOB_APPLICATION_SUBMITTED_SUCCESSFULLY);
+
+		} catch (Exception e) {
+
+			log.error("Error while creating application", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, Constants.FAILED_TO_SUBMIT_APPLICATION);
+		}
+	}
+	
+	
+
+	// upload to minio bucket
+	private String uploadToMinio(MultipartFile file, Integer jobId, JobApplicationRequest request) throws Exception {
+
+		log.info("Uploading to MinIO for job ID: {}", jobId);
+
+		String originalFileName = file.getOriginalFilename();
+
+		String fileKey = Constants.BUCKET_FOLDER + jobId + "_" + request.getFirstName() + "_" + originalFileName;
+
+		minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKET).object(fileKey)
+				.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType()).build());
+
+		return fileKey;
+	}
+
 
 }
