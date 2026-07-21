@@ -28,8 +28,6 @@ public class OfferDetailsController {
 	@Autowired
 	private IOfferDetailsService iOfferDetailsService;
 	
-	@Autowired
-	private OfferDetailsServiceImpl offerDetailsServiceImpl;
 
 	@PostMapping("/ready-to-release-list")
 	public ResponseEntity<ApiResponse<?>> getReadyToRelease(@RequestBody SpecificationFilterRequest request) {
