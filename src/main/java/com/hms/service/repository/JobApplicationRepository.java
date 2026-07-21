@@ -63,4 +63,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 	List<Object[]> getApplicationCountByJobId();
 
 	List<JobApplicationEntity> findByIdIn(Collection<Integer> ids);
+
+	Optional<JobApplicationEntity> findByPhNoAndEmailAndJobId(String phNo, String email, Integer jobId);
 }

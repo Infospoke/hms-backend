@@ -205,6 +205,19 @@ public class Constants {
 	public static final String COULD_NOT_ATTACH_FILE = "We couldn’t attach the file. Please try again.";
 	public static final String MAIL_FAILURE = "Failed to send the email";
 	public static final String FORGOT_PASSWORD_SUBJECT = "Your New Login Credentials";
+	
+	
+	public static final String JOB_ALREADY_APPLIED_WITH_THE_SAME_EMAIL_AND_NUMBER = "Job already applied with the same Email and Number";
+	public static final String YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED = "Your job application has been received - ";
+	public static final String NEW_JOB_RECEIVED_FOR = "New job application received for ";
+	public static final String JOB_APPLICATION_SUBMITTED_SUCCESSFULLY = "Job application submitted successfully";
+	public static final String FAILED_TO_SUBMIT_APPLICATION = "Failed to submit application: ";
+	public static final String CANDIDATE_EMAIL = "candidate_email";
+	
+	
+	public static final String APPLICATION_RECEIVED_FROM="Application received from ";
+	public static final String FOR_THE_JOB= " for the Job ";
+
 
 	public static final String FORGOT_PASSWORD_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
@@ -1726,6 +1739,63 @@ public static final String RECRUITER_ASSIGNMENT_REJECTED_CHECKER_MAIL_BODY =
 + "<p>"
 + "Regards,<br/>"
 + "Nexus Hiring Management System(HMS)"
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "This is a system-generated email. Please do not reply to this email."
++ "</p>"
+
++ "</body></html>";
+
+
+public static final String JOB_APPLICATION_CANDIDATE_MAIL_BODY =
+"<html><body>"
+
++ "<p>Dear %s,</p>"
+
++ "<p>"
++ "We are pleased to inform you that your profile has been registered in the "
++ "Nexus Hiring Management System (HMS) for the following job opportunity."
++ "</p>"
+
++ "<p><b>Job Details:</b></p>"
+
++ "<p><b>Job Title:</b> %s</p>"
++ "<p><b>Application Status:</b> Registered</p>"
++ "<p><b>Registered On:</b> %s</p>"
+
++ "<br/>"
+
++ "<p>"
++ "An account has been created for you in the Nexus Hiring Management System. "
++ "You can use the credentials below to access your account."
++ "</p>"
+
++ "<p><b>Login Credentials:</b></p>"
+
+
++ "<p><b>Username:</b> %s</p>"
++ "<p><b>Temporary Password:</b> %s</p>"
+
++ "<br/>"
+
++ "<p>"
++ "<b>For security reasons, we recommend changing your password after your first login.</b>"
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "If you have any questions or require assistance, please contact our recruitment team."
++ "</p>"
+
++ "<br/>"
+
++ "<p>"
++ "Regards,<br/>"
++ "Nexus Hiring Management System (HMS)"
 + "</p>"
 
 + "<br/>"
