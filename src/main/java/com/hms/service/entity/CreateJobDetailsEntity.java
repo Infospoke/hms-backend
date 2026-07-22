@@ -14,91 +14,93 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="tb_create_job_details")
+@Table(name = "tb_create_job_details")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateJobDetailsEntity {
-	
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "job_id", updatable = false, nullable = false)
-    private Integer jobId;
-    
-	@Column(name="job_title")
-	private String jobTitle;
-    
-	@Column(name="role_Id")
-	private Long roleId;
-	
-	@Column(name="business_unit")
-	private Integer businessUnitId;
-	
-	@Column(name="department")
-	private Integer departmentId;
-	
-	@Column(name="location")
-	private String location;
-	
-	@Column(name="country")
-	private String country;
-	
-	@Column(name="job_code",unique=true)
-	private String jobCode;
-	
-	@Column(name="openings")
-	private Integer openings;
-	
-	@Column(name="target_start_date")
-	private LocalDate targetStartDate;
-	
-	@Column(name="work_mode")
-	private String workMode;
-	
-	@Column(name="employment_type")
-	private String employmentType;
-	
-	@Column(name="skills_must_have",length=1000)
-	private String skillsMustHave;
-	
-	@Column(name="nice_to_have_skills",length=1000)
-	private String niceToHaveSkills;
-	
-	@Column(name="min_experience")
-	private Integer minExperience;
-	
-	@Column(name="max_experience")
-	private Integer maxExperience;
-	
-	@Column(name="additional_notes",length=1000)
-	private String additionalNotes;
-	
-	@Column(name="submit")
-	private Boolean submit=false;
-	
-	@Column(name="created_by")
-	private String createdBy;
-	
-	@Column(name="created_at")
-	private LocalDateTime createdAt;
-	
-	 @Column(name="is_open")
-	 private Boolean isOpen;
-	 
-	 @Column(name="educationRequirements")
-     private String educationRequirement;
 
-	@Column(name="sr_id")
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "job_id", updatable = false, nullable = false)
+	private Integer jobId;
+
+	@Column(name = "job_title")
+	private String jobTitle;
+
+	@Column(name = "role_Id")
+	private Long roleId;
+
+	@Column(name = "business_unit")
+	private Integer businessUnitId;
+
+	@Column(name = "department")
+	private Integer departmentId;
+
+	@Column(name = "location")
+	private String location;
+
+	@Column(name = "country")
+	private String country;
+
+	@Column(name = "job_code", unique = true)
+	private String jobCode;
+
+	@Column(name = "openings")
+	private Integer openings;
+
+	@Column(name = "target_start_date")
+	private LocalDate targetStartDate;
+
+	@Column(name = "work_mode")
+	private String workMode;
+
+	@Column(name = "employment_type")
+	private String employmentType;
+
+	@Column(name = "skills_must_have", length = 1000)
+	private String skillsMustHave;
+
+	@Column(name = "nice_to_have_skills", length = 1000)
+	private String niceToHaveSkills;
+
+	@Column(name = "min_experience")
+	private Integer minExperience;
+
+	@Column(name = "max_experience")
+	private Integer maxExperience;
+
+	@Column(name = "additional_notes", length = 1000)
+	private String additionalNotes;
+
+	@Column(name = "submit")
+	private Boolean submit = false;
+
+	@Column(name = "created_by")
+	private String createdBy;
+
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+	@Column(name = "is_open")
+	private Boolean isOpen;
+
+	@Column(name = "educationRequirements")
+	private String educationRequirement;
+
+	@Column(name = "sr_id")
 	private String srId;
-	
-	@Column(name="certifications_required",length=1000)
+
+	@Column(name = "certifications_required", length = 1000)
 	private String certificationsRequired;
-	
-	@Column(name="languages")
+
+	@Column(name = "languages")
 	private String languages;
 
-	@Column(name="plan_id")
+	@Column(name = "plan_id")
 	private Integer planId;
-	
+
+	@Column(name = "agency_ids", length = 500)
+	private String agencyIds;
 
 }

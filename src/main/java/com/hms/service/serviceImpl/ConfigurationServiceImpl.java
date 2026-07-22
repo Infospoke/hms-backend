@@ -14,11 +14,13 @@ import org.springframework.stereotype.Service;
 import com.hms.service.constants.Constants;
 import com.hms.service.dto.JrResponseDto;
 import com.hms.service.entity.AssignRolesEntity;
+import com.hms.service.entity.CategoryEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
+import com.hms.service.repository.CategoryRepostiory;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.EmployementTypeRepository;
@@ -57,10 +59,12 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	@Autowired
 	private OfferLetterTemplateRepository offerLetterTemplateRepository;
 
-	
+	@Autowired
+	private CategoryRepostiory categoryRepostiory;
+
 	@Autowired
 	private RolesRepository rolesRepository;
-	
+
 	@Autowired
 	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
 
@@ -291,7 +295,6 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		return new ApiResponse<>(ResponseCode.SUCCESS, "Users fetched successfully", response);
 	}
 
-
 	@Override
 	public ApiResponse<List<?>> getRolesByDepartments(RolesByDepartmentIdsRequest request) {
 
@@ -365,13 +368,13 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Jobs fetched successfully", response);
 	}
-	
+
 	@Override
 	public ApiResponse<List<?>> getInterviewRounds() {
 		log.info("ConfigurationServiceImpl::Inside the getInterviewRounds method");
 
-		List<DropDownResponse> response = interviewRoundDropDownRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
-				.map(ipr -> new DropDownResponse(ipr.getId(), ipr.getRoundName())).toList();
+		List<DropDownResponse> response = interviewRoundDropDownRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
+				.stream().map(ipr -> new DropDownResponse(ipr.getId(), ipr.getRoundName())).toList();
 
 		log.info("ConfigurationServiceImpl::Exit from the getInterviewRounds method");
 
@@ -381,7 +384,7 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 	@Override
 	public ApiResponse<List<?>> getOfferLetterTemplates() {
 
-	    log.info("ConfigurationServiceImpl :: Inside getOfferLetterTemplates");
+		log.info("ConfigurationServiceImpl :: Inside getOfferLetterTemplates");
 
 		List<DropDownResponse> response = offerLetterTemplateRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
 				.stream().map(template -> new DropDownResponse(template.getId(), template.getOfferLetterTemplate()))
@@ -392,4 +395,11 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Offer Letter Templates fetched successfully", response);
 	}
 
+	@Override
+	public ApiResponse<List<?>> getCategories() {
+
+		List<CategoryEntity> categories = categoryRepostiory.findAll(Sort.by(Sort.Direction.ASC,"id"));
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success", categories);
+	}
 }
