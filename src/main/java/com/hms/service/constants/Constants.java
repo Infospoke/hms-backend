@@ -3,6 +3,7 @@ package com.hms.service.constants;
 public class Constants {
 
 	public static final String BUCKET = "srdemandsupportingdocumentsbucket";
+	public static final String CANDIDATE_DOCUMENTS="candidatedocuments";
 	public static final String UNDER_SCORE = "_";
 	public static final String USER_TYPE_REQUIRED = "User Type is required";
 	public static final String FIRST_NAME_REQUIRED = "First Name is required";
@@ -1805,4 +1806,7 @@ public static final String JOB_APPLICATION_CANDIDATE_MAIL_BODY =
 + "</p>"
 
 + "</body></html>";
+public static final String CANDIDATE_BUCKET_FOLDER = "candidate-documents/";
+
+public static final String APPLICATION_FOLDER="job-applications/";
 }

@@ -30,6 +30,8 @@ public class JobApplicationRequest {
     private Boolean referral;
  
     private String jobCountry;
+    
+    private Boolean candidateCreation;
  
 
 }

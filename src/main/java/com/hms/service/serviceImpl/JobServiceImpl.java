@@ -61,6 +61,7 @@ import com.hms.service.wrappers.ResponseCode;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -487,22 +488,38 @@ public class JobServiceImpl implements IJobService {
 	        String authHeader = httpServletRequest.getHeader("Authorization");
 	        String token = authHeader.substring(7);
 	        Long userId = jwtService.extractUserId(token);
+	        
+	        CandidateCreationDetailsEntity candidate =
+	                candidateCreationDetailsRepository.findByEmail(request.getEmail());
+	        
+	        if(candidate!=null) {
+	        	request.setCandidateCreation(false);
+	        }
+
 
 	        // Upload files first
-	        String resumeKey = null;
-	        String additionalFileKey = null;
+	        List<String> resumeKeys = null;
+	        List<String> additionalFileKeys = null;
 
 	        if (cv != null && !cv.isEmpty()) {
-	            resumeKey = uploadToMinio(cv, request.getJobId(), request);
+	            resumeKeys = uploadToMinio(cv, request.getJobId(), request);
 	        }
 
 	        if (additionalFile != null && !additionalFile.isEmpty()) {
-	            additionalFileKey = uploadToMinio(additionalFile, request.getJobId(), request);
+	            additionalFileKeys = uploadToMinio(additionalFile, request.getJobId(), request);
 	        }
 
-	        CandidateCreationDetailsEntity candidate =
-	                candidateCreationDetailsRepository.findByEmail(request.getEmail());
+	        String applicationResumeKey = resumeKeys != null ? resumeKeys.get(0) : null;
+	        String candidateResumeKey =
+	                (resumeKeys != null && resumeKeys.size() > 1) ? resumeKeys.get(1) : null;
 
+	        String applicationAdditionalFileKey =
+	                additionalFileKeys != null ? additionalFileKeys.get(0) : null;
+	        String candidateAdditionalFileKey =
+	                (additionalFileKeys != null && additionalFileKeys.size() > 1)
+	                        ? additionalFileKeys.get(1)
+	                        : null;
+	       
 	        String username = request.getEmail();
 	        String temporaryPassword = null;
 
@@ -522,8 +539,8 @@ public class JobServiceImpl implements IJobService {
 	            }
 
 	            return createJobApplication(request,
-	                    resumeKey,
-	                    additionalFileKey,
+	            		applicationResumeKey,
+	            		applicationAdditionalFileKey,
 	                    userId,
 	                    username,
 	                    null);
@@ -539,14 +556,14 @@ public class JobServiceImpl implements IJobService {
 	        candidate.setEmail(request.getEmail());
 	        candidate.setPhoneNumber(request.getPhNo());
 	        candidate.setPassword(temporaryPassword);
-	        candidate.setResume(resumeKey);
-	        candidate.setAdditionalFile(additionalFileKey);
+	        candidate.setResume(candidateResumeKey);
+	        candidate.setAdditionalFile(candidateAdditionalFileKey);
 
 	        candidateCreationDetailsRepository.save(candidate);
 
 	        return createJobApplication(request,
-	                resumeKey,
-	                additionalFileKey,
+	        		applicationResumeKey,
+	        		applicationAdditionalFileKey,
 	                userId,
 	                username,
 	                temporaryPassword);
@@ -620,22 +637,56 @@ public class JobServiceImpl implements IJobService {
 		}
 	}
 	
-	
 
 	// upload to minio bucket
-	private String uploadToMinio(MultipartFile file, Integer jobId, JobApplicationRequest request) throws Exception {
+	private List<String> uploadToMinio(MultipartFile file, Integer jobId, JobApplicationRequest request) throws Exception {
 
 		log.info("Uploading to MinIO for job ID: {}", jobId);
 
 		String originalFileName = file.getOriginalFilename();
+		
+		List<String> filekeys=new ArrayList<>();
 
-		String fileKey = Constants.BUCKET_FOLDER + jobId + "_" + request.getFirstName() + "_" + originalFileName;
+		String applicationfileKey = Constants.BUCKET_FOLDER + jobId + "_"+"_" + originalFileName;
+		filekeys.add(applicationfileKey);
+		
 
-		minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKET).object(fileKey)
+		minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(applicationfileKey)
 				.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType()).build());
-
-		return fileKey;
+		
+		
+		if((Boolean.TRUE.equals(request.getCandidateCreation()))) {
+			
+		     String candidateKey = Constants.CANDIDATE_BUCKET_FOLDER
+		                + originalFileName;
+		
+			minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(candidateKey)
+					.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType()).build());
+			
+			filekeys.add(candidateKey);
+	
+		}
+		log.info("the file keys are"+file);
+		return filekeys;
+		
 	}
+	
+	//delete from minio
+	
+	private void deleteFromMinio(String key) {
 
+		log.info("JobServiceImpl:Inside the deleteFromMinio method");
+
+		try {
+
+			minioClient.removeObject(RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(key).build());
+			log.info("JobServiceImpl: Successfully deleted from MinIO");
+
+		} catch (Exception e) {
+			log.info("JobServiceImpl::exception occured in deleteFromMinio method" + e.getMessage());
+			throw new RuntimeException("Failed to delete file from MinIO", e);
+		}
+		log.info("JobServiceImpl: Exit from deleteFromMinio method");
+	}
 
 }
