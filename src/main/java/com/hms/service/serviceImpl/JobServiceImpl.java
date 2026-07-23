@@ -530,6 +530,7 @@ public class JobServiceImpl implements IJobService {
 	        }
 
 	        // Candidate Doesn't Exist
+	        log.info("creating candidate");
 	        temporaryPassword = PasswordGenerator.generatePassword(8);
 
 	        candidate = new CandidateCreationDetailsEntity();
@@ -629,7 +630,7 @@ public class JobServiceImpl implements IJobService {
 		
 		List<String> filekeys=new ArrayList<>();
 
-		String applicationfileKey = Constants.BUCKET_FOLDER + jobId + "_"+"_" + originalFileName;
+		String applicationfileKey = Constants.APPLICATION_FOLDER + jobId + "_"+"_" + originalFileName;
 		filekeys.add(applicationfileKey);
 		
 
@@ -649,6 +650,7 @@ public class JobServiceImpl implements IJobService {
 	
 		}
 		log.info("the file keys are"+file);
+		
 		return filekeys;
 		
 	}
