@@ -1,8 +1,6 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
 import java.time.Year;
-import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.request.CandidateCreationRequest;
@@ -56,57 +55,45 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			throw new RuntimeException("Password and Confirm Password do not match.");
 		}
 
-		if (request.getResume() == null || request.getResume().isEmpty()) {
+		if (resume == null || resume.isEmpty()) {
 			throw new RuntimeException("Resume is mandatory.");
 		}
-		CandidateCreationDetailsEntity entity = new CandidateCreationDetailsEntity();
 
-		entity.setFirstName(request.getFirstName().trim());
-		entity.setLastName(request.getLastName().trim());
-		entity.setPhoneNumber(request.getPhoneNumber());
-		entity.setEmail(request.getEmail().trim());
-		entity.setPassword(passwordEncoder.encode(request.getPassword()));
-
-		entity = candidateCreationDetailsRepository.save(entity);
-
-		String candidateId = String.format("CID-%d-%04d", Year.now().getValue(), entity.getId());
-
-		entity.setCandidateId(candidateId);
-
-		String candidateName = entity.getFirstName() + "_" + entity.getLastName();
-
-		String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+		// Generate Candidate ID
+		String candidateId = generateCandidateId();
 
 		String resumePath = null;
 		String additionalFilePath = null;
 
 		try {
 
-			String resumeExtension = request.getResume().getOriginalFilename()
-					.substring(request.getResume().getOriginalFilename().lastIndexOf("."));
+			// Upload Resume
 
-			String resumeObjectName = "candidate-resumes/" + candidateName + "_" + candidateId + "_" + date + "_resume"
-					+ resumeExtension;
+			String resumeExtension = resume.getOriginalFilename()
+					.substring(resume.getOriginalFilename().lastIndexOf("."));
 
-			minioClient.putObject(PutObjectArgs.builder().bucket(bucketName.trim()).object(resumeObjectName)
-					.stream(request.getResume().getInputStream(), request.getResume().getSize(), -1)
-					.contentType(request.getResume().getContentType()).build());
+			String resumeObjectName = "candidate-documents/" + candidateId + "_resume" + resumeExtension;
+
+			minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(resumeObjectName)
+					.stream(resume.getInputStream(), resume.getSize(), -1).contentType(resume.getContentType())
+					.build());
 
 			resumePath = resumeObjectName;
 
 			log.info("Resume uploaded successfully : {}", resumeObjectName);
 
-			if (request.getAdditionalFile() != null && !request.getAdditionalFile().isEmpty()) {
+			// Upload Cover Letter
 
-				String coverExtension = request.getAdditionalFile().getOriginalFilename()
-						.substring(request.getAdditionalFile().getOriginalFilename().lastIndexOf("."));
+			if (additionalFile != null && !additionalFile.isEmpty()) {
 
-				String coverObjectName = "candidate-cover-letters/" + candidateName + "_" + candidateId + "_" + date
-						+ "_coverletter" + coverExtension;
+				String coverExtension = additionalFile.getOriginalFilename()
+						.substring(additionalFile.getOriginalFilename().lastIndexOf("."));
 
-				minioClient.putObject(PutObjectArgs.builder().bucket(bucketName.trim()).object(coverObjectName)
-						.stream(request.getAdditionalFile().getInputStream(), request.getAdditionalFile().getSize(), -1)
-						.contentType(request.getAdditionalFile().getContentType()).build());
+				String coverObjectName = "candidate-documents/" + candidateId + "_coverletter" + coverExtension;
+
+				minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(coverObjectName)
+						.stream(additionalFile.getInputStream(), additionalFile.getSize(), -1)
+						.contentType(additionalFile.getContentType()).build());
 
 				additionalFilePath = coverObjectName;
 
@@ -116,18 +103,30 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		} catch (Exception e) {
 
 			log.error("Error uploading files to MinIO", e);
-
 			throw new RuntimeException("Unable to upload files to MinIO.");
 
 		}
 
-		// Save MinIO Paths
+		CandidateCreationDetailsEntity entity = new CandidateCreationDetailsEntity();
 
+		entity.setCandidateId(candidateId);
+		entity.setFirstName(request.getFirstName().trim());
+		entity.setLastName(request.getLastName().trim());
+		entity.setPhoneNumber(request.getPhoneNumber());
+		entity.setEmail(request.getEmail().trim());
+		entity.setPassword(passwordEncoder.encode(request.getPassword()));
 		entity.setResume(resumePath);
 		entity.setAdditionalFile(additionalFilePath);
 
 		candidateCreationDetailsRepository.save(entity);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate registered successfully.", candidateId);
+	}
+
+	private String generateCandidateId() {
+
+		Long sequence = candidateCreationDetailsRepository.getNextCandidateSequence();
+
+		return String.format("CID-%d-%04d", Year.now().getValue(), sequence);
 	}
 }

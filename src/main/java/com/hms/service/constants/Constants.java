@@ -1808,5 +1808,5 @@ public static final String JOB_APPLICATION_CANDIDATE_MAIL_BODY =
 + "</body></html>";
 public static final String CANDIDATE_BUCKET_FOLDER = "candidate-documents/";
 
-public static final String APPLICATION_FOLDER="job-applications/";
+public static final String APPLICATION_FOLDER="job-application/";
 }
