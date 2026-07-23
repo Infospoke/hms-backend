@@ -36,7 +36,6 @@ import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
-import com.hms.service.repository.CandidateCreationRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.InterviewAnalysisRepository;
@@ -47,7 +46,6 @@ import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
-import com.hms.service.repository.OfferRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
@@ -97,16 +95,10 @@ public class JobServiceImpl implements IJobService {
 	private InterviewFeedbackRepository interviewFeedbackRepository;
 
 	@Autowired
-	private CandidateCreationRepository candidateCreationRepository;
-
-	@Autowired
 	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
-
-	@Autowired
-	private OfferRepository offerRepository;
 	
 	@Autowired
 	private JwtService jwtService;
@@ -278,12 +270,12 @@ public class JobServiceImpl implements IJobService {
 
 		long interviews = interviewAnalysisRepository.count();
 
-		long offersAccepted = offerRepository.count();
+//		long offersAccepted = offerRepository.count();
 
 		response.setOpenJobs(openJobs);
 		response.setCandidates(applicants);
 		response.setInterviews(interviews);
-		response.setOffersAccepted(offersAccepted);
+//		response.setOffersAccepted(offersAccepted);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
@@ -326,15 +318,15 @@ public class JobServiceImpl implements IJobService {
 		log.info("Job Application IDs: {}", applicationIds);
 		log.info("Screened IDs from DB: {}", screenedSet);
 
-		List<Object[]> candidateData = candidateCreationRepository.findStatusByApplicationIds(applicationIds);
+//		List<Object[]> candidateData = candidateCreationRepository.findStatusByApplicationIds(applicationIds);
 
 		Map<Integer, String> candidateStatusMap = new HashMap<>();
 
-		for (Object[] obj : candidateData) {
-			Integer appId = (Integer) obj[0];
-			String dbStatus = (String) obj[1];
-			candidateStatusMap.put(appId, dbStatus);
-		}
+//		for (Object[] obj : candidateData) {
+//			Integer appId = (Integer) obj[0];
+//			String dbStatus = (String) obj[1];
+//			candidateStatusMap.put(appId, dbStatus);
+//		}
 
 		List<JobApplicantsResponse> result = new ArrayList<>();
 
