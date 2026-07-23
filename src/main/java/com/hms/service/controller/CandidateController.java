@@ -5,10 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.service.ICandidateService;
@@ -26,9 +27,11 @@ public class CandidateController {
 	private ICandidateService iCandidateService;
 
 	@PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<ApiResponse<?>> registerCandidate(@Valid @ModelAttribute CandidateCreationRequest request) {
+	public ResponseEntity<ApiResponse<?>> createCandidate(@RequestPart("data") @Valid CandidateCreationRequest request,
+			@RequestPart("resume") MultipartFile resume,
+			@RequestPart(value = "additionalFile", required = false) MultipartFile additionalFile) {
 
-		ApiResponse<?> response = iCandidateService.createCandidate(request);
+		ApiResponse<?> response = iCandidateService.createCandidate(request, resume, additionalFile);
 
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
