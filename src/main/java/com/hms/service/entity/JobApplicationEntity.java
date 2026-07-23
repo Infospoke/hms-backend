@@ -50,32 +50,35 @@ public class JobApplicationEntity {
 
 	@Column(name = "created_by")
 	private Integer createdBy;
-	
-	@Column(name="referral")
+
+	@Column(name = "referral")
 	private Boolean referral;
 
 	@Column(name = "created_date")
 	private LocalDateTime createdDate;
-	
+
 	@Column(name = "source")
 	private String source;
-	
+
 	@Column(name = "stage_entry_date")
 	private LocalDateTime stageEntryDate;
-	
+
 	@Column(name = "current_stage")
 	private String currentStage;
 
 	@Column(name = "job_status")
 	private String jobStatus;
-	
-	@Column(name="recruiter_id")
+
+	@Column(name = "recruiter_id")
 	private Integer recruiterId;
-	
+
 	@Column(name = "rejected")
 	private Boolean rejected;
-	
-	@Column(name="in_person_interviews")
+
+	@Column(name = "in_person_interviews")
 	private boolean inPersonInterviews;
 
+	@ManyToOne
+	@JoinColumn(name = "candidate_id", referencedColumnName = "candidate_id")
+	private CandidateCreationDetailsEntity candidate;
 }
