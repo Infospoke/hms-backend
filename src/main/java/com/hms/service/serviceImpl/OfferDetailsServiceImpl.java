@@ -673,12 +673,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			event.setCheckerMessage("A offer is now under your approval flow for review and approval");
 			
-			event.setCheckerEmailBody(String.format(Constants.OFFER_TO_BE_APPROVED_MAIL_BODY, applicantId,
+			event.setCheckerEmailBody(String.format(Constants.OFFER_TO_BE_APPROVED_MAIL_BODY,checkerRoleName,applicantId,
 					pos.getJobApplication().getFirstName() + " " + pos.getJobApplication().getLastName(),
 					pos.getJobApplication().getEmail(), pos.getTotalCtc(), pos.getNoticePeriod(),
 					pos.getProbationPeriod(), pos.getSubmittedByUserId(), pos.getCreatedDate()));
 
-			event.setCheckerEmailBody("hdfdgfhjkl");
+
 
 			String makerSubject = "";
 			String makerTitle = "";
@@ -798,6 +798,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				childEntity.setRole3(roleId);
 			}
 		}
+		
 
 		Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplication_Id(applicantId);
 
@@ -806,6 +807,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			OfferDetailsEntity offerEntity = offerOptional.get();
 
 			childEntity.setOfferSubmittedBy(offerEntity.getSubmittedByUserId());
+			
+			childEntity.setJobApplication(offerEntity.getJobApplication());
+			
+			OfferDetailsEntity offer = new OfferDetailsEntity();
+			offer.setId(offerEntity.getId());   // Primary key
+
+			childEntity.setOffer(offer);
+			
 		}
 
 		offerDeatilsChildRepository.save(childEntity);

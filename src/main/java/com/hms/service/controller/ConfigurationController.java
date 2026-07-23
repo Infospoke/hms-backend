@@ -124,7 +124,6 @@ public class ConfigurationController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-
 	@PostMapping("/roles/by-departments")
 	public ResponseEntity<ApiResponse<List<?>>> getRolesByDepartments(
 			@RequestBody RolesByDepartmentIdsRequest request) {
@@ -139,7 +138,7 @@ public class ConfigurationController {
 		ApiResponse<List<?>> response = iConfigurationService.getUsersWithCreatePermission();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/interview-plans")
 	public ResponseEntity<ApiResponse<List<?>>> getInterviewPlans() {
 
@@ -147,7 +146,7 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/jobs")
 	public ResponseEntity<ApiResponse<List<?>>> getJobs() {
 
@@ -155,7 +154,7 @@ public class ConfigurationController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/interview-rounds")
 	public ResponseEntity<ApiResponse<List<?>>> getInterviewRounds() {
 
@@ -164,7 +163,7 @@ public class ConfigurationController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
-	
+
 	@GetMapping("/offer-letter-templates")
 	public ResponseEntity<ApiResponse<List<?>>> getOfferLetterTemplates() {
 		ApiResponse<List<?>> response = iConfigurationService.getOfferLetterTemplates();
@@ -172,5 +171,9 @@ public class ConfigurationController {
 
 	}
 
-
+	@GetMapping("/categories")
+	public ResponseEntity<ApiResponse<List<?>>> getCategories() {
+		ApiResponse<List<?>> response = iConfigurationService.getCategories();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 }

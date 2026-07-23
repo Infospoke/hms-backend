@@ -46,7 +46,7 @@ public class CreateJobController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
-	
+
 	@GetMapping("/get-job-details/{jobId}")
 	public ResponseEntity<ApiResponse<?>> getJobCreationDetails(@PathVariable("jobId") Integer jobId) {
 
@@ -67,16 +67,18 @@ public class CreateJobController {
 		ApiResponse<?> response = iCreateJobService.updateJobDetailsById(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
 
-	
 	@PostMapping("/get-all-jobs")
-	public ResponseEntity<ApiResponse<?>> getAllJobs(@RequestBody SpecificationFilterRequest request){
+	public ResponseEntity<ApiResponse<?>> getAllJobs(@RequestBody SpecificationFilterRequest request) {
 		ApiResponse<?> response = iCreateJobService.getAllJobs(request);
-		return new ResponseEntity<>(response,HttpStatus.OK);
-		
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
 	}
 
+	@PostMapping("/agency-list")
+	public ResponseEntity<ApiResponse<?>> getAgencyList(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = iCreateJobService.getAgencyList(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
 }
-
-

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,15 +26,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.dto.AgencyDetailsResponseDto;
+import com.hms.service.dto.CategoryResponseDto;
 import com.hms.service.dto.JobCreationDetailsResponseDto;
 import com.hms.service.dto.NotificationEvent;
 import com.hms.service.entity.ActivityFeedEntity;
+import com.hms.service.entity.AgencyDetailsEntity;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.BusinessUnitEntity;
+import com.hms.service.entity.CategoryEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.JobApplicationEntity;
@@ -45,8 +51,10 @@ import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.SourcingChannelEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ActivityFeedRepository;
+import com.hms.service.repository.AgencyDetailsRepository;
 import com.hms.service.repository.AssignRolesRepository;
 import com.hms.service.repository.BusinessUnitRepository;
+import com.hms.service.repository.CategoryRepostiory;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.InterviewSessionRepository;
@@ -59,6 +67,7 @@ import com.hms.service.repository.RolesAndRequirementsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.SourcingChannelRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.AgencyDetailsRequest;
 import com.hms.service.request.CreateJobDetailsRequest;
 import com.hms.service.request.CreateJobRequest;
 import com.hms.service.request.InterviewPlanRequest;
@@ -103,6 +112,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 	private JwtService jwtService;
 
 	@Autowired
+	private CategoryRepostiory categoryRepostiory;
+
+	@Autowired
 	private DepartmentsRepository departmentsRepository;
 
 	@Autowired
@@ -140,6 +152,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
+
+	@Autowired
+	private AgencyDetailsRepository agencyDetailsRepository;
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
@@ -366,6 +381,24 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				}
 
 				createJobDetailsEntity.setPlanId(req.getPlanId());
+
+				// Agency Details
+
+				if (request.getAgencyDetailsRequest() != null) {
+
+					AgencyDetailsRequest agencyReq = request.getAgencyDetailsRequest();
+
+					ApiResponse<?> agencyError = validateAgencyDetailsRequest(agencyReq);
+
+					if (agencyError != null) {
+						return agencyError;
+					}
+
+					String agencyIds = agencyReq.getAgencyIds().stream().map(String::valueOf)
+							.collect(Collectors.joining(","));
+
+					createJobDetailsEntity.setAgencyIds(agencyIds);
+				}
 				createJobDetailsRepository.save(createJobDetailsEntity);
 
 				List<RecruiterAssignmentEntity> list = (List<RecruiterAssignmentEntity>) recruitersList.getData();
@@ -388,17 +421,17 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				log.info("hello");
 				activityFeedEntity.setTimeStamp(LocalDateTime.now());
 
-				activityFeedEntity.setActivity(jobTitle +" job was posted successfully");
-				activityFeedRepository.save(activityFeedEntity);										
-				
+				activityFeedEntity.setActivity(jobTitle + " job was posted successfully");
+				activityFeedRepository.save(activityFeedEntity);
+
 				NotificationEvent makerEvent = new NotificationEvent();
 
-				List<AssignRolesEntity> makerAssignRoles =
-				        assignRolesRepository.findByRoleId(createJobDetailsEntity.getRoleId().intValue());
+				List<AssignRolesEntity> makerAssignRoles = assignRolesRepository
+						.findByRoleId(createJobDetailsEntity.getRoleId().intValue());
 
 				if (makerAssignRoles != null && !makerAssignRoles.isEmpty()) {
 
-				    AssignRolesEntity makerAssignRole = makerAssignRoles.get(0);
+					AssignRolesEntity makerAssignRole = makerAssignRoles.get(0);
 
 					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
 							.get().getDepartmentName();
@@ -406,23 +439,22 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					String makerRoleName = rolesRepository.findByRoleId(makerAssignRole.getRoleId()).get()
 							.getRoleName();
 
-				    makerEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+					makerEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
 
-				    makerEvent.setType("JOB CREATION");
+					makerEvent.setType("JOB CREATION");
 
-				    makerEvent.setDeptName(departmentName);
+					makerEvent.setDeptName(departmentName);
 
-				    makerEvent.setMakerRoleId(makerAssignRole.getRoleId());
+					makerEvent.setMakerRoleId(makerAssignRole.getRoleId());
 
-				    makerEvent.setMakerRoleName(makerRoleName);
+					makerEvent.setMakerRoleName(makerRoleName);
 
-				    makerEvent.setMakerNotificationTitle("New Job Created");
+					makerEvent.setMakerNotificationTitle("New Job Created");
 
-				    makerEvent.setMakerMessage(
-				            createJobDetailsEntity.getJobTitle()
-				                    + " job has been created successfully.");
+					makerEvent.setMakerMessage(
+							createJobDetailsEntity.getJobTitle() + " job has been created successfully.");
 				}
-				
+
 				List<NotificationEvent> checkerEvents = new ArrayList<>();
 
 				List<RecruiterAssignmentEntity> recruiterAssignments = recruiterAssignmentRepository
@@ -433,43 +465,43 @@ public class CreateJobServiceImpl implements ICreateJobService {
 					String departmentName = departmentsRepository.findById(createJobDetailsEntity.getDepartmentId())
 							.get().getDepartmentName();
 
-				    for (RecruiterAssignmentEntity recruiter : recruiterAssignments) {
+					for (RecruiterAssignmentEntity recruiter : recruiterAssignments) {
 
-				        NotificationEvent checkerEvent = new NotificationEvent();
+						NotificationEvent checkerEvent = new NotificationEvent();
 
-				        checkerEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
+						checkerEvent.setProcessId(createJobDetailsEntity.getJobId().toString());
 
-				        checkerEvent.setType("JOB ASSIGNMENT");
+						checkerEvent.setType("JOB ASSIGNMENT");
 
-				        checkerEvent.setDeptName(departmentName);
+						checkerEvent.setDeptName(departmentName);
 
-				        checkerEvent.setCheckerRoleName(recruiter.getRoleName());
+						checkerEvent.setCheckerRoleName(recruiter.getRoleName());
 
-				        checkerEvent.setCheckerNotificationTitle("New Job Assignment");
+						checkerEvent.setCheckerNotificationTitle("New Job Assignment");
 
 						checkerEvent.setCheckerMessage("A new job assignment has been allocated to you for "
 								+ createJobDetailsEntity.getJobTitle());
 
-				        Map<Integer, List<String>> roleEmailMap = new HashMap<>();
+						Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
-				        roleEmailMap.put(recruiter.getRoleId(), List.of(recruiter.getEmail()));
+						roleEmailMap.put(recruiter.getRoleId(), List.of(recruiter.getEmail()));
 
-				        checkerEvent.setRoleEmailMap(roleEmailMap);
+						checkerEvent.setRoleEmailMap(roleEmailMap);
 
-				        checkerEvents.add(checkerEvent);
-				    }
+						checkerEvents.add(checkerEvent);
+					}
 				}
-				
-				notificationService.callInterviewerAssignmentNotification(makerEvent, checkerEvents);			
+
+				notificationService.callInterviewerAssignmentNotification(makerEvent, checkerEvents);
 
 			}
-		}		
+		}
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Created Successfully");
 
 	}
 
-	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {		
-		
+	public ApiResponse<?> validateCreateJobDetailsRequest(CreateJobDetailsRequest req, String srId) {
+
 		ApiResponse<?> error;
 
 		if (req.getJobTitle() != null) {
@@ -694,6 +726,43 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 			if (error != null)
 				return error;
+		}
+
+		return null;
+	}
+
+	// Agency details validation
+	private ApiResponse<?> validateAgencyDetailsRequest(AgencyDetailsRequest req) {
+
+		ApiResponse<?> error;
+
+		if (req.getAgencyIds() == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("agencyIds is required"));
+		}
+
+		if (req.getAgencyIds().isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("agencyIds cannot be empty"));
+		}
+
+		Set<Integer> uniqueAgencyIds = new HashSet<>(req.getAgencyIds());
+
+		if (uniqueAgencyIds.size() != req.getAgencyIds().size()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Duplicate agencyIds are not allowed"));
+		}
+
+		// Validate every agencyId
+		for (Integer agencyId : req.getAgencyIds()) {
+
+			error = validateObject(agencyId, "agencyId");
+
+			if (error != null) {
+				return error;
+			}
+
+			if (!agencyDetailsRepository.existsById(agencyId)) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid agencyId : " + agencyId));
+			}
 		}
 
 		return null;
@@ -1144,5 +1213,122 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		log.info("CreateJobServiceImpl :: Exit from the getAllJobs");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+	}
+
+	@Override
+	public ApiResponse<?> getAgencyList(SpecificationFilterRequest request) {
+
+		try {
+
+			List<Integer> categoryIds = new ArrayList<>();
+
+			String categoryFilter = request.getFilter("categoryIds");
+
+			if (categoryFilter != null && !categoryFilter.isBlank()) {
+
+				categoryIds.addAll(Arrays.stream(categoryFilter.split(",")).map(String::trim).filter(s -> !s.isBlank())
+						.map(Integer::parseInt).toList());
+			}
+
+			String search = request.getFilter("search");
+
+			if (search != null && !search.isBlank()) {
+
+				List<CategoryEntity> matchedCategories = categoryRepostiory
+						.findByCategoryNameContainingIgnoreCase(search);
+
+				for (CategoryEntity category : matchedCategories) {
+
+					if (!categoryIds.contains(category.getId())) {
+						categoryIds.add(category.getId());
+					}
+
+				}
+
+			}
+
+			Pageable pageable = PageRequest.of(
+
+					request.getPage(),
+
+					request.getSize(),
+
+					Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
+
+			Specification<AgencyDetailsEntity> specification = request.buildAgencySpec(categoryIds);
+
+			Page<AgencyDetailsEntity> page = agencyDetailsRepository.findAll(specification, pageable);
+
+			Map<Integer, String> categoryMap = categoryRepostiory.findAll().stream()
+					.collect(Collectors.toMap(CategoryEntity::getId, CategoryEntity::getCategoryName));
+
+			List<AgencyDetailsResponseDto> response = new ArrayList<>();
+
+			for (AgencyDetailsEntity agency : page.getContent()) {
+
+				AgencyDetailsResponseDto dto = new AgencyDetailsResponseDto();
+
+				dto.setId(agency.getId());
+
+				dto.setAgencyName(agency.getAgencyName());
+
+				dto.setEmailId(agency.getEmailId());
+
+				List<CategoryResponseDto> categoryResponses = new ArrayList<>();
+
+				if (agency.getCategoryIds() != null && !agency.getCategoryIds().isBlank()) {
+
+					String[] ids = agency.getCategoryIds().split(",");
+
+					for (String id : ids) {
+
+						Integer categoryId = Integer.parseInt(id.trim());
+
+						if (categoryMap.containsKey(categoryId)) {
+
+							categoryResponses.add(
+
+									new CategoryResponseDto(
+
+											categoryId,
+
+											categoryMap.get(categoryId)
+
+									)
+
+							);
+
+						}
+
+					}
+
+				}
+
+				dto.setCategories(categoryResponses);
+
+				response.add(dto);
+
+			}
+
+			Map<String, Object> result = new HashMap<>();
+
+			result.put("content", response);
+
+			result.put("size", page.getSize());
+
+			result.put("totalElements", page.getTotalElements());
+
+			result.put("totalPages", page.getTotalPages());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Success", result);
+
+		} catch (Exception e) {
+
+			log.error("Error while fetching agency list", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Unable to fetch agency list"));
+
+		}
+
 	}
 }

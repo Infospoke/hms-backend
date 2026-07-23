@@ -23,6 +23,8 @@ public interface ICreateJobService {
 
 	ApiResponse<?> getAllJobs(SpecificationFilterRequest request);
 
+	ApiResponse<?> getAgencyList(SpecificationFilterRequest request);
+
 
 
 

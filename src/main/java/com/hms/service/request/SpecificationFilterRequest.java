@@ -13,6 +13,7 @@ import java.util.Objects;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.hms.service.entity.AgencyDetailsEntity;
 import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
@@ -1926,5 +1927,42 @@ public class SpecificationFilterRequest {
 
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
+	}
+
+	public Specification<AgencyDetailsEntity> buildAgencySpec(List<Integer> categoryIds) {
+
+		Specification<AgencyDetailsEntity> spec = null;
+
+		String search = getFilter("search");
+		if (search != null) {
+
+			Specification<AgencyDetailsEntity> searchSpec = (root, query, cb) -> cb.or(
+					cb.like(cb.lower(root.get("agencyName")), "%" + search.toLowerCase() + "%"),
+					cb.like(cb.lower(root.get("emailId")), "%" + search.toLowerCase() + "%"));
+
+			spec = (spec == null) ? searchSpec : spec.and(searchSpec);
+		}
+
+		// Category Filter
+		if (!categoryIds.isEmpty()) {
+
+			Specification<AgencyDetailsEntity> categorySpec = (root, query, cb) -> {
+
+				List<Predicate> predicates = new ArrayList<>();
+
+				for (Integer id : categoryIds) {
+
+					predicates.add(cb.like(cb.concat(cb.concat(",", root.get("categoryIds")), ","), "%," + id + ",%"));
+
+				}
+
+				return cb.or(predicates.toArray(new Predicate[0]));
+
+			};
+
+			spec = (spec == null) ? categorySpec : spec.and(categorySpec);
+		}
+
+		return spec;
 	}
 }
