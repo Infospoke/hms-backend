@@ -16,7 +16,6 @@ import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.service.IOfferDetailsService;
-import com.hms.service.serviceImpl.OfferDetailsServiceImpl;
 import com.hms.service.wrappers.ApiResponse;
 
 import jakarta.servlet.http.HttpServletResponse;

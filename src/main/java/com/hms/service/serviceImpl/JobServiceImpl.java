@@ -15,7 +15,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,7 +50,6 @@ import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
 import com.hms.service.service.IJobService;
-import com.hms.service.service.IMailService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.utils.PasswordGenerator;
 import com.hms.service.wrappers.ApiResponse;
@@ -104,11 +102,6 @@ public class JobServiceImpl implements IJobService {
 	@Autowired
 	private JwtService jwtService;
 	
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
-	
-
 	@Autowired
 	private HttpServletRequest httpServletRequest;
 
@@ -120,10 +113,7 @@ public class JobServiceImpl implements IJobService {
 	
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
-	
-	@Autowired
-	private IMailService iMailService;
-	
+
 	@Autowired
 	private CandidateCreationDetailsRepository candidateCreationDetailsRepository;
 

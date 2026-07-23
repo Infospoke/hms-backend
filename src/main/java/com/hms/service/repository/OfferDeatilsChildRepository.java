@@ -5,9 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
-import com.hms.service.entity.OfferDetailsEntity;
 
 public interface OfferDeatilsChildRepository extends JpaRepository<OfferDetailsChildEntity,Integer>{
 
