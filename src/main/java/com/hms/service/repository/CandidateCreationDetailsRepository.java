@@ -22,4 +22,6 @@ public interface CandidateCreationDetailsRepository extends JpaRepository<Candid
 
 	// Find by Candidate ID
 	Optional<CandidateCreationDetailsEntity> findByCandidateId(String candidateId);
+	
+	Optional<CandidateCreationDetailsEntity> findByCandidateId(Integer candidateId);
 }

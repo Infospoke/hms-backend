@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.JobApplicationEntity;
 
 @Repository
@@ -65,4 +66,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 	List<JobApplicationEntity> findByIdIn(Collection<Integer> ids);
 
 	Optional<JobApplicationEntity> findByPhNoAndEmailAndJobId(String phNo, String email, Integer jobId);
+
+	List<JobApplicationEntity> findByCandidate(CandidateCreationDetailsEntity candidate);
 }

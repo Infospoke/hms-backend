@@ -7,10 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.CandidateCreationRequest;
+import com.hms.service.request.CandidateInterviewRequest;
 import com.hms.service.service.ICandidateService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -32,4 +34,12 @@ public class CandidateController {
 
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
+	
+	@PostMapping("/interviews")
+	public ResponseEntity<ApiResponse<?>> getCandidateInterviews(@RequestBody CandidateInterviewRequest request) {
+		ApiResponse<?> response = iCandidateService.getCandidateInterviews(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	
 }
