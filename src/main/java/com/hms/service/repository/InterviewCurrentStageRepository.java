@@ -55,7 +55,8 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 	
 	List<InterviewCurrentStageEntity> findByApplicationId(Integer applicationId);
 	
-
+	List<InterviewCurrentStageEntity> findByApplicationIdAndInterviewCompletedFalse(Integer applicationId);
+	
 
 
 }

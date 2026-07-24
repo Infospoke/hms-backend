@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -14,7 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.CandidateCreationRequest;
+
 import com.hms.service.request.LoginRequest;
+
+import com.hms.service.request.CandidateInterviewRequest;
+
 import com.hms.service.service.ICandidateService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -38,6 +43,7 @@ public class CandidateController {
 
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
+
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse<?>> login(
@@ -66,6 +72,13 @@ public class CandidateController {
 
 		ApiResponse<?> response = iCandidateService.logout(token);
 
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	
+	@PostMapping("/interviews")
+	public ResponseEntity<ApiResponse<?>> getCandidateInterviews(@RequestBody CandidateInterviewRequest request) {
+		ApiResponse<?> response = iCandidateService.getCandidateInterviews(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
