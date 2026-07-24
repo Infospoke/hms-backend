@@ -23,6 +23,8 @@ import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewRoundEntity;
+import com.hms.service.entity.InterviewScheduleEntity;
+import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.UserEntity;
@@ -31,6 +33,8 @@ import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
+import com.hms.service.repository.InterviewScheduleRepository;
+import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.UserRepository;
@@ -77,12 +81,18 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
-	
+
 	@Autowired
 	private UserRepository userRepository;
 
 	@Autowired
+	private InterviewScheduleRepository interviewScheduleRepository;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private InterviewSessionRepository interviewSessionRepository;
 
 	@Autowired
 	private MinioClient minioClient;
@@ -451,23 +461,18 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			// Loop every application
 
-	        for (JobApplicationEntity application : applications) {
-
+			for (JobApplicationEntity application : applications) {
 
 				// Current Pending Interview Stages
 
 				List<InterviewCurrentStageEntity> currentStages = interviewCurrentStageRepository
 						.findByApplicationIdAndInterviewCompletedFalse(application.getId());
 
-					if (currentStages.isEmpty()) {
-						continue;
-					}
-	
-	            for (InterviewCurrentStageEntity stage : currentStages) {
-
 				if (currentStages.isEmpty()) {
 					continue;
 				}
+
+				for (InterviewCurrentStageEntity stage : currentStages) {
 
 					CandidateInterviewResponse response = new CandidateInterviewResponse();
 
@@ -486,10 +491,36 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 					InterviewRoundDropDownEntity round = interviewRoundDropDownRepository
 							.findById(stage.getCurrentStageType()).orElse(null);
 
-				     if (round != null) {
-						    response.setInterviewType(round.getRoundName());
+					log.info("Current Stage Type : {}", stage.getCurrentStageType());
+
+					if (round != null) {
+
+						response.setInterviewType(round.getRoundName());
+
+						if ("AI Interview Round".equalsIgnoreCase(round.getRoundName())) {
+
+							InterviewSessionEntity session = interviewSessionRepository
+									.findByApplicationId(application.getId()).orElse(null);
+
+							if (session != null) {
+								response.setMeetingLink(session.getInterviewLink());
+							}
+
+						} else {
+
+							InterviewScheduleEntity schedule = interviewScheduleRepository
+									.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
+									.orElse(null);
+
+							log.info("Schedule : {}", schedule);
+
+							if (schedule != null) {
+								response.setMeetingLink(schedule.getMeetingLink());
+								response.setVenueDetails(schedule.getVenueDetails());
+							}
 						}
-					
+					}
+
 					CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
 					if (job != null) {

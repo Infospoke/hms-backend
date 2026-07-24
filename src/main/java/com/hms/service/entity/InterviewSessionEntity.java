@@ -82,6 +82,9 @@ public class InterviewSessionEntity {
 
 	@Column(name="move_to_schedule_datetime")
 	private LocalDateTime moveToScheduleDateTime;
+	
+	@Column(name="interview_link")
+	private String interviewLink;
 
 
 }
