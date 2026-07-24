@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 
 public class CandidateInterviewRequest {
 
-	private Integer candidateId;
+	private String candidateId;
 	
 }
