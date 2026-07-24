@@ -1,7 +1,9 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,9 +30,11 @@ import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
+import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ActivityFeedRepository;
@@ -42,13 +46,16 @@ import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
+import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.JobApplicationRequest;
+import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
+import com.hms.service.response.MyApplicationResponse;
 import com.hms.service.service.IJobService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.utils.PasswordGenerator;
@@ -113,6 +120,9 @@ public class JobServiceImpl implements IJobService {
 	
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
+	
+	@Autowired
+	private InterviewRoundRepository interviewRoundRepository;
 
 	@Autowired
 	private CandidateCreationDetailsRepository candidateCreationDetailsRepository;
@@ -673,4 +683,222 @@ public class JobServiceImpl implements IJobService {
 		log.info("JobServiceImpl: Exit from deleteFromMinio method");
 	}
 
+	@Override
+	public ApiResponse<?> getMyApplications(String candidateId) {
+
+	    log.info("JobServiceImpl : Inside getMyApplications");
+
+	    try {
+
+	        List<JobApplicationEntity> applications =
+	                jobApplicationRepository.findByCandidateCandidateId(candidateId);
+
+	        if (applications.isEmpty()) {
+	            return ApiResponse.failure(
+	                    ResponseCode.FAILURE,
+	                    Constants.NO_DATA_FOUND);
+	        }
+
+	        List<MyApplicationResponse> responseList = new ArrayList<>();
+
+	        for (JobApplicationEntity application : applications) {
+
+	        	MyApplicationResponse response = new MyApplicationResponse();
+
+	            CreateJobDetailsEntity job = createJobDetailsRepository
+	                    .findById(application.getJobId())
+	                    .orElse(null);
+
+	            ResumeAnalysisEntity resumeAnalysis =
+	                    resumeAnalysisRepository
+	                            .findByApplicationId(application.getId())
+	                            .orElse(null);
+
+	            InterviewSessionEntity interviewSession =
+	                    interviewSessionRepository
+	                            .findByApplicationId(application.getId())
+	                            .orElse(null);
+
+	            List<InterviewCurrentStageEntity> currentStages =
+	                    interviewCurrentStageRepository
+	                            .findByApplicationIdOrderByRoundOrder(application.getId());
+
+	            List<InterviewRoundEntity> interviewRounds = new ArrayList<>();
+
+	            if (job != null && job.getPlanId() != null) {
+
+	                interviewRounds = interviewRoundRepository
+	                        .findByInterviewPlanIdOrderByRoundOrder(job.getPlanId());
+
+	                response.setJobId(job.getJobId());
+	                response.setJobTitle(job.getJobTitle());
+	                response.setLocation(job.getLocation());
+	            }
+
+	            response.setApplicationId(application.getId());
+	            response.setAppliedDate(application.getCreatedDate());
+
+	            response.setDaysAfterApplied(
+	                    ChronoUnit.DAYS.between(
+	                            application.getCreatedDate().toLocalDate(),
+	                            LocalDate.now()));
+
+	            response.setTotalRounds(interviewRounds.size());
+
+	            response.setCompletedRounds(
+	                    (int) currentStages.stream()
+	                            .filter(stage -> Boolean.TRUE.equals(stage.getInterviewCompleted()))
+	                            .count());
+
+	            response.setCurrentRound(
+	                    getCurrentRound(interviewSession, currentStages, interviewRounds));
+
+	            response.setTimeline(
+	                    buildTimeline(
+	                            application,
+	                            resumeAnalysis,
+	                            interviewSession,
+	                            currentStages,
+	                            interviewRounds));
+
+	            responseList.add(response);
+	        }
+
+	        return ApiResponse.success(
+	                ResponseCode.SUCCESS,
+	                "Data fetched successfully",
+	                responseList);
+
+	    } catch (Exception e) {
+
+	        log.error("Exception while fetching my applications", e);
+
+	        return ApiResponse.failure(
+	                ResponseCode.FAILURE,
+	                "Data not found");
+	    }
+	}
+	
+	private List<ApplicationTimeLineResponse> buildTimeline(
+	        JobApplicationEntity application,
+	        ResumeAnalysisEntity resumeAnalysis,
+	        InterviewSessionEntity interviewSession,
+	        List<InterviewCurrentStageEntity> currentStages,
+	        List<InterviewRoundEntity> interviewRounds) {
+
+	    List<ApplicationTimeLineResponse> timeline = new ArrayList<>();
+
+	    // Applied
+	    ApplicationTimeLineResponse applied = new ApplicationTimeLineResponse();
+	    applied.setRoundName("Applied");
+	    applied.setCompletedDate(application.getCreatedDate());
+	    timeline.add(applied);
+
+	    // Resume Screening
+	    ApplicationTimeLineResponse screening = new ApplicationTimeLineResponse();
+	    screening.setRoundName("Resume Screening");
+
+	    if (resumeAnalysis != null) {
+	        screening.setCompletedDate(resumeAnalysis.getCreatedAt());
+	    }
+
+	    timeline.add(screening);
+
+	    // AI Interview
+	    ApplicationTimeLineResponse ai = new ApplicationTimeLineResponse();
+	    ai.setRoundName("AI Interview");
+
+	    if (interviewSession != null
+	            && Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
+
+	        ai.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
+	    }
+
+	    timeline.add(ai);
+
+	    // Configured Interview Rounds
+	    for (InterviewRoundEntity round : interviewRounds) {
+
+	    	ApplicationTimeLineResponse response = new ApplicationTimeLineResponse();
+	        response.setRoundName(round.getStageName());
+
+	        for (InterviewCurrentStageEntity stage : currentStages) {
+
+	            if (stage.getRoundOrder().equals(round.getRoundOrder())) {
+
+	                if (Boolean.TRUE.equals(stage.getInterviewCompleted())) {
+	                    response.setCompletedDate(stage.getInterviewCompletedOn());
+	                }
+
+	                if (Boolean.TRUE.equals(stage.getToSchedule())
+	                        && stage.getInterviewDate() != null
+	                        && stage.getStartTime() != null) {
+
+	                    response.setScheduledDate(
+	                            stage.getInterviewDate().atTime(stage.getStartTime()));
+	                }
+
+	                break;
+	            }
+	        }
+
+	        timeline.add(response);
+	    }
+
+	    return timeline;
+	}
+	
+	private String getCurrentRound(
+	        InterviewSessionEntity interviewSession,
+	        List<InterviewCurrentStageEntity> currentStages,
+	        List<InterviewRoundEntity> interviewRounds) {
+
+	    // AI Interview Scheduled
+	    if (interviewSession != null
+	            && Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
+
+	        return "AI Interview";
+	    }
+
+	    // Latest Scheduled Round
+	    for (InterviewCurrentStageEntity stage : currentStages) {
+
+	        if (Boolean.TRUE.equals(stage.getToSchedule())) {
+
+	            for (InterviewRoundEntity round : interviewRounds) {
+
+	                if (round.getRoundOrder().equals(stage.getRoundOrder())) {
+	                    return round.getStageName();
+	                }
+	            }
+	        }
+	    }
+
+	    // Latest Completed Round
+	    InterviewCurrentStageEntity latestCompleted = null;
+
+	    for (InterviewCurrentStageEntity stage : currentStages) {
+
+	        if (Boolean.TRUE.equals(stage.getInterviewCompleted())) {
+
+	            if (latestCompleted == null
+	                    || stage.getRoundOrder() > latestCompleted.getRoundOrder()) {
+
+	                latestCompleted = stage;
+	            }
+	        }
+	    }
+
+	    if (latestCompleted != null) {
+
+	        for (InterviewRoundEntity round : interviewRounds) {
+
+	            if (round.getRoundOrder().equals(latestCompleted.getRoundOrder())) {
+	                return round.getStageName();
+	            }
+	        }
+	    }
+
+	    return "Applied";
+	}
 }
