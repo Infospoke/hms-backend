@@ -42,10 +42,5 @@ public class CandidateCreationRequest {
     @NotBlank(message = "Confirm Password is required")
     private String confirmPassword;
 
-    @NotNull(message = "Resume is required")
-    private MultipartFile resume;
-
-    // Optional
-    private MultipartFile additionalFile;
 
 }

@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
@@ -34,6 +36,7 @@ import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -72,65 +75,95 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	private String bucketName;
 
 	@Override
-	public ApiResponse<?> createCandidate(CandidateCreationRequest request) {
+	@Transactional
+	public ApiResponse<?> createCandidate(CandidateCreationRequest request, MultipartFile resume,
+			MultipartFile additionalFile) {
 
-		// Email Duplicate Validation
 		if (candidateCreationDetailsRepository.existsByEmailIgnoreCase(request.getEmail())) {
 			throw new RuntimeException("Email already exists.");
 		}
 
-		// Phone Number Duplicate Validation
 		if (candidateCreationDetailsRepository.existsByPhoneNumber(request.getPhoneNumber())) {
 			throw new RuntimeException("Phone Number already exists.");
 		}
 
-		// Password Validation
 		if (!request.getPassword().equals(request.getConfirmPassword())) {
 			throw new RuntimeException("Password and Confirm Password do not match.");
 		}
 
-		// Resume Mandatory
-		if (request.getResume() == null || request.getResume().isEmpty()) {
+		if (resume == null || resume.isEmpty()) {
 			throw new RuntimeException("Resume is mandatory.");
 		}
 
-		// Upload Resume
-//        String resumePath = minioClient.uploadFile(
-//                request.getResume(),
-//                "candidate-resume");
+		// Generate Candidate ID
+		String candidateId = generateCandidateId();
 
-		// Upload Cover Letter (Optional)
+		String resumePath = null;
 		String additionalFilePath = null;
 
-		if (request.getAdditionalFile() != null && !request.getAdditionalFile().isEmpty()) {
-//
-//            additionalFilePath = minioClient.uploadFile(
-//                    request.getAdditionalFile(),
-//                    "candidate-cover-letter");
+		try {
+
+			// Upload Resume
+
+			String resumeExtension = resume.getOriginalFilename()
+					.substring(resume.getOriginalFilename().lastIndexOf("."));
+
+			String resumeObjectName = "candidate-documents/" + candidateId + "_resume" + resumeExtension;
+
+			minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(resumeObjectName)
+					.stream(resume.getInputStream(), resume.getSize(), -1).contentType(resume.getContentType())
+					.build());
+
+			resumePath = resumeObjectName;
+
+			log.info("Resume uploaded successfully : {}", resumeObjectName);
+
+			// Upload Cover Letter
+
+			if (additionalFile != null && !additionalFile.isEmpty()) {
+
+				String coverExtension = additionalFile.getOriginalFilename()
+						.substring(additionalFile.getOriginalFilename().lastIndexOf("."));
+
+				String coverObjectName = "candidate-documents/" + candidateId + "_coverletter" + coverExtension;
+
+				minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(coverObjectName)
+						.stream(additionalFile.getInputStream(), additionalFile.getSize(), -1)
+						.contentType(additionalFile.getContentType()).build());
+
+				additionalFilePath = coverObjectName;
+
+				log.info("Cover Letter uploaded successfully : {}", coverObjectName);
+			}
+
+		} catch (Exception e) {
+
+			log.error("Error uploading files to MinIO", e);
+			throw new RuntimeException("Unable to upload files to MinIO.");
+
 		}
 
 		CandidateCreationDetailsEntity entity = new CandidateCreationDetailsEntity();
 
-		entity.setFirstName(request.getFirstName());
-		entity.setLastName(request.getLastName());
+		entity.setCandidateId(candidateId);
+		entity.setFirstName(request.getFirstName().trim());
+		entity.setLastName(request.getLastName().trim());
 		entity.setPhoneNumber(request.getPhoneNumber());
-		entity.setEmail(request.getEmail());
-
+		entity.setEmail(request.getEmail().trim());
 		entity.setPassword(passwordEncoder.encode(request.getPassword()));
-
-		// entity.setResume(resumePath);
+		entity.setResume(resumePath);
 		entity.setAdditionalFile(additionalFilePath);
 
-		// Save first to generate DB ID
-		entity = candidateCreationDetailsRepository.save(entity);
-
-		// Generate Candidate ID
-		String candidateId = String.format("CID-%d-%04d", Year.now().getValue(), entity.getId());
-
-		entity.setCandidateId(candidateId);
-
 		candidateCreationDetailsRepository.save(entity);
-		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard counts fetched successfully", candidateId);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate registered successfully.", candidateId);
+	}
+
+	private String generateCandidateId() {
+
+		Long sequence = candidateCreationDetailsRepository.getNextCandidateSequence();
+
+		return String.format("CID-%d-%04d", Year.now().getValue(), sequence);
 	}
 
 	@Override
@@ -149,8 +182,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	        if (candidate == null) {
 
-	            return ApiResponse.failure(ResponseCode.FAILURE,
-	                    "Candidate Not Found");
+	            return ApiResponse.failure(ResponseCode.FAILURE,"Candidate Not Found");
 	        }
 
 	        // Get all applications
