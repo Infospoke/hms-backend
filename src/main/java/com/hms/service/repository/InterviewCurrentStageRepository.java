@@ -57,7 +57,8 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 
 	List<InterviewCurrentStageEntity> findByApplicationIdOrderByRoundOrder(Integer id);
 	
-
+	List<InterviewCurrentStageEntity> findByApplicationIdAndInterviewCompletedFalse(Integer applicationId);
+	
 
 
 }
