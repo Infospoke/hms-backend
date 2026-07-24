@@ -17,6 +17,7 @@ import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
+import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.OfferDetailsEntity;
@@ -24,6 +25,7 @@ import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
+import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.OfferDetailsRepository;
@@ -61,6 +63,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
+	
+	@Autowired
+	private InterviewRoundDropDownRepository interviewRoundDropDownRepository;
 	
 	@Autowired
 	private UserRepository userRepository;
@@ -174,12 +179,12 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	    List<CandidateInterviewResponse> responseList = new ArrayList<>();
 
 	    try {
-
+	    	
 	        // Candidate Validation
 
 			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
 					.findByCandidateId(String.valueOf(request.getCandidateId())).orElse(null);
-
+			
 	        if (candidate == null) {
 
 	            return ApiResponse.failure(ResponseCode.FAILURE,"Candidate Not Found");
@@ -197,26 +202,16 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	        // Loop every application
 
 	        for (JobApplicationEntity application : applications) {
-
-	            // Check Offer Details
-
-	            OfferDetailsEntity offerDetails = offerDetailsRepository.findTopByJobApplicationOrderByIdDesc(application);
-
-				if (offerDetails != null && ("HIRED".equalsIgnoreCase(offerDetails.getInterviewCompletionStatus())
-						|| "REJECTED".equalsIgnoreCase(offerDetails.getInterviewCompletionStatus()))) {
-
-					continue;
-				}
-
+	        	
 	            // Current Pending Interview Stages
 
 				List<InterviewCurrentStageEntity> currentStages = interviewCurrentStageRepository
 						.findByApplicationIdAndInterviewCompletedFalse(application.getId());
 
-	            if (currentStages.isEmpty()) {
-	                continue;
-	            }
-
+					if (currentStages.isEmpty()) {
+						continue;
+					}
+	
 	            for (InterviewCurrentStageEntity stage : currentStages) {
 
 	            	CandidateInterviewResponse response = new CandidateInterviewResponse();
@@ -233,12 +228,12 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 					response.setDuration(calculateDuration(stage.getStartTime(), stage.getEndTime()));
 
-					InterviewRoundEntity round = interviewRoundRepository.findByStageTypeId(stage.getCurrentStageType())
-							.orElse(null);
+					InterviewRoundDropDownEntity round = interviewRoundDropDownRepository
+							.findById(stage.getCurrentStageType()).orElse(null);
 
-					if (round != null) {
-						response.setInterviewType(round.getStageName());
-					}
+				     if (round != null) {
+						    response.setInterviewType(round.getRoundName());
+						}
 					
 					CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
