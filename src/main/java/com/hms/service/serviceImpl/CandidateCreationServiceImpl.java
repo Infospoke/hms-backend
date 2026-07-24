@@ -1,6 +1,8 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +15,11 @@ import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.request.CandidateCreationRequest;
+import com.hms.service.request.LoginRequest;
+import com.hms.service.response.LoginResponse;
 import com.hms.service.service.ICandidateService;
+import com.hms.service.utils.JwtService;
+import com.hms.service.utils.PasswordGenerator;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
@@ -37,6 +43,15 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Value("${minio.bucketName}")
 	private String bucketName;
+
+	@Autowired
+	private MailServiceImpl mailService;
+
+	@Autowired
+	private JwtService jwtService;
+
+	@Value("${spring.mail.username}")
+	private String fromEmail;
 
 	@Override
 	@Transactional
@@ -128,5 +143,235 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		Long sequence = candidateCreationDetailsRepository.getNextCandidateSequence();
 
 		return String.format("CID-%d-%04d", Year.now().getValue(), sequence);
+	}
+
+	@Override
+	@Transactional
+	public ApiResponse<LoginResponse> login(LoginRequest request) {
+
+		try {
+
+			log.info("Candidate Login Started");
+
+			if (request == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Request");
+			}
+
+			if (request.getEmail() == null || request.getEmail().isBlank()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Email is required");
+			}
+
+			if (request.getPassword() == null || request.getPassword().isBlank()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Password is required");
+			}
+
+			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+					.findByEmailIgnoreCase(request.getEmail());
+
+			if (optionalCandidate.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
+			}
+
+			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+
+			if (Boolean.TRUE.equals(candidate.getAccountLocked())) {
+
+				if (candidate.getLockTime() != null
+						&& candidate.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
+
+					return ApiResponse.failure(ResponseCode.FAILURE,
+							"Account is locked. Please try again after 2 minutes.");
+				}
+
+				candidate.setAccountLocked(false);
+				candidate.setFailedAttempts(0);
+				candidate.setLockTime(null);
+
+				candidateCreationDetailsRepository.save(candidate);
+			}
+
+			boolean validPassword = passwordEncoder.matches(request.getPassword(), candidate.getPassword());
+
+			if (!validPassword) {
+
+				int attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
+
+				attempts++;
+
+				candidate.setFailedAttempts(attempts);
+
+				if (attempts >= 5) {
+
+					candidate.setAccountLocked(true);
+					candidate.setLockTime(LocalDateTime.now());
+
+					candidateCreationDetailsRepository.save(candidate);
+
+					return ApiResponse.failure(ResponseCode.FAILURE, "Account locked for 2 minutes.");
+				}
+
+				candidateCreationDetailsRepository.save(candidate);
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
+			}
+
+			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+
+				if (candidate.getTemporaryPasswordExpiry() == null
+						|| LocalDateTime.now().isAfter(candidate.getTemporaryPasswordExpiry())) {
+
+					candidate.setTemporaryPassword(false);
+					candidate.setTemporaryPasswordExpiry(null);
+
+					candidateCreationDetailsRepository.save(candidate);
+
+					return ApiResponse.failure(ResponseCode.FAILURE,
+							"Temporary password expired. Please use Forgot Password again.");
+				}
+			}
+
+			candidate.setFailedAttempts(0);
+			candidate.setAccountLocked(false);
+			candidate.setLockTime(null);
+
+			String token = jwtService.generateCandidateToken(candidate.getCandidateId(), candidate.getFirstName(),
+					candidate.getLastName(), candidate.getEmail());
+
+			candidate.setToken(token);
+			candidate.setLoggedIn(true);
+			candidate.setLastLogin(LocalDateTime.now());
+
+			candidateCreationDetailsRepository.save(candidate);
+
+			LoginResponse response = new LoginResponse();
+
+			response.setToken(token);
+
+			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+
+				return ApiResponse.success(ResponseCode.SUCCESS,
+						"Temporary password verified. Please change your password.", response);
+			}
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successful", response);
+
+		} catch (Exception e) {
+
+			log.error("Candidate Login Failed", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+
+	@Override
+	@Transactional
+	public ApiResponse<?> forgotPassword(LoginRequest request) {
+
+		try {
+
+			log.info("Candidate Forgot Password Started");
+
+			if (request == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Request");
+			}
+
+			if (request.getEmail() == null || request.getEmail().isBlank()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Email is required");
+			}
+
+			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+					.findByEmailIgnoreCase(request.getEmail());
+
+			if (optionalCandidate.isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate not found");
+			}
+
+			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+
+			String temporaryPassword = PasswordGenerator.generatePassword(8);
+
+			candidate.setPassword(passwordEncoder.encode(temporaryPassword));
+
+			candidate.setPasswordUpdatedAt(LocalDateTime.now());
+
+			candidate.setFailedAttempts(0);
+			candidate.setAccountLocked(false);
+			candidate.setLockTime(null);
+
+			candidate.setToken(null);
+			candidate.setLoggedIn(false);
+
+			candidate.setTemporaryPassword(true);
+
+			candidate.setForcePasswordReset(true);
+
+			candidate.setTemporaryPasswordExpiry(LocalDateTime.now().plusMinutes(15));
+
+			candidateCreationDetailsRepository.save(candidate);
+
+			sendForgotPasswordMail(candidate, temporaryPassword);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Success",
+					"Temporary password sent successfully. It is valid for 15 minutes.");
+
+		} catch (Exception e) {
+
+			log.error("Forgot Password Failed", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+
+	private void sendForgotPasswordMail(CandidateCreationDetailsEntity candidate, String password) {
+
+		String subject = "Candidate Portal - Forgot Password";
+
+		String body = String.format(Constants.CANDIDATE_FORGOT_PASSWORD_BODY, candidate.getFirstName(),
+				candidate.getCandidateId(), candidate.getEmail(), password);
+
+		mailService.sendMail(fromEmail, candidate.getEmail(), null, subject, body, null);
+
+	}
+
+	@Override
+	@Transactional
+	public ApiResponse<?> logout(String token) {
+
+		try {
+
+			if (token == null || token.isBlank()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is required.");
+			}
+
+			if (token.startsWith("Bearer ")) {
+				token = token.substring(7);
+			}
+
+			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+					.findByToken(token);
+
+			if (optionalCandidate.isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Token");
+			}
+
+			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+
+			candidate.setToken(null);
+			candidate.setLoggedIn(false);
+			candidate.setLastLogout(LocalDateTime.now());
+
+			candidateCreationDetailsRepository.save(candidate);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Logout Successful", null);
+
+		} catch (Exception e) {
+
+			log.error("Logout Failed", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
 	}
 }

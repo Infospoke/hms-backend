@@ -158,6 +158,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
+	
 	@Autowired
 	private MinioClient minioClient;
 

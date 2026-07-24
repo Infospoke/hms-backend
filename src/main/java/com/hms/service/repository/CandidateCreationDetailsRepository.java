@@ -21,9 +21,12 @@ public interface CandidateCreationDetailsRepository extends JpaRepository<Candid
 
 	Optional<CandidateCreationDetailsEntity> findTopByOrderByIdDesc();
 
-	// Find by Candidate ID
 	Optional<CandidateCreationDetailsEntity> findByCandidateId(String candidateId);
 
 	@Query(value = "SELECT nextval('candidate_id_seq')", nativeQuery = true)
 	Long getNextCandidateSequence();
+
+	Optional<CandidateCreationDetailsEntity> findByToken(String token);
+
+	boolean existsByCandidateId(String candidateId);
 }
