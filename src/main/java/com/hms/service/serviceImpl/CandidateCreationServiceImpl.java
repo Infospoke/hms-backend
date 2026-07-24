@@ -22,11 +22,11 @@ import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
+
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
@@ -36,7 +36,6 @@ import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
-import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.CandidateCreationRequest;
 
@@ -68,13 +67,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	private JobApplicationRepository jobApplicationRepository;
 
 	@Autowired
-	private OfferDetailsRepository offerDetailsRepository;
-
-	@Autowired
 	private InterviewCurrentStageRepository interviewCurrentStageRepository;
-
-	@Autowired
-	private InterviewRoundRepository interviewRoundRepository;
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
