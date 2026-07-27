@@ -28,7 +28,7 @@ public interface ICandidateService {
 	ApiResponse<?> logout(String token);
 
 
-	ApiResponse<?> candidateOffers(String candidateId);
+	ApiResponse<?> candidateOffers();
 
 
 	ApiResponse<?> negotiateOffer(NegotiateOfferRequest request);

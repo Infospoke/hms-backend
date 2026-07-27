@@ -56,9 +56,9 @@ public class CandidateController {
 	}
 
 	
-	@GetMapping("/candidate-offers/{candidateId}")
-	public ResponseEntity<ApiResponse<?>> candidateOffers(@PathVariable("candidateId") String candidateId) {
-		ApiResponse<?> response = iCandidateService.candidateOffers(candidateId);
+	@GetMapping("/candidate-offers")
+	public ResponseEntity<ApiResponse<?>> candidateOffers() {
+		ApiResponse<?> response = iCandidateService.candidateOffers();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	

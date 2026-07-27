@@ -42,16 +42,15 @@ import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.UserEntity;
-import com.hms.service.repository.CandidateCreationDetailsRepository;
-import com.hms.service.repository.CreateJobDetailsRepository;
+
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
-import com.hms.service.repository.JobApplicationRepository;
+
 import com.hms.service.repository.UserRepository;
-import com.hms.service.request.CandidateCreationRequest;
+
 
 import com.hms.service.request.LoginRequest;
 import com.hms.service.response.LoginResponse;
@@ -67,7 +66,9 @@ import com.hms.service.wrappers.ResponseCode;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+
 
 @Service
 @Slf4j
@@ -103,6 +104,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private MinioClient minioClient;
+	
+	@Autowired
+	private HttpServletRequest httpServletRequest;
 
 	
 
@@ -208,7 +212,18 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate registered successfully.", candidateId);
 	}
 	@Override
-	public ApiResponse<?> candidateOffers(String candidateId) {
+	public ApiResponse<?> candidateOffers() {
+		
+		
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+			
+
+		}
 
 		List<Integer> applicantIds = jobApplicationRepository.findApplicantIdsByCandidateId(candidateId);
 
