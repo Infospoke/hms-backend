@@ -83,5 +83,13 @@ public class CandidateController {
 		ApiResponse<?> response = iCandidateService.getCandidateInterviews();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/get-my-applications")
+	public ResponseEntity<ApiResponse<?>> getMyApplications() {
+
+		ApiResponse<?> response = iCandidateService.getMyApplications();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }
