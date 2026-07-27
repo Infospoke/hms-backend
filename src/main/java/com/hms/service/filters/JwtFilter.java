@@ -34,8 +34,13 @@ public class JwtFilter extends OncePerRequestFilter {
 		String path = request.getRequestURI();
 
 		if (path.startsWith("/hms/login/user-login") || path.startsWith("/hms/login/forgot-password")
-				|| path.startsWith("/hms/login/validate")|| path.startsWith("/hms/configurations/**")|| path.startsWith("/hms/staffing-requisition/**")|| path.startsWith("/hms/create-job/**")|| path.startsWith("/hms/approval-chains")|| path.startsWith("/hms/notifications")
-				|| path.startsWith("/ws")|| path.startsWith("/hms/offer-details/**")|| path.startsWith("/hms/ai-interview-zone/**")|| path.startsWith("/hms/interviewer-assignment/**")|| path.startsWith("/jobs/**")|| path.startsWith("/hms/user/**")|| path.startsWith("/hms/interviw-plan/**")) {
+				|| path.startsWith("/hms/login/validate") || path.startsWith("/hms/configurations/**")
+				|| path.startsWith("/hms/staffing-requisition/**") || path.startsWith("/hms/create-job/**")
+				|| path.startsWith("/hms/approval-chains") || path.startsWith("/hms/notifications")
+				|| path.startsWith("/ws") || path.startsWith("/hms/offer-details/**")
+				|| path.startsWith("/hms/ai-interview-zone/**") || path.startsWith("/hms/interviewer-assignment/**")
+				|| path.startsWith("/jobs/**") || path.startsWith("/hms/user/**")
+				|| path.startsWith("/hms/interviw-plan/**") || path.startsWith("/hms/candidate")) {
 
 			filterChain.doFilter(request, response);
 			return;
@@ -77,5 +82,5 @@ public class JwtFilter extends OncePerRequestFilter {
 //
 		filterChain.doFilter(request, response);
 //	}
-}
+	}
 }

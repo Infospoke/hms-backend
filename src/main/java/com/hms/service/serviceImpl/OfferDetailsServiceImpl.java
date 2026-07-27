@@ -42,7 +42,6 @@ import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.OfferLetterTemplateEntity;
 import com.hms.service.entity.RolesEntity;
-import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.ApprovalChainRepository;
 import com.hms.service.repository.AssignRolesRepository;

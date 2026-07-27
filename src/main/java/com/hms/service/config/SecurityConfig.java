@@ -52,7 +52,8 @@ public class SecurityConfig {
 										"/hms/interviewer-assignment/**",
 										"/hms/jobs/**",
 										"/hms/ai-interview-zone/**",
-										"/hms/offer-details/**"
+										"/hms/offer-details/**",
+										"/hms/candidate/**"
 								).permitAll()
 								.anyRequest().authenticated())
 				.addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

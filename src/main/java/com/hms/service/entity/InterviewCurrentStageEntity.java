@@ -32,7 +32,6 @@ public class InterviewCurrentStageEntity {
 	    
 	    @Column(name="application_id")
 	    private Integer applicationId;
-
 	    
 	    @Column(name="current_stage_type")
 	    private Integer currentStageType;
@@ -48,14 +47,12 @@ public class InterviewCurrentStageEntity {
 	    
 	    @Column(name="interview_date")
 	    private LocalDate interviewDate;
-
-	    
+    
 	    @Column(name="start_time")
 		private LocalTime startTime;
 		
 		@Column(name="end_time")
 		private LocalTime endTime;
-
 	    
 	    @Column(name="feedback")
 	    private Boolean feedback;
@@ -69,5 +66,4 @@ public class InterviewCurrentStageEntity {
 	    @Column(name="feedback_status")
 	    private String feedbackStatus;
 	  
-
 }
