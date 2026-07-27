@@ -33,4 +33,6 @@ public interface ICandidateService {
 
 	ApiResponse<?> negotiateOffer(NegotiateOfferRequest request);
 
+	ApiResponse<?> getMyApplications();
+
 }
