@@ -565,8 +565,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 					response.setApplicationId(application.getId());
 
-					response.setCurrentStageId(stage.getId());
-
+					response.setCurrentStageId(stage.getCurrentStageType());
+					
 					response.setInterviewDate(stage.getInterviewDate());
 
 					response.setStartTime(stage.getStartTime());
@@ -586,8 +586,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 						if ("AI Interview Round".equalsIgnoreCase(round.getRoundName())) {
 
-							InterviewSessionEntity session = interviewSessionRepository
-									.findByApplicationId(application.getId()).orElse(null);
+							InterviewSessionEntity session = interviewSessionRepository.findByApplicationId(application.getId()).orElse(null);
 
 							if (session != null) {
 								response.setMeetingLink(session.getInterviewLink());
@@ -595,8 +594,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 						} else {
 
-							InterviewScheduleEntity schedule = interviewScheduleRepository
-									.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
+							InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
 									.orElse(null);
 
 							log.info("Application Id : {}", application.getId());
@@ -604,13 +602,13 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 							log.info("Schedule : {}", schedule);
 							
 							if (schedule != null) {
+								
 							    response.setMeetingLink(schedule.getMeetingLink());
 							    response.setVenueDetails(schedule.getVenueDetails());
 							}
 
 						}
 					}
-
 					CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
 					if (job != null) {
