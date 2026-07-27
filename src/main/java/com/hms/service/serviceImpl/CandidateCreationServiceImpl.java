@@ -1,18 +1,18 @@
 package com.hms.service.serviceImpl;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Year;
 import java.time.temporal.ChronoUnit;
-import java.time.LocalDateTime;
-import java.time.Year;
-import java.util.Optional;
-
-import java.time.Duration;
-import java.time.LocalTime;
-
 import java.util.ArrayList;
-
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,41 +24,34 @@ import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
-
-import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.OfferDetailsEntity;
-import com.hms.service.entity.ResumeAnalysisEntity;
-import com.hms.service.repository.CandidateCreationDetailsRepository;
-import com.hms.service.repository.CreateJobDetailsRepository;
-import com.hms.service.repository.JobApplicationRepository;
-import com.hms.service.repository.OfferDetailsRepository;
-import com.hms.service.repository.ResumeAnalysisRepository;
-import com.hms.service.request.CandidateCreationRequest;
-import com.hms.service.request.NegotiateOfferRequest;
-import com.hms.service.response.CandidateOfferResponse;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
-
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.OfferDetailsEntity;
+import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.UserEntity;
-
+import com.hms.service.repository.CandidateCreationDetailsRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
-
+import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.OfferDetailsRepository;
+import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.UserRepository;
-
+import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.LoginRequest;
-import com.hms.service.response.LoginResponse;
-import com.hms.service.response.MyApplicationResponse;
+import com.hms.service.request.NegotiateOfferRequest;
 import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.CandidateInterviewResponse;
-
+import com.hms.service.response.CandidateOfferResponse;
+import com.hms.service.response.LoginResponse;
+import com.hms.service.response.MyApplicationResponse;
 import com.hms.service.service.ICandidateService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.utils.PasswordGenerator;
@@ -687,32 +680,74 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			List<JobApplicationEntity> applications = jobApplicationRepository.findByCandidateCandidateId(candidateId);
 
 			if (applications.isEmpty()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND);
+				return ApiResponse.failure(ResponseCode.SUCCESS, Constants.NO_DATA_FOUND);
 			}
+			
+			List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
 
-			List<MyApplicationResponse> responseList = new ArrayList<>();
+			List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).distinct().toList();
+
+		        List<CreateJobDetailsEntity> jobs =
+		                createJobDetailsRepository.findByJobIdIn(jobIds);
+
+		        List<ResumeAnalysisEntity> resumeList =
+		                resumeAnalysisRepository.findByApplicationIdIn(applicationIds);
+
+		        List<InterviewSessionEntity> sessionList =
+		                interviewSessionRepository.findByApplicationIdIn(applicationIds);
+
+		        List<InterviewCurrentStageEntity> stageList =
+		                interviewCurrentStageRepository.findByApplicationIdInOrderByRoundOrder(applicationIds);
+		        
+		        List<InterviewRoundDropDownEntity> roundDropDownList =
+		                interviewRoundDropDownRepository.findAll();
+
+		        Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
+		                .collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+
+		        Map<Integer, ResumeAnalysisEntity> resumeMap = resumeList.stream()
+		                .collect(Collectors.toMap(ResumeAnalysisEntity::getApplicationId, Function.identity()));
+
+		        Map<Integer, InterviewSessionEntity> sessionMap = sessionList.stream()
+		                .collect(Collectors.toMap(InterviewSessionEntity::getApplicationId, Function.identity()));
+
+		        Map<Integer, List<InterviewCurrentStageEntity>> stageMap = stageList.stream()
+		                .collect(Collectors.groupingBy(InterviewCurrentStageEntity::getApplicationId));
+		        
+				List<Integer> planIds = jobs.stream().map(CreateJobDetailsEntity::getPlanId).filter(Objects::nonNull)
+						.distinct().toList();
+
+				List<InterviewRoundEntity> roundList = interviewRoundRepository
+						.findByInterviewPlanIdInOrderByRoundOrder(planIds);
+				
+				Map<Integer, List<InterviewRoundEntity>> roundMap = roundList.stream()
+					    .collect(Collectors.groupingBy(round -> round.getInterviewPlan().getId()));
+				
+				Map<Integer, InterviewRoundDropDownEntity> roundDropDownMap = roundDropDownList.stream()
+						.collect(Collectors.toMap(InterviewRoundDropDownEntity::getId, Function.identity()));
+
+		        List<MyApplicationResponse> responseList = new ArrayList<>();
+
 
 			for (JobApplicationEntity application : applications) {
-
+				
 				MyApplicationResponse response = new MyApplicationResponse();
 
-				CreateJobDetailsEntity job = createJobDetailsRepository.findById(application.getJobId()).orElse(null);
+	            CreateJobDetailsEntity job = jobMap.get(application.getJobId());
 
-				ResumeAnalysisEntity resumeAnalysis = resumeAnalysisRepository.findByApplicationId(application.getId())
-						.orElse(null);
+	            ResumeAnalysisEntity resumeAnalysis = resumeMap.get(application.getId());
 
-				InterviewSessionEntity interviewSession = interviewSessionRepository
-						.findByApplicationId(application.getId()).orElse(null);
+	            InterviewSessionEntity interviewSession = sessionMap.get(application.getId());
 
-				List<InterviewCurrentStageEntity> currentStages = interviewCurrentStageRepository
-						.findByApplicationIdOrderByRoundOrder(application.getId());
-
-				List<InterviewRoundEntity> interviewRounds = new ArrayList<>();
-
+	            List<InterviewCurrentStageEntity> currentStages =
+	                    stageMap.getOrDefault(application.getId(), new ArrayList<>());
+	
+				
+				List<InterviewRoundEntity> interviewRounds = new ArrayList<>(); 
 				if (job != null && job.getPlanId() != null) {
 
-					interviewRounds = interviewRoundRepository.findByInterviewPlanIdOrderByRoundOrder(job.getPlanId());
-
+				interviewRounds =
+						    roundMap.getOrDefault(job.getPlanId(), new ArrayList<>());
 					response.setJobId(job.getJobId());
 					response.setJobTitle(job.getJobTitle());
 					response.setLocation(job.getLocation());
@@ -729,9 +764,11 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 				response.setCompletedRounds((int) currentStages.stream()
 						.filter(stage -> Boolean.TRUE.equals(stage.getInterviewCompleted())).count());
-				response.setCurrentRound(getCurrentRound(resumeAnalysis, interviewSession, currentStages));
-				response.setTimeline(
-						buildTimeline(application, resumeAnalysis, interviewSession, currentStages, interviewRounds));
+
+				response.setCurrentRound(
+						getCurrentRound(resumeAnalysis, interviewSession, currentStages, roundDropDownMap));
+				
+				response.setTimeline(buildTimeline(application, resumeAnalysis, interviewSession, currentStages, interviewRounds));
 
 				responseList.add(response);
 			}
@@ -742,7 +779,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			log.error("Exception while fetching my applications", e);
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "Data not found");
+			return ApiResponse.failure(ResponseCode.FAILURE ,  "Failed to fetch applications");
 		}
 	}
 
@@ -813,7 +850,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	}
 
 	private String getCurrentRound(ResumeAnalysisEntity resumeAnalysis, InterviewSessionEntity interviewSession,
-			List<InterviewCurrentStageEntity> currentStages) {
+			List<InterviewCurrentStageEntity> currentStages,
+			Map<Integer, InterviewRoundDropDownEntity> roundDropDownMap) {
 
 		// Applied
 		if (resumeAnalysis == null) {
@@ -840,9 +878,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			if (!Boolean.TRUE.equals(stage.getInterviewCompleted())) {
 
-				InterviewRoundDropDownEntity round = interviewRoundDropDownRepository
-						.findById(stage.getCurrentStageType()).orElse(null);
-
+				InterviewRoundDropDownEntity round =
+				        roundDropDownMap.get(stage.getCurrentStageType());
 				return round != null ? round.getRoundName() : "Interview";
 			}
 		}
@@ -850,8 +887,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		// All interview rounds completed
 		InterviewCurrentStageEntity lastStage = currentStages.get(currentStages.size() - 1);
 
-		InterviewRoundDropDownEntity round = interviewRoundDropDownRepository.findById(lastStage.getCurrentStageType())
-				.orElse(null);
+		InterviewRoundDropDownEntity round = roundDropDownMap.get(lastStage.getCurrentStageType());
 
 		return round != null ? round.getRoundName() : "Completed";
 	}
