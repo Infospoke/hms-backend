@@ -24,6 +24,8 @@ public interface IJobService {
 
 	ApiResponse<?> jobApplication(@Valid JobApplicationRequest request, MultipartFile cv, MultipartFile additionalFile);
 
+	ApiResponse<?> getMyApplications(String candidateId);
+
 	 
 
 }
