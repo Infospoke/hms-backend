@@ -54,8 +54,6 @@ import com.hms.service.repository.UserRepository;
 
 import com.hms.service.request.LoginRequest;
 import com.hms.service.response.LoginResponse;
-
-import com.hms.service.request.CandidateInterviewRequest;
 import com.hms.service.response.CandidateInterviewResponse;
 
 import com.hms.service.service.ICandidateService;
@@ -108,12 +106,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	@Autowired
 	private HttpServletRequest httpServletRequest;
 
-	
-
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-
-	
 
 	@Value("${minio.bucketName}")
 	private String bucketName;
@@ -213,16 +207,16 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	}
 	@Override
 	public ApiResponse<?> candidateOffers() {
-		
-		
-		
+				
 		String authHeader = httpServletRequest.getHeader("Authorization");
+		
 		String candidateId = "";
+		
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-			String token = authHeader.substring(7);
-			candidateId = jwtService.extractCandidateId(token);
 			
-
+			String token = authHeader.substring(7);
+			
+			candidateId = jwtService.extractCandidateId(token);
 		}
 
 		List<Integer> applicantIds = jobApplicationRepository.findApplicantIdsByCandidateId(candidateId);
@@ -240,7 +234,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
 			dto.setJobTitle(job.getJobTitle());
+			
 			dto.setEmploymentType(job.getEmploymentType());
+			
 			dto.setJobLocation(job.getLocation());
 			
 			dto.setTotalCtc(offer.getTotalCtc());
@@ -255,14 +251,12 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Offers fetched successfully", response);
 	}
-
+	
 	@Override
 	public ApiResponse<?> negotiateOffer(NegotiateOfferRequest request) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-	
-	
+	}	
 
 	private String generateCandidateId() {
 
@@ -502,18 +496,30 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		}
 	}
 
-	public ApiResponse<?> getCandidateInterviews(CandidateInterviewRequest request) {
+	public ApiResponse<?> getCandidateInterviews() {
 
 		log.info("InterviewCurrentStageServiceImpl :: Inside getCandidateInterviews");
 
 		List<CandidateInterviewResponse> responseList = new ArrayList<>();
 
 		try {
+			
+			// Extract Candidate Id from JWT Token
+	        String authHeader = httpServletRequest.getHeader("Authorization");
+	        
+	        String candidateId = "";
+
+	        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	        	
+	            String token = authHeader.substring(7);
+	            
+	            candidateId = jwtService.extractCandidateId(token);
+	        }
 
 			// Candidate Validation
 
 			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
-					.findByCandidateId(String.valueOf(request.getCandidateId())).orElse(null);
+					.findByCandidateId(candidateId).orElse(null);
 
 			if (candidate == null) {
 
@@ -579,10 +585,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 						} else {
 
 							InterviewScheduleEntity schedule = interviewScheduleRepository
-							        .findByApplicantIdAndRoundId(
-							                application.getId(),        
-							                stage.getCurrentStageType())
-							        .orElse(null);
+									.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
+									.orElse(null);
 
 							log.info("Application Id : {}", application.getId());
 							log.info("Round Id : {}", stage.getCurrentStageType());
@@ -653,6 +657,5 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		return minutes + " mins";
 	}
-
 
 }
