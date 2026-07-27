@@ -85,4 +85,8 @@ public class JwtService {
 
 		return createToken(claims, email);
 	}
+	
+	public String extractCandidateId(String token) {
+		return decodeToken(token).get("candidateId", String.class);
+	}
 }

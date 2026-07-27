@@ -1,5 +1,8 @@
 package com.hms.service.serviceImpl;
 
+import java.time.LocalDate;
+import java.time.Year;
+
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.Optional;
@@ -8,6 +11,7 @@ import java.time.Duration;
 import java.time.LocalTime;
 
 import java.util.ArrayList;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +24,16 @@ import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
+
+import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.OfferDetailsEntity;
+import com.hms.service.repository.CandidateCreationDetailsRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
+import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.OfferDetailsRepository;
+import com.hms.service.request.CandidateCreationRequest;
+import com.hms.service.request.NegotiateOfferRequest;
+import com.hms.service.response.CandidateOfferResponse;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
 
@@ -28,16 +42,15 @@ import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.UserEntity;
-import com.hms.service.repository.CandidateCreationDetailsRepository;
-import com.hms.service.repository.CreateJobDetailsRepository;
+
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
-import com.hms.service.repository.JobApplicationRepository;
+
 import com.hms.service.repository.UserRepository;
-import com.hms.service.request.CandidateCreationRequest;
+
 
 import com.hms.service.request.LoginRequest;
 import com.hms.service.response.LoginResponse;
@@ -53,7 +66,9 @@ import com.hms.service.wrappers.ResponseCode;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+
 
 @Service
 @Slf4j
@@ -89,6 +104,16 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private MinioClient minioClient;
+	
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+
+	
+
+	@Autowired
+	private OfferDetailsRepository offerDetailsRepository;
+
+	
 
 	@Value("${minio.bucketName}")
 	private String bucketName;
@@ -186,6 +211,58 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate registered successfully.", candidateId);
 	}
+	@Override
+	public ApiResponse<?> candidateOffers() {
+		
+		
+		
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+			
+
+		}
+
+		List<Integer> applicantIds = jobApplicationRepository.findApplicantIdsByCandidateId(candidateId);
+
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicantIds);
+
+		List<CandidateOfferResponse> response = offers.stream().map(offer -> {
+
+			CandidateOfferResponse dto = new CandidateOfferResponse();
+
+			dto.setOfferId(offer.getId());
+
+			JobApplicationEntity application = offer.getJobApplication();
+
+			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+
+			dto.setJobTitle(job.getJobTitle());
+			dto.setEmploymentType(job.getEmploymentType());
+			dto.setJobLocation(job.getLocation());
+			
+			dto.setTotalCtc(offer.getTotalCtc());
+			
+			LocalDate dueDate =offer.getOfferReleasedAt().toLocalDate().plusDays(7);
+			
+			dto.setDueDate(dueDate); 
+
+			return dto;
+
+		}).toList();
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Offers fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> negotiateOffer(NegotiateOfferRequest request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	
 
 	private String generateCandidateId() {
 
@@ -576,5 +653,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		return minutes + " mins";
 	}
+
 
 }

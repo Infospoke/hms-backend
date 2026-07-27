@@ -31,4 +31,8 @@ public interface InterviewRoundRepository extends JpaRepository<InterviewRoundEn
 	
 	Optional<InterviewRoundEntity> findByStageTypeId(Integer stageTypeId);
 
+
+	List<InterviewRoundEntity> findByInterviewPlanIdOrderByRoundOrder(Integer planId);
+
+
 }
