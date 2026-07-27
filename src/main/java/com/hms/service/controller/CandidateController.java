@@ -29,8 +29,6 @@ import com.hms.service.request.NegotiateOfferRequest;
 
 import com.hms.service.request.LoginRequest;
 
-import com.hms.service.request.CandidateInterviewRequest;
-
 import com.hms.service.service.ICandidateService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -49,9 +47,7 @@ public class CandidateController {
 	public ResponseEntity<ApiResponse<?>> createCandidate(@RequestPart("data") @Valid CandidateCreationRequest request,
 			@RequestPart("resume") MultipartFile resume,
 			@RequestPart(value = "additionalFile", required = false) MultipartFile additionalFile) {
-
 		ApiResponse<?> response = iCandidateService.createCandidate(request, resume, additionalFile);
-
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 
@@ -61,47 +57,46 @@ public class CandidateController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+
 	@PostMapping(value = "/negotiate-offer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestPart("request") NegotiateOfferRequest request,
 			@RequestPart(value = "files", required = false) List<MultipartFile> files) {
-
 		ApiResponse<?> response = iCandidateService.negotiateOffer(request, files);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+}
 
 	@PostMapping("/login")
-	public ResponseEntity<ApiResponse<?>> login(
-
-			@RequestBody @Valid LoginRequest request) {
-
+	public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid LoginRequest request) {
 		ApiResponse<?> response = iCandidateService.login(request);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/forgot-password")
-	public ResponseEntity<ApiResponse<?>> forgotPassword(
-
-			@RequestBody @Valid LoginRequest request) {
-
+	public ResponseEntity<ApiResponse<?>> forgotPassword(@RequestBody @Valid LoginRequest request) {
 		ApiResponse<?> response = iCandidateService.forgotPassword(request);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/logout")
-	public ResponseEntity<ApiResponse<?>> logout(
-
-			@RequestHeader("Authorization") String token) {
-
+	public ResponseEntity<ApiResponse<?>> logout(@RequestHeader("Authorization") String token) {
 		ApiResponse<?> response = iCandidateService.logout(token);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@PostMapping("/interviews")
-	public ResponseEntity<ApiResponse<?>> getCandidateInterviews(@RequestBody CandidateInterviewRequest request) {
-		ApiResponse<?> response = iCandidateService.getCandidateInterviews(request);
+
+
+
+	@GetMapping("/interviews")
+	public ResponseEntity<ApiResponse<?>> getCandidateInterviews() {
+		ApiResponse<?> response = iCandidateService.getCandidateInterviews();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@GetMapping("/get-my-applications")
+	public ResponseEntity<ApiResponse<?>> getMyApplications() {
+
+		ApiResponse<?> response = iCandidateService.getMyApplications();
+
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
