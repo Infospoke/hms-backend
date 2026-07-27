@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 
 @Repository
@@ -31,4 +32,6 @@ public interface InterviewSessionRepository
 	List<Object[]> getCompletedInterviewCountByJobId();
 
 	Optional<InterviewSessionEntity> findFirstByApplicationIdAndStatusIgnoreCase(Integer applicationId, String status);
+
+	Optional<InterviewSessionEntity> findByApplicationId(Long applicationId);
 }
