@@ -469,7 +469,15 @@ public class UserServiceImpl implements IUserService {
 				log.info("Account is locked");
 
 				if (Boolean.TRUE.equals(user.getForcePasswordReset())) {
-					return ApiResponse.failure(ResponseCode.FAILURE, "Please reset your password");
+					
+					  if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+						  
+					        return ApiResponse.failure(ResponseCode.FAILURE, "Please reset your password");
+					        
+					    } else if (ChannelTypes.MOBILE.getChannelName().equalsIgnoreCase(channel)) {
+					    	
+					        return ApiResponse.failure(ResponseCode.FAILURE, "Please reset your PIN");
+					    }
 				}
 
 				if (user.getLockTime() != null && user.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
@@ -524,7 +532,14 @@ public class UserServiceImpl implements IUserService {
 					user.setForcePasswordReset(true);
 					userRepository.save(user);
 
-					return ApiResponse.failure(ResponseCode.FAILURE, "Too many attempts. Please reset password");
+					 if (ChannelTypes.WEB.getChannelName().equalsIgnoreCase(channel)) {
+						 
+					        return ApiResponse.failure(ResponseCode.FAILURE, "Too many attempts. Please reset your password");
+					        
+					    } else {
+					    	
+					        return ApiResponse.failure(ResponseCode.FAILURE, "Too many attempts. Please reset your PIN");
+					    }
 				}
 
 				userRepository.save(user);

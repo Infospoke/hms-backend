@@ -77,10 +77,12 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 		    FROM JobApplicationEntity j
 		    WHERE j.candidate.candidateId = :candidateId
 		    """)
-		List<Integer> findApplicantIdsByCandidateId(@Param("candidateId") String candidateId);
+	List<Integer> findApplicantIdsByCandidateId(@Param("candidateId") String candidateId);
 
 
 	List<JobApplicationEntity> findByCandidate(CandidateCreationDetailsEntity candidate);
+
+	Optional<JobApplicationEntity> findByCandidate_CandidateId(String candidateId);
 
 
 }

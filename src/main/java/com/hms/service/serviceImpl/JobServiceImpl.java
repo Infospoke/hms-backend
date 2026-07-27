@@ -1,12 +1,12 @@
 package com.hms.service.serviceImpl;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +18,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,11 +32,9 @@ import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewFeedbackEntity;
 import com.hms.service.entity.InterviewPlanEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
-import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ActivityFeedRepository;
@@ -47,16 +46,15 @@ import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
-import com.hms.service.repository.InterviewRoundRepository;
+
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.JobApplicationRequest;
-import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
-import com.hms.service.response.MyApplicationResponse;
+import com.hms.service.service.ICandidateService;
 import com.hms.service.service.IJobService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.utils.PasswordGenerator;
@@ -123,13 +121,16 @@ public class JobServiceImpl implements IJobService {
 	private ActivityFeedRepository activityFeedRepository;
 
 	@Autowired
-	private InterviewRoundRepository interviewRoundRepository;
-
-	@Autowired
 	private CandidateCreationDetailsRepository candidateCreationDetailsRepository;
+	
+	@Autowired
+	private ICandidateService iCandidateService;
 
 	@Autowired
 	private MailServiceImpl mailService;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
@@ -250,6 +251,7 @@ public class JobServiceImpl implements IJobService {
 			aiStage.setStageTypeId(1);
 			aiStage.setStageName("AI Interview");
 
+			
 			completedStageDetails.add(aiStage);
 		}
 
@@ -520,27 +522,29 @@ public class JobServiceImpl implements IJobService {
 				}
 
 				return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId,
-						username, null);
+						username, null,candidate);
 
 			}
 
 			// Candidate Doesn't Exist
 			log.info("creating candidate");
 			temporaryPassword = PasswordGenerator.generatePassword(8);
+			String candidateId = iCandidateService.generateCandidateId();
 
 			candidate = new CandidateCreationDetailsEntity();
+			candidate.setCandidateId(candidateId);
 			candidate.setFirstName(request.getFirstName());
 			candidate.setLastName(request.getLastName());
 			candidate.setEmail(request.getEmail());
 			candidate.setPhoneNumber(request.getPhNo());
-			candidate.setPassword(temporaryPassword);
+			candidate.setPassword(passwordEncoder.encode(temporaryPassword));
 			candidate.setResume(candidateResumeKey);
 			candidate.setAdditionalFile(candidateAdditionalFileKey);
 
 			candidateCreationDetailsRepository.save(candidate);
 
 			return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId, username,
-					temporaryPassword);
+					temporaryPassword,candidate);
 
 		} catch (Exception e) {
 
@@ -551,13 +555,14 @@ public class JobServiceImpl implements IJobService {
 	}
 
 	private ApiResponse<?> createJobApplication(JobApplicationRequest request, String resumeKey,
-			String additionalFileKey, Long recruiterId, String username, String temporaryPassword) {
-
-		try {
-
-			CreateJobDetailsEntity job = createJobDetailsRepository.findById(request.getJobId())
-					.orElseThrow(() -> new RuntimeException("Job not found"));
-
+			String additionalFileKey, Long recruiterId, String username, String temporaryPassword, CandidateCreationDetailsEntity candidate) {
+           
+			Optional<CreateJobDetailsEntity> job = createJobDetailsRepository.findById(request.getJobId());
+			
+			if(job.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Job not found for the requested jobId");
+			}
+			CreateJobDetailsEntity jobDetails=job.get();
 			JobApplicationEntity entity = new JobApplicationEntity();
 
 			entity.setJobId(request.getJobId());
@@ -566,6 +571,7 @@ public class JobServiceImpl implements IJobService {
 			entity.setEmail(request.getEmail());
 			entity.setPhNo(request.getPhNo());
 			entity.setReferral(request.getReferral());
+			entity.setCandidate(candidate);
 			entity.setRecruiterId(recruiterId.intValue());
 			entity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 			entity.setCurrentStage(Constants.APPLIED);
@@ -576,11 +582,11 @@ public class JobServiceImpl implements IJobService {
 
 			entity = jobApplicationRepository.save(entity);
 
-			String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + job.getJobTitle() + " ("
-					+ job.getJobCode() + ")";
+			String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + jobDetails.getJobTitle() + " ("
+					+ jobDetails.getJobCode() + ")";
 
 			String body = String.format(Constants.JOB_APPLICATION_CANDIDATE_MAIL_BODY, request.getFirstName(), // Dear
-					job.getJobTitle(), // Job Title
+					jobDetails.getJobTitle(), // Job Title
 					LocalDateTime.now(ZoneId.of(Constants.REGION)), // Registered On
 
 					username, // Username
@@ -592,7 +598,7 @@ public class JobServiceImpl implements IJobService {
 			ActivityFeedEntity activity = new ActivityFeedEntity();
 			activity.setTimeStamp(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 			activity.setActivity(Constants.APPLICATION_RECEIVED_FROM + request.getFirstName() + Constants.FOR_THE_JOB
-					+ job.getJobTitle());
+					+ jobDetails.getJobTitle());
 
 			activityFeedRepository.save(activity);
 
@@ -600,14 +606,9 @@ public class JobServiceImpl implements IJobService {
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Success",
 					Constants.JOB_APPLICATION_SUBMITTED_SUCCESSFULLY);
-
-		} catch (Exception e) {
-
-			log.error("Error while creating application", e);
-
-			return ApiResponse.failure(ResponseCode.FAILURE, Constants.FAILED_TO_SUBMIT_APPLICATION);
-		}
-	}
+            }
+ 
+	
 
 	// upload to minio bucket
 	private List<String> uploadToMinio(MultipartFile file, Integer jobId, JobApplicationRequest request)
@@ -619,7 +620,7 @@ public class JobServiceImpl implements IJobService {
 
 		List<String> filekeys = new ArrayList<>();
 
-		String applicationfileKey = Constants.APPLICATION_FOLDER + jobId + "_" + "_" + originalFileName;
+		String applicationfileKey = Constants.APPLICATION_FOLDER + jobId + "_" + originalFileName;
 		filekeys.add(applicationfileKey);
 
 		minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(applicationfileKey)
@@ -659,190 +660,5 @@ public class JobServiceImpl implements IJobService {
 		log.info("JobServiceImpl: Exit from deleteFromMinio method");
 	}
 
-	@Override
-	public ApiResponse<?> getMyApplications(String candidateId) {
-
-		log.info("JobServiceImpl : Inside getMyApplications");
-
-		try {
-
-			List<JobApplicationEntity> applications = jobApplicationRepository.findByCandidateCandidateId(candidateId);
-
-			if (applications.isEmpty()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND);
-			}
-
-			List<MyApplicationResponse> responseList = new ArrayList<>();
-
-			for (JobApplicationEntity application : applications) {
-
-				MyApplicationResponse response = new MyApplicationResponse();
-
-				CreateJobDetailsEntity job = createJobDetailsRepository.findById(application.getJobId()).orElse(null);
-
-				ResumeAnalysisEntity resumeAnalysis = resumeAnalysisRepository.findByApplicationId(application.getId())
-						.orElse(null);
-
-				InterviewSessionEntity interviewSession = interviewSessionRepository
-						.findByApplicationId(application.getId()).orElse(null);
-
-				List<InterviewCurrentStageEntity> currentStages = interviewCurrentStageRepository
-						.findByApplicationIdOrderByRoundOrder(application.getId());
-
-				List<InterviewRoundEntity> interviewRounds = new ArrayList<>();
-
-				if (job != null && job.getPlanId() != null) {
-
-					interviewRounds = interviewRoundRepository.findByInterviewPlanIdOrderByRoundOrder(job.getPlanId());
-
-					response.setJobId(job.getJobId());
-					response.setJobTitle(job.getJobTitle());
-					response.setLocation(job.getLocation());
-					response.setEmploymentType(job.getEmploymentType());
-				}
-
-				response.setApplicationId(application.getId());
-				response.setAppliedDate(application.getCreatedDate());
-
-				response.setDaysAfterApplied(
-						ChronoUnit.DAYS.between(application.getCreatedDate().toLocalDate(), LocalDate.now()));
-
-				response.setTotalRounds(interviewRounds.size());
-
-				response.setCompletedRounds((int) currentStages.stream()
-						.filter(stage -> Boolean.TRUE.equals(stage.getInterviewCompleted())).count());
-				response.setCurrentRound(getCurrentRound(resumeAnalysis, interviewSession, currentStages));
-				response.setTimeline(
-						buildTimeline(application, resumeAnalysis, interviewSession, currentStages, interviewRounds));
-
-				responseList.add(response);
-			}
-
-			return ApiResponse.success(ResponseCode.SUCCESS, "Data fetched successfully", responseList);
-
-		} catch (Exception e) {
-
-			log.error("Exception while fetching my applications", e);
-
-			return ApiResponse.failure(ResponseCode.FAILURE, "Data not found");
-		}
-	}
-
-	private List<ApplicationTimeLineResponse> buildTimeline(JobApplicationEntity application,
-			ResumeAnalysisEntity resumeAnalysis, InterviewSessionEntity interviewSession,
-			List<InterviewCurrentStageEntity> currentStages, List<InterviewRoundEntity> interviewRounds) {
-
-		List<ApplicationTimeLineResponse> timeline = new ArrayList<>();
-
-		// Applied
-		ApplicationTimeLineResponse applied = new ApplicationTimeLineResponse();
-		applied.setRoundName("Applied");
-		applied.setCompletedDate(application.getCreatedDate());
-		timeline.add(applied);
-
-		// Resume Screening
-		ApplicationTimeLineResponse screening = new ApplicationTimeLineResponse();
-		screening.setRoundName("Resume Screening");
-
-		if (resumeAnalysis != null) {
-			screening.setCompletedDate(resumeAnalysis.getCreatedAt());
-		}
-
-		timeline.add(screening);
-
-		ApplicationTimeLineResponse ai = new ApplicationTimeLineResponse();
-		ai.setRoundName("AI Interview");
-
-		if (interviewSession != null) {
-
-		    if (Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
-		        ai.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
-		    }
-
-		    if ("completed".equalsIgnoreCase(interviewSession.getStatus())) {
-		        ai.setCompletedDate(interviewSession.getInterviewScheduledDateTime());
-		    }
-		}
-
-		timeline.add(ai);
-
-		// Configured Interview Rounds
-		for (InterviewRoundEntity round : interviewRounds) {
-
-			ApplicationTimeLineResponse response = new ApplicationTimeLineResponse();
-			response.setRoundName(round.getStageName());
-
-			for (InterviewCurrentStageEntity stage : currentStages) {
-
-				if (stage.getRoundOrder().equals(round.getRoundOrder())) {
-
-					if (Boolean.TRUE.equals(stage.getInterviewCompleted())) {
-						response.setCompletedDate(stage.getInterviewCompletedOn());
-					}
-
-					if (Boolean.TRUE.equals(stage.getToSchedule()) && stage.getInterviewDate() != null
-							&& stage.getStartTime() != null) {
-
-						response.setScheduledDate(stage.getInterviewDate().atTime(stage.getStartTime()));
-					}
-
-					break;
-				}
-			}
-
-			timeline.add(response);
-		}
-
-		return timeline;
-	}
-
-	private String getCurrentRound(ResumeAnalysisEntity resumeAnalysis,
-	        InterviewSessionEntity interviewSession,
-	        List<InterviewCurrentStageEntity> currentStages) {
-
-	    // Applied
-	    if (resumeAnalysis == null) {
-	        return "Applied";
-	    }
-
-	    // Resume Screening
-	    if (interviewSession == null) {
-	        return "Resume Screening";
-	    }
-
-	    // AI Interview is in progress (scheduled or not scheduled)
-	    if (!"completed".equalsIgnoreCase(interviewSession.getStatus())) {
-	        return "AI Interview";
-	    }
-
-	    // AI Interview completed but no interview rounds created yet
-	    if (currentStages == null || currentStages.isEmpty()) {
-	        return "AI Interview";
-	    }
-
-	    // Current interview round
-	    for (InterviewCurrentStageEntity stage : currentStages) {
-
-	        if (!Boolean.TRUE.equals(stage.getInterviewCompleted())) {
-
-	            InterviewRoundDropDownEntity round =
-	                    interviewRoundDropDownRepository
-	                            .findById(stage.getCurrentStageType())
-	                            .orElse(null);
-
-	            return round != null ? round.getRoundName() : "Interview";
-	        }
-	    }
-
-	    // All interview rounds completed
-	    InterviewCurrentStageEntity lastStage =
-	            currentStages.get(currentStages.size() - 1);
-
-	    InterviewRoundDropDownEntity round =
-	            interviewRoundDropDownRepository
-	                    .findById(lastStage.getCurrentStageType())
-	                    .orElse(null);
-
-	    return round != null ? round.getRoundName() : "Completed";
-	}
+	
 }

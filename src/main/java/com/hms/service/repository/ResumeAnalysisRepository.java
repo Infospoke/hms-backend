@@ -1,14 +1,12 @@
 package com.hms.service.repository;
 
 import java.util.List;
-import java.util.Optional;
 
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 
 @Repository
@@ -24,11 +22,14 @@ public interface ResumeAnalysisRepository extends JpaRepository<ResumeAnalysisEn
 	@Query("SELECT r.applicationId, r.status FROM ResumeAnalysisEntity r WHERE r.applicationId IN :ids")
 	List<Object[]> findScreenStatuses(@Param("ids") List<Integer> applicationIds);
 
-	@Query("SELECT r.applicationId, r.status, r.success, r.createdAt " + "FROM ResumeAnalysisEntity r "
-			+ "WHERE r.applicationId IN :ids")
-	List<Object[]> findResumeDetails(@Param("ids") List<Integer> ids);
+	@Query("SELECT r.applicationId, r.status, r.success, r.createdAt " +
+		       "FROM ResumeAnalysisEntity r " +
+		       "WHERE r.applicationId IN :ids")
 
-	Optional<ResumeAnalysisEntity> findByApplicationId(Integer applicationId);
+		List<Object[]> findResumeDetails(@Param("ids") List<Integer> ids);
 
-	Optional<ResumeAnalysisEntity> findByApplicationId(Long applicationId);
+		List<ResumeAnalysisEntity> findByApplicationIdIn(List<Integer> applicationIds);
+
+		Optional<ResumeAnalysisEntity> findByApplicationId(Integer applicationId);
+
 }

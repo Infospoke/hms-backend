@@ -73,12 +73,6 @@ public class JobsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@GetMapping("/get-my-applications/{candidateId}")
-	public ResponseEntity<ApiResponse<?>> getMyApplications(@PathVariable("candidateId") String candidateId) {
 
-		ApiResponse<?> response = iJobService.getMyApplications(candidateId);
-
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
 
 }
