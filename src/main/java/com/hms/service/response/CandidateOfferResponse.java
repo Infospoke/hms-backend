@@ -24,7 +24,7 @@ public class CandidateOfferResponse {
 	private LocalDate dueDate;
 	
 	private String status;
-	 
+
 	
 
 }

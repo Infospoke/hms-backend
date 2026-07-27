@@ -1,5 +1,8 @@
 package com.hms.service.controller;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -54,11 +57,13 @@ public class CandidateController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@PutMapping("/negotiate-offer")
-	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestBody NegotiateOfferRequest request) {
-		ApiResponse<?> response = iCandidateService.negotiateOffer(request);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+
+	@PostMapping(value = "/negotiate-offer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestPart("request") NegotiateOfferRequest request,
+			@RequestPart(value = "files", required = false) List<MultipartFile> files) {
+		ApiResponse<?> response = iCandidateService.negotiateOffer(request, files);
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+}
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid LoginRequest request) {
@@ -77,6 +82,9 @@ public class CandidateController {
 		ApiResponse<?> response = iCandidateService.logout(token);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+
+
+
 
 	@GetMapping("/interviews")
 	public ResponseEntity<ApiResponse<?>> getCandidateInterviews() {

@@ -1,5 +1,7 @@
 package com.hms.service.service;
 
+import java.util.List;
+
 import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.NegotiateOfferRequest;
@@ -24,7 +26,7 @@ public interface ICandidateService {
 	ApiResponse<?> candidateOffers();
 
 
-	ApiResponse<?> negotiateOffer(NegotiateOfferRequest request);
+	ApiResponse<?> negotiateOffer(NegotiateOfferRequest request, List<MultipartFile> files);
 
 	ApiResponse<?> getMyApplications();
 

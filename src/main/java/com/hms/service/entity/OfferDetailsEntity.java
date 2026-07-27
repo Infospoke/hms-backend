@@ -138,6 +138,9 @@ public class OfferDetailsEntity {
     @ManyToOne
     @JoinColumn(name = "offer_letter_template_id")
     private OfferLetterTemplateEntity offerLetterTemplate;
+    
+    @Column(name="offer_status")
+    private String OfferStatus;
 
     
 }
