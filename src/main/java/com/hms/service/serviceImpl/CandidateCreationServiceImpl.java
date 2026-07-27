@@ -263,7 +263,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return null;
 	}
 
-	private String generateCandidateId() {
+	@Override
+	public String generateCandidateId() {
 
 		Long sequence = candidateCreationDetailsRepository.getNextCandidateSequence();
 
@@ -271,7 +272,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	}
 
 	@Override
-
 	@Transactional
 	public ApiResponse<LoginResponse> login(LoginRequest request) {
 

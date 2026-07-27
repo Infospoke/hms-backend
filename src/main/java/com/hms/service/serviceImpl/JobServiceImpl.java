@@ -18,6 +18,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,7 +54,7 @@ import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
 import com.hms.service.response.JobsDashboardResponse;
-
+import com.hms.service.service.ICandidateService;
 import com.hms.service.service.IJobService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.utils.PasswordGenerator;
@@ -121,9 +122,15 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private CandidateCreationDetailsRepository candidateCreationDetailsRepository;
+	
+	@Autowired
+	private ICandidateService iCandidateService;
 
 	@Autowired
 	private MailServiceImpl mailService;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
@@ -514,27 +521,29 @@ public class JobServiceImpl implements IJobService {
 				}
 
 				return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId,
-						username, null);
+						username, null,candidate);
 
 			}
 
 			// Candidate Doesn't Exist
 			log.info("creating candidate");
 			temporaryPassword = PasswordGenerator.generatePassword(8);
+			String candidateId = iCandidateService.generateCandidateId();
 
 			candidate = new CandidateCreationDetailsEntity();
+			candidate.setCandidateId(candidateId);
 			candidate.setFirstName(request.getFirstName());
 			candidate.setLastName(request.getLastName());
 			candidate.setEmail(request.getEmail());
 			candidate.setPhoneNumber(request.getPhNo());
-			candidate.setPassword(temporaryPassword);
+			candidate.setPassword(passwordEncoder.encode(temporaryPassword));
 			candidate.setResume(candidateResumeKey);
 			candidate.setAdditionalFile(candidateAdditionalFileKey);
 
 			candidateCreationDetailsRepository.save(candidate);
 
 			return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId, username,
-					temporaryPassword);
+					temporaryPassword,candidate);
 
 		} catch (Exception e) {
 
@@ -545,13 +554,14 @@ public class JobServiceImpl implements IJobService {
 	}
 
 	private ApiResponse<?> createJobApplication(JobApplicationRequest request, String resumeKey,
-			String additionalFileKey, Long recruiterId, String username, String temporaryPassword) {
-
-		try {
-
-			CreateJobDetailsEntity job = createJobDetailsRepository.findById(request.getJobId())
-					.orElseThrow(() -> new RuntimeException("Job not found"));
-
+			String additionalFileKey, Long recruiterId, String username, String temporaryPassword, CandidateCreationDetailsEntity candidate) {
+           
+			Optional<CreateJobDetailsEntity> job = createJobDetailsRepository.findById(request.getJobId());
+			
+			if(job.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Job not found for the requested jobId");
+			}
+			CreateJobDetailsEntity jobDetails=job.get();
 			JobApplicationEntity entity = new JobApplicationEntity();
 
 			entity.setJobId(request.getJobId());
@@ -560,6 +570,7 @@ public class JobServiceImpl implements IJobService {
 			entity.setEmail(request.getEmail());
 			entity.setPhNo(request.getPhNo());
 			entity.setReferral(request.getReferral());
+			entity.setCandidate(candidate);
 			entity.setRecruiterId(recruiterId.intValue());
 			entity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 			entity.setCurrentStage(Constants.APPLIED);
@@ -570,11 +581,11 @@ public class JobServiceImpl implements IJobService {
 
 			entity = jobApplicationRepository.save(entity);
 
-			String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + job.getJobTitle() + " ("
-					+ job.getJobCode() + ")";
+			String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + jobDetails.getJobTitle() + " ("
+					+ jobDetails.getJobCode() + ")";
 
 			String body = String.format(Constants.JOB_APPLICATION_CANDIDATE_MAIL_BODY, request.getFirstName(), // Dear
-					job.getJobTitle(), // Job Title
+					jobDetails.getJobTitle(), // Job Title
 					LocalDateTime.now(ZoneId.of(Constants.REGION)), // Registered On
 
 					username, // Username
@@ -586,7 +597,7 @@ public class JobServiceImpl implements IJobService {
 			ActivityFeedEntity activity = new ActivityFeedEntity();
 			activity.setTimeStamp(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 			activity.setActivity(Constants.APPLICATION_RECEIVED_FROM + request.getFirstName() + Constants.FOR_THE_JOB
-					+ job.getJobTitle());
+					+ jobDetails.getJobTitle());
 
 			activityFeedRepository.save(activity);
 
@@ -594,14 +605,9 @@ public class JobServiceImpl implements IJobService {
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Success",
 					Constants.JOB_APPLICATION_SUBMITTED_SUCCESSFULLY);
-
-		} catch (Exception e) {
-
-			log.error("Error while creating application", e);
-
-			return ApiResponse.failure(ResponseCode.FAILURE, Constants.FAILED_TO_SUBMIT_APPLICATION);
-		}
-	}
+            }
+ 
+	
 
 	// upload to minio bucket
 	private List<String> uploadToMinio(MultipartFile file, Integer jobId, JobApplicationRequest request)
@@ -613,7 +619,7 @@ public class JobServiceImpl implements IJobService {
 
 		List<String> filekeys = new ArrayList<>();
 
-		String applicationfileKey = Constants.APPLICATION_FOLDER + jobId + "_" + "_" + originalFileName;
+		String applicationfileKey = Constants.APPLICATION_FOLDER + jobId + "_" + originalFileName;
 		filekeys.add(applicationfileKey);
 
 		minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(applicationfileKey)

@@ -35,4 +35,6 @@ public interface ICandidateService {
 
 	ApiResponse<?> getMyApplications();
 
+	String generateCandidateId();
+
 }
