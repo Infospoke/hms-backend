@@ -768,27 +768,25 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		timeline.add(screening);
 
-		ApplicationTimeLineResponse ai = new ApplicationTimeLineResponse();
-		ai.setRoundName("AI Interview");
-
-		if (interviewSession != null) {
-
-			if (Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
-				ai.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
-			}
-
-			if ("completed".equalsIgnoreCase(interviewSession.getStatus())) {
-				ai.setCompletedDate(interviewSession.getInterviewScheduledDateTime());
-			}
-		}
-
-		timeline.add(ai);
-
 		// Configured Interview Rounds
 		for (InterviewRoundEntity round : interviewRounds) {
 
 			ApplicationTimeLineResponse response = new ApplicationTimeLineResponse();
 			response.setRoundName(round.getStageName());
+			
+			if ("AI Interview".equalsIgnoreCase(round.getStageName())) {
+
+			    if (interviewSession != null) {
+
+			        if (Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
+			            response.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
+			        }
+
+			        if ("completed".equalsIgnoreCase(interviewSession.getStatus())) {
+			            response.setCompletedDate(interviewSession.getInterviewScheduledDateTime());
+			        }
+			    }
+			}
 
 			for (InterviewCurrentStageEntity stage : currentStages) {
 
