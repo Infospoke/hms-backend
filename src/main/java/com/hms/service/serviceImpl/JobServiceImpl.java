@@ -320,7 +320,7 @@ public class JobServiceImpl implements IJobService {
 		log.info("Job Application IDs: {}", applicationIds);
 		log.info("Screened IDs from DB: {}", screenedSet);
 
-//		List<Object[]> candidateData = candidateCreationRepository.findStatusByApplicationIds(applicationIds);
+	//	List<Object[]> candidateData = candidateCreationDetailsRepository.findStatusByApplicationIds(applicationIds);
 
 		Map<Integer, String> candidateStatusMap = new HashMap<>();
 

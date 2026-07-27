@@ -82,5 +82,7 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 	InterviewScheduleEntity findByApplicantIdAndInterviewDateAndRoundId(Integer applicantId, LocalDate now,
 			Integer currentStageId);
+	
+	Optional<InterviewScheduleEntity> findByApplicantIdAndRoundId(Integer applicantId, Integer roundId);
 
 }

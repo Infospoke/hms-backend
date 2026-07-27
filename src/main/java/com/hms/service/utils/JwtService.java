@@ -19,65 +19,70 @@ public class JwtService {
 
 	public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655465675458576D5A71347437";
 
-    public String generateToken(Integer userId,Integer roleId,String email, String userName, String roleName,
-                                List<String> permissions, Boolean firstTimeWebLogin ,Boolean firstTimeMobileLogin) {
+	public String generateToken(Integer userId, Integer roleId, String email, String userName, String roleName,
+			List<String> permissions, Boolean firstTimeWebLogin, Boolean firstTimeMobileLogin) {
 
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId); 
-        claims.put("username", userName);
-        claims.put("role", roleName);
-        claims.put("roleId", roleId);
-        claims.put("permissions", permissions);
-        claims.put("firstTimeWebLogin", firstTimeWebLogin);
-        claims.put("firstTimeMobileLogin", firstTimeMobileLogin);
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("userId", userId);
+		claims.put("username", userName);
+		claims.put("role", roleName);
+		claims.put("roleId", roleId);
+		claims.put("permissions", permissions);
+		claims.put("firstTimeWebLogin", firstTimeWebLogin);
+		claims.put("firstTimeMobileLogin", firstTimeMobileLogin);
 
-        return createToken(claims, email);
-    }
+		return createToken(claims, email);
+	}
 
-    private String createToken(Map<String, Object> claims, String email) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(email)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 180))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
+	private String createToken(Map<String, Object> claims, String email) {
+		return Jwts.builder().setClaims(claims).setSubject(email).setIssuedAt(new Date(System.currentTimeMillis()))
+				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 180))
+				.signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
+	}
 
-    private Key getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
-    
-    public Claims decodeToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
+	private Key getSignKey() {
+		byte[] keyBytes = Decoders.BASE64.decode(SECRET);
+		return Keys.hmacShaKeyFor(keyBytes);
+	}
 
-    public String extractUsername(String token) {
-        return decodeToken(token).getSubject();
-    }
-    
+	public Claims decodeToken(String token) {
+		return Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody();
+	}
+
+	public String extractUsername(String token) {
+		return decodeToken(token).getSubject();
+	}
+
 	public String extractUsernameFromClaims(String token) {
 		return decodeToken(token).get("username", String.class);
 	}
 
-    public String extractRole(String token) {
-        return decodeToken(token).get("role", String.class);
-    }
+	public String extractRole(String token) {
+		return decodeToken(token).get("role", String.class);
+	}
 
-    public List<String> extractPermissions(String token) {
-        return decodeToken(token).get("permissions", List.class);
-    }
-    
-    public Long extractUserId(String token) {
-        return decodeToken(token).get("userId", Long.class);
-    }
-    
-    public Long extractRoleId(String token) {
-        return decodeToken(token).get("roleId", Long.class);
-    }
+	public List<String> extractPermissions(String token) {
+		return decodeToken(token).get("permissions", List.class);
+	}
+
+	public Long extractUserId(String token) {
+		return decodeToken(token).get("userId", Long.class);
+	}
+
+	public Long extractRoleId(String token) {
+		return decodeToken(token).get("roleId", Long.class);
+	}
+
+	public String generateCandidateToken(String candidateId, String firstName, String lastName, String email) {
+
+		Map<String, Object> claims = new HashMap<>();
+
+		claims.put("candidateId", candidateId);
+		claims.put("firstName", firstName);
+		claims.put("lastName", lastName);
+		claims.put("candidateName", firstName + " " + lastName);
+		claims.put("loginType", "CANDIDATE");
+
+		return createToken(claims, email);
+	}
 }

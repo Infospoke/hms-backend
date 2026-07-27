@@ -5,11 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-
-public class CandidateInterviewRequest {
-
-	private String candidateId;
+@AllArgsConstructor
+public class NegotiateOfferRequest {
 	
+	private Long totalCtc;
+	
+	
+
 }

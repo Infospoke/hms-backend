@@ -30,5 +30,9 @@ public class CandidateInterviewResponse {
 	    private String duration;
 
 	    private String recruiterName;
+
+		private String meetingLink;
+
+		private String venueDetails;
 	
 }
