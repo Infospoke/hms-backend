@@ -6,7 +6,7 @@ import java.time.Year;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.Optional;
-
+import java.util.UUID;
 import java.time.Duration;
 import java.time.LocalTime;
 
@@ -26,10 +26,14 @@ import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.NegotiationDocumentsEntity;
+import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.NegotiateOfferRepository;
+import com.hms.service.repository.NegotiationDocumentsRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.NegotiateOfferRequest;
@@ -51,7 +55,6 @@ import com.hms.service.repository.InterviewSessionRepository;
 
 import com.hms.service.repository.UserRepository;
 
-
 import com.hms.service.request.LoginRequest;
 import com.hms.service.response.LoginResponse;
 
@@ -68,7 +71,6 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Service
 @Slf4j
@@ -104,17 +106,19 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private MinioClient minioClient;
-	
+
 	@Autowired
 	private HttpServletRequest httpServletRequest;
-
-	
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
 
+	@Autowired
+	private NegotiateOfferRepository negotiateOfferRepository;
 	
-
+	@Autowired
+	private NegotiationDocumentsRepository negotiationDocumentsRepository;
+	
 	@Value("${minio.bucketName}")
 	private String bucketName;
 
@@ -211,17 +215,15 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Candidate registered successfully.", candidateId);
 	}
+
 	@Override
 	public ApiResponse<?> candidateOffers() {
-		
-		
-		
+
 		String authHeader = httpServletRequest.getHeader("Authorization");
 		String candidateId = "";
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			String token = authHeader.substring(7);
 			candidateId = jwtService.extractCandidateId(token);
-			
 
 		}
 
@@ -242,12 +244,12 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			dto.setJobTitle(job.getJobTitle());
 			dto.setEmploymentType(job.getEmploymentType());
 			dto.setJobLocation(job.getLocation());
-			
+
 			dto.setTotalCtc(offer.getTotalCtc());
-			
-			LocalDate dueDate =offer.getOfferReleasedAt().toLocalDate().plusDays(7);
-			
-			dto.setDueDate(dueDate); 
+
+			LocalDate dueDate = offer.getOfferReleasedAt().toLocalDate().plusDays(7);
+
+			dto.setDueDate(dueDate);
 
 			return dto;
 
@@ -255,14 +257,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Offers fetched successfully", response);
 	}
-
-	@Override
-	public ApiResponse<?> negotiateOffer(NegotiateOfferRequest request) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	
 
 	private String generateCandidateId() {
 
@@ -649,5 +643,102 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return minutes + " mins";
 	}
 
+	@Transactional
+	@Override
+	public ApiResponse<?> negotiateOffer(NegotiateOfferRequest request, List<MultipartFile> files) {
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+
+		}
+
+		NegotiationOfferEntity entity = new NegotiationOfferEntity();
+
+		CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
+				.orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+		entity.setCandidate(candidate);
+
+		entity.setFieldName(request.getField());
+
+		entity.setJustification(request.getJustification());
+
+		entity.setOfferedAmount(request.getPreviousAmount());
+
+		entity.setRequestedAmount(request.getRequestedAmount());
+		
+		JobApplicationEntity application = jobApplicationRepository.findByCandidate_CandidateId(candidateId)
+				.orElseThrow(() -> new RuntimeException("Application not found"));
+
+	       Integer jobId=application.getJobId();
+	       
+	       CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+	       
+	       if (job == null) {
+	    	    throw new RuntimeException("Job not found");
+	    	}
+
+	    	entity.setJob(job);
+					
+	     
+	       
+		
+
+		OfferDetailsEntity offer = offerDetailsRepository.findByJobApplication_Id(application.getId())
+				.orElseThrow(() -> new RuntimeException("Offer not found"));
+
+		offer.setOfferStatus("Requested for Negotiation");
+
+		offerDetailsRepository.save(offer);
+
+		entity.setOffer(offer);
+
+		negotiateOfferRepository.save(entity);
+
+		NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
+
+		documents.setCandidate(candidate);
+
+		documents.setOffer(offer);
+
+		documents.setNegotiation(entity);
+		List<String> objectNames = new ArrayList<>();
+
+		for (MultipartFile file : files) {
+
+			String originalFileName = file.getOriginalFilename();
+
+			String extension = "";
+			if (originalFileName != null && originalFileName.contains(".")) {
+				extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+			}
+
+			String objectName = "candidate-documents/" + candidateId + "/" + extension;
+
+			try {
+				minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+						.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType()).build());
+
+			} catch (Exception e) {
+				throw new RuntimeException("Failed to upload file to MinIO", e);
+			}
+
+			objectNames.add(objectName);
+		}
+
+		documents.setSupportingDocuments(objectNames);
+		
+		negotiationDocumentsRepository.save(documents);
+		
+		
+		
+		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
+		
+		
+		
+	}
 
 }

@@ -23,5 +23,6 @@ public class CandidateOfferResponse {
 	
 	private LocalDate dueDate;
 	
+	
 
 }

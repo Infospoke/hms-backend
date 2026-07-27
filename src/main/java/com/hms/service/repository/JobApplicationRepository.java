@@ -81,4 +81,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	List<JobApplicationEntity> findByCandidate(CandidateCreationDetailsEntity candidate);
 
+	Optional<JobApplicationEntity> findByCandidate_CandidateId(String candidateId);
+
 }

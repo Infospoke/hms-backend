@@ -1,5 +1,7 @@
 package com.hms.service.controller;
 
+import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
 import org.springframework.web.bind.annotation.RequestHeader;
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.request.CandidateCreationRequest;
 
 import com.hms.service.request.NegotiateOfferRequest;
-
 
 import com.hms.service.request.LoginRequest;
 
@@ -55,24 +55,19 @@ public class CandidateController {
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 
-	
 	@GetMapping("/candidate-offers")
 	public ResponseEntity<ApiResponse<?>> candidateOffers() {
 		ApiResponse<?> response = iCandidateService.candidateOffers();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
-	@PutMapping("/negotiate-offer")
-	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestBody NegotiateOfferRequest request) {
-		ApiResponse<?> response = iCandidateService.negotiateOffer(request);
+
+	@PostMapping(value = "/negotiate-offer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestPart("request") NegotiateOfferRequest request,
+			@RequestPart(value = "files", required = false) List<MultipartFile> files) {
+
+		ApiResponse<?> response = iCandidateService.negotiateOffer(request, files);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
-	
-	
-	
-
-
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse<?>> login(
@@ -104,12 +99,10 @@ public class CandidateController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	
 	@PostMapping("/interviews")
 	public ResponseEntity<ApiResponse<?>> getCandidateInterviews(@RequestBody CandidateInterviewRequest request) {
 		ApiResponse<?> response = iCandidateService.getCandidateInterviews(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
 
 }

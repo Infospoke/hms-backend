@@ -250,6 +250,7 @@ public class JobServiceImpl implements IJobService {
 			aiStage.setStageTypeId(1);
 			aiStage.setStageName("AI Interview");
 
+			
 			completedStageDetails.add(aiStage);
 		}
 
