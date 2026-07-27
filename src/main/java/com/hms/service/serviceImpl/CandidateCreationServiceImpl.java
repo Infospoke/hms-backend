@@ -502,15 +502,20 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 						} else {
 
 							InterviewScheduleEntity schedule = interviewScheduleRepository
-									.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
-									.orElse(null);
+							        .findByApplicantIdAndRoundId(
+							                application.getId(),        
+							                stage.getCurrentStageType())
+							        .orElse(null);
 
+							log.info("Application Id : {}", application.getId());
+							log.info("Round Id : {}", stage.getCurrentStageType());
 							log.info("Schedule : {}", schedule);
-
+							
 							if (schedule != null) {
-								response.setMeetingLink(schedule.getMeetingLink());
-								response.setVenueDetails(schedule.getVenueDetails());
+							    response.setMeetingLink(schedule.getMeetingLink());
+							    response.setVenueDetails(schedule.getVenueDetails());
 							}
+
 						}
 					}
 

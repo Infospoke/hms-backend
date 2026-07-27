@@ -38,43 +38,28 @@ public class CandidateController {
 	public ResponseEntity<ApiResponse<?>> createCandidate(@RequestPart("data") @Valid CandidateCreationRequest request,
 			@RequestPart("resume") MultipartFile resume,
 			@RequestPart(value = "additionalFile", required = false) MultipartFile additionalFile) {
-
 		ApiResponse<?> response = iCandidateService.createCandidate(request, resume, additionalFile);
-
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 
 
 	@PostMapping("/login")
-	public ResponseEntity<ApiResponse<?>> login(
-
-			@RequestBody @Valid LoginRequest request) {
-
+	public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid LoginRequest request) {
 		ApiResponse<?> response = iCandidateService.login(request);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/forgot-password")
-	public ResponseEntity<ApiResponse<?>> forgotPassword(
-
-			@RequestBody @Valid LoginRequest request) {
-
+	public ResponseEntity<ApiResponse<?>> forgotPassword(@RequestBody @Valid LoginRequest request) {
 		ApiResponse<?> response = iCandidateService.forgotPassword(request);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	@PostMapping("/logout")
-	public ResponseEntity<ApiResponse<?>> logout(
-
-			@RequestHeader("Authorization") String token) {
-
+	public ResponseEntity<ApiResponse<?>> logout(@RequestHeader("Authorization") String token) {
 		ApiResponse<?> response = iCandidateService.logout(token);
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
 	
 	@PostMapping("/interviews")
 	public ResponseEntity<ApiResponse<?>> getCandidateInterviews(@RequestBody CandidateInterviewRequest request) {
