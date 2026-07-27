@@ -14,7 +14,7 @@ public class CategoryEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id", nullable = false)
 	private Integer id;
-
+ 
 	@Column(name = "category_name", nullable = false, unique = true)
 	private String categoryName;
 
