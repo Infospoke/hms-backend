@@ -24,7 +24,6 @@ import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.InterviewDashboardResponse;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.wrappers.ApiResponse;
-import com.hms.service.wrappers.ResponseCode;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

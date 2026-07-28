@@ -80,6 +80,8 @@ public class CandidateCreationDetailsEntity {
 
 	@Column(name = "temporary_password_expiry")
 	private LocalDateTime temporaryPasswordExpiry;
-	
-	
+
+	@Column(name = "resume_reuploaded_at")
+	private LocalDateTime resumeReuploadedAt;
+
 }

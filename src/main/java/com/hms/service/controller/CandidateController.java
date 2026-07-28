@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hms.service.request.ApplyJobRequest;
 import com.hms.service.request.CandidateCreationRequest;
 
 import com.hms.service.request.NegotiationFieldRequest;
@@ -109,10 +110,31 @@ public class CandidateController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	@GetMapping("/details/{candidateId}")
+	public ResponseEntity<ApiResponse<?>> getCandidateById(@PathVariable("candidateId") String candidateId) {
+
+		ApiResponse<?> response = iCandidateService.getCandidateById(candidateId);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping(value = "/apply-job", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<?>> applyJob(
+
+			@RequestPart("data") ApplyJobRequest request,
+
+			@RequestPart(value = "resume", required = false) MultipartFile resume) {
+
+		ApiResponse<?> response = iCandidateService.applyJob(request, resume);
+
+		return ResponseEntity.ok(response);
+	}
+
 	@PostMapping(value = "/resume/reupload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<?>> uploadReuploadedResume(
 			@RequestPart("data") @Valid ResumeReuploadRequest request, @RequestPart("resume") MultipartFile resume) {
 		ApiResponse<?> response = iCandidateService.uploadReuploadedResume(request, resume);
 		return ResponseEntity.ok(response);
 	}
+
 }
