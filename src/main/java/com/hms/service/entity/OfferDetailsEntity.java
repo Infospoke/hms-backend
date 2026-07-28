@@ -1,5 +1,6 @@
 package com.hms.service.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -36,6 +37,9 @@ public class OfferDetailsEntity {
     @Column(name = "probation_period")
     private String probationPeriod;
     
+    @Column(name="joining_date")
+    private LocalDate joiningDate;
+  
     @Column(name = "created_by_roleId")
     private Integer createdByRoleId;
 

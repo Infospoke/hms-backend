@@ -21,12 +21,14 @@ import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import com.hms.service.constants.Constants;
@@ -52,6 +54,11 @@ import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
+import com.hms.service.enums.ReuploadStatus;
+import com.hms.service.events.ResumeReuploadRequestedEvent;
+import com.hms.service.exceptions.AlreadyExistsException;
+import com.hms.service.exceptions.CustomSystemErrorException;
+import com.hms.service.exceptions.OperationNotAllowedException;
 import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.ApplicantDetailsRepository;
@@ -61,6 +68,7 @@ import com.hms.service.repository.ChildLinkCommentsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
+import com.hms.service.repository.InterviewAnalysisRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
@@ -108,8 +116,9 @@ import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -133,6 +142,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
+
+	@Autowired
+	private InterviewAnalysisRepository interviewAnalysisRepository;
 
 	@Autowired
 	private INotificationService notificationService;
@@ -191,15 +203,21 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
-	
+
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
 
 	@Autowired
 	private MailServiceImpl mailService;
 
+	@Autowired
+	private MinioClient minioClient;
+
 	@Value("${spring.mail.username}")
 	private String fromEmail;
+
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -2718,7 +2736,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, List.of(e.getMessage()));
 		}
 	}
-	
+
 	@Override
 	public ApiResponse<?> getInterviewSummary(Integer applicationId) {
 
@@ -2808,20 +2826,20 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			response.setStartTime(interviewScheduleEntity.getStartTime());
 
 			response.setEndTime(interviewScheduleEntity.getEndTime());
-			
+
 			response.setInterviewType(interviewScheduleEntity.getMeetingLink() != null ? "Online" : "Offline");
-			
+
 			response.setRescheduleDate(interviewScheduleEntity.getRescheduleDate());
-			
+
 			response.setRescheduleStartTime(interviewScheduleEntity.getRescheduleStartTime());
-			
-			response.setRescheduleEndTime(interviewScheduleEntity.getRescheduleEndTime());			
-			
-			if(interviewScheduleEntity.getRescheduleDate()!=null)
-			{
-			response.setReScheduleInterviewType(interviewScheduleEntity.getRescheduleMeetingLink()!=null ?"Online":"Offline");
+
+			response.setRescheduleEndTime(interviewScheduleEntity.getRescheduleEndTime());
+
+			if (interviewScheduleEntity.getRescheduleDate() != null) {
+				response.setReScheduleInterviewType(
+						interviewScheduleEntity.getRescheduleMeetingLink() != null ? "Online" : "Offline");
 			}
-			
+
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview schedule details fetched successfully",
 					response);
 
@@ -2937,28 +2955,28 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	public ApiResponse<?> updateInterviewCompletionStatus(UpdateInterviewCompletionStatusRequest request) {
 
 		log.info("InterviewPlanServiceImpl :: Inside updateInterviewCompletionStatus");
-		
+
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		Integer userId = null;
-		
+
 		String roleName = null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-		    String token = authHeader.substring(7);
+			String token = authHeader.substring(7);
 
-		    userId = jwtService.extractUserId(token).intValue();
-		    
-		    roleName = jwtService.extractRole(token);
+			userId = jwtService.extractUserId(token).intValue();
+
+			roleName = jwtService.extractRole(token);
 		}
-		
+
 		UserEntity user = userRepository.findByUserId(userId).orElse(null);
 
 		if (user == null) {
-		    return ApiResponse.failure(ResponseCode.FAILURE, "User not found");
+			return ApiResponse.failure(ResponseCode.FAILURE, "User not found");
 		}
-		
+
 		if (!"HR".equalsIgnoreCase(roleName)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
@@ -2986,7 +3004,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
-		
+
 		OfferDetailsEntity offerDetails = offerDetailsRepository.findTopByJobApplicationOrderByIdDesc(application);
 
 		if (offerDetails == null) {
@@ -3000,7 +3018,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
 		}
-		
+
 		if (!application.isInPersonInterviews()) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE,
@@ -3015,7 +3033,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		offerDetails.setInterviewCompletionStatus(request.getStatus());
-		
+
 		offerDetails.setInterviewCompletionDate(LocalDateTime.now());
 
 		offerDetails.setRecruitedBy(user.getFirstName() + " " + user.getLastName());
@@ -3120,4 +3138,54 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant feedback details fetched successfully", response);
 	}
 
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public ApiResponse<?> raiseReuploadRequest(Integer applicationId) {
+
+		log.info("Resume re-upload request initiated for applicationId : {}", applicationId);
+
+		JobApplicationEntity application = jobApplicationRepository.findById(applicationId)
+				.orElseThrow(() -> new ResourceNotFoundException("Application not found."));
+
+		if (ReuploadStatus.REQUESTED.equals(application.getReuploadStatus())) {
+			throw new AlreadyExistsException("Resume re-upload request has already been raised.");
+		}
+
+		if (interviewAnalysisRepository.existsByApplicationId(applicationId)) {
+			throw new OperationNotAllowedException(
+					"Interview is already completed. Resume re-upload request cannot be raised.");
+		}
+
+		String resumePath = application.getResume();
+
+		if (resumePath != null && !resumePath.isBlank()) {
+
+			try {
+
+				minioClient.removeObject(
+						RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(resumePath).build());
+
+				log.info("Resume deleted successfully from MinIO : {}", resumePath);
+
+				application.setResume(null);
+
+			} catch (Exception ex) {
+
+				log.error("Failed to delete resume from MinIO : {}", resumePath, ex);
+
+				throw new CustomSystemErrorException("Unable to delete resume from MinIO.");
+			}
+
+		}
+		interviewSessionRepository.findByApplicationId(applicationId).ifPresent(interviewSessionRepository::delete);
+
+		resumeAnalysisRepository.findByApplicationId(applicationId).ifPresent(resumeAnalysisRepository::delete);
+
+		application.setReuploadStatus(ReuploadStatus.REQUESTED);
+
+		jobApplicationRepository.save(application);
+		applicationEventPublisher.publishEvent(new ResumeReuploadRequestedEvent(applicationId));
+
+		return ApiResponse.success("Resume re-upload request has been raised successfully.");
+	}
 }

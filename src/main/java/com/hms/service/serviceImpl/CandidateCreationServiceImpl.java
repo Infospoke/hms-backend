@@ -1,17 +1,23 @@
 package com.hms.service.serviceImpl;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Year;
 import java.time.temporal.ChronoUnit;
-import java.time.LocalDateTime;
+
 import java.util.Optional;
 import java.util.UUID;
-import java.time.Duration;
-import java.time.LocalTime;
+
 
 import java.util.ArrayList;
-
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,14 +29,21 @@ import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
-
+import com.hms.service.entity.InterviewCurrentStageEntity;
+import com.hms.service.entity.InterviewRoundDropDownEntity;
+import com.hms.service.entity.InterviewRoundEntity;
+import com.hms.service.entity.InterviewScheduleEntity;
+import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.NegotiationDocumentsEntity;
 import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
+import com.hms.service.entity.UserEntity;
+import com.hms.service.enums.ReuploadStatus;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
+
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.NegotiationDocumentsRepository;
@@ -40,28 +53,22 @@ import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.NegotiateOfferRequest;
 import com.hms.service.request.NegotiationFieldRequest;
 import com.hms.service.response.CandidateOfferResponse;
-import com.hms.service.entity.InterviewCurrentStageEntity;
-import com.hms.service.entity.InterviewRoundDropDownEntity;
-
-import com.hms.service.entity.InterviewRoundEntity;
-import com.hms.service.entity.InterviewScheduleEntity;
-import com.hms.service.entity.InterviewSessionEntity;
-import com.hms.service.entity.UserEntity;
 
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
-
 import com.hms.service.repository.UserRepository;
 
+import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
-import com.hms.service.response.LoginResponse;
-import com.hms.service.response.MyApplicationResponse;
+
 import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.CandidateInterviewResponse;
 
+import com.hms.service.response.LoginResponse;
+import com.hms.service.response.MyApplicationResponse;
 import com.hms.service.service.ICandidateService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.utils.PasswordGenerator;
@@ -284,6 +291,123 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return String.format("CID-%d-%04d", Year.now().getValue(), sequence);
 	}
 
+//	@Override
+//	@Transactional
+//	public ApiResponse<LoginResponse> login(LoginRequest request) {
+//
+//		try {
+//
+//			log.info("Candidate Login Started");
+//
+//			if (request == null) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Request");
+//			}
+//
+//			if (request.getEmail() == null || request.getEmail().isBlank()) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Email is required");
+//			}
+//
+//			if (request.getPassword() == null || request.getPassword().isBlank()) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Password is required");
+//			}
+//
+//			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+//					.findByEmailIgnoreCase(request.getEmail());
+//
+//			if (optionalCandidate.isEmpty()) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
+//			}
+//
+//			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+//
+//			if (Boolean.TRUE.equals(candidate.getAccountLocked())) {
+//
+//				if (candidate.getLockTime() != null
+//						&& candidate.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
+//
+//					return ApiResponse.failure(ResponseCode.FAILURE,
+//							"Account is locked. Please try again after 2 minutes.");
+//				}
+//
+//				candidate.setAccountLocked(false);
+//				candidate.setFailedAttempts(0);
+//				candidate.setLockTime(null);
+//
+//				candidateCreationDetailsRepository.save(candidate);
+//			}
+//
+//			boolean validPassword = passwordEncoder.matches(request.getPassword(), candidate.getPassword());
+//
+//			if (!validPassword) {
+//
+//				int attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
+//
+//				attempts++;
+//
+//				candidate.setFailedAttempts(attempts);
+//
+//				if (attempts >= 5) {
+//
+//					candidate.setAccountLocked(true);
+//					candidate.setLockTime(LocalDateTime.now());
+//
+//					candidateCreationDetailsRepository.save(candidate);
+//
+//					return ApiResponse.failure(ResponseCode.FAILURE, "Account locked for 2 minutes.");
+//				}
+//
+//				candidateCreationDetailsRepository.save(candidate);
+//
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
+//			}
+//
+//			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+//
+//				if (candidate.getTemporaryPasswordExpiry() == null
+//						|| LocalDateTime.now().isAfter(candidate.getTemporaryPasswordExpiry())) {
+//
+//					candidate.setTemporaryPassword(false);
+//					candidate.setTemporaryPasswordExpiry(null);
+//
+//					candidateCreationDetailsRepository.save(candidate);
+//
+//					return ApiResponse.failure(ResponseCode.FAILURE,
+//							"Temporary password expired. Please use Forgot Password again.");
+//				}
+//			}
+//
+//			candidate.setFailedAttempts(0);
+//			candidate.setAccountLocked(false);
+//			candidate.setLockTime(null);
+//
+//			String token = jwtService.generateCandidateToken(candidate.getCandidateId(), candidate.getFirstName(),
+//					candidate.getLastName(), candidate.getEmail());
+//
+//			candidate.setToken(token);
+//			candidate.setLoggedIn(true);
+//			candidate.setLastLogin(LocalDateTime.now());
+//
+//			candidateCreationDetailsRepository.save(candidate);
+//
+//			LoginResponse response = new LoginResponse();
+//
+//			response.setToken(token);
+//
+//			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+//
+//				return ApiResponse.success(ResponseCode.SUCCESS,
+//						"Temporary password verified. Please change your password.", response);
+//			}
+//
+//			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successful", response);
+//
+//		} catch (Exception e) {
+//
+//			log.error("Candidate Login Failed", e);
+//
+//			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+//		}
+//	}
 	@Override
 	@Transactional
 	public ApiResponse<LoginResponse> login(LoginRequest request) {
@@ -329,11 +453,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 				candidateCreationDetailsRepository.save(candidate);
 			}
 
-			boolean validPassword = passwordEncoder.matches(request.getPassword(), candidate.getPassword());
+			if (!passwordEncoder.matches(request.getPassword(), candidate.getPassword())) {
 
-			if (!validPassword) {
-
-				int attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
+				Integer attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
 
 				attempts++;
 
@@ -346,7 +468,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 					candidateCreationDetailsRepository.save(candidate);
 
-					return ApiResponse.failure(ResponseCode.FAILURE, "Account locked for 2 minutes.");
+					return ApiResponse.failure(ResponseCode.FAILURE,
+							"Account locked for 2 minutes due to multiple failed attempts.");
 				}
 
 				candidateCreationDetailsRepository.save(candidate);
@@ -354,7 +477,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
 			}
 
-			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+			boolean isTemporaryPassword = Boolean.TRUE.equals(candidate.getTemporaryPassword());
+
+			if (isTemporaryPassword) {
 
 				if (candidate.getTemporaryPasswordExpiry() == null
 						|| LocalDateTime.now().isAfter(candidate.getTemporaryPasswordExpiry())) {
@@ -365,7 +490,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 					candidateCreationDetailsRepository.save(candidate);
 
 					return ApiResponse.failure(ResponseCode.FAILURE,
-							"Temporary password expired. Please use Forgot Password again.");
+							"Temporary password has expired. Please use Forgot Password again.");
 				}
 			}
 
@@ -386,10 +511,11 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			response.setToken(token);
 
-			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+			if (isTemporaryPassword) {
 
 				return ApiResponse.success(ResponseCode.SUCCESS,
-						"Temporary password verified. Please change your password.", response);
+						"Login successful. Temporary password verified. Please change your password immediately.",
+						response);
 			}
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successful", response);
@@ -398,7 +524,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			log.error("Candidate Login Failed", e);
 
-			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+			return ApiResponse.failure(ResponseCode.FAILURE, "Login Failed : " + e.getMessage());
 		}
 	}
 
@@ -676,103 +802,119 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return minutes + " mins";
 	}
 
-
+	
 	@Transactional
 	@Override
-	public ApiResponse<?> negotiateOffer(NegotiationFieldRequest  request, List<MultipartFile> files) {
+	public ApiResponse<?> negotiateOffer(NegotiationFieldRequest request, List<MultipartFile> files) {
 
-		String authHeader = httpServletRequest.getHeader("Authorization");
-		String candidateId = "";
+	    String authHeader = httpServletRequest.getHeader("Authorization");
+	    String candidateId = "";
 
-		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-			String token = authHeader.substring(7);
-			candidateId = jwtService.extractCandidateId(token);
-		}
+	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	        String token = authHeader.substring(7);
+	        candidateId = jwtService.extractCandidateId(token);
+	    }
 
-		CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
-				.orElseThrow(() -> new RuntimeException("Candidate not found"));
+	    CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
+	            .findByCandidateId(candidateId)
+	            .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-		JobApplicationEntity application = jobApplicationRepository.findByCandidate_CandidateId(candidateId)
-				.orElseThrow(() -> new RuntimeException("Application not found"));
+	    JobApplicationEntity application = jobApplicationRepository
+	            .findByCandidate_CandidateId(candidateId)
+	            .orElseThrow(() -> new RuntimeException("Application not found"));
 
-		Integer jobId = application.getJobId();
+	    Integer jobId = application.getJobId();
 
-		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+	    CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
 
-		if (job == null) {
-			throw new RuntimeException("Job not found");
-		}
+	    if (job == null) {
+	        throw new RuntimeException("Job not found");
+	    }
 
-		OfferDetailsEntity offer = offerDetailsRepository.findByJobApplication_Id(application.getId())
-				.orElseThrow(() -> new RuntimeException("Offer not found"));
+	    OfferDetailsEntity offer = offerDetailsRepository
+	            .findByJobApplication_Id(application.getId())
+	            .orElseThrow(() -> new RuntimeException("Offer not found"));
 
-		offer.setOfferStatus("Requested for Negotiation");
-		offerDetailsRepository.save(offer);
+	    offer.setOfferStatus("Requested for Negotiation");
+	    offerDetailsRepository.save(offer);
 
-		List<NegotiationOfferEntity> negotiationEntities = new ArrayList<>();
+	    List<NegotiationOfferEntity> negotiationEntities = new ArrayList<>();
 
-		for (NegotiateOfferRequest field : request.getFields()) {
+	    for (NegotiateOfferRequest field : request.getFields()) {
 
-			NegotiationOfferEntity entity = new NegotiationOfferEntity();
+	        NegotiationOfferEntity entity = new NegotiationOfferEntity();
 
-			entity.setCandidate(candidate);
-			entity.setOffer(offer);
-			entity.setJob(job);
+	        entity.setCandidate(candidate);
+	        entity.setOffer(offer);
+	        entity.setJob(job);
 
-			entity.setFieldName(field.getFields());
-			entity.setJustification(field.getJustification());
-			entity.setOfferedAmount(field.getPreviousAmount());
-			entity.setRequestedAmount(field.getRequestedAmount());
-			entity.setApprovalStatus("PENDING");
+	        entity.setFieldName(field.getFields());
+	        entity.setJustification(field.getJustification());
+	        entity.setOfferedAmount(field.getPreviousAmount());
+	        entity.setRequestedAmount(field.getRequestedAmount());
+	        entity.setApprovalStatus("PENDING");
+	        entity.setOfferNegotiatedDate(LocalDate.now());
 
-			negotiationEntities.add(entity);
-		}
+	        negotiationEntities.add(entity);
+	    }
 
-		List<NegotiationOfferEntity> savedNegotiations = negotiateOfferRepository.saveAll(negotiationEntities);
+	    List<NegotiationOfferEntity> savedNegotiations =
+	            negotiateOfferRepository.saveAll(negotiationEntities);
 
-		if (files != null && !files.isEmpty()) {
+	    if (files != null && !files.isEmpty()) {
 
-			List<String> objectNames = new ArrayList<>();
+	        List<String> objectNames = new ArrayList<>();
 
-			for (MultipartFile file : files) {
+	        for (MultipartFile file : files) {
 
-				String originalFileName = file.getOriginalFilename();
+	            String originalFileName = file.getOriginalFilename();
 
-				String extension = "";
-				if (originalFileName != null && originalFileName.contains(".")) {
-					extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-				}
+	            String extension = "";
+	            if (originalFileName != null && originalFileName.contains(".")) {
+	                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+	            }
 
-				String objectName = "candidate-documents/" + candidateId + "/" + UUID.randomUUID() + extension;
+	            String objectName = "candidate-documents/"
+	                    + candidateId + "/"
+	                    + UUID.randomUUID()
+	                    + extension;
 
-				try {
+	            try {
 
-					minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
-							.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType())
-							.build());
+	                minioClient.putObject(
+	                        PutObjectArgs.builder()
+	                                .bucket(Constants.BUCKETNAME)
+	                                .object(objectName)
+	                                .stream(file.getInputStream(), file.getSize(), -1)
+	                                .contentType(file.getContentType())
+	                                .build());
 
-				} catch (Exception e) {
-					throw new RuntimeException("Failed to upload file to MinIO", e);
-				}
+	            } catch (Exception e) {
+	                throw new RuntimeException("Failed to upload file to MinIO", e);
+	            }
 
-				objectNames.add(objectName);
-			}
+	            objectNames.add(objectName);
+	        }
 
-			for (NegotiationOfferEntity negotiation : savedNegotiations) {
+	        for (NegotiationOfferEntity negotiation : savedNegotiations) {
 
-				NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
+	            NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
 
-				documents.setCandidate(candidate);
-				documents.setOffer(offer);
-				documents.setNegotiation(negotiation);
-				documents.setSupportingDocuments(objectNames);
+	            documents.setCandidate(candidate);
+	            documents.setOffer(offer);
+	            documents.setNegotiation(negotiation);
+	            documents.setSupportingDocuments(objectNames);
 
-				negotiationDocumentsRepository.save(documents);
-			}
-		}
+	            negotiationDocumentsRepository.save(documents);
+	        }
+	    }
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "Negotiation requested successfully",
+	            "success");
 	}
+	
 
 	@Override
 	public ApiResponse<?> getMyApplications() {
@@ -792,8 +934,47 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			List<JobApplicationEntity> applications = jobApplicationRepository.findByCandidateCandidateId(candidateId);
 
 			if (applications.isEmpty()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, Constants.NO_DATA_FOUND);
+				return ApiResponse.failure(ResponseCode.SUCCESS, Constants.NO_DATA_FOUND);
 			}
+
+			List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
+
+			List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).distinct().toList();
+
+			List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
+
+			List<ResumeAnalysisEntity> resumeList = resumeAnalysisRepository.findByApplicationIdIn(applicationIds);
+
+			List<InterviewSessionEntity> sessionList = interviewSessionRepository.findByApplicationIdIn(applicationIds);
+
+			List<InterviewCurrentStageEntity> stageList = interviewCurrentStageRepository
+					.findByApplicationIdInOrderByRoundOrder(applicationIds);
+
+			List<InterviewRoundDropDownEntity> roundDropDownList = interviewRoundDropDownRepository.findAll();
+
+			Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
+					.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+
+			Map<Integer, ResumeAnalysisEntity> resumeMap = resumeList.stream()
+					.collect(Collectors.toMap(ResumeAnalysisEntity::getApplicationId, Function.identity()));
+
+			Map<Integer, InterviewSessionEntity> sessionMap = sessionList.stream()
+					.collect(Collectors.toMap(InterviewSessionEntity::getApplicationId, Function.identity()));
+
+			Map<Integer, List<InterviewCurrentStageEntity>> stageMap = stageList.stream()
+					.collect(Collectors.groupingBy(InterviewCurrentStageEntity::getApplicationId));
+
+			List<Integer> planIds = jobs.stream().map(CreateJobDetailsEntity::getPlanId).filter(Objects::nonNull)
+					.distinct().toList();
+
+			List<InterviewRoundEntity> roundList = interviewRoundRepository
+					.findByInterviewPlanIdInOrderByRoundOrder(planIds);
+
+			Map<Integer, List<InterviewRoundEntity>> roundMap = roundList.stream()
+					.collect(Collectors.groupingBy(round -> round.getInterviewPlan().getId()));
+
+			Map<Integer, InterviewRoundDropDownEntity> roundDropDownMap = roundDropDownList.stream()
+					.collect(Collectors.toMap(InterviewRoundDropDownEntity::getId, Function.identity()));
 
 			List<MyApplicationResponse> responseList = new ArrayList<>();
 
@@ -801,27 +982,26 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 				MyApplicationResponse response = new MyApplicationResponse();
 
-				CreateJobDetailsEntity job = createJobDetailsRepository.findById(application.getJobId()).orElse(null);
+				CreateJobDetailsEntity job = jobMap.get(application.getJobId());
 
-				ResumeAnalysisEntity resumeAnalysis = resumeAnalysisRepository.findByApplicationId(application.getId())
-						.orElse(null);
+				ResumeAnalysisEntity resumeAnalysis = resumeMap.get(application.getId());
 
-				InterviewSessionEntity interviewSession = interviewSessionRepository
-						.findByApplicationId(application.getId()).orElse(null);
+				InterviewSessionEntity interviewSession = sessionMap.get(application.getId());
 
-				List<InterviewCurrentStageEntity> currentStages = interviewCurrentStageRepository
-						.findByApplicationIdOrderByRoundOrder(application.getId());
+				List<InterviewCurrentStageEntity> currentStages = stageMap.getOrDefault(application.getId(),
+						new ArrayList<>());
 
 				List<InterviewRoundEntity> interviewRounds = new ArrayList<>();
-
 				if (job != null && job.getPlanId() != null) {
 
-					interviewRounds = interviewRoundRepository.findByInterviewPlanIdOrderByRoundOrder(job.getPlanId());
-
+					interviewRounds = roundMap.getOrDefault(job.getPlanId(), new ArrayList<>());
 					response.setJobId(job.getJobId());
 					response.setJobTitle(job.getJobTitle());
 					response.setLocation(job.getLocation());
 					response.setEmploymentType(job.getEmploymentType());
+					if (application.getReuploadStatus() == ReuploadStatus.REQUESTED) {
+						response.setReuploadStatus(application.getReuploadStatus().name());
+					}
 				}
 
 				response.setApplicationId(application.getId());
@@ -834,7 +1014,10 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 				response.setCompletedRounds((int) currentStages.stream()
 						.filter(stage -> Boolean.TRUE.equals(stage.getInterviewCompleted())).count());
-				response.setCurrentRound(getCurrentRound(resumeAnalysis, interviewSession, currentStages));
+
+				response.setCurrentRound(
+						getCurrentRound(resumeAnalysis, interviewSession, currentStages, roundDropDownMap));
+
 				response.setTimeline(
 						buildTimeline(application, resumeAnalysis, interviewSession, currentStages, interviewRounds));
 
@@ -847,7 +1030,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			log.error("Exception while fetching my applications", e);
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "Data not found");
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch applications");
 		}
 	}
 
@@ -918,7 +1101,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	}
 
 	private String getCurrentRound(ResumeAnalysisEntity resumeAnalysis, InterviewSessionEntity interviewSession,
-			List<InterviewCurrentStageEntity> currentStages) {
+			List<InterviewCurrentStageEntity> currentStages,
+			Map<Integer, InterviewRoundDropDownEntity> roundDropDownMap) {
 
 		// Applied
 		if (resumeAnalysis == null) {
@@ -945,9 +1129,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			if (!Boolean.TRUE.equals(stage.getInterviewCompleted())) {
 
-				InterviewRoundDropDownEntity round = interviewRoundDropDownRepository
-						.findById(stage.getCurrentStageType()).orElse(null);
-
+				InterviewRoundDropDownEntity round = roundDropDownMap.get(stage.getCurrentStageType());
 				return round != null ? round.getRoundName() : "Interview";
 			}
 		}
@@ -955,11 +1137,66 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		// All interview rounds completed
 		InterviewCurrentStageEntity lastStage = currentStages.get(currentStages.size() - 1);
 
-		InterviewRoundDropDownEntity round = interviewRoundDropDownRepository.findById(lastStage.getCurrentStageType())
-				.orElse(null);
+		InterviewRoundDropDownEntity round = roundDropDownMap.get(lastStage.getCurrentStageType());
 
 		return round != null ? round.getRoundName() : "Completed";
 
 	}
 
+	@Override
+	@Transactional
+	public ApiResponse<?> changePassword(ChangePasswordRequest request, String authHeader) {
+
+		try {
+
+			log.info("Candidate Change Password Started");
+
+			String token = authHeader.replace("Bearer ", "");
+
+			String email = jwtService.extractUsername(token);
+
+			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+					.findByEmailIgnoreCase(email);
+
+			if (optionalCandidate.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate not found");
+			}
+
+			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+
+			if (!passwordEncoder.matches(request.getOldPassword(), candidate.getPassword())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Old password is incorrect");
+			}
+
+			if (passwordEncoder.matches(request.getNewPassword(), candidate.getPassword())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "New password cannot be same as old password");
+			}
+
+			candidate.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+			candidate.setPasswordUpdatedAt(LocalDateTime.now());
+
+			candidate.setTemporaryPassword(false);
+
+			candidate.setTemporaryPasswordExpiry(null);
+
+			candidate.setToken(null);
+
+			candidate.setLoggedIn(false);
+
+			candidateCreationDetailsRepository.save(candidate);
+
+			log.info("Password Changed Successfully");
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Password changed successfully", null);
+
+		} catch (Exception e) {
+
+			log.error("Change Password Failed", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
 }

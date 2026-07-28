@@ -25,6 +25,7 @@ public class MyApplicationResponse {
 	    private Integer totalRounds;
 	    private Integer completedRounds;
 	    private String currentRound;
+	    private String reuploadStatus;
 	    private List<ApplicationTimeLineResponse> timeline;
 
 	}

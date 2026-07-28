@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.CandidateCreationDetailsEntity;
+import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.JobApplicationEntity;
 
 @Repository
@@ -82,5 +83,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 	List<JobApplicationEntity> findByCandidate(CandidateCreationDetailsEntity candidate);
 
 	Optional<JobApplicationEntity> findByCandidate_CandidateId(String candidateId);
+
 
 }

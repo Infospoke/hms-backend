@@ -1,6 +1,7 @@
 package com.hms.service.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import com.hms.service.request.UpdateInterviewPlanRequest;
 import com.hms.service.response.InterviewDashboardResponse;
 import com.hms.service.service.IInterviewPlanService;
 import com.hms.service.wrappers.ApiResponse;
+import com.hms.service.wrappers.ResponseCode;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -176,22 +178,29 @@ public class InterviewPlanController {
 		ApiResponse<?> response = interviewPlanService.rescheduleInterview(request);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
-	
+
 	@PostMapping("/update-interview-completion-status")
-	public ResponseEntity<ApiResponse<?>> updateInterviewCompletionStatus(@RequestBody UpdateInterviewCompletionStatusRequest request) {
+	public ResponseEntity<ApiResponse<?>> updateInterviewCompletionStatus(
+			@RequestBody UpdateInterviewCompletionStatusRequest request) {
 		ApiResponse<?> response = interviewPlanService.updateInterviewCompletionStatus(request);
 		return ResponseEntity.ok(response);
 	}
-	
+
 	@PostMapping("/interview-complete")
 	public ResponseEntity<ApiResponse<?>> interviewComplete(@RequestBody InterviewCompleteRequest request) {
 		ApiResponse<?> response = interviewPlanService.interviewComplete(request);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
-	
+
 	@PostMapping("/applicant-feedback-by-id")
-	public ResponseEntity<ApiResponse<?>> getApplicantFeedbackById(@RequestBody ApplicantFeedBackRequest request){
-	ApiResponse<?> response = interviewPlanService.getApplicantFeedbackById(request);
-	return new ResponseEntity<>(response,HttpStatus.OK);
-}
+	public ResponseEntity<ApiResponse<?>> getApplicantFeedbackById(@RequestBody ApplicantFeedBackRequest request) {
+		ApiResponse<?> response = interviewPlanService.getApplicantFeedbackById(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/raise-reupload-request/{applicationId}")
+	public ResponseEntity<ApiResponse<?>> raiseReuploadRequest(@PathVariable("applicationId") Integer applicationId) {
+		ApiResponse<?> response = interviewPlanService.raiseReuploadRequest(applicationId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 }
