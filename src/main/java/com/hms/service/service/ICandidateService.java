@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hms.service.request.ApplyJobRequest;
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
@@ -24,16 +25,18 @@ public interface ICandidateService {
 
 	ApiResponse<?> logout(String token);
 
-
 	ApiResponse<?> candidateOffers();
-
 
 	ApiResponse<?> negotiateOffer(NegotiateOfferRequest request, List<MultipartFile> files);
 
 	ApiResponse<?> getMyApplications();
 
 	String generateCandidateId();
-	
+
 	ApiResponse<?> changePassword(ChangePasswordRequest request, String authHeader);
+
+	ApiResponse<?> applyJob(ApplyJobRequest request, MultipartFile resume);
+
+	ApiResponse<?> getCandidateById(String candidateId);
 
 }

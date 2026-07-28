@@ -49,11 +49,13 @@ import com.hms.service.repository.NegotiationDocumentsRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.ApplyJobRequest;
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.NegotiateOfferRequest;
 import com.hms.service.response.ApplicationTimeLineResponse;
+import com.hms.service.response.CandidateDetailsResponse;
 import com.hms.service.response.CandidateInterviewResponse;
 import com.hms.service.response.CandidateOfferResponse;
 import com.hms.service.response.LoginResponse;
@@ -66,6 +68,7 @@ import com.hms.service.wrappers.ResponseCode;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -274,123 +277,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return String.format("CID-%d-%04d", Year.now().getValue(), sequence);
 	}
 
-//	@Override
-//	@Transactional
-//	public ApiResponse<LoginResponse> login(LoginRequest request) {
-//
-//		try {
-//
-//			log.info("Candidate Login Started");
-//
-//			if (request == null) {
-//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Request");
-//			}
-//
-//			if (request.getEmail() == null || request.getEmail().isBlank()) {
-//				return ApiResponse.failure(ResponseCode.FAILURE, "Email is required");
-//			}
-//
-//			if (request.getPassword() == null || request.getPassword().isBlank()) {
-//				return ApiResponse.failure(ResponseCode.FAILURE, "Password is required");
-//			}
-//
-//			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
-//					.findByEmailIgnoreCase(request.getEmail());
-//
-//			if (optionalCandidate.isEmpty()) {
-//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
-//			}
-//
-//			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
-//
-//			if (Boolean.TRUE.equals(candidate.getAccountLocked())) {
-//
-//				if (candidate.getLockTime() != null
-//						&& candidate.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
-//
-//					return ApiResponse.failure(ResponseCode.FAILURE,
-//							"Account is locked. Please try again after 2 minutes.");
-//				}
-//
-//				candidate.setAccountLocked(false);
-//				candidate.setFailedAttempts(0);
-//				candidate.setLockTime(null);
-//
-//				candidateCreationDetailsRepository.save(candidate);
-//			}
-//
-//			boolean validPassword = passwordEncoder.matches(request.getPassword(), candidate.getPassword());
-//
-//			if (!validPassword) {
-//
-//				int attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
-//
-//				attempts++;
-//
-//				candidate.setFailedAttempts(attempts);
-//
-//				if (attempts >= 5) {
-//
-//					candidate.setAccountLocked(true);
-//					candidate.setLockTime(LocalDateTime.now());
-//
-//					candidateCreationDetailsRepository.save(candidate);
-//
-//					return ApiResponse.failure(ResponseCode.FAILURE, "Account locked for 2 minutes.");
-//				}
-//
-//				candidateCreationDetailsRepository.save(candidate);
-//
-//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
-//			}
-//
-//			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
-//
-//				if (candidate.getTemporaryPasswordExpiry() == null
-//						|| LocalDateTime.now().isAfter(candidate.getTemporaryPasswordExpiry())) {
-//
-//					candidate.setTemporaryPassword(false);
-//					candidate.setTemporaryPasswordExpiry(null);
-//
-//					candidateCreationDetailsRepository.save(candidate);
-//
-//					return ApiResponse.failure(ResponseCode.FAILURE,
-//							"Temporary password expired. Please use Forgot Password again.");
-//				}
-//			}
-//
-//			candidate.setFailedAttempts(0);
-//			candidate.setAccountLocked(false);
-//			candidate.setLockTime(null);
-//
-//			String token = jwtService.generateCandidateToken(candidate.getCandidateId(), candidate.getFirstName(),
-//					candidate.getLastName(), candidate.getEmail());
-//
-//			candidate.setToken(token);
-//			candidate.setLoggedIn(true);
-//			candidate.setLastLogin(LocalDateTime.now());
-//
-//			candidateCreationDetailsRepository.save(candidate);
-//
-//			LoginResponse response = new LoginResponse();
-//
-//			response.setToken(token);
-//
-//			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
-//
-//				return ApiResponse.success(ResponseCode.SUCCESS,
-//						"Temporary password verified. Please change your password.", response);
-//			}
-//
-//			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successful", response);
-//
-//		} catch (Exception e) {
-//
-//			log.error("Candidate Login Failed", e);
-//
-//			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
-//		}
-//	}
 	@Override
 	@Transactional
 	public ApiResponse<LoginResponse> login(LoginRequest request) {
@@ -1156,5 +1042,203 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
 		}
+	}
+
+	@Override
+	public ApiResponse<?> getCandidateById(String candidateId) {
+
+		try {
+
+			if (candidateId == null || candidateId.isBlank()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate Id is required");
+			}
+
+			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+					.findByCandidateId(candidateId);
+
+			if (optionalCandidate.isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate not found");
+			}
+
+			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+
+			CandidateDetailsResponse response = new CandidateDetailsResponse();
+
+			response.setCandidateId(candidate.getCandidateId());
+			response.setFirstName(candidate.getFirstName());
+			response.setLastName(candidate.getLastName());
+			response.setEmail(candidate.getEmail());
+			response.setPhoneNumber(candidate.getPhoneNumber());
+			response.setResume(candidate.getResume());
+			response.setAdditionalFile(candidate.getAdditionalFile());
+			response.setResumeReuploadedAt(candidate.getResumeReuploadedAt());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Candidate Details Retrieved Successfully", response);
+
+		} catch (Exception e) {
+
+			log.error("Error while fetching candidate details", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+
+	private void deleteResumeFromMinio(String objectName) {
+
+		try {
+
+			if (objectName != null && !objectName.isBlank()) {
+
+				minioClient.removeObject(
+						RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName).build());
+
+				log.info("Deleted Resume : {}", objectName);
+			}
+
+		} catch (Exception e) {
+
+			log.error("Unable to delete resume from MinIO", e);
+
+			throw new RuntimeException("Unable to delete existing resume.");
+		}
+	}
+
+	private String uploadResume(String candidateId, MultipartFile resume) {
+
+		try {
+
+			String extension = resume.getOriginalFilename().substring(resume.getOriginalFilename().lastIndexOf("."));
+
+			String objectName = "candidate-documents/" + candidateId + "_resume_" + System.currentTimeMillis()
+					+ extension;
+
+			minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+					.stream(resume.getInputStream(), resume.getSize(), -1).contentType(resume.getContentType())
+					.build());
+
+			return objectName;
+
+		} catch (Exception e) {
+
+			throw new RuntimeException("Unable to upload resume.");
+		}
+	}
+
+	@Override
+	@Transactional
+	public ApiResponse<?> applyJob(ApplyJobRequest request, MultipartFile resume) {
+
+		try {
+
+			if (request == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Request");
+			}
+
+			if (request.getCandidateId() == null || request.getCandidateId().isBlank()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate Id is required");
+			}
+
+			if (request.getJobId() == null) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Job Id is required");
+			}
+
+			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
+					.findByCandidateId(request.getCandidateId())
+					.orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+			Optional<JobApplicationEntity> optionalApplication = jobApplicationRepository
+					.findByCandidate_CandidateIdAndJobId(request.getCandidateId(), request.getJobId());
+
+			if (optionalApplication.isPresent()) {
+
+				JobApplicationEntity application = optionalApplication.get();
+
+				if (resume == null || resume.isEmpty()) {
+
+					return ApiResponse.failure(ResponseCode.FAILURE, "You have already applied for this job.");
+				}
+
+				deleteResumeFromMinio(candidate.getResume());
+
+				String resumePath = uploadResume(candidate.getCandidateId(), resume);
+
+				candidate.setResume(resumePath);
+				candidate.setResumeReuploadedAt(LocalDateTime.now());
+
+				candidateCreationDetailsRepository.save(candidate);
+
+				application.setResume(resumePath);
+				application.setReuploadStatus(ReuploadStatus.REUPLOADED);
+
+				jobApplicationRepository.save(application);
+
+				return ApiResponse.success(ResponseCode.SUCCESS, "Resume reuploaded successfully.",
+						application.getId());
+			}
+
+			String resumePath = candidate.getResume();
+
+			ReuploadStatus reuploadStatus = ReuploadStatus.NOT_REUPLOADED;
+
+			if (resume != null && !resume.isEmpty()) {
+
+				deleteResumeFromMinio(candidate.getResume());
+
+				resumePath = uploadResume(candidate.getCandidateId(), resume);
+
+				candidate.setResume(resumePath);
+
+				candidate.setResumeReuploadedAt(LocalDateTime.now());
+
+				candidateCreationDetailsRepository.save(candidate);
+
+				reuploadStatus = ReuploadStatus.REUPLOADED;
+			}
+
+			JobApplicationEntity application = new JobApplicationEntity();
+
+			application.setCandidate(candidate);
+
+			application.setJobId(request.getJobId());
+
+			application.setFirstName(candidate.getFirstName());
+
+			application.setLastName(candidate.getLastName());
+
+			application.setEmail(candidate.getEmail());
+
+			application.setPhNo(candidate.getPhoneNumber());
+
+			application.setResume(resumePath);
+
+			application.setAdditionalFile(candidate.getAdditionalFile());
+
+			application.setCreatedDate(LocalDateTime.now());
+
+			application.setStageEntryDate(LocalDateTime.now());
+
+			application.setCurrentStage("Application Submitted");
+
+			application.setJobStatus("Applied");
+
+			application.setRejected(false);
+
+			application.setReuploadStatus(reuploadStatus);
+
+			jobApplicationRepository.save(application);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Job Applied Successfully.", application.getId());
+
+		} catch (Exception e) {
+
+			log.error("Apply Job Failed", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+
 	}
 }

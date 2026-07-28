@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hms.service.request.ApplyJobRequest;
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
@@ -92,6 +94,26 @@ public class CandidateController {
 			@RequestBody ChangePasswordRequest request) {
 
 		ApiResponse<?> response = iCandidateService.changePassword(request, authHeader);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/details/{candidateId}")
+	public ResponseEntity<ApiResponse<?>> getCandidateById(@PathVariable("candidateId") String candidateId) {
+
+		ApiResponse<?> response = iCandidateService.getCandidateById(candidateId);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping(value = "/apply-job", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<?>> applyJob(
+
+			@RequestPart("data") ApplyJobRequest request,
+
+			@RequestPart(value = "resume", required = false) MultipartFile resume) {
+
+		ApiResponse<?> response = iCandidateService.applyJob(request, resume);
 
 		return ResponseEntity.ok(response);
 	}
