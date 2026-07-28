@@ -1120,6 +1120,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Letter Template Not Found");
 		}
+		
+		if (!request.getJoiningDate().isAfter(LocalDate.now())) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Joining date must be a future date");
+		}
+
+		offerDetails.setJoiningDate(request.getJoiningDate());
 
 		offerDetails.setTotalCtc(request.getTotalCtc());
 
