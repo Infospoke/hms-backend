@@ -25,8 +25,6 @@ public class CandidateDetailsResponse {
 
 	private String additionalFile;
 
-	private Boolean alreadyApplied;
-
 	private LocalDateTime resumeReuploadedAt;
 
 }

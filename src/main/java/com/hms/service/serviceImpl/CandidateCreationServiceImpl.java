@@ -11,7 +11,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -267,8 +266,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		}
 
 		List<Integer> applicantIds = jobApplicationRepository.findApplicantIdsByCandidateId(candidateId);
-		
-		
 
 		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicantIds);
 
@@ -279,11 +276,11 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			dto.setOfferId(offer.getId());
 
 			JobApplicationEntity application = offer.getJobApplication();
-		
+
 			dto.setApplicantId(application.getId());
 
 			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
-			
+
 			dto.setJobId(job.getJobId());
 
 			dto.setJobTitle(job.getJobTitle());
@@ -707,119 +704,103 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return minutes + " mins";
 	}
 
-	
 	@Transactional
 	@Override
 	public ApiResponse<?> negotiateOffer(NegotiationFieldRequest request, List<MultipartFile> files) {
 
-	    String authHeader = httpServletRequest.getHeader("Authorization");
-	    String candidateId = "";
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
 
-	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	        String token = authHeader.substring(7);
-	        candidateId = jwtService.extractCandidateId(token);
-	    }
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+		}
 
-	    CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
-	            .findByCandidateId(candidateId)
-	            .orElseThrow(() -> new RuntimeException("Candidate not found"));
+		CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
+				.orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-	    JobApplicationEntity application = jobApplicationRepository
-	            .findByCandidate_CandidateId(candidateId)
-	            .orElseThrow(() -> new RuntimeException("Application not found"));
+		JobApplicationEntity application = jobApplicationRepository.findByCandidate_CandidateId(candidateId)
+				.orElseThrow(() -> new RuntimeException("Application not found"));
 
-	    Integer jobId = application.getJobId();
+		Integer jobId = application.getJobId();
 
-	    CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
 
-	    if (job == null) {
-	        throw new RuntimeException("Job not found");
-	    }
+		if (job == null) {
+			throw new RuntimeException("Job not found");
+		}
 
-	    OfferDetailsEntity offer = offerDetailsRepository
-	            .findByJobApplication_Id(application.getId())
-	            .orElseThrow(() -> new RuntimeException("Offer not found"));
+		OfferDetailsEntity offer = offerDetailsRepository.findByJobApplication_Id(application.getId())
+				.orElseThrow(() -> new RuntimeException("Offer not found"));
 
-	    offer.setOfferStatus("Requested for Negotiation");
-	    offerDetailsRepository.save(offer);
+		offer.setOfferStatus("Requested for Negotiation");
+		offerDetailsRepository.save(offer);
 
-	    List<NegotiationOfferEntity> negotiationEntities = new ArrayList<>();
+		List<NegotiationOfferEntity> negotiationEntities = new ArrayList<>();
 
-	    for (NegotiateOfferRequest field : request.getFields()) {
+		for (NegotiateOfferRequest field : request.getFields()) {
 
-	        NegotiationOfferEntity entity = new NegotiationOfferEntity();
+			NegotiationOfferEntity entity = new NegotiationOfferEntity();
 
-	        entity.setCandidate(candidate);
-	        entity.setOffer(offer);
-	        entity.setJob(job);
+			entity.setCandidate(candidate);
+			entity.setOffer(offer);
+			entity.setJob(job);
 
-	        entity.setFieldName(field.getFields());
-	        entity.setJustification(field.getJustification());
-	        entity.setOfferedAmount(field.getPreviousAmount());
-	        entity.setRequestedAmount(field.getRequestedAmount());
-	        entity.setApprovalStatus("PENDING");
-	        entity.setOfferNegotiatedDate(LocalDate.now());
+			entity.setFieldName(field.getFields());
+			entity.setJustification(field.getJustification());
+			entity.setOfferedAmount(field.getPreviousAmount());
+			entity.setRequestedAmount(field.getRequestedAmount());
+			entity.setApprovalStatus("PENDING");
+			entity.setOfferNegotiatedDate(LocalDate.now());
 
-	        negotiationEntities.add(entity);
-	    }
+			negotiationEntities.add(entity);
+		}
 
-	    List<NegotiationOfferEntity> savedNegotiations =
-	            negotiateOfferRepository.saveAll(negotiationEntities);
+		List<NegotiationOfferEntity> savedNegotiations = negotiateOfferRepository.saveAll(negotiationEntities);
 
-	    if (files != null && !files.isEmpty()) {
+		if (files != null && !files.isEmpty()) {
 
-	        List<String> objectNames = new ArrayList<>();
+			List<String> objectNames = new ArrayList<>();
 
-	        for (MultipartFile file : files) {
+			for (MultipartFile file : files) {
 
-	            String originalFileName = file.getOriginalFilename();
+				String originalFileName = file.getOriginalFilename();
 
-	            String extension = "";
-	            if (originalFileName != null && originalFileName.contains(".")) {
-	                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-	            }
+				String extension = "";
+				if (originalFileName != null && originalFileName.contains(".")) {
+					extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+				}
 
-	            String objectName = "candidate-documents/"
-	                    + candidateId + "/"
-	                    + UUID.randomUUID()
-	                    + extension;
+				String objectName = "candidate-documents/" + candidateId + "/" + UUID.randomUUID() + extension;
 
-	            try {
+				try {
 
-	                minioClient.putObject(
-	                        PutObjectArgs.builder()
-	                                .bucket(Constants.BUCKETNAME)
-	                                .object(objectName)
-	                                .stream(file.getInputStream(), file.getSize(), -1)
-	                                .contentType(file.getContentType())
-	                                .build());
+					minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+							.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType())
+							.build());
 
-	            } catch (Exception e) {
-	                throw new RuntimeException("Failed to upload file to MinIO", e);
-	            }
+				} catch (Exception e) {
+					throw new RuntimeException("Failed to upload file to MinIO", e);
+				}
 
-	            objectNames.add(objectName);
-	        }
+				objectNames.add(objectName);
+			}
 
-	        for (NegotiationOfferEntity negotiation : savedNegotiations) {
+			for (NegotiationOfferEntity negotiation : savedNegotiations) {
 
-	            NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
+				NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
 
-	            documents.setCandidate(candidate);
-	            documents.setOffer(offer);
-	            documents.setNegotiation(negotiation);
-	            documents.setSupportingDocuments(objectNames);
+				documents.setCandidate(candidate);
+				documents.setOffer(offer);
+				documents.setNegotiation(negotiation);
+				documents.setSupportingDocuments(objectNames);
 
-	            negotiationDocumentsRepository.save(documents);
-	        }
-	    }
+				negotiationDocumentsRepository.save(documents);
+			}
+		}
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "Negotiation requested successfully",
-	            "success");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
 	}
-	
 
 	@Override
 	public ApiResponse<?> getMyApplications() {
@@ -1341,23 +1322,32 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		try {
 
+			log.info("Apply Job Started");
+
 			if (request == null) {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Request");
 			}
 
 			if (request.getCandidateId() == null || request.getCandidateId().isBlank()) {
-
 				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate Id is required");
 			}
 
 			if (request.getJobId() == null) {
-
 				return ApiResponse.failure(ResponseCode.FAILURE, "Job Id is required");
 			}
 
 			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
-					.findByCandidateId(request.getCandidateId())
-					.orElseThrow(() -> new RuntimeException("Candidate not found"));
+					.findByCandidateId(request.getCandidateId()).orElse(null);
+
+			if (candidate == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate not found");
+			}
+
+			CreateJobDetailsEntity job = createJobDetailsRepository.findById(request.getJobId()).orElse(null);
+
+			if (job == null) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Job not found");
+			}
 
 			Optional<JobApplicationEntity> optionalApplication = jobApplicationRepository
 					.findByCandidate_CandidateIdAndJobId(request.getCandidateId(), request.getJobId());
@@ -1367,20 +1357,27 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 				JobApplicationEntity application = optionalApplication.get();
 
 				if (resume == null || resume.isEmpty()) {
-
 					return ApiResponse.failure(ResponseCode.FAILURE, "You have already applied for this job.");
 				}
 
-				deleteResumeFromMinio(candidate.getResume());
+				String oldResume = candidate.getResume();
 
-				String resumePath = uploadCandidateResume(resume,candidate.getCandidateId());
+				log.info("Uploading new resume...");
 
-				candidate.setResume(resumePath);
+				String newResume = uploadCandidateResume(resume, candidate.getCandidateId());
+
+				log.info("Uploaded Successfully : {}", newResume);
+
+				if (oldResume != null && !oldResume.isBlank()) {
+					deleteResumeFromMinio(oldResume);
+				}
+
+				candidate.setResume(newResume);
 				candidate.setResumeReuploadedAt(LocalDateTime.now());
 
 				candidateCreationDetailsRepository.save(candidate);
 
-				application.setResume(resumePath);
+				application.setResume(newResume);
 				application.setReuploadStatus(ReuploadStatus.REUPLOADED);
 
 				jobApplicationRepository.save(application);
@@ -1391,64 +1388,62 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			String resumePath = candidate.getResume();
 
-			ReuploadStatus reuploadStatus = ReuploadStatus.NOT_REUPLOADED;
+			ReuploadStatus status = ReuploadStatus.NOT_REUPLOADED;
 
 			if (resume != null && !resume.isEmpty()) {
 
-				deleteResumeFromMinio(candidate.getResume());
+				String oldResume = candidate.getResume();
+
+				log.info("Uploading resume for new application...");
 
 				resumePath = uploadCandidateResume(resume, candidate.getCandidateId());
 
-				candidate.setResume(resumePath);
+				log.info("Uploaded Successfully : {}", resumePath);
 
+				if (oldResume != null && !oldResume.isBlank()) {
+					deleteResumeFromMinio(oldResume);
+				}
+
+				candidate.setResume(resumePath);
 				candidate.setResumeReuploadedAt(LocalDateTime.now());
 
 				candidateCreationDetailsRepository.save(candidate);
 
-				reuploadStatus = ReuploadStatus.REUPLOADED;
+				status = ReuploadStatus.REUPLOADED;
 			}
 
 			JobApplicationEntity application = new JobApplicationEntity();
 
 			application.setCandidate(candidate);
-
-			application.setJobId(request.getJobId());
+			application.setJobId(job.getJobId());
 
 			application.setFirstName(candidate.getFirstName());
-
 			application.setLastName(candidate.getLastName());
-
 			application.setEmail(candidate.getEmail());
-
 			application.setPhNo(candidate.getPhoneNumber());
 
 			application.setResume(resumePath);
-
 			application.setAdditionalFile(candidate.getAdditionalFile());
 
 			application.setCreatedDate(LocalDateTime.now());
-
 			application.setStageEntryDate(LocalDateTime.now());
 
 			application.setCurrentStage("Application Submitted");
-
 			application.setJobStatus("Applied");
 
 			application.setRejected(false);
 
-			application.setReuploadStatus(reuploadStatus);
+			application.setReuploadStatus(status);
 
 			jobApplicationRepository.save(application);
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Job Applied Successfully.", application.getId());
+			return ApiResponse.success(ResponseCode.SUCCESS,"success", "Job Applied Successfully.");
 
 		} catch (Exception e) {
 
 			log.error("Apply Job Failed", e);
 
-			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+			throw new RuntimeException(e);
 		}
-
 	}
-
 }
