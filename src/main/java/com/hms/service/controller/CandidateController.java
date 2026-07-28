@@ -1,6 +1,5 @@
 package com.hms.service.controller;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,8 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.CandidateCreationRequest;
 
-import com.hms.service.request.NegotiateOfferRequest;
-
+import com.hms.service.request.NegotiationFieldRequest;
 import com.hms.service.request.LoginRequest;
 
 import com.hms.service.service.ICandidateService;
@@ -59,7 +54,7 @@ public class CandidateController {
 
 
 	@PostMapping(value = "/negotiate-offer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestPart("request") NegotiateOfferRequest request,
+	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestPart("request") NegotiationFieldRequest  request,
 			@RequestPart(value = "files", required = false) List<MultipartFile> files) {
 		ApiResponse<?> response = iCandidateService.negotiateOffer(request, files);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);

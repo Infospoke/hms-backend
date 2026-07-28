@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.Year;
 import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
-import java.time.Year;
 import java.util.Optional;
 import java.util.UUID;
 import java.time.Duration;
@@ -39,6 +38,7 @@ import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.NegotiateOfferRequest;
+import com.hms.service.request.NegotiationFieldRequest;
 import com.hms.service.response.CandidateOfferResponse;
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
@@ -46,7 +46,6 @@ import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
-import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.UserEntity;
 
 import com.hms.service.repository.InterviewCurrentStageRepository;
@@ -112,11 +111,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	@Autowired
 	private HttpServletRequest httpServletRequest;
 
-
-
 	@Autowired
 	private NegotiateOfferRepository negotiateOfferRepository;
-	
+
 	@Autowired
 	private NegotiationDocumentsRepository negotiationDocumentsRepository;
 
@@ -125,10 +122,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
-	
+
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-
 
 	@Value("${minio.bucketName}")
 	private String bucketName;
@@ -231,9 +227,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	public ApiResponse<?> candidateOffers() {
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
-		
+
 		String candidateId = "";
-		
+
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
@@ -242,6 +238,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		}
 
 		List<Integer> applicantIds = jobApplicationRepository.findApplicantIdsByCandidateId(candidateId);
+		
+		
 
 		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicantIds);
 
@@ -252,13 +250,17 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			dto.setOfferId(offer.getId());
 
 			JobApplicationEntity application = offer.getJobApplication();
+		
+			dto.setApplicantId(application.getId());
 
 			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+			
+			dto.setJobId(job.getJobId());
 
 			dto.setJobTitle(job.getJobTitle());
-			
+
 			dto.setEmploymentType(job.getEmploymentType());
-			
+
 			dto.setJobLocation(job.getLocation());
 
 			dto.setTotalCtc(offer.getTotalCtc());
@@ -276,7 +278,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Override
 	public String generateCandidateId() {
-
 
 		Long sequence = candidateCreationDetailsRepository.getNextCandidateSequence();
 
@@ -520,23 +521,23 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		List<CandidateInterviewResponse> responseList = new ArrayList<>();
 
 		try {
-			
-			// Extract Candidate Id from JWT Token
-	        String authHeader = httpServletRequest.getHeader("Authorization");
-	        
-	        String candidateId = "";
 
-	        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	        	
-	            String token = authHeader.substring(7);
-	            
-	            candidateId = jwtService.extractCandidateId(token);
-	        }
+			// Extract Candidate Id from JWT Token
+			String authHeader = httpServletRequest.getHeader("Authorization");
+
+			String candidateId = "";
+
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+				String token = authHeader.substring(7);
+
+				candidateId = jwtService.extractCandidateId(token);
+			}
 
 			// Candidate Validation
 
-			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
-					.findByCandidateId(candidateId).orElse(null);
+			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
+					.orElse(null);
 
 			if (candidate == null) {
 
@@ -572,7 +573,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 					response.setApplicationId(application.getId());
 
 					response.setCurrentStageId(stage.getCurrentStageType());
-					
+
 					response.setInterviewDate(stage.getInterviewDate());
 
 					response.setStartTime(stage.getStartTime());
@@ -592,7 +593,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 						if ("AI Interview Round".equalsIgnoreCase(round.getRoundName())) {
 
-							InterviewSessionEntity session = interviewSessionRepository.findByApplicationId(application.getId()).orElse(null);
+							InterviewSessionEntity session = interviewSessionRepository
+									.findByApplicationId(application.getId()).orElse(null);
 
 							if (session != null) {
 								response.setMeetingLink(session.getInterviewLink());
@@ -600,17 +602,18 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 						} else {
 
-							InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
+							InterviewScheduleEntity schedule = interviewScheduleRepository
+									.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
 									.orElse(null);
 
 							log.info("Application Id : {}", application.getId());
 							log.info("Round Id : {}", stage.getCurrentStageType());
 							log.info("Schedule : {}", schedule);
-							
+
 							if (schedule != null) {
-								
-							    response.setMeetingLink(schedule.getMeetingLink());
-							    response.setVenueDetails(schedule.getVenueDetails());
+
+								response.setMeetingLink(schedule.getMeetingLink());
+								response.setVenueDetails(schedule.getVenueDetails());
 							}
 
 						}
@@ -676,109 +679,113 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Transactional
 	@Override
-	public ApiResponse<?> negotiateOffer(NegotiateOfferRequest request, List<MultipartFile> files) {
-	
-	String authHeader = httpServletRequest.getHeader("Authorization");
-	String candidateId = "";
-	if (authHeader != null && authHeader.startsWith("Bearer ")) {
-		String token = authHeader.substring(7);
-		candidateId = jwtService.extractCandidateId(token);
+	public ApiResponse<?> negotiateOffer(NegotiationFieldRequest  request, List<MultipartFile> files) {
 
-	}
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
 
-
-		NegotiationOfferEntity entity = new NegotiationOfferEntity();
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+		}
 
 		CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
 				.orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-		entity.setCandidate(candidate);
-
-		entity.setFieldName(request.getField());
-
-		entity.setJustification(request.getJustification());
-
-		entity.setOfferedAmount(request.getPreviousAmount());
-
-		entity.setRequestedAmount(request.getRequestedAmount());
-		
 		JobApplicationEntity application = jobApplicationRepository.findByCandidate_CandidateId(candidateId)
 				.orElseThrow(() -> new RuntimeException("Application not found"));
 
-	       Integer jobId=application.getJobId();
-	       
-	       CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
-	       
-	       if (job == null) {
-	    	    throw new RuntimeException("Job not found");
-	    	}
+		Integer jobId = application.getJobId();
 
-	    	entity.setJob(job);
-		
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+
+		if (job == null) {
+			throw new RuntimeException("Job not found");
+		}
 
 		OfferDetailsEntity offer = offerDetailsRepository.findByJobApplication_Id(application.getId())
 				.orElseThrow(() -> new RuntimeException("Offer not found"));
 
 		offer.setOfferStatus("Requested for Negotiation");
-
 		offerDetailsRepository.save(offer);
 
-		entity.setOffer(offer);
+		List<NegotiationOfferEntity> negotiationEntities = new ArrayList<>();
 
-		negotiateOfferRepository.save(entity);
+		for (NegotiateOfferRequest field : request.getFields()) {
 
-		NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
+			NegotiationOfferEntity entity = new NegotiationOfferEntity();
 
-		documents.setCandidate(candidate);
+			entity.setCandidate(candidate);
+			entity.setOffer(offer);
+			entity.setJob(job);
 
-		documents.setOffer(offer);
+			entity.setFieldName(field.getFields());
+			entity.setJustification(field.getJustification());
+			entity.setOfferedAmount(field.getPreviousAmount());
+			entity.setRequestedAmount(field.getRequestedAmount());
+			entity.setApprovalStatus("PENDING");
 
-		documents.setNegotiation(entity);
-		List<String> objectNames = new ArrayList<>();
-
-		for (MultipartFile file : files) {
-
-			String originalFileName = file.getOriginalFilename();
-
-			String extension = "";
-			if (originalFileName != null && originalFileName.contains(".")) {
-				extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-			}
-
-			String objectName = "candidate-documents/" + candidateId + "/" + extension;
-
-			try {
-				minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
-						.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType()).build());
-
-			} catch (Exception e) {
-				throw new RuntimeException("Failed to upload file to MinIO", e);
-			}
-
-			objectNames.add(objectName);
+			negotiationEntities.add(entity);
 		}
 
-		documents.setSupportingDocuments(objectNames);
-		
-		negotiationDocumentsRepository.save(documents);
-		
-		
-		
-		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
-}
-		
-		@Override
-		public ApiResponse<?> getMyApplications() {
+		List<NegotiationOfferEntity> savedNegotiations = negotiateOfferRepository.saveAll(negotiationEntities);
 
-			log.info("JobServiceImpl : Inside getMyApplications");
-			
-			String authHeader = httpServletRequest.getHeader("Authorization");
-			String candidateId = "";
-			if (authHeader != null && authHeader.startsWith("Bearer ")) {
-				String token = authHeader.substring(7);
-				candidateId = jwtService.extractCandidateId(token);
+		if (files != null && !files.isEmpty()) {
 
+			List<String> objectNames = new ArrayList<>();
+
+			for (MultipartFile file : files) {
+
+				String originalFileName = file.getOriginalFilename();
+
+				String extension = "";
+				if (originalFileName != null && originalFileName.contains(".")) {
+					extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+				}
+
+				String objectName = "candidate-documents/" + candidateId + "/" + UUID.randomUUID() + extension;
+
+				try {
+
+					minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+							.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType())
+							.build());
+
+				} catch (Exception e) {
+					throw new RuntimeException("Failed to upload file to MinIO", e);
+				}
+
+				objectNames.add(objectName);
 			}
+
+			for (NegotiationOfferEntity negotiation : savedNegotiations) {
+
+				NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
+
+				documents.setCandidate(candidate);
+				documents.setOffer(offer);
+				documents.setNegotiation(negotiation);
+				documents.setSupportingDocuments(objectNames);
+
+				negotiationDocumentsRepository.save(documents);
+			}
+		}
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
+	}
+
+	@Override
+	public ApiResponse<?> getMyApplications() {
+
+		log.info("JobServiceImpl : Inside getMyApplications");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+
+		}
 
 		try {
 
@@ -871,19 +878,19 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			ApplicationTimeLineResponse response = new ApplicationTimeLineResponse();
 			response.setRoundName(round.getStageName());
-			
+
 			if ("AI Interview".equalsIgnoreCase(round.getStageName())) {
 
-			    if (interviewSession != null) {
+				if (interviewSession != null) {
 
-			        if (Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
-			            response.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
-			        }
+					if (Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
+						response.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
+					}
 
-			        if ("completed".equalsIgnoreCase(interviewSession.getStatus())) {
-			            response.setCompletedDate(interviewSession.getInterviewScheduledDateTime());
-			        }
-			    }
+					if ("completed".equalsIgnoreCase(interviewSession.getStatus())) {
+						response.setCompletedDate(interviewSession.getInterviewScheduledDateTime());
+					}
+				}
 			}
 
 			for (InterviewCurrentStageEntity stage : currentStages) {
