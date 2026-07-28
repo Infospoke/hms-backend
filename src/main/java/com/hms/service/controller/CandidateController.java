@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -20,6 +21,7 @@ import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.NegotiateOfferRequest;
+import com.hms.service.request.ResumeReuploadRequest;
 import com.hms.service.service.ICandidateService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -95,5 +97,17 @@ public class CandidateController {
 
 		return ResponseEntity.ok(response);
 	}
+	
+	@PostMapping("/raise-reupload-request/{applicationId}")
+	public ResponseEntity<ApiResponse<?>> raiseReuploadRequest(@PathVariable("applicationId") Integer applicationId) {
+		ApiResponse<?> response = iCandidateService.raiseReuploadRequest(applicationId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
+	@PostMapping(value = "/resume/reupload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<?>> uploadReuploadedResume(
+			@RequestPart("data") @Valid ResumeReuploadRequest request, @RequestPart("resume") MultipartFile resume) {
+		ApiResponse<?> response = iCandidateService.uploadReuploadedResume(request, resume);
+		return ResponseEntity.ok(response);
+	}
 }
