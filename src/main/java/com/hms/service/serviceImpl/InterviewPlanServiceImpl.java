@@ -1,7 +1,6 @@
 package com.hms.service.serviceImpl;
 
 import java.time.Duration;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -57,7 +56,9 @@ import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ReuploadStatus;
 import com.hms.service.events.ResumeReuploadRequestedEvent;
+import com.hms.service.exceptions.AlreadyExistsException;
 import com.hms.service.exceptions.CustomSystemErrorException;
+import com.hms.service.exceptions.OperationNotAllowedException;
 import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.ApplicantDetailsRepository;
@@ -143,9 +144,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	private ResumeAnalysisRepository resumeAnalysisRepository;
 
 	@Autowired
-	private InterviewAnalysisRepository interviewAnalysisRepository;
-
-	@Autowired
 	private INotificationService notificationService;
 
 	@Autowired
@@ -209,14 +207,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Autowired
 	private MailServiceImpl mailService;
 
-	@Autowired
-	private MinioClient minioClient;
-
 	@Value("${spring.mail.username}")
 	private String fromEmail;
-
-	@Autowired
-	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
 	public ApiResponse<?> createInterviewPlan(InterviewPlanRequest request, HttpServletRequest httpRequest) {
@@ -3137,54 +3129,4 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant feedback details fetched successfully", response);
 	}
 
-	@Override
-	@Transactional(rollbackFor = Exception.class)
-	public ApiResponse<?> raiseReuploadRequest(Integer applicationId) {
-
-		log.info("Resume re-upload request initiated for applicationId : {}", applicationId);
-
-		JobApplicationEntity application = jobApplicationRepository.findById(applicationId)
-				.orElseThrow(() -> new ResourceNotFoundException("Application not found."));
-
-		if (ReuploadStatus.REQUESTED.equals(application.getReuploadStatus())) {
-			throw new CustomSystemErrorException("Resume re-upload request has already been raised.");
-		}
-
-		if (interviewAnalysisRepository.existsByApplicationId(applicationId)) {
-			throw new CustomSystemErrorException(
-					"Interview is already completed. Resume re-upload request cannot be raised.");
-		}
-
-		String resumePath = application.getResume();
-
-		if (resumePath != null && !resumePath.isBlank()) {
-
-			try {
-
-				minioClient.removeObject(
-						RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(resumePath).build());
-
-				log.info("Resume deleted successfully from MinIO : {}", resumePath);
-
-				application.setResume(null);
-
-			} catch (Exception ex) {
-
-				log.error("Failed to delete resume from MinIO : {}", resumePath, ex);
-
-				throw new CustomSystemErrorException("Unable to delete resume from MinIO.");
-			}
-
-		}
-		interviewSessionRepository.findByApplicationId(applicationId).ifPresent(interviewSessionRepository::delete);
-
-		resumeAnalysisRepository.findByApplicationId(applicationId).ifPresent(resumeAnalysisRepository::delete);
-
-		application.setReuploadStatus(ReuploadStatus.REQUESTED);
-
-		jobApplicationRepository.save(application);
-		applicationEventPublisher.publishEvent(new ResumeReuploadRequestedEvent(applicationId));
-
-		return ApiResponse.success("Resume re-upload request has been raised successfully.");
-	}
 }

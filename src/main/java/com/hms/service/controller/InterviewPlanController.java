@@ -198,9 +198,4 @@ public class InterviewPlanController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@PostMapping("/raise-reupload-request/{applicationId}")
-	public ResponseEntity<ApiResponse<?>> raiseReuploadRequest(@PathVariable("applicationId") Integer applicationId) {
-		ApiResponse<?> response = interviewPlanService.raiseReuploadRequest(applicationId);
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
 }

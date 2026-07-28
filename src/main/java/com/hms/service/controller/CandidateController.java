@@ -22,6 +22,7 @@ import com.hms.service.request.CandidateCreationRequest;
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
 import com.hms.service.request.NegotiateOfferRequest;
+import com.hms.service.request.ResumeReuploadRequest;
 import com.hms.service.service.ICandidateService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -97,6 +98,12 @@ public class CandidateController {
 
 		return ResponseEntity.ok(response);
 	}
+	
+	@PostMapping("/raise-reupload-request/{applicationId}")
+	public ResponseEntity<ApiResponse<?>> raiseReuploadRequest(@PathVariable("applicationId") Integer applicationId) {
+		ApiResponse<?> response = iCandidateService.raiseReuploadRequest(applicationId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 	@GetMapping("/details/{candidateId}")
 	public ResponseEntity<ApiResponse<?>> getCandidateById(@PathVariable("candidateId") String candidateId) {
@@ -115,6 +122,13 @@ public class CandidateController {
 
 		ApiResponse<?> response = iCandidateService.applyJob(request, resume);
 
+		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping(value = "/resume/reupload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<?>> uploadReuploadedResume(
+			@RequestPart("data") @Valid ResumeReuploadRequest request, @RequestPart("resume") MultipartFile resume) {
+		ApiResponse<?> response = iCandidateService.uploadReuploadedResume(request, resume);
 		return ResponseEntity.ok(response);
 	}
 
