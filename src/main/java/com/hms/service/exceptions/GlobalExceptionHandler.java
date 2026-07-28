@@ -108,4 +108,19 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(ApiResponse.failure(ex.getMessage()), HttpStatus.CONFLICT);
 	}
 
+	@ExceptionHandler(BadRequestException.class)
+	public ResponseEntity<ApiResponse<?>> handleBadRequestException(BadRequestException ex) {
+
+		log.error("BadRequestException : {}", ex.getMessage());
+		return new ResponseEntity<>(ApiResponse.failure(ResponseCode.FAILURE, List.of(ex.getMessage())),
+				HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ApiResponse<?>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+
+		log.error("ResourceNotFoundException : {}", ex.getMessage());
+		return new ResponseEntity<>(ApiResponse.failure(ResponseCode.FAILURE, List.of(ex.getMessage())),
+				HttpStatus.NOT_FOUND);
+	}
 }

@@ -1,6 +1,7 @@
 package com.hms.service.serviceImpl;
 
 import java.time.Duration;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,8 +43,21 @@ import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ReuploadStatus;
+import com.hms.service.events.ResumeReuploadRequestedEvent;
+import com.hms.service.exceptions.AlreadyExistsException;
+import com.hms.service.exceptions.BadRequestException;
+import com.hms.service.exceptions.CustomSystemErrorException;
+import com.hms.service.exceptions.OperationNotAllowedException;
+import com.hms.service.exceptions.ResourceNotFoundException;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
+
+import com.hms.service.repository.InterviewAnalysisRepository;
+import com.hms.service.repository.InterviewCurrentStageRepository;
+import com.hms.service.repository.InterviewRoundDropDownRepository;
+import com.hms.service.repository.InterviewRoundRepository;
+import com.hms.service.repository.InterviewScheduleRepository;
+import com.hms.service.repository.InterviewSessionRepository;
 
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.NegotiateOfferRepository;
@@ -54,15 +69,12 @@ import com.hms.service.request.NegotiateOfferRequest;
 import com.hms.service.request.NegotiationFieldRequest;
 import com.hms.service.response.CandidateOfferResponse;
 
-import com.hms.service.repository.InterviewCurrentStageRepository;
-import com.hms.service.repository.InterviewRoundDropDownRepository;
-import com.hms.service.repository.InterviewRoundRepository;
-import com.hms.service.repository.InterviewScheduleRepository;
-import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.UserRepository;
 
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
+
+import com.hms.service.request.ResumeReuploadRequest;
 
 import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.CandidateInterviewResponse;
@@ -77,6 +89,7 @@ import com.hms.service.wrappers.ResponseCode;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -113,6 +126,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	private InterviewSessionRepository interviewSessionRepository;
 
 	@Autowired
+	private InterviewAnalysisRepository interviewAnalysisRepository;
+
+	@Autowired
 	private MinioClient minioClient;
 
 	@Autowired
@@ -144,6 +160,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Value("${spring.mail.username}")
 	private String fromEmail;
+
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
 	@Transactional
@@ -1197,6 +1216,175 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			log.error("Change Password Failed", e);
 
 			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public ApiResponse<?> raiseReuploadRequest(Integer applicationId) {
+
+		log.info("Resume re-upload request initiated for applicationId : {}", applicationId);
+
+		JobApplicationEntity application = jobApplicationRepository.findById(applicationId)
+				.orElseThrow(() -> new ResourceNotFoundException("Application not found."));
+
+		if (ReuploadStatus.REQUESTED.equals(application.getReuploadStatus())) {
+			throw new AlreadyExistsException("Resume re-upload request has already been raised.");
+		}
+
+		if (interviewAnalysisRepository.existsByApplicationId(applicationId)) {
+			throw new OperationNotAllowedException(
+					"Interview is already completed. Resume re-upload request cannot be raised.");
+		}
+
+		String resumePath = application.getResume();
+
+		if (resumePath != null && !resumePath.isBlank()) {
+
+			try {
+
+				minioClient.removeObject(
+						RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(resumePath).build());
+
+				log.info("Resume deleted successfully from MinIO : {}", resumePath);
+
+				application.setResume(null);
+
+			} catch (Exception ex) {
+
+				log.error("Failed to delete resume from MinIO : {}", resumePath, ex);
+
+				throw new CustomSystemErrorException("Unable to delete resume from MinIO.");
+			}
+
+		}
+		interviewSessionRepository.findByApplicationId(applicationId).ifPresent(interviewSessionRepository::delete);
+
+		resumeAnalysisRepository.findByApplicationId(applicationId).ifPresent(resumeAnalysisRepository::delete);
+
+		application.setReuploadStatus(ReuploadStatus.REQUESTED);
+
+		jobApplicationRepository.save(application);
+		applicationEventPublisher.publishEvent(new ResumeReuploadRequestedEvent(applicationId));
+
+		return ApiResponse.success("Resume re-upload request has been raised successfully.");
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public ApiResponse<?> uploadReuploadedResume(ResumeReuploadRequest request, MultipartFile resume) {
+
+		log.info("Inside uploadReuploadedResume() for applicationId : {}", request.getApplicationId());
+
+		if (resume == null || resume.isEmpty()) {
+			throw new BadRequestException("Resume is required.");
+		}
+
+		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicationId())
+				.orElseThrow(() -> new ResourceNotFoundException("Application not found."));
+
+		if (application.getReuploadStatus() != ReuploadStatus.REQUESTED) {
+			throw new BadRequestException("Resume re-upload request has not been raised for this application.");
+		}
+
+		String applicationResumePath = uploadApplicationResume(resume, application.getJobId());
+
+		application.setResume(applicationResumePath);
+		application.setReuploadStatus(ReuploadStatus.UPLOADED);
+
+		if (Boolean.TRUE.equals(request.getUpdateProfileResume())) {
+
+			CandidateCreationDetailsEntity candidate = application.getCandidate();
+
+			if (candidate == null) {
+				throw new ResourceNotFoundException("Candidate not found.");
+			}
+
+			if (candidate.getResume() != null && !candidate.getResume().isBlank()) {
+				deleteCandidateResume(candidate.getResume());
+			}
+
+			String candidateResumePath = uploadCandidateResume(resume, candidate.getCandidateId());
+
+			candidate.setResume(candidateResumePath);
+
+			candidateCreationDetailsRepository.save(candidate);
+		}
+
+		jobApplicationRepository.save(application);
+
+		log.info("Resume uploaded successfully for applicationId : {}", application.getId());
+
+		return ApiResponse.success("Resume uploaded successfully.");
+	}
+
+	private String uploadApplicationResume(MultipartFile file, Integer jobId) {
+
+		log.info("Uploading application resume to MinIO for jobId : {}", jobId);
+
+		try {
+
+			String originalFileName = file.getOriginalFilename();
+
+			String objectName = Constants.APPLICATION_FOLDER + jobId + "_" + originalFileName;
+
+			minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+					.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType()).build());
+
+			log.info("Application resume uploaded successfully : {}", objectName);
+
+			return objectName;
+
+		} catch (Exception ex) {
+
+			log.error("Failed to upload application resume to MinIO.", ex);
+
+			throw new CustomSystemErrorException("Unable to upload application resume.");
+		}
+	}
+
+	private String uploadCandidateResume(MultipartFile resume, String candidateId) {
+
+		log.info("Uploading candidate resume to MinIO for candidateId : {}", candidateId);
+
+		try {
+
+			String extension = resume.getOriginalFilename().substring(resume.getOriginalFilename().lastIndexOf("."));
+
+			String objectName = "candidate-documents/" + candidateId + "_resume" + extension;
+
+			minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+					.stream(resume.getInputStream(), resume.getSize(), -1).contentType(resume.getContentType())
+					.build());
+
+			log.info("Candidate resume uploaded successfully : {}", objectName);
+
+			return objectName;
+
+		} catch (Exception ex) {
+
+			log.error("Failed to upload candidate resume to MinIO.", ex);
+
+			throw new CustomSystemErrorException("Unable to upload candidate resume.");
+		}
+	}
+
+	private void deleteCandidateResume(String resumePath) {
+
+		log.info("Deleting candidate resume from MinIO : {}", resumePath);
+
+		try {
+
+			minioClient
+					.removeObject(RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(resumePath).build());
+
+			log.info("Candidate resume deleted successfully : {}", resumePath);
+
+		} catch (Exception ex) {
+
+			log.error("Failed to delete candidate resume : {}", resumePath, ex);
+
+			throw new CustomSystemErrorException("Unable to delete candidate resume from MinIO.");
 		}
 	}
 }

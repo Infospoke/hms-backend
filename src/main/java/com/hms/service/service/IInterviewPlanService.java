@@ -68,7 +68,6 @@ public interface IInterviewPlanService {
 
 	ApiResponse<?> getApplicantFeedbackById(ApplicantFeedBackRequest request);
 
-	ApiResponse<?> raiseReuploadRequest(Integer applicationId);
 
 
 

@@ -12,8 +12,13 @@ import com.hms.service.request.ChangePasswordRequest;
 
 import com.hms.service.request.LoginRequest;
 
+
+import com.hms.service.request.ResumeReuploadRequest;
+
 import com.hms.service.response.LoginResponse;
 import com.hms.service.wrappers.ApiResponse;
+
+import jakarta.validation.Valid;
 
 public interface ICandidateService {
 
@@ -39,5 +44,9 @@ public interface ICandidateService {
 	String generateCandidateId();
 	
 	ApiResponse<?> changePassword(ChangePasswordRequest request, String authHeader);
+
+	ApiResponse<?> uploadReuploadedResume(@Valid ResumeReuploadRequest request, MultipartFile resume);
+
+	ApiResponse<?> raiseReuploadRequest(Integer applicationId);
 
 }
