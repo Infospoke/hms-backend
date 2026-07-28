@@ -294,7 +294,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 						Boolean.TRUE.equals(budget.getSigningBonus()) ? budget.getSigningBonusAmount() : 0);
 
 				response.setAnnualRsuEsopValue(Boolean.TRUE.equals(budget.getEquity()) ? budget.getEquityAmount() : 0);
-
+				
 				response.setOtherBenefits(
 						Boolean.TRUE.equals(budget.getRelocationBudget()) ? budget.getRelocationBudgetAmount() : 0);
 
@@ -319,6 +319,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				response.setProbationPeriod(offer.getProbationPeriod());
 				response.setNoticePeriod(offer.getNoticePeriod());
+				response.setJoiningDate(offer.getJoiningDate());				
 
 			}
 			log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
@@ -1119,6 +1120,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Letter Template Not Found");
 		}
+		
+		if (!request.getJoiningDate().isAfter(LocalDate.now())) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Joining date must be a future date");
+		}
+
+		offerDetails.setJoiningDate(request.getJoiningDate());
 
 		offerDetails.setTotalCtc(request.getTotalCtc());
 

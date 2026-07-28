@@ -35,4 +35,5 @@ public class OfferDetailsResponse {
     private String probationPeriod;
     private String noticePeriod;
     private String workLocation;
+    private LocalDate joiningDate;
 }

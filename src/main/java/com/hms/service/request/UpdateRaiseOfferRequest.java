@@ -1,5 +1,7 @@
 package com.hms.service.request;
 
+import java.time.LocalDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,5 +24,7 @@ public class UpdateRaiseOfferRequest {
 	    private String compensation;
 
 	    private Boolean submitFinancialApproval;
+	    
+	    private LocalDate joiningDate;
 
 }
