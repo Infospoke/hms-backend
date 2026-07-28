@@ -52,7 +52,7 @@ import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 
 import com.hms.service.entity.UserEntity;
-
+import com.hms.service.enums.ReuploadStatus;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
@@ -859,6 +859,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 					response.setJobTitle(job.getJobTitle());
 					response.setLocation(job.getLocation());
 					response.setEmploymentType(job.getEmploymentType());
+					if (application.getReuploadStatus() == ReuploadStatus.REQUESTED) {
+					    response.setReuploadStatus(application.getReuploadStatus().name());
+					}
 				}
 
 				response.setApplicationId(application.getId());
