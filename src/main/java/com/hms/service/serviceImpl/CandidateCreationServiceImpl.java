@@ -7,11 +7,16 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Year;
 import java.time.temporal.ChronoUnit;
+
+import java.util.Optional;
+import java.util.UUID;
+
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,28 +51,37 @@ import com.hms.service.exceptions.OperationNotAllowedException;
 import com.hms.service.exceptions.ResourceNotFoundException;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
+
 import com.hms.service.repository.InterviewAnalysisRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
+
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.NegotiationDocumentsRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
+
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApplyJobRequest;
+
 import com.hms.service.request.CandidateCreationRequest;
+import com.hms.service.request.NegotiateOfferRequest;
+import com.hms.service.request.NegotiationFieldRequest;
+import com.hms.service.response.CandidateOfferResponse;
+
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
-import com.hms.service.request.NegotiateOfferRequest;
+
 import com.hms.service.request.ResumeReuploadRequest;
+
 import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.CandidateDetailsResponse;
 import com.hms.service.response.CandidateInterviewResponse;
-import com.hms.service.response.CandidateOfferResponse;
+
 import com.hms.service.response.LoginResponse;
 import com.hms.service.response.MyApplicationResponse;
 import com.hms.service.service.ICandidateService;
@@ -253,6 +267,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		}
 
 		List<Integer> applicantIds = jobApplicationRepository.findApplicantIdsByCandidateId(candidateId);
+		
+		
 
 		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicantIds);
 
@@ -263,8 +279,12 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			dto.setOfferId(offer.getId());
 
 			JobApplicationEntity application = offer.getJobApplication();
+		
+			dto.setApplicantId(application.getId());
 
 			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+			
+			dto.setJobId(job.getJobId());
 
 			dto.setJobTitle(job.getJobTitle());
 
@@ -687,94 +707,119 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return minutes + " mins";
 	}
 
+	
 	@Transactional
 	@Override
-	public ApiResponse<?> negotiateOffer(NegotiateOfferRequest request, List<MultipartFile> files) {
+	public ApiResponse<?> negotiateOffer(NegotiationFieldRequest request, List<MultipartFile> files) {
 
-		String authHeader = httpServletRequest.getHeader("Authorization");
-		String candidateId = "";
-		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-			String token = authHeader.substring(7);
-			candidateId = jwtService.extractCandidateId(token);
+	    String authHeader = httpServletRequest.getHeader("Authorization");
+	    String candidateId = "";
 
-		}
+	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	        String token = authHeader.substring(7);
+	        candidateId = jwtService.extractCandidateId(token);
+	    }
 
-		NegotiationOfferEntity entity = new NegotiationOfferEntity();
+	    CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
+	            .findByCandidateId(candidateId)
+	            .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-		CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
-				.orElseThrow(() -> new RuntimeException("Candidate not found"));
+	    JobApplicationEntity application = jobApplicationRepository
+	            .findByCandidate_CandidateId(candidateId)
+	            .orElseThrow(() -> new RuntimeException("Application not found"));
 
-		entity.setCandidate(candidate);
+	    Integer jobId = application.getJobId();
 
-		entity.setFieldName(request.getField());
+	    CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
 
-		entity.setJustification(request.getJustification());
+	    if (job == null) {
+	        throw new RuntimeException("Job not found");
+	    }
 
-		entity.setOfferedAmount(request.getPreviousAmount());
+	    OfferDetailsEntity offer = offerDetailsRepository
+	            .findByJobApplication_Id(application.getId())
+	            .orElseThrow(() -> new RuntimeException("Offer not found"));
 
-		entity.setRequestedAmount(request.getRequestedAmount());
+	    offer.setOfferStatus("Requested for Negotiation");
+	    offerDetailsRepository.save(offer);
 
-		JobApplicationEntity application = jobApplicationRepository.findByCandidate_CandidateId(candidateId)
-				.orElseThrow(() -> new RuntimeException("Application not found"));
+	    List<NegotiationOfferEntity> negotiationEntities = new ArrayList<>();
 
-		Integer jobId = application.getJobId();
+	    for (NegotiateOfferRequest field : request.getFields()) {
 
-		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+	        NegotiationOfferEntity entity = new NegotiationOfferEntity();
 
-		if (job == null) {
-			throw new RuntimeException("Job not found");
-		}
+	        entity.setCandidate(candidate);
+	        entity.setOffer(offer);
+	        entity.setJob(job);
 
-		entity.setJob(job);
+	        entity.setFieldName(field.getFields());
+	        entity.setJustification(field.getJustification());
+	        entity.setOfferedAmount(field.getPreviousAmount());
+	        entity.setRequestedAmount(field.getRequestedAmount());
+	        entity.setApprovalStatus("PENDING");
+	        entity.setOfferNegotiatedDate(LocalDate.now());
 
-		OfferDetailsEntity offer = offerDetailsRepository.findByJobApplication_Id(application.getId())
-				.orElseThrow(() -> new RuntimeException("Offer not found"));
+	        negotiationEntities.add(entity);
+	    }
 
-		offer.setOfferStatus("Requested for Negotiation");
+	    List<NegotiationOfferEntity> savedNegotiations =
+	            negotiateOfferRepository.saveAll(negotiationEntities);
 
-		offerDetailsRepository.save(offer);
+	    if (files != null && !files.isEmpty()) {
 
-		entity.setOffer(offer);
+	        List<String> objectNames = new ArrayList<>();
 
-		negotiateOfferRepository.save(entity);
+	        for (MultipartFile file : files) {
 
-		NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
+	            String originalFileName = file.getOriginalFilename();
 
-		documents.setCandidate(candidate);
+	            String extension = "";
+	            if (originalFileName != null && originalFileName.contains(".")) {
+	                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+	            }
 
-		documents.setOffer(offer);
+	            String objectName = "candidate-documents/"
+	                    + candidateId + "/"
+	                    + UUID.randomUUID()
+	                    + extension;
 
-		documents.setNegotiation(entity);
-		List<String> objectNames = new ArrayList<>();
+	            try {
 
-		for (MultipartFile file : files) {
+	                minioClient.putObject(
+	                        PutObjectArgs.builder()
+	                                .bucket(Constants.BUCKETNAME)
+	                                .object(objectName)
+	                                .stream(file.getInputStream(), file.getSize(), -1)
+	                                .contentType(file.getContentType())
+	                                .build());
 
-			String originalFileName = file.getOriginalFilename();
+	            } catch (Exception e) {
+	                throw new RuntimeException("Failed to upload file to MinIO", e);
+	            }
 
-			String extension = "";
-			if (originalFileName != null && originalFileName.contains(".")) {
-				extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-			}
+	            objectNames.add(objectName);
+	        }
 
-			String objectName = "candidate-documents/" + candidateId + "/" + extension;
+	        for (NegotiationOfferEntity negotiation : savedNegotiations) {
 
-			try {
-				minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
-						.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType()).build());
+	            NegotiationDocumentsEntity documents = new NegotiationDocumentsEntity();
 
-			} catch (Exception e) {
-				throw new RuntimeException("Failed to upload file to MinIO", e);
-			}
+	            documents.setCandidate(candidate);
+	            documents.setOffer(offer);
+	            documents.setNegotiation(negotiation);
+	            documents.setSupportingDocuments(objectNames);
 
-			objectNames.add(objectName);
-		}
+	            negotiationDocumentsRepository.save(documents);
+	        }
+	    }
 
-		documents.setSupportingDocuments(objectNames);
-
-		negotiationDocumentsRepository.save(documents);
-
-		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "Negotiation requested successfully",
+	            "success");
 	}
+	
 
 	@Override
 	public ApiResponse<?> getMyApplications() {

@@ -19,10 +19,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.request.ApplyJobRequest;
 import com.hms.service.request.CandidateCreationRequest;
+
+import com.hms.service.request.NegotiationFieldRequest;
+
 import com.hms.service.request.ChangePasswordRequest;
+
 import com.hms.service.request.LoginRequest;
-import com.hms.service.request.NegotiateOfferRequest;
+
 import com.hms.service.request.ResumeReuploadRequest;
+
 import com.hms.service.service.ICandidateService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -52,7 +57,7 @@ public class CandidateController {
 	}
 
 	@PostMapping(value = "/negotiate-offer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestPart("request") NegotiateOfferRequest request,
+	public ResponseEntity<ApiResponse<?>> negotiateOffer(@RequestPart("request") NegotiationFieldRequest  request,
 			@RequestPart(value = "files", required = false) List<MultipartFile> files) {
 		ApiResponse<?> response = iCandidateService.negotiateOffer(request, files);
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
