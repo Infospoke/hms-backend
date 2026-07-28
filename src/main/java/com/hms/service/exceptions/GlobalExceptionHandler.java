@@ -92,4 +92,20 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(ApiResponse.failure(errorMessage), HttpStatus.BAD_REQUEST);
 	}
 
+	@ExceptionHandler(AlreadyExistsException.class)
+	public ResponseEntity<?> handleAlreadyExistsException(AlreadyExistsException ex) {
+
+		log.error("Already exists: {}", ex.getMessage());
+
+		return new ResponseEntity<>(ApiResponse.failure(ex.getMessage()), HttpStatus.CONFLICT);
+	}
+
+	@ExceptionHandler(OperationNotAllowedException.class)
+	public ResponseEntity<?> handleOperationNotAllowedException(OperationNotAllowedException ex) {
+
+		log.error("Operation not allowed: {}", ex.getMessage());
+
+		return new ResponseEntity<>(ApiResponse.failure(ex.getMessage()), HttpStatus.CONFLICT);
+	}
+
 }

@@ -1,7 +1,6 @@
 package com.hms.service.serviceImpl;
 
 import java.time.Duration;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -18,7 +17,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.coyote.BadRequestException;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +56,9 @@ import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ReuploadStatus;
 import com.hms.service.events.ResumeReuploadRequestedEvent;
+import com.hms.service.exceptions.AlreadyExistsException;
 import com.hms.service.exceptions.CustomSystemErrorException;
+import com.hms.service.exceptions.OperationNotAllowedException;
 import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.ApplicantDetailsRepository;
@@ -3148,11 +3148,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				.orElseThrow(() -> new ResourceNotFoundException("Application not found."));
 
 		if (ReuploadStatus.REQUESTED.equals(application.getReuploadStatus())) {
-			throw new CustomSystemErrorException("Resume re-upload request has already been raised.");
+			throw new AlreadyExistsException("Resume re-upload request has already been raised.");
 		}
 
 		if (interviewAnalysisRepository.existsByApplicationId(applicationId)) {
-			throw new CustomSystemErrorException(
+			throw new OperationNotAllowedException(
 					"Interview is already completed. Resume re-upload request cannot be raised.");
 		}
 
