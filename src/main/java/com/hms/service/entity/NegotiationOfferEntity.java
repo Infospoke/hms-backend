@@ -2,7 +2,12 @@ package com.hms.service.entity;
 
 
 import java.time.LocalDate;
+import java.util.List;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.hms.service.request.Negotiation;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,19 +41,6 @@ public class NegotiationOfferEntity {
 	@JoinColumn(name = "offer_id", referencedColumnName = "id")
 	private OfferDetailsEntity offer;
 	
-	
-	@Column(name="filed_name")
-	private String fieldName;
-	
-	@Column(name="requested_amount")
-	private Long requestedAmount;
-	
-	@Column(name="offered_amount")
-	private Long offeredAmount;
-	
-	@Column(name="justification")
-	private String justification;
-	
 	@Column(name="approved_amount")
 	private Long approvedAmount;
 	
@@ -61,7 +53,31 @@ public class NegotiationOfferEntity {
 	
 	@Column(name="offer_negotiated_date")
 	private LocalDate offerNegotiatedDate;
+	
+	@Column(name = "supporting_documents", columnDefinition = "jsonb")
+	private List<String> supportingDocuments;
+	
+	@Column(name="overall_justification")
+	private String overallJustification;
+	
+	@Column(name="others")
+	private String others;
+	
+    @JdbcTypeCode(SqlTypes.JSON)
+   	@Column(name = "negotiation", columnDefinition = "json")
+   	private List<Negotiation> negotiation;
+    
+    @Column(name="joining_date")
+    private LocalDate joiningDate;
+    
+    @Column(name="total_requested_amount")
+    private Long totalRequestedAmount;
+    
+    @ManyToOne
+	@JoinColumn(name = "applicant_id", referencedColumnName = "id")
+	private JobApplicationEntity applicant;
 	 
+   
 
 	
 	
