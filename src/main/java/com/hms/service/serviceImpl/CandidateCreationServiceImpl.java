@@ -6,10 +6,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Year;
 import java.time.temporal.ChronoUnit;
-
-import java.util.Optional;
-import java.util.UUID;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,41 +24,38 @@ import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
-
-import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.NegotiationDocumentsEntity;
-import com.hms.service.entity.NegotiationOfferEntity;
-import com.hms.service.entity.OfferDetailsEntity;
-import com.hms.service.entity.ResumeAnalysisEntity;
-import com.hms.service.repository.CandidateCreationDetailsRepository;
-import com.hms.service.repository.CreateJobDetailsRepository;
-import com.hms.service.repository.JobApplicationRepository;
-import com.hms.service.repository.NegotiateOfferRepository;
-import com.hms.service.repository.NegotiationDocumentsRepository;
-import com.hms.service.repository.OfferDetailsRepository;
-import com.hms.service.repository.ResumeAnalysisRepository;
-import com.hms.service.request.CandidateCreationRequest;
-import com.hms.service.request.NegotiateOfferRequest;
-import com.hms.service.response.CandidateOfferResponse;
-
 import com.hms.service.entity.InterviewCurrentStageEntity;
 import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewRoundEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
-
+import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.NegotiationDocumentsEntity;
+import com.hms.service.entity.NegotiationOfferEntity;
+import com.hms.service.entity.OfferDetailsEntity;
+import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ReuploadStatus;
+import com.hms.service.repository.CandidateCreationDetailsRepository;
+import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
+import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.NegotiateOfferRepository;
+import com.hms.service.repository.NegotiationDocumentsRepository;
+import com.hms.service.repository.OfferDetailsRepository;
+import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.UserRepository;
+import com.hms.service.request.CandidateCreationRequest;
+import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
+import com.hms.service.request.NegotiateOfferRequest;
 import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.CandidateInterviewResponse;
-
+import com.hms.service.response.CandidateOfferResponse;
 import com.hms.service.response.LoginResponse;
 import com.hms.service.response.MyApplicationResponse;
 import com.hms.service.service.ICandidateService;
@@ -114,11 +107,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	@Autowired
 	private HttpServletRequest httpServletRequest;
 
-
-
 	@Autowired
 	private NegotiateOfferRepository negotiateOfferRepository;
-	
+
 	@Autowired
 	private NegotiationDocumentsRepository negotiationDocumentsRepository;
 
@@ -127,10 +118,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
-	
+
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-
 
 	@Value("${minio.bucketName}")
 	private String bucketName;
@@ -233,9 +223,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	public ApiResponse<?> candidateOffers() {
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
-		
+
 		String candidateId = "";
-		
+
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
@@ -258,9 +248,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
 			dto.setJobTitle(job.getJobTitle());
-			
+
 			dto.setEmploymentType(job.getEmploymentType());
-			
+
 			dto.setJobLocation(job.getLocation());
 
 			dto.setTotalCtc(offer.getTotalCtc());
@@ -279,12 +269,128 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	@Override
 	public String generateCandidateId() {
 
-
 		Long sequence = candidateCreationDetailsRepository.getNextCandidateSequence();
 
 		return String.format("CID-%d-%04d", Year.now().getValue(), sequence);
 	}
 
+//	@Override
+//	@Transactional
+//	public ApiResponse<LoginResponse> login(LoginRequest request) {
+//
+//		try {
+//
+//			log.info("Candidate Login Started");
+//
+//			if (request == null) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Request");
+//			}
+//
+//			if (request.getEmail() == null || request.getEmail().isBlank()) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Email is required");
+//			}
+//
+//			if (request.getPassword() == null || request.getPassword().isBlank()) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Password is required");
+//			}
+//
+//			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+//					.findByEmailIgnoreCase(request.getEmail());
+//
+//			if (optionalCandidate.isEmpty()) {
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
+//			}
+//
+//			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+//
+//			if (Boolean.TRUE.equals(candidate.getAccountLocked())) {
+//
+//				if (candidate.getLockTime() != null
+//						&& candidate.getLockTime().plusMinutes(2).isAfter(LocalDateTime.now())) {
+//
+//					return ApiResponse.failure(ResponseCode.FAILURE,
+//							"Account is locked. Please try again after 2 minutes.");
+//				}
+//
+//				candidate.setAccountLocked(false);
+//				candidate.setFailedAttempts(0);
+//				candidate.setLockTime(null);
+//
+//				candidateCreationDetailsRepository.save(candidate);
+//			}
+//
+//			boolean validPassword = passwordEncoder.matches(request.getPassword(), candidate.getPassword());
+//
+//			if (!validPassword) {
+//
+//				int attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
+//
+//				attempts++;
+//
+//				candidate.setFailedAttempts(attempts);
+//
+//				if (attempts >= 5) {
+//
+//					candidate.setAccountLocked(true);
+//					candidate.setLockTime(LocalDateTime.now());
+//
+//					candidateCreationDetailsRepository.save(candidate);
+//
+//					return ApiResponse.failure(ResponseCode.FAILURE, "Account locked for 2 minutes.");
+//				}
+//
+//				candidateCreationDetailsRepository.save(candidate);
+//
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
+//			}
+//
+//			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+//
+//				if (candidate.getTemporaryPasswordExpiry() == null
+//						|| LocalDateTime.now().isAfter(candidate.getTemporaryPasswordExpiry())) {
+//
+//					candidate.setTemporaryPassword(false);
+//					candidate.setTemporaryPasswordExpiry(null);
+//
+//					candidateCreationDetailsRepository.save(candidate);
+//
+//					return ApiResponse.failure(ResponseCode.FAILURE,
+//							"Temporary password expired. Please use Forgot Password again.");
+//				}
+//			}
+//
+//			candidate.setFailedAttempts(0);
+//			candidate.setAccountLocked(false);
+//			candidate.setLockTime(null);
+//
+//			String token = jwtService.generateCandidateToken(candidate.getCandidateId(), candidate.getFirstName(),
+//					candidate.getLastName(), candidate.getEmail());
+//
+//			candidate.setToken(token);
+//			candidate.setLoggedIn(true);
+//			candidate.setLastLogin(LocalDateTime.now());
+//
+//			candidateCreationDetailsRepository.save(candidate);
+//
+//			LoginResponse response = new LoginResponse();
+//
+//			response.setToken(token);
+//
+//			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+//
+//				return ApiResponse.success(ResponseCode.SUCCESS,
+//						"Temporary password verified. Please change your password.", response);
+//			}
+//
+//			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successful", response);
+//
+//		} catch (Exception e) {
+//
+//			log.error("Candidate Login Failed", e);
+//
+//			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+//		}
+//	}
 	@Override
 	@Transactional
 	public ApiResponse<LoginResponse> login(LoginRequest request) {
@@ -330,11 +436,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 				candidateCreationDetailsRepository.save(candidate);
 			}
 
-			boolean validPassword = passwordEncoder.matches(request.getPassword(), candidate.getPassword());
+			if (!passwordEncoder.matches(request.getPassword(), candidate.getPassword())) {
 
-			if (!validPassword) {
-
-				int attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
+				Integer attempts = candidate.getFailedAttempts() == null ? 0 : candidate.getFailedAttempts();
 
 				attempts++;
 
@@ -347,7 +451,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 					candidateCreationDetailsRepository.save(candidate);
 
-					return ApiResponse.failure(ResponseCode.FAILURE, "Account locked for 2 minutes.");
+					return ApiResponse.failure(ResponseCode.FAILURE,
+							"Account locked for 2 minutes due to multiple failed attempts.");
 				}
 
 				candidateCreationDetailsRepository.save(candidate);
@@ -355,7 +460,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Credentials");
 			}
 
-			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+			boolean isTemporaryPassword = Boolean.TRUE.equals(candidate.getTemporaryPassword());
+
+			if (isTemporaryPassword) {
 
 				if (candidate.getTemporaryPasswordExpiry() == null
 						|| LocalDateTime.now().isAfter(candidate.getTemporaryPasswordExpiry())) {
@@ -366,7 +473,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 					candidateCreationDetailsRepository.save(candidate);
 
 					return ApiResponse.failure(ResponseCode.FAILURE,
-							"Temporary password expired. Please use Forgot Password again.");
+							"Temporary password has expired. Please use Forgot Password again.");
 				}
 			}
 
@@ -387,10 +494,11 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			response.setToken(token);
 
-			if (Boolean.TRUE.equals(candidate.getTemporaryPassword())) {
+			if (isTemporaryPassword) {
 
 				return ApiResponse.success(ResponseCode.SUCCESS,
-						"Temporary password verified. Please change your password.", response);
+						"Login successful. Temporary password verified. Please change your password immediately.",
+						response);
 			}
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Login Successful", response);
@@ -399,7 +507,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			log.error("Candidate Login Failed", e);
 
-			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+			return ApiResponse.failure(ResponseCode.FAILURE, "Login Failed : " + e.getMessage());
 		}
 	}
 
@@ -522,23 +630,23 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		List<CandidateInterviewResponse> responseList = new ArrayList<>();
 
 		try {
-			
-			// Extract Candidate Id from JWT Token
-	        String authHeader = httpServletRequest.getHeader("Authorization");
-	        
-	        String candidateId = "";
 
-	        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	        	
-	            String token = authHeader.substring(7);
-	            
-	            candidateId = jwtService.extractCandidateId(token);
-	        }
+			// Extract Candidate Id from JWT Token
+			String authHeader = httpServletRequest.getHeader("Authorization");
+
+			String candidateId = "";
+
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+				String token = authHeader.substring(7);
+
+				candidateId = jwtService.extractCandidateId(token);
+			}
 
 			// Candidate Validation
 
-			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
-					.findByCandidateId(candidateId).orElse(null);
+			CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
+					.orElse(null);
 
 			if (candidate == null) {
 
@@ -574,7 +682,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 					response.setApplicationId(application.getId());
 
 					response.setCurrentStageId(stage.getCurrentStageType());
-					
+
 					response.setInterviewDate(stage.getInterviewDate());
 
 					response.setStartTime(stage.getStartTime());
@@ -594,7 +702,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 						if ("AI Interview Round".equalsIgnoreCase(round.getRoundName())) {
 
-							InterviewSessionEntity session = interviewSessionRepository.findByApplicationId(application.getId()).orElse(null);
+							InterviewSessionEntity session = interviewSessionRepository
+									.findByApplicationId(application.getId()).orElse(null);
 
 							if (session != null) {
 								response.setMeetingLink(session.getInterviewLink());
@@ -602,17 +711,18 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 						} else {
 
-							InterviewScheduleEntity schedule = interviewScheduleRepository.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
+							InterviewScheduleEntity schedule = interviewScheduleRepository
+									.findByApplicantIdAndRoundId(application.getId(), stage.getCurrentStageType())
 									.orElse(null);
 
 							log.info("Application Id : {}", application.getId());
 							log.info("Round Id : {}", stage.getCurrentStageType());
 							log.info("Schedule : {}", schedule);
-							
+
 							if (schedule != null) {
-								
-							    response.setMeetingLink(schedule.getMeetingLink());
-							    response.setVenueDetails(schedule.getVenueDetails());
+
+								response.setMeetingLink(schedule.getMeetingLink());
+								response.setVenueDetails(schedule.getVenueDetails());
 							}
 
 						}
@@ -675,19 +785,17 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		return minutes + " mins";
 	}
 
-
 	@Transactional
 	@Override
 	public ApiResponse<?> negotiateOffer(NegotiateOfferRequest request, List<MultipartFile> files) {
-	
-	String authHeader = httpServletRequest.getHeader("Authorization");
-	String candidateId = "";
-	if (authHeader != null && authHeader.startsWith("Bearer ")) {
-		String token = authHeader.substring(7);
-		candidateId = jwtService.extractCandidateId(token);
 
-	}
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
 
+		}
 
 		NegotiationOfferEntity entity = new NegotiationOfferEntity();
 
@@ -703,20 +811,19 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		entity.setOfferedAmount(request.getPreviousAmount());
 
 		entity.setRequestedAmount(request.getRequestedAmount());
-		
+
 		JobApplicationEntity application = jobApplicationRepository.findByCandidate_CandidateId(candidateId)
 				.orElseThrow(() -> new RuntimeException("Application not found"));
 
-	       Integer jobId=application.getJobId();
-	       
-	       CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
-	       
-	       if (job == null) {
-	    	    throw new RuntimeException("Job not found");
-	    	}
+		Integer jobId = application.getJobId();
 
-	    	entity.setJob(job);
-		
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+
+		if (job == null) {
+			throw new RuntimeException("Job not found");
+		}
+
+		entity.setJob(job);
 
 		OfferDetailsEntity offer = offerDetailsRepository.findByJobApplication_Id(application.getId())
 				.orElseThrow(() -> new RuntimeException("Offer not found"));
@@ -761,26 +868,24 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		}
 
 		documents.setSupportingDocuments(objectNames);
-		
+
 		negotiationDocumentsRepository.save(documents);
-		
-		
-		
+
 		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
-}
-		
-		@Override
-		public ApiResponse<?> getMyApplications() {
+	}
 
-			log.info("JobServiceImpl : Inside getMyApplications");
-			
-			String authHeader = httpServletRequest.getHeader("Authorization");
-			String candidateId = "";
-			if (authHeader != null && authHeader.startsWith("Bearer ")) {
-				String token = authHeader.substring(7);
-				candidateId = jwtService.extractCandidateId(token);
+	@Override
+	public ApiResponse<?> getMyApplications() {
 
-			}
+		log.info("JobServiceImpl : Inside getMyApplications");
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+
+		}
 
 		try {
 
@@ -789,78 +894,71 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			if (applications.isEmpty()) {
 				return ApiResponse.failure(ResponseCode.SUCCESS, Constants.NO_DATA_FOUND);
 			}
-			
+
 			List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
 
 			List<Integer> jobIds = applications.stream().map(JobApplicationEntity::getJobId).distinct().toList();
 
-		        List<CreateJobDetailsEntity> jobs =
-		                createJobDetailsRepository.findByJobIdIn(jobIds);
+			List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
 
-		        List<ResumeAnalysisEntity> resumeList =
-		                resumeAnalysisRepository.findByApplicationIdIn(applicationIds);
+			List<ResumeAnalysisEntity> resumeList = resumeAnalysisRepository.findByApplicationIdIn(applicationIds);
 
-		        List<InterviewSessionEntity> sessionList =
-		                interviewSessionRepository.findByApplicationIdIn(applicationIds);
+			List<InterviewSessionEntity> sessionList = interviewSessionRepository.findByApplicationIdIn(applicationIds);
 
-		        List<InterviewCurrentStageEntity> stageList =
-		                interviewCurrentStageRepository.findByApplicationIdInOrderByRoundOrder(applicationIds);
-		        
-		        List<InterviewRoundDropDownEntity> roundDropDownList =
-		                interviewRoundDropDownRepository.findAll();
+			List<InterviewCurrentStageEntity> stageList = interviewCurrentStageRepository
+					.findByApplicationIdInOrderByRoundOrder(applicationIds);
 
-		        Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
-		                .collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+			List<InterviewRoundDropDownEntity> roundDropDownList = interviewRoundDropDownRepository.findAll();
 
-		        Map<Integer, ResumeAnalysisEntity> resumeMap = resumeList.stream()
-		                .collect(Collectors.toMap(ResumeAnalysisEntity::getApplicationId, Function.identity()));
+			Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
+					.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
 
-		        Map<Integer, InterviewSessionEntity> sessionMap = sessionList.stream()
-		                .collect(Collectors.toMap(InterviewSessionEntity::getApplicationId, Function.identity()));
+			Map<Integer, ResumeAnalysisEntity> resumeMap = resumeList.stream()
+					.collect(Collectors.toMap(ResumeAnalysisEntity::getApplicationId, Function.identity()));
 
-		        Map<Integer, List<InterviewCurrentStageEntity>> stageMap = stageList.stream()
-		                .collect(Collectors.groupingBy(InterviewCurrentStageEntity::getApplicationId));
-		        
-				List<Integer> planIds = jobs.stream().map(CreateJobDetailsEntity::getPlanId).filter(Objects::nonNull)
-						.distinct().toList();
+			Map<Integer, InterviewSessionEntity> sessionMap = sessionList.stream()
+					.collect(Collectors.toMap(InterviewSessionEntity::getApplicationId, Function.identity()));
 
-				List<InterviewRoundEntity> roundList = interviewRoundRepository
-						.findByInterviewPlanIdInOrderByRoundOrder(planIds);
-				
-				Map<Integer, List<InterviewRoundEntity>> roundMap = roundList.stream()
-					    .collect(Collectors.groupingBy(round -> round.getInterviewPlan().getId()));
-				
-				Map<Integer, InterviewRoundDropDownEntity> roundDropDownMap = roundDropDownList.stream()
-						.collect(Collectors.toMap(InterviewRoundDropDownEntity::getId, Function.identity()));
+			Map<Integer, List<InterviewCurrentStageEntity>> stageMap = stageList.stream()
+					.collect(Collectors.groupingBy(InterviewCurrentStageEntity::getApplicationId));
 
-		        List<MyApplicationResponse> responseList = new ArrayList<>();
+			List<Integer> planIds = jobs.stream().map(CreateJobDetailsEntity::getPlanId).filter(Objects::nonNull)
+					.distinct().toList();
 
+			List<InterviewRoundEntity> roundList = interviewRoundRepository
+					.findByInterviewPlanIdInOrderByRoundOrder(planIds);
+
+			Map<Integer, List<InterviewRoundEntity>> roundMap = roundList.stream()
+					.collect(Collectors.groupingBy(round -> round.getInterviewPlan().getId()));
+
+			Map<Integer, InterviewRoundDropDownEntity> roundDropDownMap = roundDropDownList.stream()
+					.collect(Collectors.toMap(InterviewRoundDropDownEntity::getId, Function.identity()));
+
+			List<MyApplicationResponse> responseList = new ArrayList<>();
 
 			for (JobApplicationEntity application : applications) {
-				
+
 				MyApplicationResponse response = new MyApplicationResponse();
 
-	            CreateJobDetailsEntity job = jobMap.get(application.getJobId());
+				CreateJobDetailsEntity job = jobMap.get(application.getJobId());
 
-	            ResumeAnalysisEntity resumeAnalysis = resumeMap.get(application.getId());
+				ResumeAnalysisEntity resumeAnalysis = resumeMap.get(application.getId());
 
-	            InterviewSessionEntity interviewSession = sessionMap.get(application.getId());
+				InterviewSessionEntity interviewSession = sessionMap.get(application.getId());
 
-	            List<InterviewCurrentStageEntity> currentStages =
-	                    stageMap.getOrDefault(application.getId(), new ArrayList<>());
-	
-				
-				List<InterviewRoundEntity> interviewRounds = new ArrayList<>(); 
+				List<InterviewCurrentStageEntity> currentStages = stageMap.getOrDefault(application.getId(),
+						new ArrayList<>());
+
+				List<InterviewRoundEntity> interviewRounds = new ArrayList<>();
 				if (job != null && job.getPlanId() != null) {
 
-				interviewRounds =
-						    roundMap.getOrDefault(job.getPlanId(), new ArrayList<>());
+					interviewRounds = roundMap.getOrDefault(job.getPlanId(), new ArrayList<>());
 					response.setJobId(job.getJobId());
 					response.setJobTitle(job.getJobTitle());
 					response.setLocation(job.getLocation());
 					response.setEmploymentType(job.getEmploymentType());
 					if (application.getReuploadStatus() == ReuploadStatus.REQUESTED) {
-					    response.setReuploadStatus(application.getReuploadStatus().name());
+						response.setReuploadStatus(application.getReuploadStatus().name());
 					}
 				}
 
@@ -877,8 +975,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 				response.setCurrentRound(
 						getCurrentRound(resumeAnalysis, interviewSession, currentStages, roundDropDownMap));
-				
-				response.setTimeline(buildTimeline(application, resumeAnalysis, interviewSession, currentStages, interviewRounds));
+
+				response.setTimeline(
+						buildTimeline(application, resumeAnalysis, interviewSession, currentStages, interviewRounds));
 
 				responseList.add(response);
 			}
@@ -889,7 +988,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			log.error("Exception while fetching my applications", e);
 
-			return ApiResponse.failure(ResponseCode.FAILURE ,  "Failed to fetch applications");
+			return ApiResponse.failure(ResponseCode.FAILURE, "Failed to fetch applications");
 		}
 	}
 
@@ -920,19 +1019,19 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			ApplicationTimeLineResponse response = new ApplicationTimeLineResponse();
 			response.setRoundName(round.getStageName());
-			
+
 			if ("AI Interview".equalsIgnoreCase(round.getStageName())) {
 
-			    if (interviewSession != null) {
+				if (interviewSession != null) {
 
-			        if (Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
-			            response.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
-			        }
+					if (Boolean.TRUE.equals(interviewSession.getIsScheduled())) {
+						response.setScheduledDate(interviewSession.getInterviewScheduledDateTime());
+					}
 
-			        if ("completed".equalsIgnoreCase(interviewSession.getStatus())) {
-			            response.setCompletedDate(interviewSession.getInterviewScheduledDateTime());
-			        }
-			    }
+					if ("completed".equalsIgnoreCase(interviewSession.getStatus())) {
+						response.setCompletedDate(interviewSession.getInterviewScheduledDateTime());
+					}
+				}
 			}
 
 			for (InterviewCurrentStageEntity stage : currentStages) {
@@ -988,8 +1087,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			if (!Boolean.TRUE.equals(stage.getInterviewCompleted())) {
 
-				InterviewRoundDropDownEntity round =
-				        roundDropDownMap.get(stage.getCurrentStageType());
+				InterviewRoundDropDownEntity round = roundDropDownMap.get(stage.getCurrentStageType());
 				return round != null ? round.getRoundName() : "Interview";
 			}
 		}
@@ -1003,4 +1101,60 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	}
 
+	@Override
+	@Transactional
+	public ApiResponse<?> changePassword(ChangePasswordRequest request, String authHeader) {
+
+		try {
+
+			log.info("Candidate Change Password Started");
+
+			String token = authHeader.replace("Bearer ", "");
+
+			String email = jwtService.extractUsername(token);
+
+			Optional<CandidateCreationDetailsEntity> optionalCandidate = candidateCreationDetailsRepository
+					.findByEmailIgnoreCase(email);
+
+			if (optionalCandidate.isEmpty()) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "Candidate not found");
+			}
+
+			CandidateCreationDetailsEntity candidate = optionalCandidate.get();
+
+			if (!passwordEncoder.matches(request.getOldPassword(), candidate.getPassword())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Old password is incorrect");
+			}
+
+			if (passwordEncoder.matches(request.getNewPassword(), candidate.getPassword())) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "New password cannot be same as old password");
+			}
+
+			candidate.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+			candidate.setPasswordUpdatedAt(LocalDateTime.now());
+
+			candidate.setTemporaryPassword(false);
+
+			candidate.setTemporaryPasswordExpiry(null);
+
+			candidate.setToken(null);
+
+			candidate.setLoggedIn(false);
+
+			candidateCreationDetailsRepository.save(candidate);
+
+			log.info("Password Changed Successfully");
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Password changed successfully", null);
+
+		} catch (Exception e) {
+
+			log.error("Change Password Failed", e);
+
+			return ApiResponse.failure(ResponseCode.FAILURE, e.getMessage());
+		}
+	}
 }
