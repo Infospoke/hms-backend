@@ -2003,16 +2003,12 @@ public class SpecificationFilterRequest {
 	        }
 	        
 	        // ---------------- Job Title ----------------
-	        String jobTitle = getFilter("jobTitle");
-
-	        if (jobTitle != null && !jobTitle.trim().isEmpty()) {
-
-	            predicates.add(
-	                    cb.like(
-	                            cb.lower(job.get("jobTitle")),
-	                            "%" + jobTitle.trim().toLowerCase() + "%"));
-	        }
-
+	        String jobId = getFilter("jobId");
+	        
+			if (jobId != null && !jobId.isBlank()) {
+				predicates.add(cb.equal(job.get("jobId"), Integer.valueOf(jobId)));
+			}
+ 
 	        // ---------------- Priority ----------------
 	        String priority = getFilter("priority");
 
