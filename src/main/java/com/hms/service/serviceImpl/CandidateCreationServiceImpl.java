@@ -756,6 +756,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		entity.setJoiningDate(request.getJoiningDate());
 		entity.setApplicant(applicants);
 		entity.setTotalRequestedAmount(totalRequestedAmount);
+		entity.setJoiningDateReason(request.getReasonForJoiningDate());
 
 		negotiateOfferRepository.save(entity);
 
