@@ -338,11 +338,6 @@ public class UserServiceImpl implements IUserService {
 			log.info("UserServiceImpl::Role updated successfully");
 		}
 
-		if (request.getBusinessUnitId() != null) {
-			user.setBusinessUnitId(request.getBusinessUnitId());
-			log.info("UserServiceImpl::Business Unit updated");
-		}
-
 		if (request.getDepartmentId() != null) {
 			user.setDepartmentId(request.getDepartmentId());
 			log.info("UserServiceImpl::Department updated");
