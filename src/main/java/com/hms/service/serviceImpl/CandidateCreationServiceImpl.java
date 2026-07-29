@@ -778,7 +778,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		try {
 
-			List<JobApplicationEntity> applications = jobApplicationRepository.findByCandidateCandidateId(candidateId);
+			List<JobApplicationEntity> applications = jobApplicationRepository.findByCandidateCandidateIdOrderByCreatedDateDesc(candidateId);
 
 			if (applications.isEmpty()) {
 				return ApiResponse.failure(ResponseCode.SUCCESS, Constants.NO_DATA_FOUND);

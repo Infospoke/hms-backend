@@ -38,12 +38,9 @@ public interface AInterviewQuestionsRepository extends JpaRepository<AIInterview
 			    FROM InterviewSessionEntity i
 			    WHERE i.isScheduled = true
 			      AND LOWER(i.status) = 'upcoming'
+			      AND i.interviewScheduledDatetime > CURRENT_TIMESTAMP
 			      AND (i.isDeleted = false OR i.isDeleted IS NULL)
 			""")
 	Long countUpcomingAIInterview();
-
-	
-
-	
 
 }
