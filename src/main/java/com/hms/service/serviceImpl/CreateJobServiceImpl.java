@@ -945,12 +945,16 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		Long userId = null;
+		
+		String candidateId=null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 			String token = authHeader.substring(7);
 
 			userId = jwtService.extractUserId(token);
+			
+			candidateId=jwtService.extractCandidateId(token);
 
 		} else {
 
@@ -1048,7 +1052,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				}
 
 				// RECRUITERS
-
+				
+				if(userId!=null)
+				{
 				if (!recruiterEntities.isEmpty()) {
 
 					List<AssignedRecruiterResponse> recruiters = recruiterEntities.stream().map(entity -> {
@@ -1085,6 +1091,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 						recruitersResponse.setMyResponse(List.of(myResponse));
 					}
 					response.setRecruiters(recruitersResponse);
+				}
 				}
 				long totalApplicants = jobApplicationRepository.countByJobId(jobId);
 				long resumeCompleted = resumeAnalysisRepository.countByJobId(jobId);

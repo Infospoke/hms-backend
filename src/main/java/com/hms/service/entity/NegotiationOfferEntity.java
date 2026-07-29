@@ -2,12 +2,14 @@ package com.hms.service.entity;
 
 
 import java.time.LocalDate;
+
 import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import com.hms.service.request.Negotiation;
+
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -64,7 +66,7 @@ public class NegotiationOfferEntity {
 	private String others;
 	
     @JdbcTypeCode(SqlTypes.JSON)
-   	@Column(name = "negotiation", columnDefinition = "json")
+   	@Column(name = "negotiation", columnDefinition = "jsonb")
    	private List<Negotiation> negotiation;
     
     @Column(name="joining_date")
@@ -76,11 +78,6 @@ public class NegotiationOfferEntity {
     @ManyToOne
 	@JoinColumn(name = "applicant_id", referencedColumnName = "id")
 	private JobApplicationEntity applicant;
-	 
+	
    
-
-	
-	
-	
-
 }

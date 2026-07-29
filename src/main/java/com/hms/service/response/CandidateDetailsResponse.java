@@ -1,7 +1,5 @@
 package com.hms.service.response;
 
-import java.time.LocalDateTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +23,5 @@ public class CandidateDetailsResponse {
 
 	private String additionalFile;
 
-	private LocalDateTime resumeReuploadedAt;
 
 }

@@ -1,21 +1,17 @@
 package com.hms.service.serviceImpl;
 
+import java.io.InputStream;
 import java.time.Duration;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Year;
 import java.time.temporal.ChronoUnit;
-
-import java.util.Optional;
-
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -49,38 +45,28 @@ import com.hms.service.exceptions.OperationNotAllowedException;
 import com.hms.service.exceptions.ResourceNotFoundException;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
-
 import com.hms.service.repository.InterviewAnalysisRepository;
 import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
 import com.hms.service.repository.InterviewRoundRepository;
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
-
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.NegotiateOfferRepository;
-
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
-
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApplyJobRequest;
-
 import com.hms.service.request.CandidateCreationRequest;
-
-import com.hms.service.request.Negotiation;
-import com.hms.service.request.NegotiationFieldRequest;
-import com.hms.service.response.CandidateOfferResponse;
-
 import com.hms.service.request.ChangePasswordRequest;
 import com.hms.service.request.LoginRequest;
-
+import com.hms.service.request.Negotiation;
+import com.hms.service.request.NegotiationFieldRequest;
 import com.hms.service.request.ResumeReuploadRequest;
-
 import com.hms.service.response.ApplicationTimeLineResponse;
 import com.hms.service.response.CandidateDetailsResponse;
 import com.hms.service.response.CandidateInterviewResponse;
-
+import com.hms.service.response.CandidateOfferResponse;
 import com.hms.service.response.LoginResponse;
 import com.hms.service.response.MyApplicationResponse;
 import com.hms.service.service.ICandidateService;
@@ -89,6 +75,7 @@ import com.hms.service.utils.PasswordGenerator;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
@@ -138,7 +125,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private NegotiateOfferRepository negotiateOfferRepository;
-
 
 	@Autowired
 	private InterviewRoundRepository interviewRoundRepository;
@@ -707,87 +693,75 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 	@Override
 	public ApiResponse<?> negotiateOffer(NegotiationFieldRequest request, List<MultipartFile> files) {
 
-	    String authHeader = httpServletRequest.getHeader("Authorization");
-	    String candidateId = "";
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String candidateId = "";
 
-	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	        String token = authHeader.substring(7);
-	        candidateId = jwtService.extractCandidateId(token);
-	    }
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			String token = authHeader.substring(7);
+			candidateId = jwtService.extractCandidateId(token);
+		}
 
-	    CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository
-	            .findByCandidateId(candidateId)
-	            .orElseThrow(() -> new RuntimeException("Candidate not found"));
+		CandidateCreationDetailsEntity candidate = candidateCreationDetailsRepository.findByCandidateId(candidateId)
+				.orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-	    OfferDetailsEntity offer = offerDetailsRepository.findById(request.getOfferId())
-	            .orElseThrow(() -> new RuntimeException("Offer not found"));
+		OfferDetailsEntity offer = offerDetailsRepository.findById(request.getOfferId())
+				.orElseThrow(() -> new RuntimeException("Offer not found"));
 
-	    CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(request.getJobId());
-	           
-	    Optional<JobApplicationEntity> applicant=jobApplicationRepository.findById(request.getApplicantId());
-	    JobApplicationEntity applicants=applicant.get();
-	    List<String> documentNames = new ArrayList<>();
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(request.getJobId());
 
-	    if (files != null && !files.isEmpty()) {
+		Optional<JobApplicationEntity> applicant = jobApplicationRepository.findById(request.getApplicantId());
+		JobApplicationEntity applicants = applicant.get();
+		List<String> documentNames = new ArrayList<>();
 
-	        for (MultipartFile file : files) {
+		if (files != null && !files.isEmpty()) {
 
-	            String originalFileName = file.getOriginalFilename();
-	            String extension = "";
+			for (MultipartFile file : files) {
 
-	            if (originalFileName != null && originalFileName.contains(".")) {
-	                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-	            }
+				String originalFileName = file.getOriginalFilename();
+				String extension = "";
 
-	           
-	            try {
-	            	String objectName =Constants.NEGOTIATION_DOCUMENTS + candidateId +"-"+job.getJobId() + extension;
+				if (originalFileName != null && originalFileName.contains(".")) {
+					extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+				}
 
-	                minioClient.putObject(
-	                        PutObjectArgs.builder()
-	                                .bucket(Constants.BUCKETNAME)
-	                                .object(objectName)
-	                                .stream(file.getInputStream(), file.getSize(), -1)
-	                                .contentType(file.getContentType())
-	                                .build());
+				try {
+					String objectName = Constants.NEGOTIATION_DOCUMENTS + candidateId + "-" + job.getJobId()
+							+ extension;
 
-	                documentNames.add(objectName);
+					minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+							.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType())
+							.build());
 
-	            } catch (Exception e) {
-	                throw new RuntimeException("Failed to upload document", e);
-	            }
-	        }
-	    }
-	    Long totalRequestedAmount = request.getNegotiation()
-	            .stream()
-	            .filter(Objects::nonNull)
-	            .map(Negotiation::getRequestedAmount)
-	            .filter(Objects::nonNull)
-	            .reduce(0L, Long::sum);
+					documentNames.add(objectName);
 
-	    NegotiationOfferEntity entity = new NegotiationOfferEntity();
+				} catch (Exception e) {
+					throw new RuntimeException("Failed to upload document", e);
+				}
+			}
+		}
+		Long totalRequestedAmount = request.getNegotiation().stream().filter(Objects::nonNull)
+				.map(Negotiation::getRequestedAmount).filter(Objects::nonNull).reduce(0L, Long::sum);
 
-	    entity.setCandidate(candidate);
-	    entity.setOffer(offer);
-	    entity.setJob(job);
-	    entity.setApprovalStatus("PENDING");
-	    entity.setOfferNegotiatedDate(LocalDate.now());
-	    entity.setSupportingDocuments(documentNames);
-	    entity.setOverallJustification(request.getOverallJustification());
-	    entity.setOthers(request.getOthers());
-	    entity.setNegotiation(request.getNegotiation());
-	    entity.setJoiningDate(request.getJoiningDate());
-	    entity.setApplicant(applicants);
-	    entity.setTotalRequestedAmount(totalRequestedAmount);
-	    
+		NegotiationOfferEntity entity = new NegotiationOfferEntity();
 
-	    negotiateOfferRepository.save(entity);
+		entity.setCandidate(candidate);
+		entity.setOffer(offer);
+		entity.setJob(job);
+		entity.setApprovalStatus("PENDING");
+		entity.setOfferNegotiatedDate(LocalDate.now());
+		entity.setSupportingDocuments(documentNames);
+		entity.setOverallJustification(request.getOverallJustification());
+		entity.setOthers(request.getOthers());
+		entity.setNegotiation(request.getNegotiation());
+		entity.setJoiningDate(request.getJoiningDate());
+		entity.setApplicant(applicants);
+		entity.setTotalRequestedAmount(totalRequestedAmount);
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "Negotiation requested successfully",
-	            "success");
+		negotiateOfferRepository.save(entity);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
 	}
+
 	@Override
 	public ApiResponse<?> getMyApplications() {
 
@@ -1101,8 +1075,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			response.setPhoneNumber(candidate.getPhoneNumber());
 			response.setResume(candidate.getResume());
 			response.setAdditionalFile(candidate.getAdditionalFile());
-			response.setResumeReuploadedAt(candidate.getResumeReuploadedAt());
-
+			
 			return ApiResponse.success(ResponseCode.SUCCESS, "Candidate Details Retrieved Successfully", response);
 
 		} catch (Exception e) {
@@ -1113,25 +1086,25 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		}
 	}
 
-	private void deleteResumeFromMinio(String objectName) {
-
-		try {
-
-			if (objectName != null && !objectName.isBlank()) {
-
-				minioClient.removeObject(
-						RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName).build());
-
-				log.info("Deleted Resume : {}", objectName);
-			}
-
-		} catch (Exception e) {
-
-			log.error("Unable to delete resume from MinIO", e);
-
-			throw new RuntimeException("Unable to delete existing resume.");
-		}
-	}
+//	private void deleteResumeFromMinio(String objectName) {
+//
+//		try {
+//
+//			if (objectName != null && !objectName.isBlank()) {
+//
+//				minioClient.removeObject(
+//						RemoveObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName).build());
+//
+//				log.info("Deleted Resume : {}", objectName);
+//			}
+//
+//		} catch (Exception e) {
+//
+//			log.error("Unable to delete resume from MinIO", e);
+//
+//			throw new RuntimeException("Unable to delete existing resume.");
+//		}
+//	}
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -1335,67 +1308,29 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 				return ApiResponse.failure(ResponseCode.FAILURE, "Job not found");
 			}
 
-			Optional<JobApplicationEntity> optionalApplication = jobApplicationRepository
-					.findByCandidate_CandidateIdAndJobId(request.getCandidateId(), request.getJobId());
+			boolean alreadyApplied = jobApplicationRepository
+					.existsByCandidate_CandidateIdAndJobId(request.getCandidateId(), request.getJobId());
 
-			if (optionalApplication.isPresent()) {
-
-				JobApplicationEntity application = optionalApplication.get();
-
-				if (resume == null || resume.isEmpty()) {
-					return ApiResponse.failure(ResponseCode.FAILURE, "You have already applied for this job.");
-				}
-
-				String oldResume = candidate.getResume();
-
-				log.info("Uploading new resume...");
-
-				String newResume = uploadCandidateResume(resume, candidate.getCandidateId());
-
-				log.info("Uploaded Successfully : {}", newResume);
-
-				if (oldResume != null && !oldResume.isBlank()) {
-					deleteResumeFromMinio(oldResume);
-				}
-
-				candidate.setResume(newResume);
-				candidate.setResumeReuploadedAt(LocalDateTime.now());
-
-				candidateCreationDetailsRepository.save(candidate);
-
-				application.setResume(newResume);
-				application.setReuploadStatus(ReuploadStatus.REUPLOADED);
-
-				jobApplicationRepository.save(application);
-
-				return ApiResponse.success(ResponseCode.SUCCESS, "Resume reuploaded successfully.",
-						application.getId());
+			if (alreadyApplied) {
+				return ApiResponse.failure(ResponseCode.FAILURE, "You have already applied for this job.");
 			}
 
-			String resumePath = candidate.getResume();
+			String resumePath;
 
-			ReuploadStatus status = ReuploadStatus.NOT_REUPLOADED;
+			ReuploadStatus status;
 
 			if (resume != null && !resume.isEmpty()) {
 
-				String oldResume = candidate.getResume();
+				resumePath = uploadJobApplicationResume(resume, candidate.getCandidateId(), request.getJobId());
 
-				log.info("Uploading resume for new application...");
+				status = ReuploadStatus.UPLOADED;
 
-				resumePath = uploadCandidateResume(resume, candidate.getCandidateId());
+			} else {
 
-				log.info("Uploaded Successfully : {}", resumePath);
+				resumePath = copyCandidateResumeToJobApplication(candidate.getResume(), candidate.getCandidateId(),
+						request.getJobId());
 
-				if (oldResume != null && !oldResume.isBlank()) {
-					deleteResumeFromMinio(oldResume);
-				}
-
-				candidate.setResume(resumePath);
-				candidate.setResumeReuploadedAt(LocalDateTime.now());
-
-				candidateCreationDetailsRepository.save(candidate);
-
-				status = ReuploadStatus.REUPLOADED;
+				status = ReuploadStatus.NOT_REUPLOADED;
 			}
 
 			JobApplicationEntity application = new JobApplicationEntity();
@@ -1423,13 +1358,56 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			jobApplicationRepository.save(application);
 
-			return ApiResponse.success(ResponseCode.SUCCESS,"success", "Job Applied Successfully.");
+			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Applied Successfully.");
 
 		} catch (Exception e) {
 
 			log.error("Apply Job Failed", e);
 
 			throw new RuntimeException(e);
+		}
+	}
+
+	private String copyCandidateResumeToJobApplication(String candidateResumePath, String candidateId, Integer jobId) {
+
+		try {
+
+			String extension = candidateResumePath.substring(candidateResumePath.lastIndexOf("."));
+
+			String objectName = "job-applications/" + candidateId + "_" + jobId + "_resume" + extension;
+
+			try (InputStream inputStream = minioClient.getObject(
+					GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(candidateResumePath).build())) {
+
+				minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+						.stream(inputStream, -1, 10485760).build());
+			}
+
+			return objectName;
+
+		} catch (Exception e) {
+
+			throw new RuntimeException("Unable to copy candidate resume.", e);
+		}
+	}
+
+	private String uploadJobApplicationResume(MultipartFile resume, String candidateId, Integer jobId) {
+
+		try {
+
+			String extension = resume.getOriginalFilename().substring(resume.getOriginalFilename().lastIndexOf("."));
+
+			String objectName = "job-applications/" + candidateId + "_" + jobId + "_resume" + extension;
+
+			minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
+					.stream(resume.getInputStream(), resume.getSize(), -1).contentType(resume.getContentType())
+					.build());
+
+			return objectName;
+
+		} catch (Exception e) {
+
+			throw new RuntimeException("Unable to upload resume.", e);
 		}
 	}
 }

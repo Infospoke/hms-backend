@@ -32,4 +32,5 @@ public interface OfferDetailsRepository
 	Optional<OfferDetailsEntity> findByJobApplication(JobApplicationEntity jobApplication);
 
 
+
 }
