@@ -1970,7 +1970,7 @@ public class SpecificationFilterRequest {
 
 	    return (root, query, cb) -> {
 
-	        query.distinct(true);
+	        query.distinct(false);
 
 	        List<Predicate> predicates = new ArrayList<>();
 

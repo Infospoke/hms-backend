@@ -1084,6 +1084,7 @@ public class Constants {
 	public static final String ADDITIONAL = "Additional";
 	public static final String BUCKETNAME = "infospokejobapplicationsbucket";
 	public static final String MOVE_TO_NEXT_ROUND = "Move to Next Round";
+	public static final String NEGOTIATION_DOCUMENTS="negotiation-documents/";
 
 	public static final String INTERVIEW_SELECTED_SUBJECT = "Congratulations! Interview Cleared";
 

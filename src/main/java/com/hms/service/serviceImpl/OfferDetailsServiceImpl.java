@@ -1125,6 +1125,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Letter Template Not Found");
 		}
+		
+		if (!request.getJoiningDate().isAfter(LocalDate.now())) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Joining date must be a future date");
+		}
+
+		offerDetails.setJoiningDate(request.getJoiningDate());
 
 		offerDetails.setTotalCtc(request.getTotalCtc());
 
@@ -1602,12 +1608,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
             Integer applicantId=entity.getApplicant().getId();
 		
 			response.setApprovedAmount(entity.getApprovedAmount());
-			response.setOfferNegotiationDate(entity.getOfferNegotiateddate());
-			response.setPriority(getPriority(entity.getOfferNegotiateddate()));
+			response.setOfferNegotiationDate(entity.getOfferNegotiatedDate());
+			response.setPriority(getPriority(entity.getOfferNegotiatedDate()));
 			Optional<OfferDetailsEntity> offerDetails=offerDetailsRepository.findByJobApplication_Id(applicantId);
 			Long totalCtc=offerDetails.get().getTotalCtc();
 			response.setOfferedAmount(totalCtc);
-			response.setRequestedAmount(entity.getRequestedAmount());
+			response.setRequestedAmount(entity.getTotalRequestedAmount());
 
 			return response;
 

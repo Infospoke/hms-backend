@@ -92,4 +92,35 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(ApiResponse.failure(errorMessage), HttpStatus.BAD_REQUEST);
 	}
 
+	@ExceptionHandler(AlreadyExistsException.class)
+	public ResponseEntity<?> handleAlreadyExistsException(AlreadyExistsException ex) {
+
+		log.error("Already exists: {}", ex.getMessage());
+
+		return new ResponseEntity<>(ApiResponse.failure(ex.getMessage()), HttpStatus.CONFLICT);
+	}
+
+	@ExceptionHandler(OperationNotAllowedException.class)
+	public ResponseEntity<?> handleOperationNotAllowedException(OperationNotAllowedException ex) {
+
+		log.error("Operation not allowed: {}", ex.getMessage());
+
+		return new ResponseEntity<>(ApiResponse.failure(ex.getMessage()), HttpStatus.CONFLICT);
+	}
+
+	@ExceptionHandler(BadRequestException.class)
+	public ResponseEntity<ApiResponse<?>> handleBadRequestException(BadRequestException ex) {
+
+		log.error("BadRequestException : {}", ex.getMessage());
+		return new ResponseEntity<>(ApiResponse.failure(ResponseCode.FAILURE, List.of(ex.getMessage())),
+				HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ApiResponse<?>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+
+		log.error("ResourceNotFoundException : {}", ex.getMessage());
+		return new ResponseEntity<>(ApiResponse.failure(ResponseCode.FAILURE, List.of(ex.getMessage())),
+				HttpStatus.NOT_FOUND);
+	}
 }

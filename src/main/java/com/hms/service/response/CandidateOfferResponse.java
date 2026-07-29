@@ -24,6 +24,10 @@ public class CandidateOfferResponse {
 	private LocalDate dueDate;
 	
 	private String status;
+	
+	private Integer applicantId;
+	
+	private Integer jobId;
 
 	
 
