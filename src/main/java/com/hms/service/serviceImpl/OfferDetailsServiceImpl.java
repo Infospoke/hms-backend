@@ -1581,9 +1581,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		Page<NegotiationOfferEntity> negotiationPage = negotiationOfferRepository
 				.findAll(request.buildOfferNegotiationSpecification(), pageable);
 
-		if (negotiationPage.isEmpty()) {
-			return ApiResponse.failure(ResponseCode.SUCCESS, "No Records Found");
-		}
 
 		List<OfferNegotiationResponse> responseList = negotiationPage.getContent().stream().map(entity -> {
 
