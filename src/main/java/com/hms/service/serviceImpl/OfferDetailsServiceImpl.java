@@ -1600,12 +1600,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				response.setJobTitle(entity.getJob().getJobTitle());
 			}
             Integer applicantId=entity.getApplicant().getId();
-			response.setOfferedAmount(entity.getOfferedAmount());
+		
 			response.setApprovedAmount(entity.getApprovedAmount());
-			response.setOfferNegotiationDate(entity.getOfferNegotiationdate());
-			response.setPriority(getPriority(entity.getOfferNegotiationdate()));
-			OfferDetailsEntity totalCtc=offerDetailsRepository.findByApplicationId(applicantId);
-			response.setRequestedAmount(totalCtc.getTotalCtc());
+			response.setOfferNegotiationDate(entity.getOfferNegotiateddate());
+			response.setPriority(getPriority(entity.getOfferNegotiateddate()));
+			Optional<OfferDetailsEntity> offerDetails=offerDetailsRepository.findByJobApplication_Id(applicantId);
+			Long totalCtc=offerDetails.get().getTotalCtc();
+			response.setOfferedAmount(totalCtc);
+			response.setRequestedAmount(entity.getRequestedAmount());
 
 			return response;
 

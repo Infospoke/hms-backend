@@ -54,8 +54,8 @@ public class NegotiationOfferEntity {
 	@Column(name="approvalStatus")
 	private String approvalStatus;
 	
-	@Column(name="offer_negotiation_date")
-	private LocalDate offerNegotiationdate;
+	@Column(name="offer_negotiated_date")
+	private LocalDate offerNegotiateddate;
 	
 	@ManyToOne
 	@JoinColumn(name = "job_id", referencedColumnName = "job_id")
