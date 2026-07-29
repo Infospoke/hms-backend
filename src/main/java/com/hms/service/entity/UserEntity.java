@@ -40,7 +40,7 @@ public class UserEntity {
 	@Column(name = "last_name", nullable = false, length = 50)
 	private String lastName;
 
-	@Column(name = "employee_id", nullable = false, unique = true, updatable = false,length=4)
+	@Column(name = "employee_id", nullable = false, unique = true, updatable = false, length = 4)
 	private Integer employeeId;
 
 	@Column(name = "email", nullable = false, unique = true)
@@ -56,9 +56,6 @@ public class UserEntity {
 
 	@Column(name = "employment_type_id", nullable = false)
 	private Integer employmentTypeId;
-
-	@Column(name = "business_unit_id", nullable = false)
-	private Integer businessUnitId;
 
 	@Column(name = "department_id", nullable = false)
 	private Integer departmentId;
@@ -97,16 +94,13 @@ public class UserEntity {
 
 	private LocalDateTime passwordUpdatedAt;
 
-	 @Column(name = "candidate_id")
-	 private Integer candidateId;
-	 
+	@Column(name = "candidate_id")
+	private Integer candidateId;
 
 	private LocalDateTime pinUpdatedAt;
-	
+
 	private Boolean firstTimeWebLogin;
-	
+
 	private Boolean firstTimeMobileLogin;
-
-
 
 }
