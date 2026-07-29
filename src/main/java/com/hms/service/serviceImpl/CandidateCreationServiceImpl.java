@@ -290,7 +290,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			dto.setTotalCtc(offer.getTotalCtc());
 
 			LocalDate dueDate = offer.getOfferReleasedAt().toLocalDate().plusDays(7);
-
+			
+			dto.setStatus(offer.getOfferStatus());
 			dto.setDueDate(dueDate);
 
 			return dto;
