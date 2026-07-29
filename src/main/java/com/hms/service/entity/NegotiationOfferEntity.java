@@ -78,6 +78,9 @@ public class NegotiationOfferEntity {
     @ManyToOne
 	@JoinColumn(name = "applicant_id", referencedColumnName = "id")
 	private JobApplicationEntity applicant;
+    
+    @Column(name="joining_date_reason")
+    private String joiningDateReason;
 	
    
 }

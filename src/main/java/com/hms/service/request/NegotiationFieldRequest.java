@@ -28,4 +28,6 @@ public class NegotiationFieldRequest {
 	    private LocalDate joiningDate;
 	    
 	    private Integer applicantId;
+	    
+	    private String reasonForJoiningDate;
 }
