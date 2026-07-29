@@ -1,6 +1,8 @@
 package com.hms.service.entity;
 
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -52,13 +54,17 @@ public class NegotiationOfferEntity {
 	@Column(name="approvalStatus")
 	private String approvalStatus;
 	
+	@Column(name="offer_negotiation_date")
+	private LocalDate offerNegotiationdate;
+	
 	@ManyToOne
 	@JoinColumn(name = "job_id", referencedColumnName = "job_id")
 	private CreateJobDetailsEntity job;
+	
+	  @ManyToOne
+	  @JoinColumn(name = "applicant_id", referencedColumnName = "id")
+	  private JobApplicationEntity applicant;
 	 
-
-	
-	
-	
+	 
 
 }

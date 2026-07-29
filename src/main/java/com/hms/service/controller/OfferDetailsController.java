@@ -95,5 +95,13 @@ public class OfferDetailsController {
 		ApiResponse<?> response = iOfferDetailsService.getAllPendingApprovals(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
+	@PostMapping("/negotiation-list")
+	public ResponseEntity<ApiResponse<?>> getOfferNegotiationList(@RequestBody SpecificationFilterRequest request) {
+
+		ApiResponse<?> response = iOfferDetailsService.getOfferNegotiationList(request);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 }

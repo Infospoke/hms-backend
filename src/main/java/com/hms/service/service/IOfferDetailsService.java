@@ -34,4 +34,6 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> getAllPendingApprovals(SpecificationFilterRequest request);
 
+	ApiResponse<?> getOfferNegotiationList(SpecificationFilterRequest request);
+
 }

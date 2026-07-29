@@ -38,6 +38,7 @@ import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.FunctionalityEntity;
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsChildEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.OfferLetterTemplateEntity;
@@ -50,6 +51,7 @@ import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.FunctionalityRepository;
 import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.OfferDeatilsChildRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.OfferLetterTemplateRepository;
@@ -63,6 +65,7 @@ import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.response.OfferCommentsResponse;
 import com.hms.service.response.OfferDetailsResponse;
+import com.hms.service.response.OfferNegotiationResponse;
 import com.hms.service.response.PendingApprovalsResponse;
 import com.hms.service.response.RaiseOfferRequestResponse;
 import com.hms.service.service.INotificationService;
@@ -134,6 +137,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private MinioClient minioClient;
+
+	@Autowired
+	private NegotiateOfferRepository negotiationOfferRepository;
 
 	@Value("${minio.bucketName}")
 	private String bucketName;
@@ -294,7 +300,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 						Boolean.TRUE.equals(budget.getSigningBonus()) ? budget.getSigningBonusAmount() : 0);
 
 				response.setAnnualRsuEsopValue(Boolean.TRUE.equals(budget.getEquity()) ? budget.getEquityAmount() : 0);
-				
+
 				response.setOtherBenefits(
 						Boolean.TRUE.equals(budget.getRelocationBudget()) ? budget.getRelocationBudgetAmount() : 0);
 
@@ -319,7 +325,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				response.setProbationPeriod(offer.getProbationPeriod());
 				response.setNoticePeriod(offer.getNoticePeriod());
-				response.setJoiningDate(offer.getJoiningDate());				
+				response.setJoiningDate(offer.getJoiningDate());
 
 			}
 			log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
@@ -672,13 +678,11 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			event.setCheckerNotificationTitle("Level " + approvalLevel + " Approved — " + levelName);
 
 			event.setCheckerMessage("A offer is now under your approval flow for review and approval");
-			
-			event.setCheckerEmailBody(String.format(Constants.OFFER_TO_BE_APPROVED_MAIL_BODY,checkerRoleName,applicantId,
-					pos.getJobApplication().getFirstName() + " " + pos.getJobApplication().getLastName(),
+
+			event.setCheckerEmailBody(String.format(Constants.OFFER_TO_BE_APPROVED_MAIL_BODY, checkerRoleName,
+					applicantId, pos.getJobApplication().getFirstName() + " " + pos.getJobApplication().getLastName(),
 					pos.getJobApplication().getEmail(), pos.getTotalCtc(), pos.getNoticePeriod(),
 					pos.getProbationPeriod(), pos.getSubmittedByUserId(), pos.getCreatedDate()));
-
-
 
 			String makerSubject = "";
 			String makerTitle = "";
@@ -702,7 +706,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				makerTitle = "Level 2 Approved — " + roleName;
 
-				makerMailBody = Constants.OFFER_LEVEL2_APPROVED_MAIL_BODY;;
+				makerMailBody = Constants.OFFER_LEVEL2_APPROVED_MAIL_BODY;
+				;
 
 				break;
 
@@ -712,7 +717,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 				makerTitle = "Level 3 Approved — " + roleName;
 
-				makerMailBody = Constants.OFFER_LEVEL3_APPROVED_MAIL_BODY;;
+				makerMailBody = Constants.OFFER_LEVEL3_APPROVED_MAIL_BODY;
+				;
 
 				break;
 			}
@@ -798,7 +804,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				childEntity.setRole3(roleId);
 			}
 		}
-		
 
 		Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplication_Id(applicantId);
 
@@ -807,14 +812,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			OfferDetailsEntity offerEntity = offerOptional.get();
 
 			childEntity.setOfferSubmittedBy(offerEntity.getSubmittedByUserId());
-			
+
 			childEntity.setJobApplication(offerEntity.getJobApplication());
-			
+
 			OfferDetailsEntity offer = new OfferDetailsEntity();
-			offer.setId(offerEntity.getId());   // Primary key
+			offer.setId(offerEntity.getId()); // Primary key
 
 			childEntity.setOffer(offer);
-			
+
 		}
 
 		offerDeatilsChildRepository.save(childEntity);
@@ -1074,7 +1079,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		Integer userId = null;
-		
+
 		String roleName = null;
 
 		if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -1082,10 +1087,10 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			String token = authHeader.substring(7);
 
 			userId = jwtService.extractUserId(token).intValue();
-			
+
 			roleName = jwtService.extractRole(token);
 		}
-		
+
 		if (!"Recruiting Operations".equalsIgnoreCase(roleName)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
@@ -1458,23 +1463,22 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Page<OfferDetailsEntity> page = offerDetailsRepository.findAll(specification, pageable);
 		List<PendingApprovalsResponse> response = new ArrayList<>();
-		
+
 		Map<String, Object> data = new HashMap<>();
 		data.put("pendingApprovals", response);
 		data.put("currentPage", page.getNumber());
 		data.put("totalPages", page.getTotalPages());
 		data.put("totalElements", page.getTotalElements());
 		data.put("pageSize", page.getSize());
-		
 
 		for (OfferDetailsEntity entity : page.getContent()) {
 
-			OfferDetailsChildEntity childEntity =
-			        offerDeatilsChildRepository.findByOfferId(entity.getId()).orElse(null);
+			OfferDetailsChildEntity childEntity = offerDeatilsChildRepository.findByOfferId(entity.getId())
+					.orElse(null);
 
 			response.add(mapToResponse(entity, roleId.intValue(), childEntity));
 		}
-		return ApiResponse.success(ResponseCode.SUCCESS, "Pending approvals fetched successfully",data);
+		return ApiResponse.success(ResponseCode.SUCCESS, "Pending approvals fetched successfully", data);
 
 	}
 
@@ -1503,11 +1507,11 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		LocalDateTime requestedOn = null;
 
 		if (roleId.equals(childEntity.getRole1())) {
-		    requestedOn = entity.getCreatedDate();
+			requestedOn = entity.getCreatedDate();
 		} else if (roleId.equals(childEntity.getRole2())) {
-		    requestedOn = entity.getDateOfApproval1();
+			requestedOn = entity.getDateOfApproval1();
 		} else if (roleId.equals(childEntity.getRole3())) {
-		    requestedOn = entity.getDateOfApproval2();
+			requestedOn = entity.getDateOfApproval2();
 		}
 
 		response.setRequestedOn(requestedOn);
@@ -1558,5 +1562,84 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return "High";
 	}
 
+	@Override
+	public ApiResponse<?> getOfferNegotiationList(SpecificationFilterRequest request) {
+
+		log.info("NegotiationOfferServiceImpl : getOfferNegotiationList");
+
+		Sort sort = request.getDirection().equalsIgnoreCase("ASC") ? Sort.by(request.getSortBy()).ascending()
+				: Sort.by(request.getSortBy()).descending();
+
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		Page<NegotiationOfferEntity> negotiationPage = negotiationOfferRepository
+				.findAll(request.buildOfferNegotiationSpecification(), pageable);
+
+		if (negotiationPage.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.SUCCESS, "No Records Found");
+		}
+
+		List<OfferNegotiationResponse> responseList = negotiationPage.getContent().stream().map(entity -> {
+
+			OfferNegotiationResponse response = new OfferNegotiationResponse();
+
+			response.setNegotiationId(entity.getId());
+
+			// Candidate Details
+			if (entity.getCandidate() != null) {
+
+				response.setCandidateId(entity.getCandidate().getCandidateId());
+
+				response.setCandidateName(entity.getCandidate().getFirstName());
+
+				response.setEmail(entity.getCandidate().getEmail());
+			}
+
+			// Job Title
+			if (entity.getJob() != null) {
+				response.setJobTitle(entity.getJob().getJobTitle());
+			}
+            Integer applicantId=entity.getApplicant().getId();
+			response.setOfferedAmount(entity.getOfferedAmount());
+			response.setApprovedAmount(entity.getApprovedAmount());
+			response.setOfferNegotiationDate(entity.getOfferNegotiationdate());
+			response.setPriority(getPriority(entity.getOfferNegotiationdate()));
+			OfferDetailsEntity totalCtc=offerDetailsRepository.findByApplicationId(applicantId);
+			response.setRequestedAmount(totalCtc.getTotalCtc());
+
+			return response;
+
+		}).toList();
+
+		Map<String, Object> result = new HashMap<>();
+
+		result.put("content", responseList);
+		result.put("currentPage", negotiationPage.getNumber());
+		result.put("totalPages", negotiationPage.getTotalPages());
+		result.put("totalElements", negotiationPage.getTotalElements());
+		result.put("size", negotiationPage.getSize());
+		result.put("last", negotiationPage.isLast());
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success", result);
+	}
+
+	private String getPriority(LocalDate negotiationDate) {
+
+		if (negotiationDate == null) {
+			return "";
+		}
+
+		long days = ChronoUnit.DAYS.between(negotiationDate, LocalDate.now());
+
+		if (days <= 1) {
+			return "LOW";
+		}
+
+		if (days == 2) {
+			return "MEDIUM";
+		}
+
+		return "HIGH";
+	}
 
 }
