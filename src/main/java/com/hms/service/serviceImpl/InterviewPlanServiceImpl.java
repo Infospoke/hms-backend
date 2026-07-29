@@ -1841,7 +1841,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		for (InterviewSessionEntity session : sessionPage.getContent()) {
 
-			if (Boolean.TRUE.equals(session.getMoveToSchedule())) {
+			
 
 				AIInterviewScheduleResponse response = new AIInterviewScheduleResponse();
 
@@ -1871,7 +1871,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 						response.setInterviewPlan(planOptional.get().getPlanName());
 					}
-				}
+				
+				
 
 				if (session.getMoveToScheduleDateTime() != null) {
 
