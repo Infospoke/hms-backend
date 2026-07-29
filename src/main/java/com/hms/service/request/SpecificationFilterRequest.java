@@ -1966,7 +1966,8 @@ public class SpecificationFilterRequest {
 		}
 
 		return spec;
-	}public Specification<NegotiationOfferEntity> buildOfferNegotiationSpecification() {
+	}
+	public Specification<NegotiationOfferEntity> buildOfferNegotiationSpecification() {
 
 	    return (root, query, cb) -> {
 
@@ -1980,44 +1981,34 @@ public class SpecificationFilterRequest {
 	        Join<NegotiationOfferEntity, CreateJobDetailsEntity> job =
 	                root.join("job", JoinType.LEFT);
 
-	        // ---------------- Search ----------------
 	        String search = getFilter("search");
 
-	        if (search != null && !search.isBlank()) {
+	        if (search != null && !search.trim().isEmpty()) {
 
-	            String keyword = "%" + search.toLowerCase().trim() + "%";
+	            String keyword = "%" + search.trim().toLowerCase() + "%";
 
-	            Predicate candidateName = cb.like(
-	                    cb.lower(
-	                            cb.concat(
-	                                    cb.concat(
-	                                            cb.coalesce(candidate.get("firstName"), ""),
-	                                            " "),
-	                                    cb.coalesce(candidate.get("lastName"), "")
-	                            )
-	                    ),
+	            Predicate firstName = cb.like(
+	                    cb.lower(candidate.get("firstName")),
 	                    keyword);
 
 	            Predicate email = cb.like(
 	                    cb.lower(candidate.get("email")),
 	                    keyword);
 
-	            Predicate jobTitle = cb.like(
-	                    cb.lower(job.get("jobTitle")),
-	                    keyword);
-
-	            predicates.add(cb.or(candidateName, email, jobTitle));
+	            predicates.add(cb.or(
+	                    firstName,
+	                    email));
 	        }
-
+	        
 	        // ---------------- Job Title ----------------
 	        String jobTitle = getFilter("jobTitle");
 
-	        if (jobTitle != null && !jobTitle.isBlank()) {
+	        if (jobTitle != null && !jobTitle.trim().isEmpty()) {
 
 	            predicates.add(
 	                    cb.like(
 	                            cb.lower(job.get("jobTitle")),
-	                            "%" + jobTitle.toLowerCase().trim() + "%"));
+	                            "%" + jobTitle.trim().toLowerCase() + "%"));
 	        }
 
 	        // ---------------- Priority ----------------
@@ -2033,7 +2024,7 @@ public class SpecificationFilterRequest {
 
 	                predicates.add(
 	                        cb.greaterThanOrEqualTo(
-	                                root.get("offerNegotiationdate"),
+	                                root.get("offerNegotiatedDate"),
 	                                today.minusDays(1)));
 
 	                break;
@@ -2042,7 +2033,7 @@ public class SpecificationFilterRequest {
 
 	                predicates.add(
 	                        cb.between(
-	                                root.get("offerNegotiationdate"),
+	                                root.get("offerNegotiatedDate"),
 	                                today.minusDays(2),
 	                                today.minusDays(2)));
 
@@ -2052,7 +2043,7 @@ public class SpecificationFilterRequest {
 
 	                predicates.add(
 	                        cb.lessThanOrEqualTo(
-	                                root.get("offerNegotiationdate"),
+	                                root.get("offerNegotiatedDate"),
 	                                today.minusDays(3)));
 
 	                break;
@@ -2061,7 +2052,7 @@ public class SpecificationFilterRequest {
 
 	        // ---------------- Date Filter ----------------
 	        Specification<NegotiationOfferEntity> dateSpecification =
-	                dateSpec("offerNegotiationdate");
+	                dateSpec("offerNegotiatedDate");
 
 	        if (dateSpecification != null) {
 
