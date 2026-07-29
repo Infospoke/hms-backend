@@ -52,9 +52,6 @@ public class UserCreationRequest {
     @NotNull(message = Constants.EMPLOYMENT_TYPE_REQUIRED)
     private Integer employmentTypeId;
 
-    @NotNull(message = Constants.BUSINESS_UNIT_REQUIRED)
-    private Integer businessUnitId;
-
     @NotNull(message = Constants.DEPARTMENT_REQUIRED)
     private Integer departmentId;
 

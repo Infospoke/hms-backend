@@ -33,7 +33,6 @@ import com.hms.service.entity.UserEntity;
 import com.hms.service.enums.ChannelTypes;
 import com.hms.service.enums.CredentialType;
 import com.hms.service.repository.AssignRolesRepository;
-import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PasswordHistoryRepository;
@@ -83,9 +82,6 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
-
-	@Autowired
-	private BusinessUnitRepository businessUnitRepository;
 
 	@Autowired
 	private PasswordHistoryRepository passwordHistoryRepository;
@@ -157,11 +153,6 @@ public class UserServiceImpl implements IUserService {
 		user.setFirstTimeMobileLogin(true);
 		user.setEmploymentTypeId(request.getEmploymentTypeId());
 
-		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-			user.setBusinessUnitId(request.getBusinessUnitId());
-		} else {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
-		}
 
 		if (departmentsRepository.existsById(request.getDepartmentId())) {
 			user.setDepartmentId(request.getDepartmentId());
