@@ -87,4 +87,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	Optional<JobApplicationEntity> findByCandidate_CandidateIdAndJobId(String candidateId, Integer jobId);
 
+	boolean existsByCandidate_CandidateIdAndJobId(String candidateId, Integer jobId);
+
 }
