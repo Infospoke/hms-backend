@@ -1330,6 +1330,8 @@ public class SpecificationFilterRequest {
 			List<Predicate> predicates = new ArrayList<>();
 
 			predicates.add(cb.isFalse(root.get("isScheduled")));
+			
+			predicates.add(cb.isTrue(root.get("moveToSchedule")));
 
 			// Search
 			String search = getFilter("search");

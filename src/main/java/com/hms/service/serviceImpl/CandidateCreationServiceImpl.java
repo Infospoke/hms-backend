@@ -276,8 +276,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			dto.setTotalCtc(offer.getTotalCtc());
 
 			LocalDate dueDate = offer.getOfferReleasedAt().toLocalDate().plusDays(7);
-			
-			dto.setStatus(offer.getOfferStatus());
+
 			dto.setDueDate(dueDate);
 
 			return dto;
@@ -756,7 +755,6 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		entity.setJoiningDate(request.getJoiningDate());
 		entity.setApplicant(applicants);
 		entity.setTotalRequestedAmount(totalRequestedAmount);
-		entity.setJoiningDateReason(request.getReasonForJoiningDate());
 
 		negotiateOfferRepository.save(entity);
 
