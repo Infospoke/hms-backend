@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.DepartmentRequest;
 import com.hms.service.request.RolesByDepartmentIdsRequest;
 import com.hms.service.service.IConfigurationService;
 import com.hms.service.wrappers.ApiResponse;
@@ -174,6 +175,13 @@ public class ConfigurationController {
 	@GetMapping("/categories")
 	public ResponseEntity<ApiResponse<List<?>>> getCategories() {
 		ApiResponse<List<?>> response = iConfigurationService.getCategories();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/get-departments")
+	public ResponseEntity<ApiResponse<?>> getDepartments(@RequestBody DepartmentRequest request) {
+
+		ApiResponse<?> response = iConfigurationService.getDepartments(request);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 }

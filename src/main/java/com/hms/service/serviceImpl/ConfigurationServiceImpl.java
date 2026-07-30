@@ -15,6 +15,7 @@ import com.hms.service.constants.Constants;
 import com.hms.service.dto.JrResponseDto;
 import com.hms.service.entity.AssignRolesEntity;
 import com.hms.service.entity.CategoryEntity;
+import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
@@ -36,6 +37,7 @@ import com.hms.service.repository.SeniorityLevelRepository;
 import com.hms.service.repository.TravelRequirementRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.repository.UserTypeRepository;
+import com.hms.service.request.DepartmentRequest;
 import com.hms.service.request.RolesByDepartmentIdsRequest;
 import com.hms.service.response.DropDownResponse;
 import com.hms.service.response.JrResponse;
@@ -401,5 +403,23 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		List<CategoryEntity> categories = categoryRepostiory.findAll(Sort.by(Sort.Direction.ASC,"id"));
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Success", categories);
+	}
+	
+	@Override
+	public ApiResponse<?> getDepartments(DepartmentRequest request) {
+
+	    List<DepartmentsEntity> departments;
+
+	    if (Boolean.TRUE.equals(request.getUserDepartments())) {
+	        departments = departmentsRepository.findByUserDepartmentsTrue();
+
+	    } else if (Boolean.TRUE.equals(request.getSrDepartments())) {
+	        departments = departmentsRepository.findBySrDepartmentsTrue();
+
+	    } else {
+	        return new ApiResponse<>(ResponseCode.FAILURE, "Please provide a valid department type.", null);
+	    }
+
+	    return new ApiResponse<>(ResponseCode.SUCCESS, "Departments fetched successfully.", departments);
 	}
 }

@@ -27,5 +27,9 @@ public interface DepartmentsRepository extends JpaRepository<DepartmentsEntity, 
 	Optional<DepartmentsEntity> findById(Integer id);
 
 	List<DepartmentsEntity> findByIdIn(Collection<Integer> ids);
+	
+    List<DepartmentsEntity> findByUserDepartmentsTrue();
 
+	List<DepartmentsEntity> findBySrDepartmentsTrue();
+	
 }
