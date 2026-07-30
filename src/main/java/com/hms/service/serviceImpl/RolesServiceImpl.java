@@ -90,12 +90,6 @@ public class RolesServiceImpl implements IRoleService {
 		entity.setRoleId(sequenceGenerator.generateRoleId());
 		entity.setDescription(request.getDescription());
 		entity.setCreatedDate(LocalDate.now());
-		if (businessUnitRepository.existsById(request.getBusinessUnitId())) {
-			entity.setBusinessUnitId(request.getBusinessUnitId());
-		} else {
-			log.info("BusinessUnit Id is required");
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_BUSINESS_UNIT_ID));
-		}
 		if (departmentsRepository.existsById(request.getDepartmentId())) {
 			entity.setDepartmentId(request.getDepartmentId());
 		} else {
