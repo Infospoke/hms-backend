@@ -30,5 +30,11 @@ public class DepartmentsEntity {
 
     @Column(name="dept_code")
     private String deptCode;
+    
+    @Column(name="user_departments")
+    private Boolean userDepartments;
+    
+    @Column(name="sr_departments")
+    private Boolean srDepartments;
 
 }
