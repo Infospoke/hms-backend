@@ -43,8 +43,7 @@ ON CONFLICT (id) DO NOTHING;
 -- BUSINESS UNIT
 -- =========================================
 
-INSERT INTO tb_business_unit (id, business_name)
-VALUES
+INSERT INTO tb_business_unit (id, business_name) VALUES
 (1, 'Human Capital Management'),
 (2, 'Corporate Services'),
 (3, 'Executive Office'),
@@ -53,47 +52,75 @@ VALUES
 (6, 'Sales & Marketing'),
 (7, 'Customer Experience & Support'),
 (8, 'Finance & Procurement'),
-(9, 'Business Consulting & Strategy')
+(9, 'Business Consulting & Strategy'),
+(10, 'Other')
 ON CONFLICT (id) DO NOTHING;
+ 
 
 
 -- =========================================
 -- DEPARTMENTS
 -- =========================================
-
-INSERT INTO tb_departments 
-(id, department_name, dept_code, business_unit_id)
+INSERT INTO tb_departments
+(id, department_name, business_unit_id, dept_code, user_departments, sr_departments)
 VALUES
 
-(1, 'Talent Acquisition', 'TAC', 1),
-(2, 'Recruiting Operations', 'ROP', 1),
-(3, 'Human Resources', 'HRS', 1),
-(4, 'HR Business Partnering', 'HBP', 1),
+-- SR Departments
+(1, 'Talent Acquisition', 1, 'TA', FALSE, TRUE),
+(2, 'Recruiting Operations', 1, 'RO', FALSE, TRUE),
+(3, 'Human Resources', 1, 'HR', FALSE, TRUE),
+(4, 'HR Business Partnering', 1, 'HRBP', FALSE, TRUE),
+(5, 'Compensation & Benefits', 1, 'CB', FALSE, TRUE),
 
-(5, 'Business Operations', 'BOP', 2),
-(6, 'Legal & Compliance', 'LGC', 2),
+(6, 'Business Operations', 2, 'BO', FALSE, TRUE),
+(7, 'Administration', 2, 'ADM', FALSE, TRUE),
+(8, 'Legal & Compliance', 2, 'LC', FALSE, TRUE),
 
-(7, 'Executive Leadership', 'EXL', 3),
+(9, 'Executive Leadership', 3, 'EL', FALSE, TRUE),
+(10, 'Corporate Strategy', 3, 'CS', FALSE, TRUE),
 
-(8, 'Information Technology', 'ITT', 4),
-(9, 'Software Development', 'SWD', 4),
-(10, 'UI/UX Design', 'UXD', 4),
-(11, 'Quality Assurance (QA)', 'QAS', 4),
-(12, 'DevOps / Cloud Engineering', 'DCE', 4),
-(13, 'Data & Analytics', 'DNA', 4),
+(11, 'Software Development', 4, 'SD', FALSE, TRUE),
+(12, 'Information Technology', 4, 'IT', FALSE, TRUE),
+(13, 'UI/UX Design', 4, 'UIUX', FALSE, TRUE),
+(14, 'Quality Assurance (QA)', 4, 'QA', FALSE, TRUE),
+(15, 'DevOps & Cloud Engineering', 4, 'DCE', FALSE, TRUE),
+(16, 'Data Engineering', 4, 'DE', FALSE, TRUE),
+(17, 'Data Analytics', 4, 'DA', FALSE, TRUE),
+(18, 'Cyber Security', 4, 'CYB', FALSE, TRUE),
+(19, 'Infrastructure Management', 4, 'IM', FALSE, TRUE),
 
-(14, 'SAP Functional', 'SPF', 5),
-(15, 'SAP Technical', 'SPT', 5),
+(20, 'SAP Functional', 5, 'SAPF', FALSE, TRUE),
+(21, 'SAP Technical', 5, 'SAPT', FALSE, TRUE),
+(22, 'Salesforce CRM', 5, 'SFDC', FALSE, TRUE),
 
-(16, 'Sales', 'SAL', 6),
-(17, 'Marketing', 'MKT', 6),
+(23, 'Sales', 6, 'SAL', FALSE, TRUE),
+(24, 'Marketing', 6, 'MKT', FALSE, TRUE),
+(25, 'Digital Marketing', 6, 'DM', FALSE, TRUE),
+(26, 'Business Development', 6, 'BD', FALSE, TRUE),
 
-(18, 'Customer Support', 'CSP', 7),
+(27, 'Customer Support', 7, 'CSUP', FALSE, TRUE),
+(28, 'Technical Support', 7, 'TS', FALSE, TRUE),
+(29, 'Implementation Services', 7, 'IS', FALSE, TRUE),
 
-(19, 'Finance', 'FIN', 8),
-(20, 'Procurement', 'PRC', 8),
+(30, 'Finance', 8, 'FIN', FALSE, TRUE),
+(31, 'Accounting', 8, 'ACC', FALSE, TRUE),
+(32, 'Payroll', 8, 'PAY', FALSE, TRUE),
 
-(21, 'Business Analysis', 'BAN', 9)
+(33, 'Business Analysis', 9, 'BA', FALSE, TRUE),
+(34, 'Product Management', 9, 'PM', FALSE, TRUE),
+
+(35, 'Other', 10, 'OTH', FALSE, TRUE),
+
+-- User Creation Departments
+(36, 'Business Department', NULL, 'BD', TRUE, FALSE),
+(37, 'Recruiting Operations', NULL, 'RO', TRUE, FALSE),
+(38, 'Talent Acquisition (TA)', NULL, 'TA', TRUE, FALSE),
+(39, 'Human Resources (HR)', NULL, 'HR', TRUE, FALSE),
+(40, 'Finance', NULL, 'FIN', TRUE, FALSE),
+(41, 'Executive Office', NULL, 'EO', TRUE, FALSE),
+(42, 'IT & System Administration', NULL, 'ITSA', TRUE, FALSE),
+(43, 'Corporate Administration', NULL, 'CA', TRUE, FALSE),
+(44, 'Employee Services', NULL, 'ES', TRUE, FALSE)
 
 ON CONFLICT (id) DO NOTHING;
 
