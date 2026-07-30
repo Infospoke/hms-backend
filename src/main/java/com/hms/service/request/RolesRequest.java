@@ -18,9 +18,6 @@ public class RolesRequest {
 	@NotBlank(message = Constants.ROLE_NAME_IS_REQUIRED)
 	private String roleName;
 
-	@NotNull(message = Constants.BUSINESS_UNIT_REQUIRED)
-	private Integer businessUnitId;
-
 	@NotNull(message = Constants.DEPARTMENT_REQUIRED)
 	private Integer departmentId;
 
