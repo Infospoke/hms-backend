@@ -27,11 +27,11 @@ public class RolesController {
 	@Autowired
 	private IRoleService iRoleService;
 
-	@PostMapping("/add-role")
-	public ResponseEntity<ApiResponse<?>> addRolePermissions(@Valid @RequestBody RolesRequest request) {
-		ApiResponse<?> response = iRoleService.addRolePermissions(request);
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
-	}
+//	@PostMapping("/add-role")
+//	public ResponseEntity<ApiResponse<?>> addRolePermissions(@Valid @RequestBody RolesRequest request) {
+//		ApiResponse<?> response = iRoleService.addRolePermissions(request);
+//		return new ResponseEntity<>(response, HttpStatus.CREATED);
+//	}
 
 	@GetMapping("/get-all-role-permissions")
 	public ResponseEntity<ApiResponse<?>> getAllRolePermissions() {
