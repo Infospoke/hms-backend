@@ -68,7 +68,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	Optional<JobApplicationEntity> findByPhNoAndEmailAndJobId(String phNo, String email, Integer jobId);
 
-
 	@Query("""
 			SELECT j.id
 			FROM JobApplicationEntity j
@@ -80,8 +79,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	List<JobApplicationEntity> findByCandidate_CandidateId(String candidateId);
 
-	
-
 	boolean existsByCandidate_CandidateId(String candidateId);
 
 	Optional<JobApplicationEntity> findByCandidate_CandidateIdAndJobId(String candidateId, Integer jobId);
@@ -89,5 +86,7 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 	boolean existsByCandidate_CandidateIdAndJobId(String candidateId, Integer jobId);
 
 	List<JobApplicationEntity> findByCandidateCandidateIdOrderByCreatedDateDesc(String candidateId);
+
+	List<JobApplicationEntity> findByRecruiterId(Integer recruiterId);
 
 }
