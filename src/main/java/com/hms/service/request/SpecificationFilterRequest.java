@@ -34,7 +34,6 @@ import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.InterviewPlanRepository;
-import com.hms.service.serviceImpl.OfferDetailsServiceImpl;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -44,6 +43,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Data
 
@@ -1332,7 +1332,7 @@ public class SpecificationFilterRequest {
 			List<Predicate> predicates = new ArrayList<>();
 
 			predicates.add(cb.isFalse(root.get("isScheduled")));
-			
+
 			predicates.add(cb.isTrue(root.get("moveToSchedule")));
 
 			// Search
@@ -1790,19 +1790,19 @@ public class SpecificationFilterRequest {
 			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
 
 			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
-			
+
 			String approvalType = getFilter("approvalType");
 
 			if (approvalType != null && !approvalType.isBlank()) {
 
-			    if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
+				if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
 
-			        predicates.add(cb.isNotNull(root.get("negotiationId")));
+					predicates.add(cb.isNotNull(root.get("negotiationId")));
 
-			    } else if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
+				} else if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
 
-			        predicates.add(cb.isNull(root.get("negotiationId")));
-			    }
+					predicates.add(cb.isNull(root.get("negotiationId")));
+				}
 			}
 
 			predicates.add(cb.equal(application.get("jobId"), job.get("jobId")));
@@ -1985,163 +1985,136 @@ public class SpecificationFilterRequest {
 
 		return spec;
 	}
+
 	public Specification<NegotiationOfferEntity> buildOfferNegotiationSpecification() {
 
-	    return (root, query, cb) -> {
+		return (root, query, cb) -> {
 
-	        query.distinct(false);
+			query.distinct(false);
 
-	        List<Predicate> predicates = new ArrayList<>();
+			List<Predicate> predicates = new ArrayList<>();
 
-	        Join<NegotiationOfferEntity, CandidateCreationDetailsEntity> candidate =
-	                root.join("candidate", JoinType.LEFT);
+			Join<NegotiationOfferEntity, CandidateCreationDetailsEntity> candidate = root.join("candidate",
+					JoinType.LEFT);
 
-	        Join<NegotiationOfferEntity, CreateJobDetailsEntity> job =
-	                root.join("job", JoinType.LEFT);
+			Join<NegotiationOfferEntity, CreateJobDetailsEntity> job = root.join("job", JoinType.LEFT);
 
-	        Join<NegotiationOfferEntity, OfferDetailsEntity> offer =
-	                root.join("offer", JoinType.LEFT);
+			Join<NegotiationOfferEntity, OfferDetailsEntity> offer = root.join("offer", JoinType.LEFT);
 
-	        String search = getFilter("search");
+			String search = getFilter("search");
 
-	        if (search != null && !search.trim().isEmpty()) {
+			if (search != null && !search.trim().isEmpty()) {
 
-	            String keyword = "%" + search.trim().toLowerCase() + "%";
+				String keyword = "%" + search.trim().toLowerCase() + "%";
 
-	            predicates.add(cb.or(
-	                    cb.like(cb.lower(candidate.get("firstName")), keyword),
-	                    cb.like(cb.lower(candidate.get("email")), keyword)
-	            ));
-	        }
+				predicates.add(cb.or(cb.like(cb.lower(candidate.get("firstName")), keyword),
+						cb.like(cb.lower(candidate.get("email")), keyword)));
+			}
 
-	        String jobId = getFilter("jobId");
+			String jobId = getFilter("jobId");
 
-	        if (jobId != null && !jobId.isBlank()) {
-	            predicates.add(cb.equal(job.get("jobId"), Integer.valueOf(jobId)));
-	        }
+			if (jobId != null && !jobId.isBlank()) {
+				predicates.add(cb.equal(job.get("jobId"), Integer.valueOf(jobId)));
+			}
 
-	        String priority = getFilter("priority");
+			String priority = getFilter("priority");
 
-	        if (priority != null && !priority.isBlank()) {
+			if (priority != null && !priority.isBlank()) {
 
-	            LocalDate today = LocalDate.now();
+				LocalDate today = LocalDate.now();
 
-	            switch (priority.toUpperCase()) {
+				switch (priority.toUpperCase()) {
 
-	                case "LOW":
-	                    predicates.add(cb.greaterThanOrEqualTo(
-	                            root.get("offerNegotiatedDate"),
-	                            today.minusDays(1)));
-	                    break;
+				case "LOW":
+					predicates.add(cb.greaterThanOrEqualTo(root.get("offerNegotiatedDate"), today.minusDays(1)));
+					break;
 
-	                case "MEDIUM":
-	                    predicates.add(cb.between(
-	                            root.get("offerNegotiatedDate"),
-	                            today.minusDays(2),
-	                            today.minusDays(2)));
-	                    break;
+				case "MEDIUM":
+					predicates.add(cb.between(root.get("offerNegotiatedDate"), today.minusDays(2), today.minusDays(2)));
+					break;
 
-	                case "HIGH":
-	                    predicates.add(cb.lessThanOrEqualTo(
-	                            root.get("offerNegotiatedDate"),
-	                            today.minusDays(3)));
-	                    break;
-	            }
-	        }
+				case "HIGH":
+					predicates.add(cb.lessThanOrEqualTo(root.get("offerNegotiatedDate"), today.minusDays(3)));
+					break;
+				}
+			}
 
-	        Specification<NegotiationOfferEntity> dateSpecification =
-	                dateSpec("offerNegotiatedDate");
+			Specification<NegotiationOfferEntity> dateSpecification = dateSpec("offerNegotiatedDate");
 
-	        if (dateSpecification != null) {
+			if (dateSpecification != null) {
 
-	            Predicate datePredicate =
-	                    dateSpecification.toPredicate(root, query, cb);
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
 
-	            if (datePredicate != null) {
-	                predicates.add(datePredicate);
-	            }
-	        }
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
 
-	        String status = getFilter("status");
+			String status = getFilter("status");
 
-	        if (status != null && !status.isBlank()) {
+			if (status != null && !status.isBlank()) {
 
-	            predicates.add(
-	                    cb.equal(
-	                            cb.upper(offer.get("offerStatus")),
-	                            status.toUpperCase()
-	                    )
-	            );
-	        }
+				predicates.add(cb.equal(cb.upper(offer.get("offerStatus")), status.toUpperCase()));
+			}
 
-	        return cb.and(predicates.toArray(new Predicate[0]));
-	    };
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
+
 	public Specification<OfferDetailsEntity> buildOfferStatusSpecification() {
 
-	    return (root, query, cb) -> {
+		return (root, query, cb) -> {
 
-	        List<Predicate> predicates = new ArrayList<>();
+			List<Predicate> predicates = new ArrayList<>();
 
-	        Join<OfferDetailsEntity, JobApplicationEntity> application =
-	                root.join("jobApplication", JoinType.LEFT);
+			Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication", JoinType.LEFT);
 
-	        Join<JobApplicationEntity, CandidateCreationDetailsEntity> candidate =
-	                application.join("candidate", JoinType.LEFT);
+			Join<JobApplicationEntity, CandidateCreationDetailsEntity> candidate = application.join("candidate",
+					JoinType.LEFT);
 
-	        String search = getFilter("search");
+			String search = getFilter("search");
 
-	        if (search != null && !search.trim().isEmpty()) {
+			if (search != null && !search.trim().isEmpty()) {
 
-	            String keyword = "%" + search.trim().toLowerCase() + "%";
+				String keyword = "%" + search.trim().toLowerCase() + "%";
 
-	            predicates.add(cb.or(
-	                    cb.like(cb.lower(candidate.get("firstName")), keyword),
-	                    cb.like(cb.lower(candidate.get("email")), keyword)
-	            ));
-	        }
+				predicates.add(cb.or(cb.like(cb.lower(candidate.get("firstName")), keyword),
+						cb.like(cb.lower(candidate.get("email")), keyword)));
+			}
 
-	        String jobId = getFilter("jobId");
+			String jobId = getFilter("jobId");
 
-	        if (jobId != null && !jobId.isBlank()) {
+			if (jobId != null && !jobId.isBlank()) {
 
-	            predicates.add(cb.equal(
-	                    application.get("jobId"),
-	                    Integer.valueOf(jobId)));
-	        }
+				predicates.add(cb.equal(application.get("jobId"), Integer.valueOf(jobId)));
+			}
 
-	        String status = getFilter("status");
+			String status = getFilter("status");
 
-	        if (status != null && !status.isBlank()) {
+			if (status != null && !status.isBlank()) {
 
-	            switch (status.toUpperCase()) {
+				switch (status.toUpperCase()) {
 
-	                case "REQUESTED FOR NEGOTIATION":
-	                    break;
+				case "REQUESTED FOR NEGOTIATION":
+					break;
 
-	                case "ACCEPTED":
-	                case "REJECTED":
-	                case "PENDING":
+				case "ACCEPTED":
+				case "REJECTED":
+				case "PENDING":
 
-	                    predicates.add(cb.equal(
-	                            cb.upper(root.get("offerStatus")),
-	                            status.toUpperCase()));
-	                    break;
+					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), status.toUpperCase()));
+					break;
 
-	                case "EXPIRED":
+				case "EXPIRED":
 
-	                    predicates.add(cb.equal(
-	                            cb.upper(root.get("offerStatus")),
-	                            "PENDING"));
+					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), "PENDING"));
 
-	                    predicates.add(cb.lessThanOrEqualTo(
-	                            root.get("offerReleasedAt"),
-	                            LocalDateTime.now().minusDays(7)));
-	                    break;
-	            }
-	        }
+					predicates.add(cb.lessThanOrEqualTo(root.get("offerReleasedAt"), LocalDateTime.now().minusDays(7)));
+					break;
+				}
+			}
 
-	        return cb.and(predicates.toArray(new Predicate[0]));
-	    };
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
 }
