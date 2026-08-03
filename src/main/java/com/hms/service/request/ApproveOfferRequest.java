@@ -19,6 +19,9 @@ public class ApproveOfferRequest {
 	
 	private String eSignature;
 	
+    private String approvalType;          // NORMAL_APPROVAL / NEGOTIATION
+
+    private Long approver1DecisionAmount;
 	
 
 }

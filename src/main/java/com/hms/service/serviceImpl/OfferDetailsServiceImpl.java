@@ -511,6 +511,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		if (submittedBy != null) {
 
 			Optional<UserEntity> maker = userRepository.findByUserId(submittedBy);
+			
+			if (maker.isEmpty()) {
+				log.error("Maker not found for userId : {}", submittedBy);
+				return ApiResponse.failure(ResponseCode.FAILURE, "Maker not found");
+			}
+			
 			UserEntity userEntity = maker.get();
 
 			if (userEntity == null) {
@@ -577,6 +583,17 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			pos.setApprover1Role(roleName);
 			pos.setDateOfApproval1(now);
 			pos.setApprover1Comments(request.getComments());
+			
+			if ("NEGOTIATION".equalsIgnoreCase(request.getApprovalType())) {
+
+			    if (request.getApprover1DecisionAmount() == null) {
+
+					return ApiResponse.failure(ResponseCode.FAILURE,
+							"Finance Analyst decision amount is mandatory for negotiation approval");
+				}
+
+			    pos.setApprover1DecisionAmount(request.getApprover1DecisionAmount());
+			}
 
 			approverName = pos.getApprover1By();
 			approvedDate = pos.getDateOfApproval1();

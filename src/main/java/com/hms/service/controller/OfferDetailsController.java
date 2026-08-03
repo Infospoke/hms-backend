@@ -103,5 +103,7 @@ public class OfferDetailsController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	
 
 }
