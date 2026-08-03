@@ -1,7 +1,7 @@
 package com.hms.service.service;
 
 import com.hms.service.request.ApproveOfferRequest;
-
+import com.hms.service.request.HrRecommendationRequest;
 import com.hms.service.request.ReleaseOfferRequest;
 
 import com.hms.service.request.SpecificationFilterRequest;
@@ -37,5 +37,7 @@ public interface IOfferDetailsService {
 	ApiResponse<?> getOfferNegotiationList(SpecificationFilterRequest request);
 
 	ApiResponse<?> getNegotiationDetails(Integer applicantId);
+
+	ApiResponse<?> reviewNegotiationRequest(HrRecommendationRequest request);
 
 }

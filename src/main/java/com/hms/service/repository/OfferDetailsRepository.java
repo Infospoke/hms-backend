@@ -15,8 +15,6 @@ import com.hms.service.entity.OfferDetailsEntity;
 public interface OfferDetailsRepository
 		extends JpaRepository<OfferDetailsEntity, Integer>, JpaSpecificationExecutor<OfferDetailsEntity> {
 
-	Optional<OfferDetailsEntity> findByJobApplication_Id(Integer applicantId);
-
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
 
 	OfferDetailsEntity findTopByJobApplicationOrderByIdDesc(JobApplicationEntity application);
@@ -30,6 +28,12 @@ public interface OfferDetailsRepository
 	Long countByApproveTrueAndOfferReleasedFalse();
 	
 	Optional<OfferDetailsEntity> findByJobApplication(JobApplicationEntity jobApplication);
+
+	Optional<OfferDetailsEntity> findByJobApplication_IdAndNegotiationFalse(Integer applicantId);
+
+	Optional<OfferDetailsEntity> findByJobApplication_Id(Integer applicantId);
+
+	Optional<OfferDetailsEntity> findByJobApplication_IdAndNegotiationTrue(Integer applicantId);
 
 
 

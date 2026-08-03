@@ -7,6 +7,7 @@ import java.util.List;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.hms.service.request.HrRecommendation;
 import com.hms.service.request.Negotiation;
 
 import jakarta.persistence.Column;
@@ -79,6 +80,14 @@ public class NegotiationOfferEntity {
     
     @Column(name="joining_date_reason")
     private String joiningDateReason;
-	
-   
+    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "hr_recommendations", columnDefinition = "jsonb")
+    private List<HrRecommendation> hrRecommendations;
+
+    @Column(name = "hr_recommended_ctc")
+    private Long hrRecommendedCtc;
+    
+    @Column(name="hr_reason",length=1000)
+    private String hrReason;
 }

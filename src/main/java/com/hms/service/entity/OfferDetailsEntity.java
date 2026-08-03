@@ -2,6 +2,10 @@ package com.hms.service.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -148,8 +152,17 @@ public class OfferDetailsEntity {
 
     @Column(name="negotiation_id")
 	private Integer negotiationId;
+     
+    @Column(name="revised_joining_date")
+    private LocalDate revisedJoiningDate;
     
     @Column(name = "approver1_decision_amount")
     private Long approver1DecisionAmount;
+ 
+    @Column(name="negotiation")
+    private Boolean negotiation=false;
+    
+    @Column(name="re_release_offer_id")
+    private Integer reReleaseOfferId;
     
 }
