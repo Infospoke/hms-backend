@@ -1790,6 +1790,20 @@ public class SpecificationFilterRequest {
 			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
 
 			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
+			
+			String approvalType = getFilter("approvalType");
+
+			if (approvalType != null && !approvalType.isBlank()) {
+
+			    if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
+
+			        predicates.add(cb.isNotNull(root.get("negotiationId")));
+
+			    } else if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
+
+			        predicates.add(cb.isNull(root.get("negotiationId")));
+			    }
+			}
 
 			predicates.add(cb.equal(application.get("jobId"), job.get("jobId")));
 			predicates.add(cb.equal(job.get("departmentId"), department.get("id")));
