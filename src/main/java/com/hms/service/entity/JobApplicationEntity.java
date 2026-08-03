@@ -92,8 +92,11 @@ public class JobApplicationEntity {
 	@ManyToOne
 	@JoinColumn(name = "candidate_id", referencedColumnName = "candidate_id")
 	private CandidateCreationDetailsEntity candidate;
-	
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "reupload_status")
 	private ReuploadStatus reuploadStatus;
+
+	@Column(name = "career_portal")
+	private Boolean careerPortal = false;
 }

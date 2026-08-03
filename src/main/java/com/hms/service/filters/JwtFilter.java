@@ -40,7 +40,7 @@ public class JwtFilter extends OncePerRequestFilter {
 				|| path.startsWith("/ws") || path.startsWith("/hms/offer-details/**")
 				|| path.startsWith("/hms/ai-interview-zone/**") || path.startsWith("/hms/interviewer-assignment/**")
 				|| path.startsWith("/jobs/**") || path.startsWith("/hms/user/**")
-				|| path.startsWith("/hms/interviw-plan/**") || path.startsWith("/hms/candidate")) {
+				|| path.startsWith("/hms/interviw-plan/**") || path.startsWith("/hms/candidate")|| path.startsWith("/hms/dashboard/**")) {
 
 			filterChain.doFilter(request, response);
 			return;

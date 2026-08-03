@@ -144,7 +144,7 @@ public class OfferDetailsEntity {
     private OfferLetterTemplateEntity offerLetterTemplate;
     
     @Column(name="offer_status")
-    private String OfferStatus;
+    private String offerStatus;
 
     @Column(name="negotiation_id")
 	private Integer negotiationId;

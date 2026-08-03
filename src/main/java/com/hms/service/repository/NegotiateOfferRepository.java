@@ -14,5 +14,7 @@ public interface NegotiateOfferRepository
 		extends JpaRepository<NegotiationOfferEntity, Integer>, JpaSpecificationExecutor<NegotiationOfferEntity> {
 
 	List<NegotiationOfferEntity> findByIdIn(List<Integer> ids);
-	
+
+	List<NegotiationOfferEntity> findByApplicant_IdIn(List<Integer> applicationIds);
+
 }

@@ -1,6 +1,7 @@
 package com.hms.service.response;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,6 +29,10 @@ public class OfferNegotiationResponse {
     private Long approvedAmount;
     
     private LocalDate offerNegotiationDate;
+    
+    private String status;
+    
+    private LocalDateTime offerReleasedDate;
     
     private String priority;
 

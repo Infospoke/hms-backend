@@ -2,14 +2,12 @@ package com.hms.service.entity;
 
 
 import java.time.LocalDate;
-
 import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import com.hms.service.request.Negotiation;
-
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -46,7 +44,7 @@ public class NegotiationOfferEntity {
 	@Column(name="approved_amount")
 	private Long approvedAmount;
 	
-	@Column(name="approvalStatus")
+	@Column(name="approval_status")
 	private String approvalStatus;
 	
 	@ManyToOne
