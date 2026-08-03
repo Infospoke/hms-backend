@@ -1,6 +1,8 @@
 package com.hms.service.serviceImpl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -141,14 +143,32 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 				sla = "Overdue";
 
-			} else if (daysRemaining <= 5) {
-
-				sla = "At Risk";
-
 			} else {
 
-				sla = "On Track";
+				Long actualTimeline = ChronoUnit.DAYS.between(job.getCreatedAt().toLocalDate(),
+						job.getTargetStartDate());
 
+				if (actualTimeline <= 0) {
+					actualTimeline = 1L;
+				}
+
+				double timePercentage = (daysRemaining.doubleValue() / actualTimeline.doubleValue()) * 100;
+
+				Integer filledCandidates = myCandidates;
+
+				Integer remainingHiring = Math.max(job.getOpenings() - filledCandidates, 0);
+
+				double hiringPercentage = (remainingHiring.doubleValue() / job.getOpenings().doubleValue()) * 100;
+
+				if (timePercentage < 50 && hiringPercentage < 50) {
+
+					sla = "At Risk";
+
+				} else {
+
+					sla = "On Track";
+
+				}
 			}
 
 			MyAssignedJobsDto dto = new MyAssignedJobsDto();
@@ -199,14 +219,40 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 	}
 
 	@Override
-	public ApiResponse<?> getRecruiterAnalytics(Integer jobId) {
+	public ApiResponse<?> getRecruiterAnalytics(Integer jobId, LocalDate fromDate, LocalDate toDate) {
 
 		RecruiterAnalyticsResponseDto response = new RecruiterAnalyticsResponseDto();
 
 		Integer recruiterId = getRecruiterIdFromToken();
 
-		List<JobApplicationEntity> applications = jobApplicationRepository.findByRecruiterIdAndJobId(recruiterId,
-				jobId);
+		List<JobApplicationEntity> applications;
+
+	
+		if (fromDate == null && toDate == null) {
+
+			applications = jobApplicationRepository.findByRecruiterIdAndJobId(recruiterId, jobId);
+
+		} else {
+
+			LocalDateTime fromDateTime;
+			LocalDateTime toDateTime;
+
+			if (fromDate != null) {
+				fromDateTime = fromDate.atStartOfDay();
+			} else {
+				fromDateTime = LocalDate.of(1900, 1, 1).atStartOfDay();
+			}
+
+		
+			if (toDate != null) {
+				toDateTime = toDate.atTime(LocalTime.MAX);
+			} else {
+				toDateTime = LocalDate.of(9999, 12, 31).atTime(LocalTime.MAX);
+			}
+
+			applications = jobApplicationRepository.findRecruiterApplicationsByDate(recruiterId, jobId, fromDateTime,
+					toDateTime);
+		}
 
 		if (applications.isEmpty()) {
 
@@ -308,7 +354,7 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		return dto;
 	}
-
+//not implemented yet
 	private NegotiationFlowDto buildNegotiationFlow(List<NegotiationOfferEntity> negotiations) {
 
 		NegotiationFlowDto dto = new NegotiationFlowDto();

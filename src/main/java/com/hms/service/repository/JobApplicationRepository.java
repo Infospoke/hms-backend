@@ -1,5 +1,6 @@
 package com.hms.service.repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -89,6 +90,16 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	List<JobApplicationEntity> findByRecruiterId(Integer recruiterId);
 
-	List<JobApplicationEntity> findByRecruiterIdAndJobId(Integer recruiterId, Integer jobId);
+	@Query("""
+			    SELECT j
+			    FROM JobApplicationEntity j
+			    WHERE j.recruiterId = :recruiterId
+			      AND j.jobId = :jobId
+			      AND j.createdDate BETWEEN :fromDate AND :toDate
+			""")
+	List<JobApplicationEntity> findRecruiterApplicationsByDate(@Param("recruiterId") Integer recruiterId,
+			@Param("jobId") Integer jobId, @Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate);
 
+	List<JobApplicationEntity> findByRecruiterIdAndJobId(Integer recruiterId, Integer jobId);
 }
