@@ -1782,9 +1782,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Optional<NegotiationOfferEntity> negotiationDetails = negotiationOfferRepository
 				.findByApplicant_Id(applicantId);
+		
+		log.info("Applicant Id : {}", applicantId);
+		log.info("Negotiation Present : {}", negotiationDetails.isPresent());
 
 		if (negotiationDetails.isEmpty()) {
-			ApiResponse.failure("Negotiation details not found");
+			return ApiResponse.failure("Negotiation details not found");
 		}
 
 		NegotiationOfferEntity negotiation = negotiationDetails.get();
@@ -1809,8 +1812,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		}
 		
-		
-
 		// Job Details
 
 		Integer jobId = negotiation.getApplicant().getJobId();
@@ -1833,11 +1834,19 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				response.setMaximumSalary(budget.getMaximumSalary());
 
 				response.setAnnualHiringCost(budget.getAnnualHiringCost());
-
 	
 			}
 
 		}
+		
+		// HR Recommendation Details
+		response.setHrRecommendations(negotiation.getHrRecommendations());
+
+		response.setHrRecommendedCtc(negotiation.getHrRecommendedCtc());
+
+		response.setHrReason(negotiation.getHrReason());
+
+		response.setRevisedJoiningDate(negotiation.getRevisedJoiningDate());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
 	}
@@ -1936,7 +1945,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    log.info("Approval Chain Started Successfully : {}", roleEmailMap);
 
 	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
+	            ResponseCode.SUCCESS,"Success",
 	            "Review request submitted successfully");
 	}
 

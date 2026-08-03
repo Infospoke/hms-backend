@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.hms.service.request.HrRecommendation;
 import com.hms.service.request.Negotiation;
 
 import lombok.AllArgsConstructor;
@@ -52,5 +53,13 @@ public class NegotiationDetailsResponse {
     private List<String> supportingDocuments;
 
     private List<Negotiation> negotiation;
+    
+    private List<HrRecommendation> hrRecommendations;
+
+    private Long hrRecommendedCtc;
+
+    private String hrReason;
+
+    private LocalDate revisedJoiningDate;
 
 }

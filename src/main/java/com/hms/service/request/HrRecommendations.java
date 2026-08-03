@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class HrRecommendation {
-	
-	 private String fieldName;
 
-	 private Long amount;
+public class HrRecommendations {
+
+	private String fieldName;
+
+	private Long amount;
 
 }
