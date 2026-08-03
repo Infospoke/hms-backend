@@ -22,7 +22,6 @@ import com.hms.service.entity.PermissionEntity;
 import com.hms.service.entity.RolesEntity;
 import com.hms.service.entity.UserEntity;
 import com.hms.service.repository.AssignRolesRepository;
-import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.DepartmentsRepository;
 import com.hms.service.repository.ModuleRepository;
 import com.hms.service.repository.PermissionRepository;
@@ -55,9 +54,6 @@ public class RolesServiceImpl implements IRoleService {
 	private PermissionRepository permissionRepository;
 
 	@Autowired
-	private BusinessUnitRepository businessUnitRepository;
-
-	@Autowired
 	private DepartmentsRepository departmentsRepository;
 
 	@Autowired
@@ -65,11 +61,9 @@ public class RolesServiceImpl implements IRoleService {
 
 	@Autowired
 	private AssignRolesRepository assignRolesRepository;
-	
+
 	@Autowired
 	private ModuleRepository moduleRepository;
-
-	
 
 	@Autowired
 	private UserRepository userRepository;
@@ -168,7 +162,7 @@ public class RolesServiceImpl implements IRoleService {
 			module.setDelete(delete);
 
 			role.getSubModules().add(module);
-	
+
 		}
 
 		List<RolePermissionResponse> rolesList = new ArrayList<>(roleMap.values());
@@ -246,204 +240,147 @@ public class RolesServiceImpl implements IRoleService {
 	@Override
 	public ApiResponse<?> usersByRoleId(Integer roleId, FilterRequest request) {
 
-	    log.info("RoleInfoServiceImpl:: Inside the usersByRoleId");
+		log.info("RoleInfoServiceImpl:: Inside the usersByRoleId");
 
-	    Sort sort = Sort.by(
-	            request.getDirection() != null && request.getDirection().equalsIgnoreCase("DESC")
-	                    ? Sort.Direction.DESC
-	                    : Sort.Direction.ASC,
-	            request.getSortBy() != null ? request.getSortBy() : "id"
-	    );
+		Sort sort = Sort.by(
+				request.getDirection() != null && request.getDirection().equalsIgnoreCase("DESC") ? Sort.Direction.DESC
+						: Sort.Direction.ASC,
+				request.getSortBy() != null ? request.getSortBy() : "id");
 
-	    Pageable pageable = PageRequest.of(
-	            request.getPage() != null ? request.getPage() : 0,
-	            request.getSize() != null ? request.getSize() : 10,
-	            sort
-	    );
+		Pageable pageable = PageRequest.of(request.getPage() != null ? request.getPage() : 0,
+				request.getSize() != null ? request.getSize() : 10, sort);
 
-	    List<AssignRolesEntity> assignRolesEntity = assignRolesRepository.findByRoleId(roleId);
+		List<AssignRolesEntity> assignRolesEntity = assignRolesRepository.findByRoleId(roleId);
 
-	  
-	    List<Integer> userIds = assignRolesEntity.stream()
-	            .map(AssignRolesEntity::getUserId)
-	            .toList();
+		List<Integer> userIds = assignRolesEntity.stream().map(AssignRolesEntity::getUserId).toList();
 
-	    System.out.println(userIds);
+		System.out.println(userIds);
 
-	    if (userIds.isEmpty()) {
-	        return ApiResponse.failure(ResponseCode.FAILURE, "No users are assigned for this role");
-	    }
+		if (userIds.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "No users are assigned for this role");
+		}
 
-	    Page<UserEntity> userPage = userRepository.findByUserIdIn(userIds, pageable);
+		Page<UserEntity> userPage = userRepository.findByUserIdIn(userIds, pageable);
 
-	    if (userPage.isEmpty()) {
-	        return ApiResponse.failure(ResponseCode.FAILURE, "No users found");
-	    }
+		if (userPage.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "No users found");
+		}
 
-	    List<Map<String, String>> userDetails = userPage.getContent().stream().map(user -> {
-	        Map<String, String> map = new HashMap<>();
-	        map.put("username", user.getUsername());
-	        map.put("email", user.getEmail());
-	        return map;
-	    }).toList();
+		List<Map<String, String>> userDetails = userPage.getContent().stream().map(user -> {
+			Map<String, String> map = new HashMap<>();
+			map.put("username", user.getUsername());
+			map.put("email", user.getEmail());
+			return map;
+		}).toList();
 
-	    log.info("RoleInfoServiceImpl:: Exit from the usersByRoleId");
+		log.info("RoleInfoServiceImpl:: Exit from the usersByRoleId");
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "Users fetched successfully",
-	            Map.of(
-	                    "content", userDetails,
-	                    "currentPage", userPage.getNumber(),
-	                    "totalItems", userPage.getTotalElements(),
-	                    "totalPages", userPage.getTotalPages()
-	            )
-	    );
+		return ApiResponse.success(ResponseCode.SUCCESS, "Users fetched successfully",
+				Map.of("content", userDetails, "currentPage", userPage.getNumber(), "totalItems",
+						userPage.getTotalElements(), "totalPages", userPage.getTotalPages()));
 	}
-	
+
 	@Override
 	public ApiResponse<?> getRolePermissionMatrix(FilterRequest request) {
 
-	    log.info("RoleInfoServiceImpl::Inside getRolePermissionMatrix");
+		log.info("RoleInfoServiceImpl::Inside getRolePermissionMatrix");
 
-	    Sort sort = Sort.by(
-	            request.getDirection() != null && request.getDirection().equalsIgnoreCase("DESC")
-	                    ? Sort.Direction.DESC
-	                    : Sort.Direction.ASC,
-	            request.getSortBy() != null ? request.getSortBy() : "id"
-	    );
+		Sort sort = Sort.by(
+				request.getDirection() != null && request.getDirection().equalsIgnoreCase("DESC") ? Sort.Direction.DESC
+						: Sort.Direction.ASC,
+				request.getSortBy() != null ? request.getSortBy() : "id");
 
-	    Pageable pageable = PageRequest.of(
-	            request.getPage() != null ? request.getPage() : 0,
-	            request.getSize() != null ? request.getSize() : 10,
-	            sort
-	    );
+		Pageable pageable = PageRequest.of(request.getPage() != null ? request.getPage() : 0,
+				request.getSize() != null ? request.getSize() : 10, sort);
 
-	    Page<RolesEntity> rolePage = roleInfoRepository.findAll(pageable);
+		Page<RolesEntity> rolePage = roleInfoRepository.findAll(pageable);
 
-	    if (rolePage.isEmpty()) {
-	        return ApiResponse.success(ResponseCode.SUCCESS, "No roles found", List.of());
-	    }
+		if (rolePage.isEmpty()) {
+			return ApiResponse.success(ResponseCode.SUCCESS, "No roles found", List.of());
+		}
 
-	    List<RolesEntity> roles = rolePage.getContent();
+		List<RolesEntity> roles = rolePage.getContent();
 
-	    
-	    List<Integer> roleIds = roles.stream()
-	            .map(RolesEntity::getRoleId)
-	            .toList();
+		List<Integer> roleIds = roles.stream().map(RolesEntity::getRoleId).toList();
 
-	    
-	    List<Object[]> results = assignRolesRepository.countUsersByRoleIds(roleIds);
+		List<Object[]> results = assignRolesRepository.countUsersByRoleIds(roleIds);
 
-	   
-	    Map<Integer, Long> userCountMap = new HashMap<>();
-	    for (Object[] row : results) {
-	        Integer roleId = ((Number) row[0]).intValue();   
-	        Long count = ((Number) row[1]).longValue();     
-	        userCountMap.put(roleId, count);
-	    }
+		Map<Integer, Long> userCountMap = new HashMap<>();
+		for (Object[] row : results) {
+			Integer roleId = ((Number) row[0]).intValue();
+			Long count = ((Number) row[1]).longValue();
+			userCountMap.put(roleId, count);
+		}
 
-	 
-	    List<RolePermissionMatrixResponse> response = roles.stream().map(role -> {
+		List<RolePermissionMatrixResponse> response = roles.stream().map(role -> {
 
-	    	long userCount = userCountMap.getOrDefault(role.getRoleId(), 0L);
+			long userCount = userCountMap.getOrDefault(role.getRoleId(), 0L);
 
-	        return new RolePermissionMatrixResponse(
-	                role.getRoleId(),
-	                role.getRoleName(),
-	                role.getDescription(),
-	                userCount
-	        );
+			return new RolePermissionMatrixResponse(role.getRoleId(), role.getRoleName(), role.getDescription(),
+					userCount);
 
-	    }).toList();
+		}).toList();
 
-	    log.info("RoleInfoServiceImpl::Exit from getRolePermissionMatrix");
+		log.info("RoleInfoServiceImpl::Exit from getRolePermissionMatrix");
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "Role data fetched successfully",
-	            Map.of(
-	                    "content", response,
-	                    "currentPage", rolePage.getNumber(),
-	                    "totalItems", rolePage.getTotalElements(),
-	                    "totalPages", rolePage.getTotalPages()
-	            )
-	    );
+		return ApiResponse.success(ResponseCode.SUCCESS, "Role data fetched successfully",
+				Map.of("content", response, "currentPage", rolePage.getNumber(), "totalItems",
+						rolePage.getTotalElements(), "totalPages", rolePage.getTotalPages()));
 	}
 
 	@Override
 	public ApiResponse<?> getPermissionsByRoleId(Integer roleId) {
- 
-	    log.info("RoleInfoServiceImpl::Inside getPermissionsByRoleId");
- 
-	    List<PermissionEntity> permissionsEntity =
-	            permissionRepository.findByRoleId(roleId);
- 
-	    if (permissionsEntity == null || permissionsEntity.isEmpty()) {
-	        return ApiResponse.success(ResponseCode.SUCCESS, "No permissions found", List.of());
-	    }
- 
 
-	    List<Integer> moduleIds = permissionsEntity.stream()
-	            .map(PermissionEntity::getModuleId)
-	            .toList();
- 
-	    List<ModuleEntity> modulesEntity =
-	            moduleRepository.findByModuleIdIn(moduleIds);
- 
-	    Map<Integer, ModuleEntity> moduleMap = modulesEntity.stream()
-	            .collect(Collectors.toMap(ModuleEntity::getModuleId, module -> module));
- 
-	   
-	    Map<Integer, List<PermissionEntity>> grouped =
-	            permissionsEntity.stream()
-	                    .collect(Collectors.groupingBy(permissions ->
-	                            moduleMap.get(permissions.getModuleId()).getParentId()
-	                    ));
- 
-	    Set<Integer> parentIds = grouped.keySet();
- 
-	    Map<Integer, ModuleEntity> parentMap =
-	            moduleRepository.findByModuleIdIn(new ArrayList<>(parentIds))
-	                    .stream()
-	                    .collect(Collectors.toMap(ModuleEntity::getId,modules -> modules));
- 
-	    List<RolePermissionResponse> response = new ArrayList<>();
- 
-	    for (Map.Entry<Integer, List<PermissionEntity>> entry : grouped.entrySet()) {
- 
-	        Integer parentId = entry.getKey();
-	        ModuleEntity parentModule = parentMap.get(parentId);
- 
-	        if (parentModule == null) continue;
- 
-	        List<ModulePermissionResponse> subModules = entry.getValue().stream()
-	                .map(permissionEntity -> {
-	                    ModuleEntity sub = moduleMap.get(permissionEntity.getModuleId());
- 
-	                    return new ModulePermissionResponse(
-	                            sub.getModuleId(),
-	                            sub.getModuleName(),
-	                            permissionEntity.getCreate(),
-	                            permissionEntity.getView(),
-	                            permissionEntity.getEdit(),
-	                            permissionEntity.getDelete(),
-	                            permissionEntity.getExport()
-	                    );
-	                })
-	                .toList();
- 
-	        RolePermissionResponse rolePermissionResponse = new RolePermissionResponse();
-	        rolePermissionResponse.setModuleId(parentModule.getId());
-	        rolePermissionResponse.setModuleName(parentModule.getModuleName());
-	        rolePermissionResponse.setSubModules(subModules);
- 
-	        response.add(rolePermissionResponse);
-	    }
- 
-	    return ApiResponse.success(ResponseCode.SUCCESS,
-	            "Permissions fetched successfully",
-	            response);
+		log.info("RoleInfoServiceImpl::Inside getPermissionsByRoleId");
+
+		List<PermissionEntity> permissionsEntity = permissionRepository.findByRoleId(roleId);
+
+		if (permissionsEntity == null || permissionsEntity.isEmpty()) {
+			return ApiResponse.success(ResponseCode.SUCCESS, "No permissions found", List.of());
+		}
+
+		List<Integer> moduleIds = permissionsEntity.stream().map(PermissionEntity::getModuleId).toList();
+
+		List<ModuleEntity> modulesEntity = moduleRepository.findByModuleIdIn(moduleIds);
+
+		Map<Integer, ModuleEntity> moduleMap = modulesEntity.stream()
+				.collect(Collectors.toMap(ModuleEntity::getModuleId, module -> module));
+
+		Map<Integer, List<PermissionEntity>> grouped = permissionsEntity.stream()
+				.collect(Collectors.groupingBy(permissions -> moduleMap.get(permissions.getModuleId()).getParentId()));
+
+		Set<Integer> parentIds = grouped.keySet();
+
+		Map<Integer, ModuleEntity> parentMap = moduleRepository.findByModuleIdIn(new ArrayList<>(parentIds)).stream()
+				.collect(Collectors.toMap(ModuleEntity::getId, modules -> modules));
+
+		List<RolePermissionResponse> response = new ArrayList<>();
+
+		for (Map.Entry<Integer, List<PermissionEntity>> entry : grouped.entrySet()) {
+
+			Integer parentId = entry.getKey();
+			ModuleEntity parentModule = parentMap.get(parentId);
+
+			if (parentModule == null)
+				continue;
+
+			List<ModulePermissionResponse> subModules = entry.getValue().stream().map(permissionEntity -> {
+				ModuleEntity sub = moduleMap.get(permissionEntity.getModuleId());
+
+				return new ModulePermissionResponse(sub.getModuleId(), sub.getModuleName(),
+						permissionEntity.getCreate(), permissionEntity.getView(), permissionEntity.getEdit(),
+						permissionEntity.getDelete(), permissionEntity.getExport());
+			}).toList();
+
+			RolePermissionResponse rolePermissionResponse = new RolePermissionResponse();
+			rolePermissionResponse.setModuleId(parentModule.getId());
+			rolePermissionResponse.setModuleName(parentModule.getModuleName());
+			rolePermissionResponse.setSubModules(subModules);
+
+			response.add(rolePermissionResponse);
+		}
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Permissions fetched successfully", response);
 	}
 
 }

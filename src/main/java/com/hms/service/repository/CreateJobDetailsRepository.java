@@ -34,7 +34,7 @@ public interface CreateJobDetailsRepository
 	Long getTotalOpeningsByUserId(@Param("userId") Integer userId);
 
 	CreateJobDetailsEntity findBySrId(String srId);
-
+	
 	long countByIsOpenTrue();
 
 	Page<CreateJobDetailsEntity> findAll(Specification<CreateJobDetailsEntity> spec, Pageable pageable);
@@ -51,7 +51,7 @@ public interface CreateJobDetailsRepository
 
 	List<CreateJobDetailsEntity> findByJobIdIn(List<Integer> jobIds);
 
-   
+	
 
 	
 }
