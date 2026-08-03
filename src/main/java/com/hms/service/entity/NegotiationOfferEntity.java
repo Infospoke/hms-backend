@@ -90,4 +90,7 @@ public class NegotiationOfferEntity {
     
     @Column(name="hr_reason",length=1000)
     private String hrReason;
+     
+    @Column(name="revised_joining_date")
+    private LocalDate revisedJoiningDate;
 }

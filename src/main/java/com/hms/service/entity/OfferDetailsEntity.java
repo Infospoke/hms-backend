@@ -151,9 +151,6 @@ public class OfferDetailsEntity {
 
     @Column(name="negotiation_id")
 	private Integer negotiationId;
-     
-    @Column(name="revised_joining_date")
-    private LocalDate revisedJoiningDate;
     
     @Column(name = "approver1_decision_amount")
     private Long approver1DecisionAmount;

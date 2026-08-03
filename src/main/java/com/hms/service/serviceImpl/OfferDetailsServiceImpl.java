@@ -1854,7 +1854,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    Long loginUserId = jwtService.extractUserId(token);
 	    Long loginRoleId = jwtService.extractRoleId(token);
 
-	    // Step 1 : Fetch Negotiation
+
 	    Optional<NegotiationOfferEntity> negotiationOptional =
 	            negotiationOfferRepository.findByApplicant_Id(request.getApplicantId());
 
@@ -1864,13 +1864,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	    NegotiationOfferEntity negotiation = negotiationOptional.get();
 
-	    // Step 2 : Save HR Recommendation
 	    negotiation.setHrRecommendedCtc(request.getHrRecommendedCtc());
 	    negotiation.setHrRecommendations(request.getHrRecommendations());
 	    negotiation.setHrReason(request.getHrReason());
+	    negotiation.setRevisedJoiningDate(request.getRevisedJoiningDate());
 	    negotiationOfferRepository.save(negotiation);
 
-	    // Step 3 : Fetch Existing Negotiation Offer
 	    Optional<OfferDetailsEntity> offerOptional =
 	            offerDetailsRepository.findByJobApplication_IdAndNegotiationTrue(request.getApplicantId());
 
@@ -1887,7 +1886,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 
-	    // Step 4 : Create New Offer
 	    OfferDetailsEntity newOffer = new OfferDetailsEntity();
 
 	    newOffer.setJobApplication(oldOffer.getJobApplication());
@@ -1895,9 +1893,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    newOffer.setNoticePeriod(oldOffer.getNoticePeriod());
 
 	    newOffer.setProbationPeriod(oldOffer.getProbationPeriod());
-	    
-	    newOffer.setRevisedJoiningDate(request.getRevisedJoiningDate());
-	    
+	     
 	    newOffer.setOfferStatus("Pending");
 	    
 	    newOffer.setInProgress(false);
@@ -1930,13 +1926,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	    OfferDetailsEntity savedOffer = offerDetailsRepository.save(newOffer);
 
-	    // Step 5 : Update Old Offer with Re-Release Offer Id
-
 	    oldOffer.setReReleaseOfferId(savedOffer.getId());
 
 	    offerDetailsRepository.save(oldOffer);
-
-	    // Step 6 : Start Approval Chain
 
 	    Map<Integer, List<String>> roleEmailMap =
 	            processApprovalChain(request.getApplicantId());
@@ -1945,8 +1937,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	    return ApiResponse.success(
 	            ResponseCode.SUCCESS,
-	            "Review request submitted successfully",
-	            roleEmailMap);
+	            "Review request submitted successfully");
 	}
 
 }
