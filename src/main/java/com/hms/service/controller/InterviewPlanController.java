@@ -179,8 +179,7 @@ public class InterviewPlanController {
 	}
 
 	@PostMapping("/update-interview-completion-status")
-	public ResponseEntity<ApiResponse<?>> updateInterviewCompletionStatus(
-			@RequestBody UpdateInterviewCompletionStatusRequest request) {
+	public ResponseEntity<ApiResponse<?>> updateInterviewCompletionStatus(@RequestBody UpdateInterviewCompletionStatusRequest request) {
 		ApiResponse<?> response = interviewPlanService.updateInterviewCompletionStatus(request);
 		return ResponseEntity.ok(response);
 	}

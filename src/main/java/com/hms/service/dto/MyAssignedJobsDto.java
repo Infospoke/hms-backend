@@ -30,4 +30,5 @@ public class MyAssignedJobsDto {
 
     private String slaStatus;
 
+	private String priority;
 }

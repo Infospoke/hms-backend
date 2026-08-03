@@ -561,14 +561,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		boolean approved = Boolean.TRUE.equals(request.getApprove());
 
-//		if (approvalLevel == 3 && approved) {
-//
-//			if (request.getESignature() == null || request.getESignature().trim().isEmpty()) {
-//
-//				return ApiResponse.failure(ResponseCode.FAILURE, "Approval Failed",
-//						List.of("HR Head e-signature is mandatory for Level 3 approval."));
-//			}
-//		}
+		if (approvalLevel == 3 && approved) {
+
+			if (request.getESignature() == null || request.getESignature().trim().isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Approval Failed",
+						List.of("HR Head e-signature is mandatory for Level 3 approval."));
+			}
+		}
 
 		LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 
