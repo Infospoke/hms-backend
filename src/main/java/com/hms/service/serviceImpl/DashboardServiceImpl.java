@@ -27,12 +27,14 @@ import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
+import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
+import com.hms.service.repository.StaffingRequisitionRepository;
 import com.hms.service.service.IRecuriterDashboardService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -53,6 +55,9 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
+
+	@Autowired
+	private StaffingRequisitionRepository staffingRequisitionRepository;
 
 	@Autowired
 	private JwtService jwtService;
@@ -87,6 +92,7 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 		String token = authHeader.substring(7);
 
 		Integer recruiterId = jwtService.extractUserId(token).intValue();
+
 		List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository
 				.findByUserIdAndStatusIgnoreCase(recruiterId, "Accepted");
 
@@ -107,10 +113,18 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 		List<Integer> jobIds = assignments.stream().map(RecruiterAssignmentEntity::getJobId).distinct()
 				.collect(Collectors.toList());
 
+		List<String> srIds = assignments.stream().map(RecruiterAssignmentEntity::getSrId).distinct()
+				.collect(Collectors.toList());
+
 		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
+
+		List<SRPositionBasicsEntity> srPositions = staffingRequisitionRepository.findBySrIdIn(srIds);
 
 		Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
 				.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+
+		Map<String, SRPositionBasicsEntity> srPositionMap = srPositions.stream()
+				.collect(Collectors.toMap(SRPositionBasicsEntity::getSrId, Function.identity()));
 
 		List<JobApplicationEntity> applications = jobApplicationRepository.findByRecruiterId(recruiterId);
 
@@ -129,6 +143,14 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 			if (job == null) {
 				continue;
+			}
+
+			SRPositionBasicsEntity srPosition = srPositionMap.get(assignment.getSrId());
+
+			String priority = null;
+
+			if (srPosition != null) {
+				priority = srPosition.getPriority();
 			}
 
 			totalOpenings += job.getOpenings();
@@ -167,15 +189,16 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 				} else {
 
 					sla = "On Track";
-
 				}
 			}
 
 			MyAssignedJobsDto dto = new MyAssignedJobsDto();
 
 			dto.setJobId(job.getJobId());
-
 			dto.setPosition(job.getJobTitle());
+
+			// Priority from SR Position Basics
+			dto.setPriority(priority);
 
 			dto.setTotalOpenings(job.getOpenings());
 
@@ -183,13 +206,10 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 			dto.setMy(myCandidates);
 
-			// Not implemented yet
 			dto.setTeam(null);
 
-			// Not implemented yet
 			dto.setYetToFill(null);
 
-			// Not implemented yet
 			dto.setInProgress(null);
 
 			dto.setDaysRemaining(daysRemaining);
@@ -197,23 +217,23 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 			dto.setSlaStatus(sla);
 
 			dashboardList.add(dto);
+			cards.setMyApprovedSRs(approvedSRCount);
+
+			cards.setActiveCandidates(activeCandidateCount);
+
+			cards.setTotalOpenings(totalOpenings);
+
+			// Yet to Fill - Not implemented
+			cards.setYetToFill(0);
+
+			// In Progress - Not implemented
+			cards.setInProgress(0);
+
+			response.setCards(cards);
+
+			response.setMyAssignedJobsDto(dashboardList);
 
 		}
-
-		cards.setMyApprovedSRs(approvedSRCount);
-
-		cards.setActiveCandidates(activeCandidateCount);
-
-		cards.setTotalOpenings(totalOpenings);
-
-		cards.setYetToFill(0);
-
-		cards.setInProgress(0);
-
-		response.setCards(cards);
-
-		response.setMyAssignedJobsDto(dashboardList);
-
 		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard counts fetched successfully", response);
 
 	}
@@ -227,7 +247,6 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		List<JobApplicationEntity> applications;
 
-	
 		if (fromDate == null && toDate == null) {
 
 			applications = jobApplicationRepository.findByRecruiterIdAndJobId(recruiterId, jobId);
@@ -243,7 +262,6 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 				fromDateTime = LocalDate.of(1900, 1, 1).atStartOfDay();
 			}
 
-		
 			if (toDate != null) {
 				toDateTime = toDate.atTime(LocalTime.MAX);
 			} else {
@@ -354,6 +372,7 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		return dto;
 	}
+
 //not implemented yet
 	private NegotiationFlowDto buildNegotiationFlow(List<NegotiationOfferEntity> negotiations) {
 
