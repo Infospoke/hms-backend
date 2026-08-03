@@ -36,4 +36,6 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> getOfferNegotiationList(SpecificationFilterRequest request);
 
+	ApiResponse<?> getNegotiationDetails(Integer applicantId);
+
 }
