@@ -96,7 +96,7 @@ public class OfferDetailsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@PostMapping("/negotiation-list")
+	@PostMapping("/candidate-response")
 	public ResponseEntity<ApiResponse<?>> getOfferNegotiationList(@RequestBody SpecificationFilterRequest request) {
 
 		ApiResponse<?> response = iOfferDetailsService.getOfferNegotiationList(request);
