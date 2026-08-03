@@ -27,13 +27,15 @@ import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
+import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
-import com.hms.service.service.IRecuriterDashboardService;
+import com.hms.service.repository.StaffingRequisitionRepository;
+import com.hms.service.service.IDashboardService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -43,13 +45,16 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class DashboardServiceImpl implements IRecuriterDashboardService {
+public class DashboardServiceImpl implements IDashboardService {
 
 	@Autowired
 	private RecruiterAssignmentRepository recruiterAssignmentRepository;
 
 	@Autowired
 	private CreateJobDetailsRepository createJobDetailsRepository;
+
+	@Autowired
+	private StaffingRequisitionRepository staffingRequisitionRepository;
 
 	@Autowired
 	private JobApplicationRepository jobApplicationRepository;
@@ -227,7 +232,6 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		List<JobApplicationEntity> applications;
 
-	
 		if (fromDate == null && toDate == null) {
 
 			applications = jobApplicationRepository.findByRecruiterIdAndJobId(recruiterId, jobId);
@@ -243,7 +247,6 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 				fromDateTime = LocalDate.of(1900, 1, 1).atStartOfDay();
 			}
 
-		
 			if (toDate != null) {
 				toDateTime = toDate.atTime(LocalTime.MAX);
 			} else {
@@ -354,6 +357,7 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		return dto;
 	}
+
 //not implemented yet
 	private NegotiationFlowDto buildNegotiationFlow(List<NegotiationOfferEntity> negotiations) {
 
@@ -393,5 +397,145 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 		dto.setOthers(null);
 
 		return dto;
+	}
+
+	@Override
+	public ApiResponse<?> getHiringDashboard() {
+
+		RecuriterDashboardDetailsDto response = new RecuriterDashboardDetailsDto();
+
+		DashboardCardsDto cards = new DashboardCardsDto();
+
+		List<MyAssignedJobsDto> dashboardList = new ArrayList<>();
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing.");
+		}
+
+		String token = authHeader.substring(7);
+
+		Long userId = jwtService.extractUserId(token);
+
+		List<SRPositionBasicsEntity> srList = staffingRequisitionRepository.findByUserId(userId);
+
+		if (srList.isEmpty()) {
+
+			cards.setMyApprovedSRs(0L);
+			cards.setActiveCandidates(0L);
+			cards.setTotalOpenings(0);
+			cards.setYetToFill(0);
+			cards.setInProgress(0);
+
+			response.setCards(cards);
+			response.setMyAssignedJobsDto(new ArrayList<>());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard fetched successfully", response);
+		}
+
+		Long openSrCount = (long) srList.size();
+
+		Long totalCandidates = 0L;
+
+		Long interviewCount = 0L;
+
+		Long offerCount = 0L;
+
+		Integer totalOpenings = 0;
+
+		for (SRPositionBasicsEntity sr : srList) {
+
+			CreateJobDetailsEntity job = createJobDetailsRepository.findBySrId(sr.getSrId());
+
+			if (job == null) {
+				continue;
+			}
+
+			totalOpenings += job.getOpenings();
+
+			Long candidateCount = (long) jobApplicationRepository.countByJobId(job.getJobId());
+
+			totalCandidates += candidateCount;
+
+			Long interviews = jobApplicationRepository.countByJobIdAndInPersonInterviewsTrue(job.getJobId());
+
+			interviewCount += interviews;
+
+			List<JobApplicationEntity> applications = jobApplicationRepository.findByJobId(job.getJobId());
+
+			List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
+
+			if (!applicationIds.isEmpty()) {
+				offerCount += offerDetailsRepository.countReleasedOffers(applicationIds);
+			}
+
+			MyAssignedJobsDto dto = new MyAssignedJobsDto();
+
+			dto.setJobId(job.getJobId());
+			dto.setPosition(job.getJobTitle());
+			dto.setTotalOpenings(job.getOpenings());
+			dto.setTargetStartDate(job.getTargetStartDate());
+			dto.setPriority(sr.getPriority());
+
+			dto.setInProgress(null);
+			dto.setYetToFill(job.getOpenings());
+
+			LocalDate today = LocalDate.now();
+
+			Long difference = ChronoUnit.DAYS.between(today, job.getTargetStartDate());
+
+			dto.setDaysRemaining(difference);
+
+			String sla;
+
+			if (difference < 0) {
+
+				sla = "Over Due";
+
+			} else {
+
+				Long actualTime = ChronoUnit.DAYS.between(job.getCreatedAt().toLocalDate(), job.getTargetStartDate());
+
+				if (actualTime <= 0) {
+					actualTime = 1L;
+				}
+
+				int openings = job.getOpenings();
+				int hired = 0;
+				int remaining = openings - hired;
+
+				double timePercentage = (difference.doubleValue() / actualTime.doubleValue()) * 100;
+
+				double remainingPercentage = ((double) remaining / openings) * 100;
+
+				if (timePercentage < 50 && remainingPercentage < 50) {
+					sla = "At Risk";
+				} else {
+					sla = "On Track";
+				}
+			}
+
+			dto.setSlaStatus(sla);
+
+			dashboardList.add(dto);
+		}
+
+		cards.setMyApprovedSRs(openSrCount);
+
+		cards.setActiveCandidates(totalCandidates);
+
+		cards.setTotalOpenings(interviewCount.intValue());
+
+		cards.setYetToFill(offerCount.intValue());
+
+		cards.setInProgress(0);
+
+		response.setCards(cards);
+
+		response.setMyAssignedJobsDto(dashboardList);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard fetched successfully", response);
+
 	}
 }

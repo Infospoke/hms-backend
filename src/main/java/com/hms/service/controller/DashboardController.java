@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hms.service.service.IRecuriterDashboardService;
+import com.hms.service.service.IDashboardService;
 import com.hms.service.wrappers.ApiResponse;
 
 @RestController
@@ -20,7 +20,7 @@ import com.hms.service.wrappers.ApiResponse;
 public class DashboardController {
 
 	@Autowired
-	private IRecuriterDashboardService iRecuriterDashboardService;
+	private IDashboardService iRecuriterDashboardService;
 
 	@GetMapping("/recruiter")
 	public ResponseEntity<ApiResponse<?>> dashboard() {
@@ -40,6 +40,12 @@ public class DashboardController {
 			@RequestParam(name = "toDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate toDate) {
 
 		return ResponseEntity.ok(iRecuriterDashboardService.getRecruiterAnalytics(jobId, fromDate, toDate));
+	}
+
+	@GetMapping("/hiring")
+	public ResponseEntity<ApiResponse<?>> getDashboard() {
+		ApiResponse<?> response = iRecuriterDashboardService.getHiringDashboard();
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 }

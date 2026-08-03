@@ -29,5 +29,9 @@ public class MyAssignedJobsDto {
     private Long daysRemaining;
 
     private String slaStatus;
+    
+    private String srId;
+    
+    private String priority;
 
 }

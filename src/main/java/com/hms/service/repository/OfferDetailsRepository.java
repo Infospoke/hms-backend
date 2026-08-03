@@ -1,11 +1,12 @@
 package com.hms.service.repository;
 
-import java.util.Optional;
-
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.JobApplicationEntity;
@@ -28,9 +29,18 @@ public interface OfferDetailsRepository
 	Long countBySubmitFinancialApprovalTrueAndApproveFalseAndRejectFalse();
 
 	Long countByApproveTrueAndOfferReleasedFalse();
-	
+
 	Optional<OfferDetailsEntity> findByJobApplication(JobApplicationEntity jobApplication);
 
+	Long countByJobApplicationIdInAndOfferReleasedTrue(Iterable<Integer> applicationIds);
 
+	@Query("""
+			SELECT COUNT(o)
+			FROM OfferDetailsEntity o
+			WHERE o.offerReleased = true
+			AND o.jobApplication.id IN :applicationIds
+			""")
+	Long countReleasedOffers(@Param("applicationIds") List<Integer> applicationIds);
+	
 
 }
