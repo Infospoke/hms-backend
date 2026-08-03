@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OfferNegotiationResponse {
+	
+	private Integer applicantId;
 
     private Integer negotiationId;
 

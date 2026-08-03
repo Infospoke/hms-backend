@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.compress.utils.IOUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -64,6 +65,7 @@ import com.hms.service.request.LevelConfig;
 import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
+import com.hms.service.response.NegotiationDetailsResponse;
 import com.hms.service.response.OfferCommentsResponse;
 import com.hms.service.response.OfferDetailsResponse;
 import com.hms.service.response.OfferNegotiationResponse;
@@ -1126,7 +1128,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Letter Template Not Found");
 		}
-		
+
 		if (!request.getJoiningDate().isAfter(LocalDate.now())) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Joining date must be a future date");
 		}
@@ -1631,143 +1633,112 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	@Override
 	public ApiResponse<?> getOfferNegotiationList(SpecificationFilterRequest request) {
 
-	    log.info("NegotiationOfferServiceImpl : getOfferNegotiationList");
+		log.info("NegotiationOfferServiceImpl : getOfferNegotiationList");
 
-	    Sort sort = request.getDirection().equalsIgnoreCase("ASC")
-	            ? Sort.by(request.getSortBy()).ascending()
-	            : Sort.by(request.getSortBy()).descending();
+		Sort sort = request.getDirection().equalsIgnoreCase("ASC") ? Sort.by(request.getSortBy()).ascending()
+				: Sort.by(request.getSortBy()).descending();
 
-	    Pageable pageable = PageRequest.of(
-	            request.getPage(),
-	            request.getSize(),
-	            sort);
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
-	    String status = request.getFilter("status");
+		String status = request.getFilter("status");
 
-	    // ================= NEGOTIATION =================
-	    if ("Requested for Negotiation".equalsIgnoreCase(status)) {
+		// ================= NEGOTIATION =================
+		if ("Requested for Negotiation".equalsIgnoreCase(status)) {
 
-	        Page<NegotiationOfferEntity> negotiationPage =
-	                negotiationOfferRepository.findAll(
-	                        request.buildOfferNegotiationSpecification(),
-	                        pageable);
+			Page<NegotiationOfferEntity> negotiationPage = negotiationOfferRepository
+					.findAll(request.buildOfferNegotiationSpecification(), pageable);
 
-	        List<OfferNegotiationResponse> responseList =
-	                negotiationPage.getContent()
-	                        .stream()
-	                        .map(this::mapNegotiationResponse)
-	                        .toList();
+			List<OfferNegotiationResponse> responseList = negotiationPage.getContent().stream()
+					.map(this::mapNegotiationResponse).toList();
 
-	        return ApiResponse.success(
-	                ResponseCode.SUCCESS,
-	                "Success",
-	                Map.of(
-	                        "content", responseList,
-	                        "currentPage", negotiationPage.getNumber(),
-	                        "totalPages", negotiationPage.getTotalPages(),
-	                        "totalElements", negotiationPage.getTotalElements(),
-	                        "size", negotiationPage.getSize(),
-	                        "last", negotiationPage.isLast()));
-	    }
+			return ApiResponse.success(ResponseCode.SUCCESS, "Success",
+					Map.of("content", responseList, "currentPage", negotiationPage.getNumber(), "totalPages",
+							negotiationPage.getTotalPages(), "totalElements", negotiationPage.getTotalElements(),
+							"size", negotiationPage.getSize(), "last", negotiationPage.isLast()));
+		}
 
-	    // ================= OFFER =================
-	    Page<OfferDetailsEntity> offerPage =
-	            offerDetailsRepository.findAll(
-	                    request.buildOfferStatusSpecification(),
-	                    pageable);
+		// ================= OFFER =================
+		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(request.buildOfferStatusSpecification(),
+				pageable);
 
-	    List<OfferNegotiationResponse> responseList =
-	            offerPage.getContent()
-	                    .stream()
-	                    .map(this::mapOfferResponse)
-	                    .toList();
+		List<OfferNegotiationResponse> responseList = offerPage.getContent().stream().map(this::mapOfferResponse)
+				.toList();
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
-	            "Success",
-	            Map.of(
-	                    "content", responseList,
-	                    "currentPage", offerPage.getNumber(),
-	                    "totalPages", offerPage.getTotalPages(),
-	                    "totalElements", offerPage.getTotalElements(),
-	                    "size", offerPage.getSize(),
-	                    "last", offerPage.isLast()));
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success",
+				Map.of("content", responseList, "currentPage", offerPage.getNumber(), "totalPages",
+						offerPage.getTotalPages(), "totalElements", offerPage.getTotalElements(), "size",
+						offerPage.getSize(), "last", offerPage.isLast()));
 	}
 
-	private OfferNegotiationResponse mapNegotiationResponse(
-	        NegotiationOfferEntity entity) {
+	private OfferNegotiationResponse mapNegotiationResponse(NegotiationOfferEntity entity) {
 
-	    OfferNegotiationResponse response = new OfferNegotiationResponse();
+		OfferNegotiationResponse response = new OfferNegotiationResponse();
 
-	    response.setNegotiationId(entity.getId());
+		response.setNegotiationId(entity.getId());
+		
+		response.setApplicantId(entity.getApplicant().getId());
 
-	    if (entity.getCandidate() != null) {
+		if (entity.getCandidate() != null) {
 
-	        response.setCandidateId(entity.getCandidate().getCandidateId());
-	        response.setCandidateName(entity.getCandidate().getFirstName());
-	        response.setEmail(entity.getCandidate().getEmail());
-	    }
+			response.setCandidateId(entity.getCandidate().getCandidateId());
+			response.setCandidateName(entity.getCandidate().getFirstName());
+			response.setEmail(entity.getCandidate().getEmail());
+		}
 
-	    if (entity.getJob() != null) {
-	        response.setJobTitle(entity.getJob().getJobTitle());
-	    }
+		if (entity.getJob() != null) {
+			response.setJobTitle(entity.getJob().getJobTitle());
+		}
 
-	    response.setApprovedAmount(entity.getApprovedAmount());
+		response.setApprovedAmount(entity.getApprovedAmount());
 
-	    response.setOfferNegotiationDate(entity.getOfferNegotiatedDate());
+		response.setOfferNegotiationDate(entity.getOfferNegotiatedDate());
 
-	    response.setPriority(getPriority(entity.getOfferNegotiatedDate()));
+		response.setPriority(getPriority(entity.getOfferNegotiatedDate()));
 
-	    if (entity.getOffer() != null) {
+		if (entity.getOffer() != null) {
 
-	        response.setOfferedAmount(entity.getOffer().getTotalCtc());
+			response.setOfferedAmount(entity.getOffer().getTotalCtc());
 
-	        response.setStatus(entity.getOffer().getOfferStatus());
-	    }
+			response.setStatus(entity.getOffer().getOfferStatus());
+		}
 
-	    response.setRequestedAmount(entity.getTotalRequestedAmount());
+		response.setRequestedAmount(entity.getTotalRequestedAmount());
 
-	    return response;
+		return response;
 	}
 
-	private OfferNegotiationResponse mapOfferResponse(
-	        OfferDetailsEntity offer) {
+	private OfferNegotiationResponse mapOfferResponse(OfferDetailsEntity offer) {
 
-	    OfferNegotiationResponse response = new OfferNegotiationResponse();
+		OfferNegotiationResponse response = new OfferNegotiationResponse();
+	
+		JobApplicationEntity application = offer.getJobApplication();
 
-	    JobApplicationEntity application = offer.getJobApplication();
+		if (application != null) {
 
-	    if (application != null) {
+			CandidateCreationDetailsEntity candidate = application.getCandidate();
 
-	        CandidateCreationDetailsEntity candidate =
-	                application.getCandidate();
+			if (candidate != null) {
 
-	        if (candidate != null) {
+				response.setCandidateId(candidate.getCandidateId());
+				response.setCandidateName(candidate.getFirstName());
+				response.setEmail(candidate.getEmail());
+			}
 
-	            response.setCandidateId(candidate.getCandidateId());
-	            response.setCandidateName(candidate.getFirstName());
-	            response.setEmail(candidate.getEmail());
-	        }
+			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
-	        CreateJobDetailsEntity job =
-	                createJobDetailsRepository.findByJobId(application.getJobId());
+			if (job != null) {
+				response.setJobTitle(job.getJobTitle());
+			}
+		}
 
-	        if (job != null) {
-	            response.setJobTitle(job.getJobTitle());
-	        }
-	    }
+		response.setOfferedAmount(offer.getTotalCtc());
 
-	    response.setOfferedAmount(offer.getTotalCtc());
+		response.setStatus(offer.getOfferStatus());
 
-	    response.setStatus(offer.getOfferStatus());
+		response.setOfferReleasedDate(offer.getOfferReleasedAt());
 
-	    response.setOfferReleasedDate(offer.getOfferReleasedAt());
-
-	    return response;
+		return response;
 	}
-	
-	
-	
 
 	private String getPriority(LocalDate negotiationDate) {
 
@@ -1786,6 +1757,71 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 		return "HIGH";
+	}
+
+	@Override
+	public ApiResponse<?> getNegotiationDetails(Integer applicantId) {
+
+		Optional<NegotiationOfferEntity> negotiationDetails = negotiationOfferRepository
+				.findByApplicant_Id(applicantId);
+
+		if (negotiationDetails.isEmpty()) {
+			ApiResponse.failure("Negotiation details not found");
+		}
+
+		NegotiationOfferEntity negotiation = negotiationDetails.get();
+
+		NegotiationDetailsResponse response = new NegotiationDetailsResponse();
+
+		BeanUtils.copyProperties(negotiation, response);
+
+		response.setNegotiationId(negotiation.getId());
+		response.setApplicantId(applicantId);
+		response.setOfferReleasedOn(negotiation.getOffer().getCreatedDate());
+
+		// Candidate Details
+
+		CandidateCreationDetailsEntity candidate = negotiation.getApplicant().getCandidate();
+
+		if (candidate != null) {
+
+			response.setCandidateId(candidate.getCandidateId());
+			response.setCandidateName(candidate.getFirstName());
+			response.setEmail(candidate.getEmail());
+
+		}
+		
+		
+
+		// Job Details
+
+		Integer jobId = negotiation.getApplicant().getJobId();
+
+		response.setJobId(jobId);
+
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+
+		if (job != null) {
+
+			response.setJobTitle(job.getJobTitle());
+			response.setSrId(job.getSrId());
+
+			BudgetAndCompensationEntity budget = budgetAndCompensationRepository.findBySrId(job.getSrId()).orElse(null);
+
+			if (budget != null) {
+
+				response.setMinimumSalary(budget.getMinimumSalary());
+
+				response.setMaximumSalary(budget.getMaximumSalary());
+
+				response.setAnnualHiringCost(budget.getAnnualHiringCost());
+
+	
+			}
+
+		}
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
 	}
 
 }

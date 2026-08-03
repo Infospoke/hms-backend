@@ -1,6 +1,7 @@
 package com.hms.service.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -14,5 +15,7 @@ public interface NegotiateOfferRepository
 		extends JpaRepository<NegotiationOfferEntity, Integer>, JpaSpecificationExecutor<NegotiationOfferEntity> {
 
 	List<NegotiationOfferEntity> findByApplicant_IdIn(List<Integer> applicationIds);
+	
+	Optional<NegotiationOfferEntity> findByApplicant_Id(Integer applicantId);
 
 }

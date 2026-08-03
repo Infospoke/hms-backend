@@ -104,4 +104,13 @@ public class OfferDetailsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	@GetMapping("/negotiation-details/{applicantId}")
+	public ResponseEntity<ApiResponse<?>> getNegotiationDetails(@PathVariable("applicantId") Integer applicantId) {
+        ApiResponse<?> response = iOfferDetailsService.getNegotiationDetails(applicantId);
+		return new ResponseEntity<>(response,HttpStatus.OK);
+	}
+
+	
+	
+
 }

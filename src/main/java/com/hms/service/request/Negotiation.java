@@ -11,6 +11,8 @@ public class Negotiation {
 	
 	private String fieldName;
 	
+	private Long initialAmount;
+	
 	private Long requestedAmount;
 	
 	private String reason;
