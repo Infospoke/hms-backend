@@ -54,6 +54,9 @@ public class OfferDetailsChildEntity {
     @Column(name="offer_submitted_by")
     private Integer offerSubmittedBy;
     
+    @Column(name="negotiation")
+    private Boolean negotiation=false;
+    
     
 	
 

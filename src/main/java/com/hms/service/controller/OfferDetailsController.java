@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.ApproveOfferRequest;
+import com.hms.service.request.HrRecommendationRequest;
 import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
@@ -104,13 +105,20 @@ public class OfferDetailsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	
-
 	@GetMapping("/negotiation-details/{applicantId}")
 	public ResponseEntity<ApiResponse<?>> getNegotiationDetails(@PathVariable("applicantId") Integer applicantId) {
         ApiResponse<?> response = iOfferDetailsService.getNegotiationDetails(applicantId);
 		return new ResponseEntity<>(response,HttpStatus.OK);
 	}
+	
+	@PostMapping("/review-negotiation-request")
+	public ResponseEntity<ApiResponse<?>> reviewNegotiationRequest(@RequestBody HrRecommendationRequest request) {
+
+		ApiResponse<?> response = iOfferDetailsService.reviewNegotiationRequest(request);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 
 	
 	

@@ -61,6 +61,7 @@ import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
+import com.hms.service.request.HrRecommendationRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
@@ -560,14 +561,14 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		boolean approved = Boolean.TRUE.equals(request.getApprove());
 
-//		if (approvalLevel == 3 && approved) {
-//
-//			if (request.getESignature() == null || request.getESignature().trim().isEmpty()) {
-//
-//				return ApiResponse.failure(ResponseCode.FAILURE, "Approval Failed",
-//						List.of("HR Head e-signature is mandatory for Level 3 approval."));
-//			}
-//		}
+		if (approvalLevel == 3 && approved) {
+
+			if (request.getESignature() == null || request.getESignature().trim().isEmpty()) {
+
+				return ApiResponse.failure(ResponseCode.FAILURE, "Approval Failed",
+						List.of("HR Head e-signature is mandatory for Level 3 approval."));
+			}
+		}
 
 		LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 
@@ -790,7 +791,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		levels.sort(Comparator.comparing(LevelConfig::getLevel));
 
 		Optional<OfferDetailsChildEntity> optionalChild = offerDeatilsChildRepository
-				.findByJobApplication_Id(applicantId);
+				.findByJobApplication_IdAndNegotiationFalse(applicantId);
 
 		OfferDetailsChildEntity childEntity;
 
@@ -825,7 +826,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			}
 		}
 
-		Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplication_Id(applicantId);
+		Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplication_IdAndNegotiationFalse(applicantId);
 
 		if (offerOptional.isPresent()) {
 
@@ -1839,6 +1840,113 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Success", response);
+	}
+
+	@Override
+	@Transactional
+	public ApiResponse<?> reviewNegotiationRequest(HrRecommendationRequest request) {
+
+	    log.info("OfferDetailsServiceImpl : Inside reviewNegotiationRequest");
+
+	    String authHeader = httpServletRequest.getHeader("Authorization");
+	    String token = authHeader.substring(7);
+
+	    Long loginUserId = jwtService.extractUserId(token);
+	    Long loginRoleId = jwtService.extractRoleId(token);
+
+	    // Step 1 : Fetch Negotiation
+	    Optional<NegotiationOfferEntity> negotiationOptional =
+	            negotiationOfferRepository.findByApplicant_Id(request.getApplicantId());
+
+	    if (negotiationOptional.isEmpty()) {
+	        ApiResponse.failure(ResponseCode.FAILURE,"Negotiation details not found");
+	    }
+
+	    NegotiationOfferEntity negotiation = negotiationOptional.get();
+
+	    // Step 2 : Save HR Recommendation
+	    negotiation.setHrRecommendedCtc(request.getHrRecommendedCtc());
+	    negotiation.setHrRecommendations(request.getHrRecommendations());
+	    negotiation.setHrReason(request.getHrReason());
+	    negotiationOfferRepository.save(negotiation);
+
+	    // Step 3 : Fetch Existing Negotiation Offer
+	    Optional<OfferDetailsEntity> offerOptional =
+	            offerDetailsRepository.findByJobApplication_IdAndNegotiationTrue(request.getApplicantId());
+
+	    OfferDetailsEntity oldOffer = null;
+
+		if (offerOptional.isPresent()) {
+
+			oldOffer = offerOptional.get();
+
+		} else {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Offer Details not found");
+
+		}
+
+
+	    // Step 4 : Create New Offer
+	    OfferDetailsEntity newOffer = new OfferDetailsEntity();
+
+	    newOffer.setJobApplication(oldOffer.getJobApplication());
+
+	    newOffer.setNoticePeriod(oldOffer.getNoticePeriod());
+
+	    newOffer.setProbationPeriod(oldOffer.getProbationPeriod());
+	    
+	    newOffer.setRevisedJoiningDate(request.getRevisedJoiningDate());
+	    
+	    newOffer.setOfferStatus("Pending");
+	    
+	    newOffer.setInProgress(false);
+	    
+	    newOffer.setSubmitFinancialApproval(true);
+	    
+	    newOffer.setInterviewCompletionDate(oldOffer.getInterviewCompletionDate());
+	    
+	    newOffer.setInterviewCompletionStatus(oldOffer.getInterviewCompletionStatus());
+	    
+	    newOffer.setRecruitedBy(oldOffer.getRecruitedBy());
+	    
+	    newOffer.setOfferLetterTemplate(oldOffer.getOfferLetterTemplate());;
+
+	    newOffer.setCreatedByRoleId(loginRoleId.intValue());
+
+	    newOffer.setSubmittedByUserId(loginUserId.intValue());
+
+	    newOffer.setCreatedDate(LocalDateTime.now());
+
+	    newOffer.setApprover1(false);
+	    newOffer.setApprover2(false);
+	    newOffer.setApprover3(false);
+
+	    newOffer.setOfferReleased(false);
+	    
+	    newOffer.setApprover1Role(oldOffer.getApprover1Role());
+	    newOffer.setApprover2Role(oldOffer.getApprover2Role());
+	    newOffer.setApprover3Role(oldOffer.getApprover3Role());
+
+	    OfferDetailsEntity savedOffer = offerDetailsRepository.save(newOffer);
+
+	    // Step 5 : Update Old Offer with Re-Release Offer Id
+
+	    oldOffer.setReReleaseOfferId(savedOffer.getId());
+
+	    offerDetailsRepository.save(oldOffer);
+
+	    // Step 6 : Start Approval Chain
+
+	    Map<Integer, List<String>> roleEmailMap =
+	            processApprovalChain(request.getApplicantId());
+
+	    log.info("Approval Chain Started Successfully : {}", roleEmailMap);
+
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "Review request submitted successfully",
+	            roleEmailMap);
 	}
 
 }
