@@ -1367,7 +1367,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			offer.setOfferReleased(true);
 			offer.setOfferReleasedBy(userId);
 			offer.setOfferReleasedAt(LocalDateTime.now());
-
+			offer.setOfferStatus("Pending");
 			try {
 
 				String candidateName = application.getFirstName().trim() + "_" + application.getLastName().trim();

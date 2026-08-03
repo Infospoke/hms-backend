@@ -86,15 +86,16 @@ public interface RecruiterAssignmentRepository
 
 	RecruiterAssignmentEntity findRecuirtersBySrId(String srId);
 
-
 	List<RecruiterAssignmentEntity> findByJobId(Integer jobId);
+
 	Page<RecruiterAssignmentEntity> findByJobId(Integer jobId, Pageable pageable);
-	
-	
-	RecruiterAssignmentEntity findByJobIdAndUserId(Integer jobId ,Integer userId);
+
+	RecruiterAssignmentEntity findByJobIdAndUserId(Integer jobId, Integer userId);
+
 	RecruiterAssignmentEntity findRecuirtersByJobId(Integer jobId);
 
 	List<RecruiterAssignmentEntity> findByJobIdAndSrId(Integer jobId, String srId);
-	
-}
 
+	List<RecruiterAssignmentEntity> findByUserIdAndStatusIgnoreCase(Integer userId, String status);
+
+}
