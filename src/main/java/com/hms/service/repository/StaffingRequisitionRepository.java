@@ -15,4 +15,6 @@ public interface StaffingRequisitionRepository extends JpaRepository<SRPositionB
 	Integer getNextSrSequence();
 
 	List<SRPositionBasicsEntity> findByUserId(Long userId);
+
+	List<SRPositionBasicsEntity> findBySrIdIn(List<String> srIds);
 }

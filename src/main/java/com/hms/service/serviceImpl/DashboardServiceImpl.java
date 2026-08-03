@@ -54,10 +54,10 @@ public class DashboardServiceImpl implements IDashboardService {
 	private CreateJobDetailsRepository createJobDetailsRepository;
 
 	@Autowired
-	private StaffingRequisitionRepository staffingRequisitionRepository;
+	private JobApplicationRepository jobApplicationRepository;
 
 	@Autowired
-	private JobApplicationRepository jobApplicationRepository;
+	private StaffingRequisitionRepository staffingRequisitionRepository;
 
 	@Autowired
 	private JwtService jwtService;
@@ -92,6 +92,7 @@ public class DashboardServiceImpl implements IDashboardService {
 		String token = authHeader.substring(7);
 
 		Integer recruiterId = jwtService.extractUserId(token).intValue();
+
 		List<RecruiterAssignmentEntity> assignments = recruiterAssignmentRepository
 				.findByUserIdAndStatusIgnoreCase(recruiterId, "Accepted");
 
@@ -112,10 +113,18 @@ public class DashboardServiceImpl implements IDashboardService {
 		List<Integer> jobIds = assignments.stream().map(RecruiterAssignmentEntity::getJobId).distinct()
 				.collect(Collectors.toList());
 
+		List<String> srIds = assignments.stream().map(RecruiterAssignmentEntity::getSrId).distinct()
+				.collect(Collectors.toList());
+
 		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByJobIdIn(jobIds);
+
+		List<SRPositionBasicsEntity> srPositions = staffingRequisitionRepository.findBySrIdIn(srIds);
 
 		Map<Integer, CreateJobDetailsEntity> jobMap = jobs.stream()
 				.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+
+		Map<String, SRPositionBasicsEntity> srPositionMap = srPositions.stream()
+				.collect(Collectors.toMap(SRPositionBasicsEntity::getSrId, Function.identity()));
 
 		List<JobApplicationEntity> applications = jobApplicationRepository.findByRecruiterId(recruiterId);
 
@@ -134,6 +143,14 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			if (job == null) {
 				continue;
+			}
+
+			SRPositionBasicsEntity srPosition = srPositionMap.get(assignment.getSrId());
+
+			String priority = null;
+
+			if (srPosition != null) {
+				priority = srPosition.getPriority();
 			}
 
 			totalOpenings += job.getOpenings();
@@ -172,15 +189,16 @@ public class DashboardServiceImpl implements IDashboardService {
 				} else {
 
 					sla = "On Track";
-
 				}
 			}
 
 			MyAssignedJobsDto dto = new MyAssignedJobsDto();
 
 			dto.setJobId(job.getJobId());
-
 			dto.setPosition(job.getJobTitle());
+
+			// Priority from SR Position Basics
+			dto.setPriority(priority);
 
 			dto.setTotalOpenings(job.getOpenings());
 
@@ -188,13 +206,10 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			dto.setMy(myCandidates);
 
-			// Not implemented yet
 			dto.setTeam(null);
 
-			// Not implemented yet
 			dto.setYetToFill(null);
 
-			// Not implemented yet
 			dto.setInProgress(null);
 
 			dto.setDaysRemaining(daysRemaining);
@@ -202,23 +217,23 @@ public class DashboardServiceImpl implements IDashboardService {
 			dto.setSlaStatus(sla);
 
 			dashboardList.add(dto);
+			cards.setMyApprovedSRs(approvedSRCount);
+
+			cards.setActiveCandidates(activeCandidateCount);
+
+			cards.setTotalOpenings(totalOpenings);
+
+			// Yet to Fill - Not implemented
+			cards.setYetToFill(0);
+
+			// In Progress - Not implemented
+			cards.setInProgress(0);
+
+			response.setCards(cards);
+
+			response.setMyAssignedJobsDto(dashboardList);
 
 		}
-
-		cards.setMyApprovedSRs(approvedSRCount);
-
-		cards.setActiveCandidates(activeCandidateCount);
-
-		cards.setTotalOpenings(totalOpenings);
-
-		cards.setYetToFill(0);
-
-		cards.setInProgress(0);
-
-		response.setCards(cards);
-
-		response.setMyAssignedJobsDto(dashboardList);
-
 		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard counts fetched successfully", response);
 
 	}
