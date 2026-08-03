@@ -2999,13 +2999,6 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		OfferDetailsEntity offerDetails = offerDetailsRepository.findTopByJobApplicationOrderByIdDesc(application);
 
-		if (offerDetails == null) {
-
-			offerDetails = new OfferDetailsEntity();
-
-			offerDetails.setJobApplication(application);
-		}
-
 		if (application == null) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Applicant Not Found");
@@ -3017,13 +3010,32 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 					"Interview completion status can be updated only if all rounds are completed.");
 		}
 
-		String currentStatus = offerDetails.getInterviewCompletionStatus();
+		String currentStatus = offerDetails != null ? offerDetails.getInterviewCompletionStatus() : null;
+		
+		if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
+
+			if (offerDetails != null) {
+
+				offerDetailsRepository.delete(offerDetails);
+			}
+
+			sendInterviewRejectedMail(application);
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "Candidate rejected successfully", null);
+		}
 
 		if ("HIRED".equalsIgnoreCase(currentStatus) || "REJECTED".equalsIgnoreCase(currentStatus)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Interview completion status cannot be modified.");
 		}
 
+		if (offerDetails == null) {
+
+		    offerDetails = new OfferDetailsEntity();
+
+		    offerDetails.setJobApplication(application);
+		}
+		
 		offerDetails.setInterviewCompletionStatus(request.getStatus());
 
 		offerDetails.setInterviewCompletionDate(LocalDateTime.now());
@@ -3036,11 +3048,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			sendInterviewSelectedMail(application);
 
-		} else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
-
-			sendInterviewRejectedMail(application);
-		}
-
+		} 
+		
 		log.info("InterviewPlanServiceImpl :: Exit updateInterviewCompletionStatus");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview completion status updated successfully", null);
