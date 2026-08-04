@@ -106,6 +106,8 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 	Long countByJobIdAndInPersonInterviewsTrue(Integer jobId);
 
 	List<JobApplicationEntity> findByJobId(Integer jobId);
-	
-	
+
+	List<JobApplicationEntity> findByJobIdAndCreatedDateBetween(Integer jobId, LocalDateTime fromDate,
+			LocalDateTime toDate);
+
 }

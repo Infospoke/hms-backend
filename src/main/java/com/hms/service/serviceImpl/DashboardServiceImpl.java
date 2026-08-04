@@ -14,10 +14,14 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.dto.CandidatePipelineDto;
+import com.hms.service.dto.CandidateQualityDto;
 import com.hms.service.dto.ConversionFunnelDto;
 import com.hms.service.dto.DashboardCardsDto;
 import com.hms.service.dto.HiringDashboardCardsDto;
 import com.hms.service.dto.HiringDashboardResponseDto;
+import com.hms.service.dto.HiringHealthDto;
+import com.hms.service.dto.HiringManagerAnalyticsResponseDto;
 import com.hms.service.dto.MyAssignedJobsDto;
 import com.hms.service.dto.NegotiationFlowDto;
 import com.hms.service.dto.OfferStatusFlowDto;
@@ -590,4 +594,207 @@ public class DashboardServiceImpl implements IDashboardService {
 				"Dashboard fetched successfully", response);
 
 	}
+
+	@Override
+	public ApiResponse<?> getHiringManagerAnalytics(String srId, LocalDate fromDate, LocalDate toDate) {
+
+		HiringManagerAnalyticsResponseDto response = new HiringManagerAnalyticsResponseDto();
+
+		CreateJobDetailsEntity job = createJobDetailsRepository.findBySrId(srId);
+
+		if (job == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of("Invalid SR Id"));
+		}
+
+		Integer jobId = job.getJobId();
+
+		List<JobApplicationEntity> applications;
+
+		if (fromDate != null && toDate != null) {
+
+			LocalDateTime from = fromDate.atStartOfDay();
+
+			LocalDateTime to = toDate.atTime(LocalTime.MAX);
+
+			applications = jobApplicationRepository.findByJobIdAndCreatedDateBetween(jobId, from, to);
+
+		} else {
+
+			applications = jobApplicationRepository.findByJobId(jobId);
+		}
+
+		if (applications.isEmpty()) {
+
+			response.setCandidatePipeline(new CandidatePipelineDto());
+			response.setOfferStatusFlow(new OfferStatusFlowDto());
+			response.setNegotiationFlow(new NegotiationFlowDto());
+			response.setCandidateQuality(new CandidateQualityDto());
+			response.setHiringHealth(new HiringHealthDto());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "No Data Found", response);
+		}
+
+		List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
+
+		List<ResumeAnalysisEntity> resumeAnalysis = resumeAnalysisRepository.findByApplicationIdIn(applicationIds);
+
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
+
+		response.setCandidatePipeline(
+		        buildCandidatePipeline(applications, resumeAnalysis, offers));
+
+		response.setOfferStatusFlow(buildOfferStatusFlow(offers));
+
+		response.setNegotiationFlow(buildNegotiationFlow(offers));
+
+		response.setCandidateQuality(buildCandidateQuality(resumeAnalysis));
+
+		response.setHiringHealth(buildHiringHealth(applications, resumeAnalysis, offers));
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Hiring Manager Analytics fetched successfully.", response);
+	}
+
+	private CandidatePipelineDto buildCandidatePipeline(List<JobApplicationEntity> applications,
+	        List<ResumeAnalysisEntity> resumeAnalysis,
+	        List<OfferDetailsEntity> offers) {
+
+	    CandidatePipelineDto dto = new CandidatePipelineDto();
+
+	    long applied = applications.size();
+	    long screening = resumeAnalysis.size();
+
+	    long interview = 0;
+	    for (JobApplicationEntity application : applications) {
+	        if (application.isInPersonInterviews()) {
+	            interview++;
+	        }
+	    }
+
+	    long offer = 0;
+	    long hired = 0;
+
+	    for (OfferDetailsEntity offerDetails : offers) {
+
+	        if (Boolean.TRUE.equals(offerDetails.getOfferReleased())) {
+	            offer++;
+	        }
+
+	        if ("Accepted".equalsIgnoreCase(offerDetails.getOfferStatus())) {
+	            hired++;
+	        }
+	    }
+
+	    dto.setApplied(applied);
+	    dto.setScreening(screening);
+	    dto.setInterview(interview);
+	    dto.setOffer(offer);
+	    dto.setHired(hired);
+
+	    dto.setScreeningPercentage(calculatePercentage(applied, screening));
+	    dto.setInterviewPercentage(calculatePercentage(screening, interview));
+	    dto.setOfferPercentage(calculatePercentage(interview, offer));
+	    dto.setHiredPercentage(calculatePercentage(offer, hired));
+	    dto.setOverallConversionRate(calculatePercentage(applied, hired));
+
+	    return dto;
+	}
+
+	private Double calculatePercentage(long total, long value) {
+
+		if (total == 0) {
+			return 0.0;
+		}
+
+		return Math.round(((double) value / total) * 1000.0) / 10.0;
+	}
+
+	private CandidateQualityDto buildCandidateQuality(List<ResumeAnalysisEntity> resumeAnalysis) {
+
+	    CandidateQualityDto dto = new CandidateQualityDto();
+
+	    long excellent = 0;
+	    long good = 0;
+	    long average = 0;
+	    long needsReview = 0;
+
+	    for (ResumeAnalysisEntity resume : resumeAnalysis) {
+
+	        if (resume.getFinalScore() == null) {
+	            continue;
+	        }
+
+	        double score = resume.getFinalScore();
+
+	        if (score >= 90) {
+	            excellent++;
+	        } else if (score >= 80) {
+	            good++;
+	        } else if (score >= 70) {
+	            average++;
+	        } else {
+	            needsReview++;
+	        }
+	    }
+
+	    dto.setExcellent(excellent);
+	    dto.setGood(good);
+	    dto.setAverage(average);
+	    dto.setNeedsReview(needsReview);
+	    dto.setTotalCandidates((long) resumeAnalysis.size());
+
+	    return dto;
+	}
+	private HiringHealthDto buildHiringHealth(List<JobApplicationEntity> applications,
+	        List<ResumeAnalysisEntity> resumeAnalysis,
+	        List<OfferDetailsEntity> offers) {
+
+	    HiringHealthDto dto = new HiringHealthDto();
+
+	    long totalApplications = applications.size();
+	    long screened = resumeAnalysis.size();
+
+	    long interviews = 0;
+
+	    for (JobApplicationEntity application : applications) {
+	        if (application.isInPersonInterviews()) {
+	            interviews++;
+	        }
+	    }
+
+	    long offersReleased = 0;
+
+	    for (OfferDetailsEntity offer : offers) {
+	        if (Boolean.TRUE.equals(offer.getOfferReleased())) {
+	            offersReleased++;
+	        }
+	    }
+
+	    long qualityCandidates = 0;
+
+	    for (ResumeAnalysisEntity resume : resumeAnalysis) {
+
+	        if (resume.getFinalScore() != null
+	                && resume.getFinalScore() >= 80) {
+	            qualityCandidates++;
+	        }
+	    }
+
+	    dto.setPipelineCoverage(
+	            calculatePercentage(totalApplications, screened));
+
+	    dto.setOfferProgress(
+	            calculatePercentage(interviews, offersReleased));
+
+	    dto.setCandidateQuality(
+	            calculatePercentage(screened, qualityCandidates));
+
+	    dto.setRequisitionsOnTrack(
+	            calculatePercentage(totalApplications, interviews));
+
+	    dto.setAgingRequisitions(
+	            100 - calculatePercentage(totalApplications, interviews));
+
+	    return dto;
+	}
+
 }
