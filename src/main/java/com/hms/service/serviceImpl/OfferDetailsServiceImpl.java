@@ -1589,65 +1589,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return "High";
 	}
 
-//	@Override
-//	public ApiResponse<?> getOfferNegotiationList(SpecificationFilterRequest request) {
-//
-//		log.info("NegotiationOfferServiceImpl : getOfferNegotiationList");
-//
-//		Sort sort = request.getDirection().equalsIgnoreCase("ASC") ? Sort.by(request.getSortBy()).ascending()
-//				: Sort.by(request.getSortBy()).descending();
-//
-//		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-//
-//		Page<NegotiationOfferEntity> negotiationPage = negotiationOfferRepository
-//				.findAll(request.buildOfferNegotiationSpecification(), pageable);
-//
-//
-//		List<OfferNegotiationResponse> responseList = negotiationPage.getContent().stream().map(entity -> {
-//
-//			OfferNegotiationResponse response = new OfferNegotiationResponse();
-//
-//			response.setNegotiationId(entity.getId());
-//
-//			// Candidate Details
-//			if (entity.getCandidate() != null) {
-//
-//				response.setCandidateId(entity.getCandidate().getCandidateId());
-//
-//				response.setCandidateName(entity.getCandidate().getFirstName());
-//
-//				response.setEmail(entity.getCandidate().getEmail());
-//			}
-//
-//			// Job Title
-//			if (entity.getJob() != null) {
-//				response.setJobTitle(entity.getJob().getJobTitle());
-//			}
-//            Integer applicantId=entity.getApplicant().getId();
-//		
-//			response.setApprovedAmount(entity.getApprovedAmount());
-//			response.setOfferNegotiationDate(entity.getOfferNegotiatedDate());
-//			response.setPriority(getPriority(entity.getOfferNegotiatedDate()));
-//			Optional<OfferDetailsEntity> offerDetails=offerDetailsRepository.findByJobApplication_Id(applicantId);
-//			Long totalCtc=offerDetails.get().getTotalCtc();
-//			response.setOfferedAmount(totalCtc);
-//			response.setRequestedAmount(entity.getTotalRequestedAmount());
-//
-//			return response;
-//
-//		}).toList();
-//
-//		Map<String, Object> result = new HashMap<>();
-//
-//		result.put("content", responseList);
-//		result.put("currentPage", negotiationPage.getNumber());
-//		result.put("totalPages", negotiationPage.getTotalPages());
-//		result.put("totalElements", negotiationPage.getTotalElements());
-//		result.put("size", negotiationPage.getSize());
-//		result.put("last", negotiationPage.isLast());
-//
-//		return ApiResponse.success(ResponseCode.SUCCESS, "Success", result);
-//	}
 	@Override
 	public ApiResponse<?> getOfferNegotiationList(SpecificationFilterRequest request) {
 
@@ -1927,7 +1868,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    OfferDetailsEntity savedOffer = offerDetailsRepository.save(newOffer);
 
 	    oldOffer.setReReleaseOfferId(savedOffer.getId());
-
+	    oldOffer.setOfferStatus("Reviewed");
 	    offerDetailsRepository.save(oldOffer);
 
 	    Map<Integer, List<String>> roleEmailMap =
@@ -1936,8 +1877,38 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    log.info("Approval Chain Started Successfully : {}", roleEmailMap);
 
 	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,
+	            ResponseCode.SUCCESS,"Success",
 	            "Review request submitted successfully");
+	}
+	
+	@Override
+	public void viewDocument(String filePath, String action, HttpServletResponse response) {
+
+	    log.info("Inside viewSupportingDocument");
+
+	    try (InputStream inputStream = minioClient.getObject(
+	            GetObjectArgs.builder()
+	                    .bucket("infospokejobapplicationsbucket")
+	                    .object(filePath)
+	                    .build())) {
+
+	        String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+
+	        response.setContentType("application/pdf");
+
+	        response.setHeader(
+	                "Content-Disposition",
+	                ("view".equalsIgnoreCase(action) ? "inline" : "attachment")
+	                        + "; filename=\"" + fileName + "\"");
+
+	        IOUtils.copy(inputStream, response.getOutputStream());
+
+	        response.flushBuffer();
+
+	    } catch (Exception e) {
+	        log.error("Error while viewing supporting document", e);
+	        throw new RuntimeException("Unable to fetch supporting document from MinIO");
+	    }
 	}
 
 }

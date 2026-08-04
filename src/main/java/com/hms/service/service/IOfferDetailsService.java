@@ -40,4 +40,6 @@ public interface IOfferDetailsService {
 
 	ApiResponse<?> reviewNegotiationRequest(HrRecommendationRequest request);
 
+	void viewDocument(String filePath, String action, HttpServletResponse response);
+
 }

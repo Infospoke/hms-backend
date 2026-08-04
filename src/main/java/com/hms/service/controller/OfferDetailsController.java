@@ -16,6 +16,7 @@ import com.hms.service.request.HrRecommendationRequest;
 import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
+import com.hms.service.request.ViewDocumentRequest;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -118,9 +119,12 @@ public class OfferDetailsController {
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
 
-	
-	
+	@PostMapping("/view-document")
+	public void viewSupportingDocument(@RequestBody ViewDocumentRequest request,
+			@RequestParam(name = "action", defaultValue = "view") String action, HttpServletResponse response) {
+
+		iOfferDetailsService.viewDocument(request.getFilePath(), action, response);
+	}	
 
 }
