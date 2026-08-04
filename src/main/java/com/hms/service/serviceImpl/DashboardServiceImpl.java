@@ -98,6 +98,9 @@ public class DashboardServiceImpl implements IDashboardService {
 			cards.setTotalOpenings(0);
 			cards.setYetToFill(0);
 			cards.setInProgress(0);
+			cards.setFilled(0);
+			cards.setMy(0);
+			cards.setTeam(0);
 
 			response.setCards(cards);
 			response.setMyAssignedJobsDto(new ArrayList<>());

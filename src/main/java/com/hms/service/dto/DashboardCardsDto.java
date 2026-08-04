@@ -18,5 +18,11 @@ public class DashboardCardsDto {
     private Integer yetToFill;
 
     private Integer inProgress;
+    
+    private Integer filled;
+    
+    private Integer my;
+    
+    private Integer team;
 
 }
