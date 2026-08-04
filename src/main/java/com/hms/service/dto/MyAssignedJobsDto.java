@@ -1,4 +1,5 @@
 package com.hms.service.dto;
+
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
@@ -10,25 +11,27 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MyAssignedJobsDto {
 
-    private Integer jobId;
+	private Integer jobId;
 
-    private String position;
+	private String position;
 
-    private Integer totalOpenings;
+	private Integer totalOpenings;
 
-    private LocalDate targetStartDate;
+	private LocalDate targetStartDate;
 
-    private Integer my;
+	private Integer my;
 
-    private Integer team;
+	private Integer team;
 
-    private Integer yetToFill;
+	private Integer yetToFill;
 
-    private Integer inProgress;
+	private Integer inProgress;
 
-    private Long daysRemaining;
+	private Long daysRemaining;
 
-    private String slaStatus;
+	private String slaStatus;
+
+	private String srId;
 
 	private String priority;
 }

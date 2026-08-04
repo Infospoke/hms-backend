@@ -102,4 +102,12 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 			@Param("toDate") LocalDateTime toDate);
 
 	List<JobApplicationEntity> findByRecruiterIdAndJobId(Integer recruiterId, Integer jobId);
+
+	Long countByJobIdAndInPersonInterviewsTrue(Integer jobId);
+
+	List<JobApplicationEntity> findByJobId(Integer jobId);
+
+	List<JobApplicationEntity> findByJobIdAndCreatedDateBetween(Integer jobId, LocalDateTime fromDate,
+			LocalDateTime toDate);
+
 }

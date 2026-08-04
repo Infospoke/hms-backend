@@ -13,8 +13,14 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.hms.service.dto.CandidatePipelineDto;
+import com.hms.service.dto.CandidateQualityDto;
 import com.hms.service.dto.ConversionFunnelDto;
 import com.hms.service.dto.DashboardCardsDto;
+import com.hms.service.dto.HiringDashboardCardsDto;
+import com.hms.service.dto.HiringDashboardResponseDto;
+import com.hms.service.dto.HiringHealthDto;
+import com.hms.service.dto.HiringManagerAnalyticsResponseDto;
 import com.hms.service.dto.MyAssignedJobsDto;
 import com.hms.service.dto.NegotiationFlowDto;
 import com.hms.service.dto.OfferStatusFlowDto;
@@ -23,19 +29,17 @@ import com.hms.service.dto.RecuriterDashboardDetailsDto;
 import com.hms.service.dto.SourcePerformanceDto;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.JobApplicationRepository;
-import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.StaffingRequisitionRepository;
-import com.hms.service.service.IRecuriterDashboardService;
+import com.hms.service.service.IDashboardService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
@@ -45,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class DashboardServiceImpl implements IRecuriterDashboardService {
+public class DashboardServiceImpl implements IDashboardService {
 
 	@Autowired
 	private RecruiterAssignmentRepository recruiterAssignmentRepository;
@@ -70,9 +74,6 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-
-	@Autowired
-	private NegotiateOfferRepository negotiateOfferRepository;
 
 	@Override
 	public ApiResponse<?> getDashboard() {
@@ -289,13 +290,11 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
 
-		List<NegotiationOfferEntity> negotiations = negotiateOfferRepository.findByApplicant_IdIn(applicationIds);
-
 		response.setConversionFunnel(buildConversionFunnel(applications, resumeAnalysis, offers));
 
 		response.setOfferStatusFlow(buildOfferStatusFlow(offers));
 
-		response.setNegotiationFlow(buildNegotiationFlow(negotiations));
+		response.setNegotiationFlow(buildNegotiationFlow(offers));
 
 		response.setSourcePerformance(buildSourcePerformance(applications));
 
@@ -345,50 +344,77 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		OfferStatusFlowDto dto = new OfferStatusFlowDto();
 
+		Map<Integer, OfferDetailsEntity> uniqueOffers = offers.stream().collect(Collectors
+				.toMap(offer -> offer.getJobApplication().getId(), Function.identity(), (existing, latest) -> latest));
+
+		List<OfferDetailsEntity> offerList = new ArrayList<>(uniqueOffers.values());
+
 		dto.setOfferRequestByHR(
 
-				offers.stream().filter(offer -> offer.getInterviewCompletionStatus() != null
+				offerList.stream().filter(offer -> offer.getInterviewCompletionStatus() != null
 						&& offer.getInterviewCompletionStatus().equalsIgnoreCase("Hired")).count());
 
 		dto.setUnderReviewApproval(
 
-				offers.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
+				offerList.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
 
 		dto.setOfferReleased(
 
-				offers.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
+				offerList.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
 
 		dto.setOfferAccepted(
 
-				offers.stream().filter(
+				offerList.stream().filter(
 						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
 						.count());
 
 		dto.setOfferRejected(
 
-				offers.stream().filter(
+				offerList.stream().filter(
 						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
 						.count());
 
 		return dto;
 	}
 
-//not implemented yet
-	private NegotiationFlowDto buildNegotiationFlow(List<NegotiationOfferEntity> negotiations) {
+	private NegotiationFlowDto buildNegotiationFlow(List<OfferDetailsEntity> offers) {
 
 		NegotiationFlowDto dto = new NegotiationFlowDto();
 
-		dto.setNegotiationRequest((long) negotiations.size());
+		List<OfferDetailsEntity> negotiationOffers = offers.stream()
+				.filter(offer -> Boolean.TRUE.equals(offer.getNegotiation()))
+				.filter(offer -> offer.getNegotiationId() != null).collect(Collectors.toList());
 
-		dto.setHrReview(null);
+		dto.setNegotiationRequest(
 
-		dto.setUnderReview(null);
+				negotiationOffers.stream().filter(offer -> offer.getOfferStatus() != null
+						&& offer.getOfferStatus().equalsIgnoreCase("Request For Negotiation")).count());
 
-		dto.setReReleaseOffer(null);
+		dto.setHrReview(
 
-		dto.setCandidateAccepted(null);
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Reviewed"))
+						.count());
 
-		dto.setCandidateRejected(null);
+		dto.setUnderReview(
+
+				negotiationOffers.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
+
+		dto.setReReleaseOffer(
+
+				negotiationOffers.stream().filter(offer -> offer.getReReleaseOfferId() != null).count());
+
+		dto.setCandidateAccepted(
+
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
+						.count());
+
+		dto.setCandidateRejected(
+
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
+						.count());
 
 		return dto;
 	}
@@ -413,4 +439,393 @@ public class DashboardServiceImpl implements IRecuriterDashboardService {
 
 		return dto;
 	}
+
+	@Override
+
+	public ApiResponse<?> getHiringDashboard() {
+
+		HiringDashboardResponseDto response = new HiringDashboardResponseDto();
+
+		HiringDashboardCardsDto cards = new HiringDashboardCardsDto();
+
+		List<MyAssignedJobsDto> dashboardList = new ArrayList<>();
+
+		String authHeader = httpServletRequest.getHeader("Authorization");
+
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+			return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing.");
+
+		}
+
+		String token = authHeader.substring(7);
+
+		Long userId = jwtService.extractUserId(token);
+
+		List<SRPositionBasicsEntity> srList = staffingRequisitionRepository.findByUserId(userId);
+
+		if (srList.isEmpty()) {
+
+			cards.setAverageHiringAge(0L);
+
+			cards.setInterviews(0L);
+
+			cards.setOffers(0L);
+
+			cards.setOpenSrs(0L);
+
+			cards.setTotalCandidates(0L);
+
+			response.setCards(cards);
+
+			response.setMyRequisitions(new ArrayList<>());
+
+			return ApiResponse.success(ResponseCode.SUCCESS,
+
+					"Dashboard fetched successfully", response);
+
+		}
+
+		Long openSrCount = (long) srList.size();
+
+		Long totalCandidates = 0L;
+
+		Long interviewCount = 0L;
+
+		Long offerCount = 0L;
+
+		for (SRPositionBasicsEntity sr : srList) {
+
+			CreateJobDetailsEntity job = createJobDetailsRepository.findBySrId(sr.getSrId());
+
+			if (job == null) {
+
+				continue;
+
+			}
+
+			Long candidateCount = (long) jobApplicationRepository.countByJobId(job.getJobId());
+
+			totalCandidates += candidateCount;
+
+			Long interviews = jobApplicationRepository
+
+					.countByJobIdAndInPersonInterviewsTrue(job.getJobId());
+
+			interviewCount += interviews;
+
+			List<JobApplicationEntity> applications =
+
+					jobApplicationRepository.findByJobId(job.getJobId());
+
+			List<Integer> applicationIds = applications.stream()
+
+					.map(JobApplicationEntity::getId)
+
+					.toList();
+
+			if (!applicationIds.isEmpty()) {
+
+				offerCount += offerDetailsRepository.countReleasedOffers(applicationIds);
+
+			}
+
+			MyAssignedJobsDto dto = new MyAssignedJobsDto();
+
+			dto.setJobId(job.getJobId());
+
+			dto.setPosition(job.getJobTitle());
+
+			dto.setTotalOpenings(job.getOpenings());
+
+			dto.setTargetStartDate(job.getTargetStartDate());
+
+			dto.setPriority(sr.getPriority());
+			
+			dto.setSrId(sr.getSrId());
+
+			dto.setInProgress(null);
+
+			dto.setYetToFill(job.getOpenings());
+
+			LocalDate today = LocalDate.now();
+
+			Long difference = ChronoUnit.DAYS.between(today, job.getTargetStartDate());
+
+			dto.setDaysRemaining(difference);
+
+			String sla;
+
+			if (difference < 0) {
+
+				sla = "Over Due";
+
+			} else {
+
+				Long actualTime = ChronoUnit.DAYS.between(
+
+						job.getCreatedAt().toLocalDate(),
+
+						job.getTargetStartDate());
+
+				if (actualTime <= 0) {
+
+					actualTime = 1L;
+
+				}
+
+				int openings = job.getOpenings();
+
+				int hired = 0;
+
+				int remaining = openings - hired;
+
+				double timePercentage =
+
+						(difference.doubleValue() / actualTime.doubleValue()) * 100;
+
+				double remainingPercentage =
+
+						((double) remaining / openings) * 100;
+
+				if (timePercentage < 50 && remainingPercentage < 50) {
+
+					sla = "At Risk";
+
+				} else {
+
+					sla = "On Track";
+
+				}
+
+			}
+
+			dto.setSlaStatus(sla);
+
+			dashboardList.add(dto);
+
+		}
+
+		cards.setAverageHiringAge(0L);
+
+		cards.setInterviews(interviewCount);
+
+		cards.setOffers(offerCount);
+
+		cards.setOpenSrs(openSrCount);
+
+		cards.setTotalCandidates(totalCandidates);
+
+		response.setCards(cards);
+
+		response.setMyRequisitions(dashboardList);
+
+		return ApiResponse.success(ResponseCode.SUCCESS,
+
+				"Dashboard fetched successfully", response);
+
+	}
+
+	@Override
+	public ApiResponse<?> getHiringManagerAnalytics(String srId, LocalDate fromDate, LocalDate toDate) {
+
+		HiringManagerAnalyticsResponseDto response = new HiringManagerAnalyticsResponseDto();
+
+		CreateJobDetailsEntity job = createJobDetailsRepository.findBySrId(srId);
+
+		if (job == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, List.of("Invalid SR Id"));
+		}
+
+		Integer jobId = job.getJobId();
+
+		List<JobApplicationEntity> applications;
+
+		if (fromDate != null && toDate != null) {
+
+			LocalDateTime from = fromDate.atStartOfDay();
+
+			LocalDateTime to = toDate.atTime(LocalTime.MAX);
+
+			applications = jobApplicationRepository.findByJobIdAndCreatedDateBetween(jobId, from, to);
+
+		} else {
+
+			applications = jobApplicationRepository.findByJobId(jobId);
+		}
+
+		if (applications.isEmpty()) {
+
+			response.setCandidatePipeline(new CandidatePipelineDto());
+			response.setOfferStatusFlow(new OfferStatusFlowDto());
+			response.setNegotiationFlow(new NegotiationFlowDto());
+			response.setCandidateQuality(new CandidateQualityDto());
+			response.setHiringHealth(new HiringHealthDto());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "No Data Found", response);
+		}
+
+		List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
+
+		List<ResumeAnalysisEntity> resumeAnalysis = resumeAnalysisRepository.findByApplicationIdIn(applicationIds);
+
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
+
+		response.setCandidatePipeline(
+		        buildCandidatePipeline(applications, resumeAnalysis, offers));
+
+		response.setOfferStatusFlow(buildOfferStatusFlow(offers));
+
+		response.setNegotiationFlow(buildNegotiationFlow(offers));
+
+		response.setCandidateQuality(buildCandidateQuality(resumeAnalysis));
+
+		response.setHiringHealth(buildHiringHealth(applications, resumeAnalysis, offers));
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Hiring Manager Analytics fetched successfully.", response);
+	}
+
+	private CandidatePipelineDto buildCandidatePipeline(List<JobApplicationEntity> applications,
+	        List<ResumeAnalysisEntity> resumeAnalysis,
+	        List<OfferDetailsEntity> offers) {
+
+	    CandidatePipelineDto dto = new CandidatePipelineDto();
+
+	    long applied = applications.size();
+	    long screening = resumeAnalysis.size();
+
+	    long interview = 0;
+	    for (JobApplicationEntity application : applications) {
+	        if (application.isInPersonInterviews()) {
+	            interview++;
+	        }
+	    }
+
+	    long offer = 0;
+	    long hired = 0;
+
+	    for (OfferDetailsEntity offerDetails : offers) {
+
+	        if (Boolean.TRUE.equals(offerDetails.getOfferReleased())) {
+	            offer++;
+	        }
+
+	        if ("Accepted".equalsIgnoreCase(offerDetails.getOfferStatus())) {
+	            hired++;
+	        }
+	    }
+
+	    dto.setApplied(applied);
+	    dto.setScreening(screening);
+	    dto.setInterview(interview);
+	    dto.setOffer(offer);
+	    dto.setHired(hired);
+
+	    dto.setScreeningPercentage(calculatePercentage(applied, screening));
+	    dto.setInterviewPercentage(calculatePercentage(screening, interview));
+	    dto.setOfferPercentage(calculatePercentage(interview, offer));
+	    dto.setHiredPercentage(calculatePercentage(offer, hired));
+	    dto.setOverallConversionRate(calculatePercentage(applied, hired));
+
+	    return dto;
+	}
+
+	private Double calculatePercentage(long total, long value) {
+
+		if (total == 0) {
+			return 0.0;
+		}
+
+		return Math.round(((double) value / total) * 1000.0) / 10.0;
+	}
+
+	private CandidateQualityDto buildCandidateQuality(List<ResumeAnalysisEntity> resumeAnalysis) {
+
+	    CandidateQualityDto dto = new CandidateQualityDto();
+
+	    long excellent = 0;
+	    long good = 0;
+	    long average = 0;
+	    long needsReview = 0;
+
+	    for (ResumeAnalysisEntity resume : resumeAnalysis) {
+
+	        if (resume.getFinalScore() == null) {
+	            continue;
+	        }
+
+	        double score = resume.getFinalScore();
+
+	        if (score >= 90) {
+	            excellent++;
+	        } else if (score >= 80) {
+	            good++;
+	        } else if (score >= 70) {
+	            average++;
+	        } else {
+	            needsReview++;
+	        }
+	    }
+
+	    dto.setExcellent(excellent);
+	    dto.setGood(good);
+	    dto.setAverage(average);
+	    dto.setNeedsReview(needsReview);
+	    dto.setTotalCandidates((long) resumeAnalysis.size());
+
+	    return dto;
+	}
+	private HiringHealthDto buildHiringHealth(List<JobApplicationEntity> applications,
+	        List<ResumeAnalysisEntity> resumeAnalysis,
+	        List<OfferDetailsEntity> offers) {
+
+	    HiringHealthDto dto = new HiringHealthDto();
+
+	    long totalApplications = applications.size();
+	    long screened = resumeAnalysis.size();
+
+	    long interviews = 0;
+
+	    for (JobApplicationEntity application : applications) {
+	        if (application.isInPersonInterviews()) {
+	            interviews++;
+	        }
+	    }
+
+	    long offersReleased = 0;
+
+	    for (OfferDetailsEntity offer : offers) {
+	        if (Boolean.TRUE.equals(offer.getOfferReleased())) {
+	            offersReleased++;
+	        }
+	    }
+
+	    long qualityCandidates = 0;
+
+	    for (ResumeAnalysisEntity resume : resumeAnalysis) {
+
+	        if (resume.getFinalScore() != null
+	                && resume.getFinalScore() >= 80) {
+	            qualityCandidates++;
+	        }
+	    }
+
+	    dto.setPipelineCoverage(
+	            calculatePercentage(totalApplications, screened));
+
+	    dto.setOfferProgress(
+	            calculatePercentage(interviews, offersReleased));
+
+	    dto.setCandidateQuality(
+	            calculatePercentage(screened, qualityCandidates));
+
+	    dto.setRequisitionsOnTrack(
+	            calculatePercentage(totalApplications, interviews));
+
+	    dto.setAgingRequisitions(
+	            100 - calculatePercentage(totalApplications, interviews));
+
+	    return dto;
+	}
+
 }
