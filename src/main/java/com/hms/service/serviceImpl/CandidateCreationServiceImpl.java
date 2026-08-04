@@ -717,15 +717,12 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			for (MultipartFile file : files) {
 
 				String originalFileName = file.getOriginalFilename();
-				String extension = "";
-
-				if (originalFileName != null && originalFileName.contains(".")) {
-					extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-				}
+				
+				log.info("The Original file name" +originalFileName);
 
 				try {
-					String objectName = Constants.NEGOTIATION_DOCUMENTS + candidateId + "-" + job.getJobId()
-							+ extension;
+					String objectName = Constants.NEGOTIATION_DOCUMENTS + candidateId + "-" + job.getJobId()+"-"
+							+ originalFileName;
 
 					minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
 							.stream(file.getInputStream(), file.getSize(), -1).contentType(file.getContentType())
@@ -757,6 +754,11 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		entity.setTotalRequestedAmount(totalRequestedAmount);
 
 		negotiateOfferRepository.save(entity);
+		
+		offer.setNegotiation(true);
+		offer.setNegotiationId(entity.getId());
+		offer.setOfferStatus("Requested for Negotiation");
+		offerDetailsRepository.save(offer);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
 	}
