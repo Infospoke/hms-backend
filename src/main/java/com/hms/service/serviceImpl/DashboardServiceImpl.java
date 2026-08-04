@@ -23,14 +23,12 @@ import com.hms.service.dto.RecuriterDashboardDetailsDto;
 import com.hms.service.dto.SourcePerformanceDto;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.JobApplicationRepository;
-import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
@@ -70,9 +68,6 @@ public class DashboardServiceImpl implements IDashboardService {
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-
-	@Autowired
-	private NegotiateOfferRepository negotiateOfferRepository;
 
 	@Override
 	public ApiResponse<?> getDashboard() {
@@ -289,13 +284,11 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
 
-		List<NegotiationOfferEntity> negotiations = negotiateOfferRepository.findByApplicant_IdIn(applicationIds);
-
 		response.setConversionFunnel(buildConversionFunnel(applications, resumeAnalysis, offers));
 
 		response.setOfferStatusFlow(buildOfferStatusFlow(offers));
 
-		response.setNegotiationFlow(buildNegotiationFlow(negotiations));
+		response.setNegotiationFlow(buildNegotiationFlow(offers));
 
 		response.setSourcePerformance(buildSourcePerformance(applications));
 
@@ -345,50 +338,77 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		OfferStatusFlowDto dto = new OfferStatusFlowDto();
 
+		Map<Integer, OfferDetailsEntity> uniqueOffers = offers.stream().collect(Collectors
+				.toMap(offer -> offer.getJobApplication().getId(), Function.identity(), (existing, latest) -> latest));
+
+		List<OfferDetailsEntity> offerList = new ArrayList<>(uniqueOffers.values());
+
 		dto.setOfferRequestByHR(
 
-				offers.stream().filter(offer -> offer.getInterviewCompletionStatus() != null
+				offerList.stream().filter(offer -> offer.getInterviewCompletionStatus() != null
 						&& offer.getInterviewCompletionStatus().equalsIgnoreCase("Hired")).count());
 
 		dto.setUnderReviewApproval(
 
-				offers.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
+				offerList.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
 
 		dto.setOfferReleased(
 
-				offers.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
+				offerList.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
 
 		dto.setOfferAccepted(
 
-				offers.stream().filter(
+				offerList.stream().filter(
 						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
 						.count());
 
 		dto.setOfferRejected(
 
-				offers.stream().filter(
+				offerList.stream().filter(
 						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
 						.count());
 
 		return dto;
 	}
 
-//not implemented yet
-	private NegotiationFlowDto buildNegotiationFlow(List<NegotiationOfferEntity> negotiations) {
+	private NegotiationFlowDto buildNegotiationFlow(List<OfferDetailsEntity> offers) {
 
 		NegotiationFlowDto dto = new NegotiationFlowDto();
 
-		dto.setNegotiationRequest((long) negotiations.size());
+		List<OfferDetailsEntity> negotiationOffers = offers.stream()
+				.filter(offer -> Boolean.TRUE.equals(offer.getNegotiation()))
+				.filter(offer -> offer.getNegotiationId() != null).collect(Collectors.toList());
 
-		dto.setHrReview(null);
+		dto.setNegotiationRequest(
 
-		dto.setUnderReview(null);
+				negotiationOffers.stream().filter(offer -> offer.getOfferStatus() != null
+						&& offer.getOfferStatus().equalsIgnoreCase("Request For Negotiation")).count());
 
-		dto.setReReleaseOffer(null);
+		dto.setHrReview(
 
-		dto.setCandidateAccepted(null);
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Reviewed"))
+						.count());
 
-		dto.setCandidateRejected(null);
+		dto.setUnderReview(
+
+				negotiationOffers.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
+
+		dto.setReReleaseOffer(
+
+				negotiationOffers.stream().filter(offer -> offer.getReReleaseOfferId() != null).count());
+
+		dto.setCandidateAccepted(
+
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
+						.count());
+
+		dto.setCandidateRejected(
+
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
+						.count());
 
 		return dto;
 	}
