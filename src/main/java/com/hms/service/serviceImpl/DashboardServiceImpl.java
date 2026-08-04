@@ -537,6 +537,8 @@ public class DashboardServiceImpl implements IDashboardService {
 			dto.setTargetStartDate(job.getTargetStartDate());
 
 			dto.setPriority(sr.getPriority());
+			
+			dto.setSrId(sr.getSrId());
 
 			dto.setInProgress(null);
 
