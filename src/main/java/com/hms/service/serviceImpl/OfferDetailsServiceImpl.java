@@ -1,6 +1,9 @@
 package com.hms.service.serviceImpl;
 
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -476,7 +479,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		String expectedRoleName = rolesRepository.findByRoleId(expectedRole)
 				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
-		
+
 		log.info("Current Approval Level : {}", currentLevel);
 		log.info("Token Role : {}", roleName);
 		log.info("Expected Role Id : {}", expectedRole);
@@ -521,12 +524,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		if (submittedBy != null) {
 
 			Optional<UserEntity> maker = userRepository.findByUserId(submittedBy);
-			
+
 			if (maker.isEmpty()) {
 				log.error("Maker not found for userId : {}", submittedBy);
 				return ApiResponse.failure(ResponseCode.FAILURE, "Maker not found");
 			}
-			
+
 			UserEntity userEntity = maker.get();
 
 			if (userEntity == null) {
@@ -593,7 +596,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			pos.setApprover1Role(roleName);
 			pos.setDateOfApproval1(now);
 			pos.setApprover1Comments(request.getComments());
-			
+
 			if ("NEGOTIATION".equalsIgnoreCase(request.getApprovalType())) {
 
 				if (request.getFinanceRecommendations() == null || request.getFinanceRecommendations().isEmpty()) {
@@ -605,32 +608,33 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 					return ApiResponse.failure(ResponseCode.FAILURE, "Finance reason is mandatory");
 				}
 
-			    // Update Negotiation Table
-				
+				// Update Negotiation Table
+
 				log.info("Request Applicant Id : {}", request.getApplicantId());
-				
-			    Optional<NegotiationOfferEntity> negotiationOpt = negotiationOfferRepository.findByApplicant_Id(request.getApplicantId());
 
-			    log.info("Negotiation Found : {}", negotiationOpt.isPresent());
-			    
-			    if (negotiationOpt.isPresent()) {
+				Optional<NegotiationOfferEntity> negotiationOpt = negotiationOfferRepository
+						.findByApplicant_Id(request.getApplicantId());
 
-			        NegotiationOfferEntity negotiation = negotiationOpt.get();
-			        
-			        log.info("Negotiation Id : {}", negotiation.getId());
+				log.info("Negotiation Found : {}", negotiationOpt.isPresent());
 
-			        negotiation.setFinanceRecommendations(request.getFinanceRecommendations());
+				if (negotiationOpt.isPresent()) {
 
-			        negotiation.setFinanceReason(request.getFinanceReason());
+					NegotiationOfferEntity negotiation = negotiationOpt.get();
 
-			        negotiationOfferRepository.save(negotiation);
-			        
-			        log.info("Negotiation saved successfully");
-			    } else {
+					log.info("Negotiation Id : {}", negotiation.getId());
 
-			        log.error("Negotiation record not found for applicantId={}", request.getApplicantId());
-			        
-			    }
+					negotiation.setFinanceRecommendations(request.getFinanceRecommendations());
+
+					negotiation.setFinanceReason(request.getFinanceReason());
+
+					negotiationOfferRepository.save(negotiation);
+
+					log.info("Negotiation saved successfully");
+				} else {
+
+					log.error("Negotiation record not found for applicantId={}", request.getApplicantId());
+
+				}
 			}
 
 			approverName = pos.getApprover1By();
@@ -668,20 +672,17 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 					if (negotiation.getFinanceRecommendations() != null) {
 
-					    Long basicPay = negotiation.getFinanceRecommendations()
-					            .stream()
-					            .filter(f -> "Basic Pay".equalsIgnoreCase(f.getFieldName()))
-					            .map(FinanceRecommendation::getAmount)
-					            .findFirst()
-					            .orElse(null);
+						Long basicPay = negotiation.getFinanceRecommendations().stream()
+								.filter(f -> "Basic Pay".equalsIgnoreCase(f.getFieldName()))
+								.map(FinanceRecommendation::getAmount).findFirst().orElse(null);
 
-					    if (basicPay != null) {
-					        pos.setTotalCtc(basicPay);
-					    }
+						if (basicPay != null) {
+							pos.setTotalCtc(basicPay);
+						}
 					}
 				}
-			}		
-			
+			}
+
 			approverName = pos.getApprover2By();
 			approvedDate = pos.getDateOfApproval2();
 
@@ -885,7 +886,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			}
 		}
 
-		Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplication_IdAndNegotiationFalse(applicantId);
+		Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository
+				.findByJobApplication_IdAndNegotiationFalse(applicantId);
 
 		if (offerOptional.isPresent()) {
 
@@ -1241,30 +1243,41 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	@Override
 	public void viewOfferLetter(Integer appId, String action, HttpServletResponse response) {
 
-		log.info("Inside viewOfferLetter");
+		log.info("JobsServiceImpl: Inside viewOfferLetter method");
 
 		JobApplicationEntity application = jobApplicationRepository.findById(appId)
-				.orElseThrow(() -> new RuntimeException("Application not found"));
+				.orElseThrow(() -> new RuntimeException(Constants.APPLICATION_NOT_FOUND));
 
 		String candidateName = application.getFirstName() + "_" + application.getLastName();
 
 		String objectKey = "offer-letters/" + appId + "/" + candidateName + "_Offer_Letter.pdf";
 
-		try (InputStream inputStream = minioClient.getObject(
-				GetObjectArgs.builder().bucket("infospokejobapplicationsbucket").object(objectKey).build())) {
+		String fileName = Paths.get(objectKey).getFileName().toString();
+
+		try {
+
+			InputStream minioStream = minioClient
+					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
+
+			String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
 
 			response.setContentType("application/pdf");
+			response.setCharacterEncoding("UTF-8");
 
 			response.setHeader("Content-Disposition", ("view".equalsIgnoreCase(action) ? "inline" : "attachment")
-					+ "; filename=\"" + candidateName + "_Offer_Letter.pdf\"");
+					+ "; filename*=UTF-8''" + encodedFileName);
 
-			IOUtils.copy(inputStream, response.getOutputStream());
+			IOUtils.copy(minioStream, response.getOutputStream());
 
 			response.flushBuffer();
 
+			minioStream.close();
+
 		} catch (Exception e) {
-			log.error("Error while viewing offer letter", e);
-			throw new RuntimeException("Unable to fetch offer letter from MinIO");
+
+			log.error("JobsServiceImpl::Exception occurred in viewOfferLetter method", e);
+
+			throw new RuntimeException("Error downloading offer letter from MinIO", e);
 		}
 	}
 
@@ -1752,7 +1765,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		OfferNegotiationResponse response = new OfferNegotiationResponse();
 
 		response.setNegotiationId(entity.getId());
-		
+
 		response.setApplicantId(entity.getApplicant().getId());
 
 		if (entity.getCandidate() != null) {
@@ -1787,7 +1800,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	private OfferNegotiationResponse mapOfferResponse(OfferDetailsEntity offer) {
 
 		OfferNegotiationResponse response = new OfferNegotiationResponse();
-	
+
 		JobApplicationEntity application = offer.getJobApplication();
 
 		if (application != null) {
@@ -1841,7 +1854,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Optional<NegotiationOfferEntity> negotiationDetails = negotiationOfferRepository
 				.findByApplicant_Id(applicantId);
-		
+
 		log.info("Applicant Id : {}", applicantId);
 		log.info("Negotiation Present : {}", negotiationDetails.isPresent());
 
@@ -1870,7 +1883,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setEmail(candidate.getEmail());
 
 		}
-		
+
 		// Job Details
 
 		Integer jobId = negotiation.getApplicant().getJobId();
@@ -1893,11 +1906,11 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				response.setMaximumSalary(budget.getMaximumSalary());
 
 				response.setAnnualHiringCost(budget.getAnnualHiringCost());
-	
+
 			}
 
 		}
-		
+
 		// HR Recommendation Details
 		response.setHrRecommendations(negotiation.getHrRecommendations());
 
@@ -1914,34 +1927,33 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	@Transactional
 	public ApiResponse<?> reviewNegotiationRequest(HrRecommendationRequest request) {
 
-	    log.info("OfferDetailsServiceImpl : Inside reviewNegotiationRequest");
+		log.info("OfferDetailsServiceImpl : Inside reviewNegotiationRequest");
 
-	    String authHeader = httpServletRequest.getHeader("Authorization");
-	    String token = authHeader.substring(7);
+		String authHeader = httpServletRequest.getHeader("Authorization");
+		String token = authHeader.substring(7);
 
-	    Long loginUserId = jwtService.extractUserId(token);
-	    Long loginRoleId = jwtService.extractRoleId(token);
+		Long loginUserId = jwtService.extractUserId(token);
+		Long loginRoleId = jwtService.extractRoleId(token);
 
+		Optional<NegotiationOfferEntity> negotiationOptional = negotiationOfferRepository
+				.findByApplicant_Id(request.getApplicantId());
 
-	    Optional<NegotiationOfferEntity> negotiationOptional =
-	            negotiationOfferRepository.findByApplicant_Id(request.getApplicantId());
+		if (negotiationOptional.isEmpty()) {
+			ApiResponse.failure(ResponseCode.FAILURE, "Negotiation details not found");
+		}
 
-	    if (negotiationOptional.isEmpty()) {
-	        ApiResponse.failure(ResponseCode.FAILURE,"Negotiation details not found");
-	    }
+		NegotiationOfferEntity negotiation = negotiationOptional.get();
 
-	    NegotiationOfferEntity negotiation = negotiationOptional.get();
+		negotiation.setHrRecommendedCtc(request.getHrRecommendedCtc());
+		negotiation.setHrRecommendations(request.getHrRecommendations());
+		negotiation.setHrReason(request.getHrReason());
+		negotiation.setRevisedJoiningDate(request.getRevisedJoiningDate());
+		negotiationOfferRepository.save(negotiation);
 
-	    negotiation.setHrRecommendedCtc(request.getHrRecommendedCtc());
-	    negotiation.setHrRecommendations(request.getHrRecommendations());
-	    negotiation.setHrReason(request.getHrReason());
-	    negotiation.setRevisedJoiningDate(request.getRevisedJoiningDate());
-	    negotiationOfferRepository.save(negotiation);
+		Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository
+				.findByJobApplication_IdAndNegotiationTrue(request.getApplicantId());
 
-	    Optional<OfferDetailsEntity> offerOptional =
-	            offerDetailsRepository.findByJobApplication_IdAndNegotiationTrue(request.getApplicantId());
-
-	    OfferDetailsEntity oldOffer = null;
+		OfferDetailsEntity oldOffer = null;
 
 		if (offerOptional.isPresent()) {
 
@@ -1953,59 +1965,56 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		}
 
+		OfferDetailsEntity newOffer = new OfferDetailsEntity();
 
-	    OfferDetailsEntity newOffer = new OfferDetailsEntity();
+		newOffer.setJobApplication(oldOffer.getJobApplication());
 
-	    newOffer.setJobApplication(oldOffer.getJobApplication());
+		newOffer.setNoticePeriod(oldOffer.getNoticePeriod());
 
-	    newOffer.setNoticePeriod(oldOffer.getNoticePeriod());
+		newOffer.setProbationPeriod(oldOffer.getProbationPeriod());
 
-	    newOffer.setProbationPeriod(oldOffer.getProbationPeriod());
-	     
-	    newOffer.setOfferStatus("Pending");
-	    
-	    newOffer.setInProgress(false);
-	    
-	    newOffer.setSubmitFinancialApproval(true);
-	    
-	    newOffer.setInterviewCompletionDate(oldOffer.getInterviewCompletionDate());
-	    
-	    newOffer.setInterviewCompletionStatus(oldOffer.getInterviewCompletionStatus());
-	    
-	    newOffer.setRecruitedBy(oldOffer.getRecruitedBy());
-	    
-	    newOffer.setOfferLetterTemplate(oldOffer.getOfferLetterTemplate());;
+		newOffer.setOfferStatus("Pending");
 
-	    newOffer.setCreatedByRoleId(loginRoleId.intValue());
+		newOffer.setInProgress(false);
 
-	    newOffer.setSubmittedByUserId(loginUserId.intValue());
+		newOffer.setSubmitFinancialApproval(true);
 
-	    newOffer.setCreatedDate(LocalDateTime.now());
+		newOffer.setInterviewCompletionDate(oldOffer.getInterviewCompletionDate());
 
-	    newOffer.setApprover1(false);
-	    newOffer.setApprover2(false);
-	    newOffer.setApprover3(false);
+		newOffer.setInterviewCompletionStatus(oldOffer.getInterviewCompletionStatus());
 
-	    newOffer.setOfferReleased(false);
-	    
-	    newOffer.setApprover1Role(oldOffer.getApprover1Role());
-	    newOffer.setApprover2Role(oldOffer.getApprover2Role());
-	    newOffer.setApprover3Role(oldOffer.getApprover3Role());
+		newOffer.setRecruitedBy(oldOffer.getRecruitedBy());
 
-	    OfferDetailsEntity savedOffer = offerDetailsRepository.save(newOffer);
+		newOffer.setOfferLetterTemplate(oldOffer.getOfferLetterTemplate());
+		;
 
-	    oldOffer.setReReleaseOfferId(savedOffer.getId());
+		newOffer.setCreatedByRoleId(loginRoleId.intValue());
 
-	    offerDetailsRepository.save(oldOffer);
+		newOffer.setSubmittedByUserId(loginUserId.intValue());
 
-	    Map<Integer, List<String>> roleEmailMap =
-	            processApprovalChain(request.getApplicantId());
+		newOffer.setCreatedDate(LocalDateTime.now());
 
-	    log.info("Approval Chain Started Successfully : {}", roleEmailMap);
+		newOffer.setApprover1(false);
+		newOffer.setApprover2(false);
+		newOffer.setApprover3(false);
 
-	    return ApiResponse.success(
-	            ResponseCode.SUCCESS,"Success",
-	            "Review request submitted successfully");
+		newOffer.setOfferReleased(false);
+
+		newOffer.setApprover1Role(oldOffer.getApprover1Role());
+		newOffer.setApprover2Role(oldOffer.getApprover2Role());
+		newOffer.setApprover3Role(oldOffer.getApprover3Role());
+
+		OfferDetailsEntity savedOffer = offerDetailsRepository.save(newOffer);
+
+		oldOffer.setReReleaseOfferId(savedOffer.getId());
+
+		offerDetailsRepository.save(oldOffer);
+
+		Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getApplicantId());
+
+		log.info("Approval Chain Started Successfully : {}", roleEmailMap);
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success", "Review request submitted successfully");
 	}
 
 }
