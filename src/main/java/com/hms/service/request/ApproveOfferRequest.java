@@ -1,5 +1,7 @@
 package com.hms.service.request;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +23,9 @@ public class ApproveOfferRequest {
 	
     private String approvalType;          // NORMAL_APPROVAL / NEGOTIATION
 
-    private Long approver1DecisionAmount;
+    private List<FinanceRecommendation> financeRecommendations;
+
+    private String financeReason;
 	
 
 }

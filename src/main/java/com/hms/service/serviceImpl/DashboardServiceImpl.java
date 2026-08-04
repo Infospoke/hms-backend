@@ -17,6 +17,8 @@ import com.hms.service.dto.CandidatePipelineDto;
 import com.hms.service.dto.CandidateQualityDto;
 import com.hms.service.dto.ConversionFunnelDto;
 import com.hms.service.dto.DashboardCardsDto;
+import com.hms.service.dto.HiringDashboardCardsDto;
+import com.hms.service.dto.HiringDashboardResponseDto;
 import com.hms.service.dto.HiringHealthDto;
 import com.hms.service.dto.HiringManagerAnalyticsResponseDto;
 import com.hms.service.dto.MyAssignedJobsDto;
@@ -27,14 +29,12 @@ import com.hms.service.dto.RecuriterDashboardDetailsDto;
 import com.hms.service.dto.SourcePerformanceDto;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobApplicationEntity;
-import com.hms.service.entity.NegotiationOfferEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.ResumeAnalysisEntity;
 import com.hms.service.entity.SRPositionBasicsEntity;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.JobApplicationRepository;
-import com.hms.service.repository.NegotiateOfferRepository;
 import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
@@ -74,9 +74,6 @@ public class DashboardServiceImpl implements IDashboardService {
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
-
-	@Autowired
-	private NegotiateOfferRepository negotiateOfferRepository;
 
 	@Override
 	public ApiResponse<?> getDashboard() {
@@ -293,13 +290,11 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
 
-		List<NegotiationOfferEntity> negotiations = negotiateOfferRepository.findByApplicant_IdIn(applicationIds);
-
 		response.setConversionFunnel(buildConversionFunnel(applications, resumeAnalysis, offers));
 
 		response.setOfferStatusFlow(buildOfferStatusFlow(offers));
 
-		response.setNegotiationFlow(buildNegotiationFlow(negotiations));
+		response.setNegotiationFlow(buildNegotiationFlow(offers));
 
 		response.setSourcePerformance(buildSourcePerformance(applications));
 
@@ -349,50 +344,77 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		OfferStatusFlowDto dto = new OfferStatusFlowDto();
 
+		Map<Integer, OfferDetailsEntity> uniqueOffers = offers.stream().collect(Collectors
+				.toMap(offer -> offer.getJobApplication().getId(), Function.identity(), (existing, latest) -> latest));
+
+		List<OfferDetailsEntity> offerList = new ArrayList<>(uniqueOffers.values());
+
 		dto.setOfferRequestByHR(
 
-				offers.stream().filter(offer -> offer.getInterviewCompletionStatus() != null
+				offerList.stream().filter(offer -> offer.getInterviewCompletionStatus() != null
 						&& offer.getInterviewCompletionStatus().equalsIgnoreCase("Hired")).count());
 
 		dto.setUnderReviewApproval(
 
-				offers.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
+				offerList.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
 
 		dto.setOfferReleased(
 
-				offers.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
+				offerList.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
 
 		dto.setOfferAccepted(
 
-				offers.stream().filter(
+				offerList.stream().filter(
 						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
 						.count());
 
 		dto.setOfferRejected(
 
-				offers.stream().filter(
+				offerList.stream().filter(
 						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
 						.count());
 
 		return dto;
 	}
 
-//not implemented yet
-	private NegotiationFlowDto buildNegotiationFlow(List<NegotiationOfferEntity> negotiations) {
+	private NegotiationFlowDto buildNegotiationFlow(List<OfferDetailsEntity> offers) {
 
 		NegotiationFlowDto dto = new NegotiationFlowDto();
 
-		dto.setNegotiationRequest((long) negotiations.size());
+		List<OfferDetailsEntity> negotiationOffers = offers.stream()
+				.filter(offer -> Boolean.TRUE.equals(offer.getNegotiation()))
+				.filter(offer -> offer.getNegotiationId() != null).collect(Collectors.toList());
 
-		dto.setHrReview(null);
+		dto.setNegotiationRequest(
 
-		dto.setUnderReview(null);
+				negotiationOffers.stream().filter(offer -> offer.getOfferStatus() != null
+						&& offer.getOfferStatus().equalsIgnoreCase("Request For Negotiation")).count());
 
-		dto.setReReleaseOffer(null);
+		dto.setHrReview(
 
-		dto.setCandidateAccepted(null);
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Reviewed"))
+						.count());
 
-		dto.setCandidateRejected(null);
+		dto.setUnderReview(
+
+				negotiationOffers.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
+
+		dto.setReReleaseOffer(
+
+				negotiationOffers.stream().filter(offer -> offer.getReReleaseOfferId() != null).count());
+
+		dto.setCandidateAccepted(
+
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
+						.count());
+
+		dto.setCandidateRejected(
+
+				negotiationOffers.stream().filter(
+						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
+						.count());
 
 		return dto;
 	}
@@ -419,18 +441,21 @@ public class DashboardServiceImpl implements IDashboardService {
 	}
 
 	@Override
+
 	public ApiResponse<?> getHiringDashboard() {
 
-		RecuriterDashboardDetailsDto response = new RecuriterDashboardDetailsDto();
+		HiringDashboardResponseDto response = new HiringDashboardResponseDto();
 
-		DashboardCardsDto cards = new DashboardCardsDto();
+		HiringDashboardCardsDto cards = new HiringDashboardCardsDto();
 
 		List<MyAssignedJobsDto> dashboardList = new ArrayList<>();
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
 			return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing.");
+
 		}
 
 		String token = authHeader.substring(7);
@@ -441,16 +466,24 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		if (srList.isEmpty()) {
 
-			cards.setMyApprovedSRs(0L);
-			cards.setActiveCandidates(0L);
-			cards.setTotalOpenings(0);
-			cards.setYetToFill(0);
-			cards.setInProgress(0);
+			cards.setAverageHiringAge(0L);
+
+			cards.setInterviews(0L);
+
+			cards.setOffers(0L);
+
+			cards.setOpenSrs(0L);
+
+			cards.setTotalCandidates(0L);
 
 			response.setCards(cards);
-			response.setMyAssignedJobsDto(new ArrayList<>());
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard fetched successfully", response);
+			response.setMyRequisitions(new ArrayList<>());
+
+			return ApiResponse.success(ResponseCode.SUCCESS,
+
+					"Dashboard fetched successfully", response);
+
 		}
 
 		Long openSrCount = (long) srList.size();
@@ -461,43 +494,58 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		Long offerCount = 0L;
 
-		Integer totalOpenings = 0;
-
 		for (SRPositionBasicsEntity sr : srList) {
 
 			CreateJobDetailsEntity job = createJobDetailsRepository.findBySrId(sr.getSrId());
 
 			if (job == null) {
-				continue;
-			}
 
-			totalOpenings += job.getOpenings();
+				continue;
+
+			}
 
 			Long candidateCount = (long) jobApplicationRepository.countByJobId(job.getJobId());
 
 			totalCandidates += candidateCount;
 
-			Long interviews = jobApplicationRepository.countByJobIdAndInPersonInterviewsTrue(job.getJobId());
+			Long interviews = jobApplicationRepository
+
+					.countByJobIdAndInPersonInterviewsTrue(job.getJobId());
 
 			interviewCount += interviews;
 
-			List<JobApplicationEntity> applications = jobApplicationRepository.findByJobId(job.getJobId());
+			List<JobApplicationEntity> applications =
 
-			List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
+					jobApplicationRepository.findByJobId(job.getJobId());
+
+			List<Integer> applicationIds = applications.stream()
+
+					.map(JobApplicationEntity::getId)
+
+					.toList();
 
 			if (!applicationIds.isEmpty()) {
+
 				offerCount += offerDetailsRepository.countReleasedOffers(applicationIds);
+
 			}
 
 			MyAssignedJobsDto dto = new MyAssignedJobsDto();
 
 			dto.setJobId(job.getJobId());
+
 			dto.setPosition(job.getJobTitle());
+
 			dto.setTotalOpenings(job.getOpenings());
+
 			dto.setTargetStartDate(job.getTargetStartDate());
+
 			dto.setPriority(sr.getPriority());
+			
+			dto.setSrId(sr.getSrId());
 
 			dto.setInProgress(null);
+
 			dto.setYetToFill(job.getOpenings());
 
 			LocalDate today = LocalDate.now();
@@ -514,47 +562,67 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			} else {
 
-				Long actualTime = ChronoUnit.DAYS.between(job.getCreatedAt().toLocalDate(), job.getTargetStartDate());
+				Long actualTime = ChronoUnit.DAYS.between(
+
+						job.getCreatedAt().toLocalDate(),
+
+						job.getTargetStartDate());
 
 				if (actualTime <= 0) {
+
 					actualTime = 1L;
+
 				}
 
 				int openings = job.getOpenings();
+
 				int hired = 0;
+
 				int remaining = openings - hired;
 
-				double timePercentage = (difference.doubleValue() / actualTime.doubleValue()) * 100;
+				double timePercentage =
 
-				double remainingPercentage = ((double) remaining / openings) * 100;
+						(difference.doubleValue() / actualTime.doubleValue()) * 100;
+
+				double remainingPercentage =
+
+						((double) remaining / openings) * 100;
 
 				if (timePercentage < 50 && remainingPercentage < 50) {
+
 					sla = "At Risk";
+
 				} else {
+
 					sla = "On Track";
+
 				}
+
 			}
 
 			dto.setSlaStatus(sla);
 
 			dashboardList.add(dto);
+
 		}
 
-		cards.setMyApprovedSRs(openSrCount);
+		cards.setAverageHiringAge(0L);
 
-		cards.setActiveCandidates(totalCandidates);
+		cards.setInterviews(interviewCount);
 
-		cards.setTotalOpenings(interviewCount.intValue());
+		cards.setOffers(offerCount);
 
-		cards.setYetToFill(offerCount.intValue());
+		cards.setOpenSrs(openSrCount);
 
-		cards.setInProgress(0);
+		cards.setTotalCandidates(totalCandidates);
 
 		response.setCards(cards);
 
-		response.setMyAssignedJobsDto(dashboardList);
+		response.setMyRequisitions(dashboardList);
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard fetched successfully", response);
+		return ApiResponse.success(ResponseCode.SUCCESS,
+
+				"Dashboard fetched successfully", response);
 
 	}
 
@@ -603,14 +671,12 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
 
-		List<NegotiationOfferEntity> negotiations = negotiateOfferRepository.findByApplicant_IdIn(applicationIds);
-
 		response.setCandidatePipeline(
 		        buildCandidatePipeline(applications, resumeAnalysis, offers));
 
 		response.setOfferStatusFlow(buildOfferStatusFlow(offers));
 
-		response.setNegotiationFlow(buildNegotiationFlow(negotiations));
+		response.setNegotiationFlow(buildNegotiationFlow(offers));
 
 		response.setCandidateQuality(buildCandidateQuality(resumeAnalysis));
 

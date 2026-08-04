@@ -757,6 +757,11 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		entity.setTotalRequestedAmount(totalRequestedAmount);
 
 		negotiateOfferRepository.save(entity);
+		
+		offer.setNegotiation(true);
+		offer.setNegotiationId(entity.getId());
+		offer.setOfferStatus("Requested for Negotiation");
+		offerDetailsRepository.save(offer);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Negotiation requested successfully", "success");
 	}

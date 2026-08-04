@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import com.hms.service.entity.NegotiationOfferEntity;
+import com.hms.service.entity.OfferDetailsEntity;
 
 @Repository
 
@@ -16,7 +17,7 @@ public interface NegotiateOfferRepository
 
 	List<NegotiationOfferEntity> findByIdIn(List<Integer> ids);
 
-	List<NegotiationOfferEntity> findByApplicant_IdIn(List<Integer> applicationIds);
+	List<OfferDetailsEntity> findByApplicant_IdIn(List<Integer> applicationIds);
 	
 	Optional<NegotiationOfferEntity> findByApplicant_Id(Integer applicantId);
 
