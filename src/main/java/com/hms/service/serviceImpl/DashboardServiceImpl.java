@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.ConversionFunnelDto;
 import com.hms.service.dto.DashboardCardsDto;
+import com.hms.service.dto.HiringDashboardCardsDto;
+import com.hms.service.dto.HiringDashboardResponseDto;
 import com.hms.service.dto.MyAssignedJobsDto;
 import com.hms.service.dto.NegotiationFlowDto;
 import com.hms.service.dto.OfferStatusFlowDto;
@@ -98,9 +100,6 @@ public class DashboardServiceImpl implements IDashboardService {
 			cards.setTotalOpenings(0);
 			cards.setYetToFill(0);
 			cards.setInProgress(0);
-			cards.setFilled(0);
-			cards.setMy(0);
-			cards.setTeam(0);
 
 			response.setCards(cards);
 			response.setMyAssignedJobsDto(new ArrayList<>());
@@ -438,18 +437,21 @@ public class DashboardServiceImpl implements IDashboardService {
 	}
 
 	@Override
+
 	public ApiResponse<?> getHiringDashboard() {
 
-		RecuriterDashboardDetailsDto response = new RecuriterDashboardDetailsDto();
+		HiringDashboardResponseDto response = new HiringDashboardResponseDto();
 
-		DashboardCardsDto cards = new DashboardCardsDto();
+		HiringDashboardCardsDto cards = new HiringDashboardCardsDto();
 
 		List<MyAssignedJobsDto> dashboardList = new ArrayList<>();
 
 		String authHeader = httpServletRequest.getHeader("Authorization");
 
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
 			return ApiResponse.failure(ResponseCode.FAILURE, "Authorization token is missing.");
+
 		}
 
 		String token = authHeader.substring(7);
@@ -460,16 +462,24 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		if (srList.isEmpty()) {
 
-			cards.setMyApprovedSRs(0L);
-			cards.setActiveCandidates(0L);
-			cards.setTotalOpenings(0);
-			cards.setYetToFill(0);
-			cards.setInProgress(0);
+			cards.setAverageHiringAge(0L);
+
+			cards.setInterviews(0L);
+
+			cards.setOffers(0L);
+
+			cards.setOpenSrs(0L);
+
+			cards.setTotalCandidates(0L);
 
 			response.setCards(cards);
-			response.setMyAssignedJobsDto(new ArrayList<>());
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard fetched successfully", response);
+			response.setMyRequisitions(new ArrayList<>());
+
+			return ApiResponse.success(ResponseCode.SUCCESS,
+
+					"Dashboard fetched successfully", response);
+
 		}
 
 		Long openSrCount = (long) srList.size();
@@ -480,43 +490,56 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		Long offerCount = 0L;
 
-		Integer totalOpenings = 0;
-
 		for (SRPositionBasicsEntity sr : srList) {
 
 			CreateJobDetailsEntity job = createJobDetailsRepository.findBySrId(sr.getSrId());
 
 			if (job == null) {
-				continue;
-			}
 
-			totalOpenings += job.getOpenings();
+				continue;
+
+			}
 
 			Long candidateCount = (long) jobApplicationRepository.countByJobId(job.getJobId());
 
 			totalCandidates += candidateCount;
 
-			Long interviews = jobApplicationRepository.countByJobIdAndInPersonInterviewsTrue(job.getJobId());
+			Long interviews = jobApplicationRepository
+
+					.countByJobIdAndInPersonInterviewsTrue(job.getJobId());
 
 			interviewCount += interviews;
 
-			List<JobApplicationEntity> applications = jobApplicationRepository.findByJobId(job.getJobId());
+			List<JobApplicationEntity> applications =
 
-			List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
+					jobApplicationRepository.findByJobId(job.getJobId());
+
+			List<Integer> applicationIds = applications.stream()
+
+					.map(JobApplicationEntity::getId)
+
+					.toList();
 
 			if (!applicationIds.isEmpty()) {
+
 				offerCount += offerDetailsRepository.countReleasedOffers(applicationIds);
+
 			}
 
 			MyAssignedJobsDto dto = new MyAssignedJobsDto();
 
 			dto.setJobId(job.getJobId());
+
 			dto.setPosition(job.getJobTitle());
+
 			dto.setTotalOpenings(job.getOpenings());
+
 			dto.setTargetStartDate(job.getTargetStartDate());
+
 			dto.setPriority(sr.getPriority());
 
 			dto.setInProgress(null);
+
 			dto.setYetToFill(job.getOpenings());
 
 			LocalDate today = LocalDate.now();
@@ -533,47 +556,67 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			} else {
 
-				Long actualTime = ChronoUnit.DAYS.between(job.getCreatedAt().toLocalDate(), job.getTargetStartDate());
+				Long actualTime = ChronoUnit.DAYS.between(
+
+						job.getCreatedAt().toLocalDate(),
+
+						job.getTargetStartDate());
 
 				if (actualTime <= 0) {
+
 					actualTime = 1L;
+
 				}
 
 				int openings = job.getOpenings();
+
 				int hired = 0;
+
 				int remaining = openings - hired;
 
-				double timePercentage = (difference.doubleValue() / actualTime.doubleValue()) * 100;
+				double timePercentage =
 
-				double remainingPercentage = ((double) remaining / openings) * 100;
+						(difference.doubleValue() / actualTime.doubleValue()) * 100;
+
+				double remainingPercentage =
+
+						((double) remaining / openings) * 100;
 
 				if (timePercentage < 50 && remainingPercentage < 50) {
+
 					sla = "At Risk";
+
 				} else {
+
 					sla = "On Track";
+
 				}
+
 			}
 
 			dto.setSlaStatus(sla);
 
 			dashboardList.add(dto);
+
 		}
 
-		cards.setMyApprovedSRs(openSrCount);
+		cards.setAverageHiringAge(0L);
 
-		cards.setActiveCandidates(totalCandidates);
+		cards.setInterviews(interviewCount);
 
-		cards.setTotalOpenings(interviewCount.intValue());
+		cards.setOffers(offerCount);
 
-		cards.setYetToFill(offerCount.intValue());
+		cards.setOpenSrs(openSrCount);
 
-		cards.setInProgress(0);
+		cards.setTotalCandidates(totalCandidates);
 
 		response.setCards(cards);
 
-		response.setMyAssignedJobsDto(dashboardList);
+		response.setMyRequisitions(dashboardList);
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Dashboard fetched successfully", response);
+		return ApiResponse.success(ResponseCode.SUCCESS,
+
+				"Dashboard fetched successfully", response);
 
 	}
 }

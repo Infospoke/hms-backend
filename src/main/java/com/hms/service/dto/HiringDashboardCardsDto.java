@@ -16,6 +16,6 @@ public class HiringDashboardCardsDto {
 
     private Long offers;
 
-    private Double averageHiringAge;
+    private Long averageHiringAge;
 
 }
