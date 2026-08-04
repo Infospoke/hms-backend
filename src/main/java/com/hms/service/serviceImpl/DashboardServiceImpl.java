@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -207,11 +208,11 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			dto.setMy(myCandidates);
 
-			dto.setTeam(null);
+			dto.setTeam(0);
 
-			dto.setYetToFill(null);
+			dto.setYetToFill(0);
 
-			dto.setInProgress(null);
+			dto.setInProgress(0);
 
 			dto.setDaysRemaining(daysRemaining);
 
@@ -272,17 +273,19 @@ public class DashboardServiceImpl implements IDashboardService {
 			applications = jobApplicationRepository.findRecruiterApplicationsByDate(recruiterId, jobId, fromDateTime,
 					toDateTime);
 		}
-
 		if (applications.isEmpty()) {
 
-			response.setConversionFunnel(new ConversionFunnelDto());
-			response.setOfferStatusFlow(new OfferStatusFlowDto());
-			response.setNegotiationFlow(new NegotiationFlowDto());
-			response.setSourcePerformance(new SourcePerformanceDto());
+			response.setConversionFunnel(
+					buildConversionFunnel(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+
+			response.setOfferStatusFlow(buildOfferStatusFlow(Collections.emptyList()));
+
+			response.setNegotiationFlow(buildNegotiationFlow(Collections.emptyList()));
+
+			response.setSourcePerformance(buildSourcePerformance(Collections.emptyList()));
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "No data found.", response);
 		}
-
 		List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId)
 				.collect(Collectors.toList());
 
@@ -321,21 +324,17 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		dto.setApplications((long) applications.size());
 
-		dto.setScreening(applications.stream()
-				.filter(app -> app.getCurrentStage() != null && app.getCurrentStage().equalsIgnoreCase("Screened"))
-				.count());
+		dto.setScreening(
+				applications.stream().filter(app -> "Screened".equalsIgnoreCase(app.getCurrentStage())).count());
 
-		dto.setShortlisted(resumeAnalysis.stream()
-				.filter(resume -> resume.getStatus() != null && resume.getStatus().equalsIgnoreCase("Shortlisted"))
-				.count());
+		dto.setShortlisted(
+				resumeAnalysis.stream().filter(resume -> "Shortlisted".equalsIgnoreCase(resume.getStatus())).count());
 
 		dto.setInterview(applications.stream().filter(JobApplicationEntity::isInPersonInterviews).count());
 
-		dto.setOffers(offers.stream()
-				.filter(offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
-				.count());
+		dto.setOffers(offers.stream().filter(offer -> "Accepted".equalsIgnoreCase(offer.getOfferStatus())).count());
 
-		dto.setHired(null);
+		dto.setHired(0L);
 
 		return dto;
 	}
@@ -349,30 +348,19 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		List<OfferDetailsEntity> offerList = new ArrayList<>(uniqueOffers.values());
 
-		dto.setOfferRequestByHR(
-
-				offerList.stream().filter(offer -> offer.getInterviewCompletionStatus() != null
-						&& offer.getInterviewCompletionStatus().equalsIgnoreCase("Hired")).count());
+		dto.setOfferRequestByHR(offerList.stream()
+				.filter(offer -> "Hired".equalsIgnoreCase(offer.getInterviewCompletionStatus())).count());
 
 		dto.setUnderReviewApproval(
-
 				offerList.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
 
-		dto.setOfferReleased(
-
-				offerList.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
+		dto.setOfferReleased(offerList.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
 
 		dto.setOfferAccepted(
-
-				offerList.stream().filter(
-						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
-						.count());
+				offerList.stream().filter(offer -> "Accepted".equalsIgnoreCase(offer.getOfferStatus())).count());
 
 		dto.setOfferRejected(
-
-				offerList.stream().filter(
-						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
-						.count());
+				offerList.stream().filter(offer -> "Rejected".equalsIgnoreCase(offer.getOfferStatus())).count());
 
 		return dto;
 	}
@@ -385,36 +373,22 @@ public class DashboardServiceImpl implements IDashboardService {
 				.filter(offer -> Boolean.TRUE.equals(offer.getNegotiation()))
 				.filter(offer -> offer.getNegotiationId() != null).collect(Collectors.toList());
 
-		dto.setNegotiationRequest(
+		dto.setNegotiationRequest(negotiationOffers.stream()
+				.filter(offer -> "Request For Negotiation".equalsIgnoreCase(offer.getOfferStatus())).count());
 
-				negotiationOffers.stream().filter(offer -> offer.getOfferStatus() != null
-						&& offer.getOfferStatus().equalsIgnoreCase("Request For Negotiation")).count());
-
-		dto.setHrReview(
-
-				negotiationOffers.stream().filter(
-						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Reviewed"))
-						.count());
+		dto.setHrReview(negotiationOffers.stream().filter(offer -> "Reviewed".equalsIgnoreCase(offer.getOfferStatus()))
+				.count());
 
 		dto.setUnderReview(
-
 				negotiationOffers.stream().filter(offer -> Boolean.FALSE.equals(offer.getApprover3())).count());
 
-		dto.setReReleaseOffer(
+		dto.setReReleaseOffer(negotiationOffers.stream().filter(offer -> offer.getReReleaseOfferId() != null).count());
 
-				negotiationOffers.stream().filter(offer -> offer.getReReleaseOfferId() != null).count());
+		dto.setCandidateAccepted(negotiationOffers.stream()
+				.filter(offer -> "Accepted".equalsIgnoreCase(offer.getOfferStatus())).count());
 
-		dto.setCandidateAccepted(
-
-				negotiationOffers.stream().filter(
-						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Accepted"))
-						.count());
-
-		dto.setCandidateRejected(
-
-				negotiationOffers.stream().filter(
-						offer -> offer.getOfferStatus() != null && offer.getOfferStatus().equalsIgnoreCase("Rejected"))
-						.count());
+		dto.setCandidateRejected(negotiationOffers.stream()
+				.filter(offer -> "Rejected".equalsIgnoreCase(offer.getOfferStatus())).count());
 
 		return dto;
 	}
@@ -424,18 +398,13 @@ public class DashboardServiceImpl implements IDashboardService {
 		SourcePerformanceDto dto = new SourcePerformanceDto();
 
 		dto.setCompanyCareerPortal(
-
 				applications.stream().filter(app -> Boolean.TRUE.equals(app.getCareerPortal())).count());
 
-		dto.setLinkedIn(null);
-
-		dto.setNaukri(null);
-
-		dto.setEmployeeReferral(null);
-
-		dto.setIndeed(null);
-
-		dto.setOthers(null);
+		dto.setLinkedIn(0L);
+		dto.setNaukri(0L);
+		dto.setEmployeeReferral(0L);
+		dto.setIndeed(0L);
+		dto.setOthers(0L);
 
 		return dto;
 	}
@@ -541,7 +510,7 @@ public class DashboardServiceImpl implements IDashboardService {
 			dto.setTargetStartDate(job.getTargetStartDate());
 
 			dto.setPriority(sr.getPriority());
-			
+
 			dto.setSrId(sr.getSrId());
 
 			dto.setInProgress(null);
