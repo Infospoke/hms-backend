@@ -1547,8 +1547,22 @@ public class SpecificationFilterRequest {
 
 		Specification<OfferDetailsEntity> spec = (root, query, cb) -> cb.conjunction();
 
+		 String releaseType = getFilter("releaseType");
+		
+		 if ("RE-RELEASE".equalsIgnoreCase(releaseType)) {
+
+		        // Re-release candidates
+		        spec = spec.and((root, query, cb) ->
+		                cb.and(
+		                        cb.isTrue(root.get("approve")),
+		                        cb.isTrue(root.get("negotiation"))
+		                ));
+
+		    } else {
+		
 		spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
 				cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased")))));
+		    }
 
 		String search = getFilter("search");
 		if (search != null) {
@@ -1679,6 +1693,10 @@ public class SpecificationFilterRequest {
 
 			// Candidate should be hired/accepted
 			predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")), "hired"));
+
+			// Candidate should NOT be submitted for financial approval
+			predicates.add(cb.or(cb.isNull(root.get("submitFinancialApproval")),
+					cb.isFalse(root.get("submitFinancialApproval"))));
 
 			// Search
 			String search = getFilter("search");

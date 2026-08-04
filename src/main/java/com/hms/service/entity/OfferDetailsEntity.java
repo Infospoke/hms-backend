@@ -50,7 +50,7 @@ public class OfferDetailsEntity {
     private LocalDateTime respondedAt;
     
     @Column(name = "submit_financial_approval")
-    private Boolean submitFinancialApproval=false;
+    private Boolean submitFinancialApproval;
     
     @Column(name="approver1")
     private Boolean approver1=false;
