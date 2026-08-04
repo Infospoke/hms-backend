@@ -157,4 +157,8 @@ public class OfferDetailsEntity {
     @Column(name="re_release_offer_id")
     private Integer reReleaseOfferId;
     
+    @Column(name="offer_letter_path")
+    private String offerLetterPath;
+    
+    
 }

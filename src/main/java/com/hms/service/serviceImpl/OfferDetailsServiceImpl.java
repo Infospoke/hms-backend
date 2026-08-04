@@ -715,6 +715,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				pos.setApprover3(true);
 
 				approvalStatus = pos.getApprover3();
+				pos.setOfferLetterPath(request.getOfferLetterPath());
 			}
 
 			break;

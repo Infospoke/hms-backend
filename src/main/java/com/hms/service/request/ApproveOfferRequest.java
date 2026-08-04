@@ -27,5 +27,6 @@ public class ApproveOfferRequest {
 
     private String financeReason;
 	
+    private String offerLetterPath;
 
 }
