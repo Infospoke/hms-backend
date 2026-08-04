@@ -61,6 +61,7 @@ import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RolesRepository;
 import com.hms.service.repository.UserRepository;
 import com.hms.service.request.ApproveOfferRequest;
+import com.hms.service.request.FinanceRecommendation;
 import com.hms.service.request.HrRecommendationRequest;
 import com.hms.service.request.LevelConfig;
 import com.hms.service.request.ReleaseOfferRequest;
@@ -475,6 +476,11 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		String expectedRoleName = rolesRepository.findByRoleId(expectedRole)
 				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
+		
+		log.info("Current Approval Level : {}", currentLevel);
+		log.info("Token Role : {}", roleName);
+		log.info("Expected Role Id : {}", expectedRole);
+		log.info("Expected Role Name : {}", expectedRoleName);
 
 		if (!roleName.equalsIgnoreCase(expectedRoleName)) {
 
@@ -590,13 +596,41 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			
 			if ("NEGOTIATION".equalsIgnoreCase(request.getApprovalType())) {
 
-			    if (request.getApprover1DecisionAmount() == null) {
+				if (request.getFinanceRecommendations() == null || request.getFinanceRecommendations().isEmpty()) {
 
-					return ApiResponse.failure(ResponseCode.FAILURE,
-							"Finance Analyst decision amount is mandatory for negotiation approval");
+					return ApiResponse.failure(ResponseCode.FAILURE, "Finance recommendations are mandatory");
 				}
 
-			    pos.setApprover1DecisionAmount(request.getApprover1DecisionAmount());
+				if (request.getFinanceReason() == null || request.getFinanceReason().isBlank()) {
+					return ApiResponse.failure(ResponseCode.FAILURE, "Finance reason is mandatory");
+				}
+
+			    // Update Negotiation Table
+				
+				log.info("Request Applicant Id : {}", request.getApplicantId());
+				
+			    Optional<NegotiationOfferEntity> negotiationOpt = negotiationOfferRepository.findByApplicant_Id(request.getApplicantId());
+
+			    log.info("Negotiation Found : {}", negotiationOpt.isPresent());
+			    
+			    if (negotiationOpt.isPresent()) {
+
+			        NegotiationOfferEntity negotiation = negotiationOpt.get();
+			        
+			        log.info("Negotiation Id : {}", negotiation.getId());
+
+			        negotiation.setFinanceRecommendations(request.getFinanceRecommendations());
+
+			        negotiation.setFinanceReason(request.getFinanceReason());
+
+			        negotiationOfferRepository.save(negotiation);
+			        
+			        log.info("Negotiation saved successfully");
+			    } else {
+
+			        log.error("Negotiation record not found for applicantId={}", request.getApplicantId());
+			        
+			    }
 			}
 
 			approverName = pos.getApprover1By();
@@ -623,6 +657,31 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			pos.setDateOfApproval2(now);
 			pos.setApprover2Comments(request.getComments());
 
+			if ("NEGOTIATION".equalsIgnoreCase(request.getApprovalType())) {
+
+				Optional<NegotiationOfferEntity> negotiationOpt = negotiationOfferRepository
+						.findByApplicant_Id(request.getApplicantId());
+
+				if (negotiationOpt.isPresent()) {
+
+					NegotiationOfferEntity negotiation = negotiationOpt.get();
+
+					if (negotiation.getFinanceRecommendations() != null) {
+
+					    Long basicPay = negotiation.getFinanceRecommendations()
+					            .stream()
+					            .filter(f -> "Basic Pay".equalsIgnoreCase(f.getFieldName()))
+					            .map(FinanceRecommendation::getAmount)
+					            .findFirst()
+					            .orElse(null);
+
+					    if (basicPay != null) {
+					        pos.setTotalCtc(basicPay);
+					    }
+					}
+				}
+			}		
+			
 			approverName = pos.getApprover2By();
 			approvedDate = pos.getDateOfApproval2();
 

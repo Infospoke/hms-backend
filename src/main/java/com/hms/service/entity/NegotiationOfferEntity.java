@@ -7,6 +7,7 @@ import java.util.List;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.hms.service.request.FinanceRecommendation;
 import com.hms.service.request.HrRecommendation;
 import com.hms.service.request.Negotiation;
 
@@ -93,4 +94,11 @@ public class NegotiationOfferEntity {
      
     @Column(name="revised_joining_date")
     private LocalDate revisedJoiningDate;
+    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "finance_recommendations", columnDefinition = "jsonb")
+    private List<FinanceRecommendation> financeRecommendations;
+
+    @Column(name = "finance_reason", length = 1000)
+    private String financeReason;
 }
