@@ -1134,21 +1134,29 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	@Override
 	public ApiResponse<?> getOfferDashboardCounts() {
 
-		log.info("OfferDetailsServiceImpl :: getOfferDashboardCounts");
+		Long newOfferRequests = offerDetailsRepository.countNewOfferRequests();
 
-		Long raiseOfferRequest = offerDetailsRepository.countBySubmitFinancialApprovalFalse();
+		Long newApprovals = offerDetailsRepository.countNewOfferApprovals();
 
-		Long pendingApprovals = offerDetailsRepository
-				.countBySubmitFinancialApprovalTrueAndApproveFalseAndRejectFalse();
+		Long negotiationApprovals = offerDetailsRepository.countNegotiationApprovals();
 
-		Long readyToRelease = offerDetailsRepository.countByApproveTrueAndOfferReleasedFalse();
+		Long pendingRelease = offerDetailsRepository.countPendingRelease();
+
+		Long reRelease = offerDetailsRepository.countReRelease();
+
+		Long candidateResponses = offerDetailsRepository.countCandidateResponses();
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
-		response.put("raiseOfferRequest", raiseOfferRequest);
-		response.put("pendingApprovals", pendingApprovals);
-		response.put("readyToRelease", readyToRelease);
-		response.put("releaseOfferLetter", pendingApprovals + readyToRelease);
+		response.put("newOfferRequests", newOfferRequests);
+
+		response.put("offerApprovals", Map.of("new", newApprovals, "negotiation", negotiationApprovals, "total",
+				newApprovals + negotiationApprovals));
+
+		response.put("releaseOfferLetter",
+				Map.of("pending", pendingRelease, "reRelease", reRelease, "total", pendingRelease + reRelease));
+
+		response.put("candidateResponses", candidateResponses);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Offer dashboard counts fetched successfully", response);
 	}

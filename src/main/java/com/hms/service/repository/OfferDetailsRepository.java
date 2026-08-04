@@ -22,12 +22,6 @@ public interface OfferDetailsRepository
 
 	Optional<OfferDetailsEntity> findByJobApplicationId(Integer applicantId);
 
-	Long countBySubmitFinancialApprovalFalse();
-
-	Long countBySubmitFinancialApprovalTrueAndApproveFalseAndRejectFalse();
-
-	Long countByApproveTrueAndOfferReleasedFalse();
-
 	Optional<OfferDetailsEntity> findByJobApplication(JobApplicationEntity jobApplication);
 
 	Long countByJobApplicationIdInAndOfferReleasedTrue(Iterable<Integer> applicationIds);
@@ -46,4 +40,60 @@ public interface OfferDetailsRepository
 			""")
 	Long countReleasedOffers(@Param("applicationIds") List<Integer> applicationIds);
 
+	@Query("""
+			SELECT COUNT(o)
+			FROM OfferDetailsEntity o
+			WHERE UPPER(o.interviewCompletionStatus) = 'HIRED'
+			AND o.submitFinancialApproval = false
+			""")
+	Long countNewOfferRequests();
+
+	@Query("""
+			SELECT COUNT(DISTINCT o.jobApplication.id)
+			FROM OfferDetailsEntity o
+			WHERE o.submitFinancialApproval = true
+			AND o.approve = false
+			AND o.reReleaseOfferId IS NULL
+			""")
+	Long countNewOfferApprovals();
+
+	@Query("""
+			SELECT COUNT(o)
+			FROM OfferDetailsEntity o
+			WHERE o.approve = true
+			AND o.offerReleased = false
+			AND o.reReleaseOfferId IS NULL
+			""")
+	Long countPendingRelease();
+
+	@Query("""
+			SELECT COUNT(DISTINCT o.reReleaseOfferId)
+			FROM OfferDetailsEntity o
+			WHERE o.approve = true
+			AND o.offerReleased = false
+			AND o.reReleaseOfferId IS NOT NULL
+			""")
+	Long countReRelease();
+
+	@Query("""
+			SELECT COUNT(o)
+			FROM OfferDetailsEntity o
+			WHERE UPPER(o.offerStatus) IN (
+			'PENDING',
+			'ACCEPTED',
+			'REJECTED',
+			'EXPIRED',
+			'REQUEST FOR NEGOTIATION'
+			)
+			""")
+	Long countCandidateResponses();
+
+	@Query("""
+			SELECT COUNT(DISTINCT o.reReleaseOfferId)
+			FROM OfferDetailsEntity o
+			WHERE o.submitFinancialApproval = true
+			AND o.approve = false
+			AND o.reReleaseOfferId IS NOT NULL
+			""")
+	Long countNegotiationApprovals();
 }
