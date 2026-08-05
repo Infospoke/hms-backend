@@ -2023,9 +2023,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		
 		response.setTotalCtc(offer.getTotalCtc());
 
-		// ---------------------------------------------------------
 		// Job Application
-		// ---------------------------------------------------------
 
 		JobApplicationEntity application = offer.getJobApplication();
 
@@ -2033,9 +2031,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Job Application not found");
 		}
 
-		// ---------------------------------------------------------
 		// Candidate Details
-		// ---------------------------------------------------------
 
 		CandidateCreationDetailsEntity candidate = application.getCandidate();
 
@@ -2048,10 +2044,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setEmail(candidate.getEmail());
 
 		}
-
-		// ---------------------------------------------------------
 		// Job Details
-		// ---------------------------------------------------------
 
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
 
@@ -2071,9 +2064,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			}
 
-			// ---------------------------------------------------------
 			// Negotiation Details
-			// ---------------------------------------------------------
 
 			NegotiationOfferEntity negotiation = negotiationOfferRepository.findByOffer_Id(offer.getId()).orElse(null);
 
@@ -2096,13 +2087,10 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				BudgetAndCompensationEntity budget = budgetAndCompensationRepository.findBySrId(job.getSrId())
 						.orElse(null);
 
-				// -----------------------------
-				// Fill Missing Components
-				// -----------------------------
-
-				addFinanceComponent(financeList, "Basic Pay", response.getTotalCtc());
-
 				if (budget != null) {
+					
+					addFinanceComponent(financeList, "Basic Pay", budget.getProposedTotalCompensation() == null ? null
+							: budget.getProposedTotalCompensation().longValue());
 
 					addFinanceComponent(financeList, "Relocation Budget",
 							budget.getRelocationBudgetAmount() == null ? null
