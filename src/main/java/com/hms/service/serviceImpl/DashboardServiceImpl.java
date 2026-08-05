@@ -17,17 +17,20 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.dto.CandidatePipelineDto;
 import com.hms.service.dto.CandidateQualityDto;
+import com.hms.service.dto.CandidateSourcePerformanceDto;
 import com.hms.service.dto.ConversionFunnelDto;
 import com.hms.service.dto.DashboardCardsDto;
 import com.hms.service.dto.HiringDashboardCardsDto;
 import com.hms.service.dto.HiringDashboardResponseDto;
 import com.hms.service.dto.HiringHealthDto;
 import com.hms.service.dto.HiringManagerAnalyticsResponseDto;
+import com.hms.service.dto.HiringTrendDto;
 import com.hms.service.dto.MyAssignedJobsDto;
 import com.hms.service.dto.NegotiationFlowDto;
 import com.hms.service.dto.OfferStatusFlowDto;
 import com.hms.service.dto.RecruiterAnalyticsResponseDto;
 import com.hms.service.dto.RecuriterDashboardDetailsDto;
+import com.hms.service.dto.RecuriterPerformanceResponseDto;
 import com.hms.service.dto.SourcePerformanceDto;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.JobApplicationEntity;
@@ -41,10 +44,14 @@ import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.StaffingRequisitionRepository;
+
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.RecruiterAssignmentDashboardResponse;
 import com.hms.service.response.RecruiterDashboardCountResponse;
 import com.hms.service.response.RecruiterDashboardResponse;
+
+import com.hms.service.request.RecuriterPerformanceRequest;
+
 import com.hms.service.service.IDashboardService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -337,7 +344,10 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		dto.setInterview(applications.stream().filter(JobApplicationEntity::isInPersonInterviews).count());
 
-		dto.setOffers(offers.stream().filter(offer -> "Accepted".equalsIgnoreCase(offer.getOfferStatus())).count());
+		dto.setOffersAccepted(
+				offers.stream().filter(offer -> "Accepted".equalsIgnoreCase(offer.getOfferStatus())).count());
+
+		dto.setOffersReleased(offers.stream().filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased())).count());
 
 		dto.setHired(0L);
 
@@ -795,6 +805,7 @@ public class DashboardServiceImpl implements IDashboardService {
 	}
 
 	@Override
+
 	public ApiResponse<?> getRecruiterDashboard(SpecificationFilterRequest request) {
 
 		log.info("RecruiterDashboardServiceImpl : getRecruiterDashboard");
@@ -934,6 +945,114 @@ public class DashboardServiceImpl implements IDashboardService {
 		dashboard.setAssignments(jobs);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Success", dashboard);
+
+	}
+	
+	public ApiResponse<?> getRecruiterPerformance(RecuriterPerformanceRequest request) {
+
+		RecuriterPerformanceResponseDto response = new RecuriterPerformanceResponseDto();
+
+		LocalDateTime fromDateTime = request.getFromDate().atStartOfDay();
+
+		LocalDateTime toDateTime = request.getToDate().atTime(LocalTime.MAX);
+
+		List<JobApplicationEntity> applications = jobApplicationRepository.findApplicationsByRecruiterAndJob(
+				request.getRecruiterId(), request.getJobId(), fromDateTime, toDateTime);
+
+		if (applications.isEmpty()) {
+
+			response.setCandidateSourcePerformance(new ArrayList<>());
+			response.setRecruitmentFunnel(new ConversionFunnelDto());
+			response.setHiringTrend(new ArrayList<>());
+
+			return ApiResponse.success(ResponseCode.SUCCESS, "No data found.", response);
+		}
+
+		List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
+
+		List<ResumeAnalysisEntity> resumeAnalysis = resumeAnalysisRepository.findByApplicationIdIn(applicationIds);
+
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
+
+		response.setCandidateSourcePerformance(buildCandidateSourcePerformance(applications, offers));
+
+		response.setRecruitmentFunnel(buildConversionFunnel(applications, resumeAnalysis, offers));
+
+		response.setHiringTrend(buildHiringTrend(request.getFromDate(), request.getToDate(), applications, offers));
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Recruiter performance fetched successfully.", response);
+	}
+
+	private List<CandidateSourcePerformanceDto> buildCandidateSourcePerformance(List<JobApplicationEntity> applications,
+			List<OfferDetailsEntity> offers) {
+
+		List<CandidateSourcePerformanceDto> response = new ArrayList<>();
+
+		Map<Integer, OfferDetailsEntity> offerMap = offers.stream().collect(Collectors
+				.toMap(offer -> offer.getJobApplication().getId(), Function.identity(), (existing, latest) -> latest));
+
+		List<JobApplicationEntity> careerPortalApplications = applications.stream()
+				.filter(app -> Boolean.TRUE.equals(app.getCareerPortal())).toList();
+		List<JobApplicationEntity> linkedInApplications = applications.stream()
+				.filter(app -> "LinkedIn".equalsIgnoreCase(app.getSource())).toList();
+		List<JobApplicationEntity> naukriApplications = applications.stream()
+				.filter(app -> "Naukri".equalsIgnoreCase(app.getSource())).toList();
+		List<JobApplicationEntity> indeedApplications = applications.stream()
+				.filter(app -> "Indeed".equalsIgnoreCase(app.getSource())).toList();
+
+		if (!careerPortalApplications.isEmpty()) {
+
+			CandidateSourcePerformanceDto dto = new CandidateSourcePerformanceDto();
+
+			dto.setSource("Career Portal");
+
+			dto.setApplicantsAdded((long) careerPortalApplications.size());
+
+			dto.setInterviewed(
+					careerPortalApplications.stream().filter(JobApplicationEntity::isInPersonInterviews).count());
+
+			dto.setOffered(careerPortalApplications.stream().filter(app -> {
+				OfferDetailsEntity offer = offerMap.get(app.getId());
+				return offer != null && Boolean.TRUE.equals(offer.getOfferReleased());
+			}).count());
+
+			dto.setHired(0L);
+
+			response.add(dto);
+		}
+
+		return response;
+	}
+
+	private List<HiringTrendDto> buildHiringTrend(LocalDate fromDate, LocalDate toDate,
+			List<JobApplicationEntity> applications, List<OfferDetailsEntity> offers) {
+
+		List<HiringTrendDto> response = new ArrayList<>();
+
+		Map<LocalDate, Long> candidatesAddedMap = applications.stream()
+				.collect(Collectors.groupingBy(app -> app.getCreatedDate().toLocalDate(), Collectors.counting()));
+
+		Map<LocalDate, Long> offersReleasedMap = offers.stream()
+				.filter(offer -> Boolean.TRUE.equals(offer.getOfferReleased()))
+				.filter(offer -> offer.getJobApplication() != null).collect(Collectors.groupingBy(
+						offer -> offer.getJobApplication().getCreatedDate().toLocalDate(), Collectors.counting()));
+
+		for (LocalDate date = fromDate; !date.isAfter(toDate); date = date.plusDays(1)) {
+
+			HiringTrendDto dto = new HiringTrendDto();
+
+			dto.setDate(date);
+
+			dto.setCandidatesAdded(candidatesAddedMap.getOrDefault(date, 0L));
+
+			dto.setOffersReleased(offersReleasedMap.getOrDefault(date, 0L));
+
+			dto.setHired(0L);
+
+			response.add(dto);
+		}
+
+		return response;
 
 	}
 }

@@ -71,6 +71,7 @@ import com.hms.service.request.ReleaseOfferRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.request.UpdateRaiseOfferRequest;
 import com.hms.service.response.NegotiationDetailsResponse;
+import com.hms.service.response.NegotiationReviewResponse;
 import com.hms.service.response.OfferCommentsResponse;
 import com.hms.service.response.OfferDetailsResponse;
 import com.hms.service.response.OfferNegotiationResponse;
@@ -143,6 +144,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Autowired
 	private PositionBasicsRepository positionBasicsRepository;
+	
+	@Autowired
+	private OfferDeatilsChildRepository offerDetailsChildRepository;
 
 	@Autowired
 	private MinioClient minioClient;
@@ -1188,10 +1192,10 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			roleName = jwtService.extractRole(token);
 		}
 
-		if (!"Recruiting Operations".equalsIgnoreCase(roleName)) {
+		if (!"Recruiter".equalsIgnoreCase(roleName)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
-					List.of("Only Recruiting Operations can Submit Raise offer Request."));
+					List.of("Only Recruiter can Submit Raise offer Request."));
 		}
 
 		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
@@ -1827,7 +1831,111 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		response.setNegotiationId(negotiation.getId());
 		response.setApplicantId(applicantId);
 		response.setOfferReleasedOn(negotiation.getOffer().getCreatedDate());
+		
+		OfferDetailsEntity offer = negotiation.getOffer();
+		
+		OfferDetailsChildEntity child = offerDetailsChildRepository.findByOffer_Id(offer.getId()).orElse(null);
+		
+		String role1Name = null;
+		String role2Name = null;
+		String role3Name = null;
+		
+		log.info("Offer Id : {}", offer.getId());
 
+		if (child != null) {
+
+			RolesEntity role1 = child.getRole1() != null ? rolesRepository.findByRoleId(child.getRole1()).orElse(null)
+					: null;
+
+			RolesEntity role2 = child.getRole2() != null ? rolesRepository.findByRoleId(child.getRole2()).orElse(null)
+					: null;
+
+			RolesEntity role3 = child.getRole3() != null ? rolesRepository.findByRoleId(child.getRole3()).orElse(null)
+					: null;
+
+		    role1Name = role1 != null ? role1.getRoleName() : null;
+		    role2Name = role2 != null ? role2.getRoleName() : null;
+		    role3Name = role3 != null ? role3.getRoleName() : null;
+		}
+		
+		if (child != null) {
+		    log.info("Role1 Id : {}", child.getRole1());
+		    log.info("Role2 Id : {}", child.getRole2());
+		    log.info("Role3 Id : {}", child.getRole3());
+
+		    log.info("Role1 Name : {}", role1Name);
+		    log.info("Role2 Name : {}", role2Name);
+		    log.info("Role3 Name : {}", role3Name);
+		}
+		
+		List<NegotiationReviewResponse> stages = new ArrayList<>();
+
+		NegotiationReviewResponse stage1 = new NegotiationReviewResponse();
+
+		stage1.setStage("Approval Stage 1");
+		
+		stage1.setRole(role1Name);
+
+		if (Boolean.TRUE.equals(offer.getApprover1())) {
+
+		    stage1.setStatus("APPROVED");
+		    stage1.setApprovedBy(offer.getApprover1By());
+		    stage1.setApprovedOn(offer.getDateOfApproval1());
+
+		} else {
+
+		    stage1.setStatus("PENDING");
+		    stage1.setApprovedBy(null);
+		    stage1.setApprovedOn(null);
+
+		}
+
+		stages.add(stage1);
+
+		NegotiationReviewResponse stage2 = new NegotiationReviewResponse();
+
+		stage2.setStage("Approval Stage 2");
+		stage2.setRole(role2Name);
+
+		if (Boolean.TRUE.equals(offer.getApprover2())) {
+
+		    stage2.setStatus("APPROVED");
+		    stage2.setApprovedBy(offer.getApprover2By());
+		    stage2.setApprovedOn(offer.getDateOfApproval2());
+
+		} else {
+
+		    stage2.setStatus("PENDING");
+		    stage2.setApprovedBy(null);
+		    stage2.setApprovedOn(null);
+
+		}
+
+		stages.add(stage2);
+
+		NegotiationReviewResponse stage3 = new NegotiationReviewResponse();
+
+		stage3.setStage("Approval Stage 3");
+		stage3.setRole(role3Name);
+
+		if (Boolean.TRUE.equals(offer.getApprover3())) {
+
+		    stage3.setStatus("APPROVED");
+		    stage3.setApprovedBy(offer.getApprover3By());
+		    stage3.setApprovedOn(offer.getDateOfApproval3());
+
+		} else {
+
+		    stage3.setStatus("PENDING");
+		    stage3.setApprovedBy(null);
+		    stage3.setApprovedOn(null);
+
+		}
+
+		stages.add(stage3);
+
+		response.setApprovalStages(stages);
+		
 		// Candidate Details
 
 		CandidateCreationDetailsEntity candidate = negotiation.getApplicant().getCandidate();

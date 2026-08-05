@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+
 import com.hms.service.request.SpecificationFilterRequest;
+import com.hms.service.request.RecuriterPerformanceRequest;
 import com.hms.service.service.IDashboardService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -52,17 +54,23 @@ public class DashboardController {
 	}
 
 	@GetMapping("/hiring-dashboard-analytics")
-	public ResponseEntity<ApiResponse<?>> getHiringManagerAnalytics(
-			@RequestParam(name = "srId") String srId,
+	public ResponseEntity<ApiResponse<?>> getHiringManagerAnalytics(@RequestParam(name = "srId") String srId,
 			@RequestParam(name = "fromDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fromDate,
 			@RequestParam(name = "toDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate toDate) {
 		return ResponseEntity.ok(iRecuriterDashboardService.getHiringManagerAnalytics(srId, fromDate, toDate));
 	}
 	
-	@PostMapping("/recruiter-dashboard")
+	@PostMapping("/recruiter-performance-dashboard")
 	public ApiResponse<?> getRecruiterDashboard(@RequestBody SpecificationFilterRequest request) {
 
 		return iRecuriterDashboardService.getRecruiterDashboard(request);
+	}
+
+	@PostMapping("/recruiter-performance")
+	public ResponseEntity<ApiResponse<?>> getRecruiterPerformance(@RequestBody RecuriterPerformanceRequest request) {
+		ApiResponse<?> response = iRecuriterDashboardService.getRecruiterPerformance(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
 	}
 
 }
