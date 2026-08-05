@@ -1192,10 +1192,10 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			roleName = jwtService.extractRole(token);
 		}
 
-		if (!"Recruiting Operations".equalsIgnoreCase(roleName)) {
+		if (!"Recruiter".equalsIgnoreCase(roleName)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
-					List.of("Only Recruiting Operations can Submit Raise offer Request."));
+					List.of("Only Recruiter can Submit Raise offer Request."));
 		}
 
 		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
@@ -1873,6 +1873,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		NegotiationReviewResponse stage1 = new NegotiationReviewResponse();
 
 		stage1.setStage("Approval Stage 1");
+		
 		stage1.setRole(role1Name);
 
 		if (Boolean.TRUE.equals(offer.getApprover1())) {
