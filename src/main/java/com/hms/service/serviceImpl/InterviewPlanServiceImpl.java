@@ -2960,10 +2960,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "User not found");
 		}
 
-		if (!"HR".equalsIgnoreCase(roleName)) {
+		if (!"Recruiter".equalsIgnoreCase(roleName)) {
 
 			return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
-					List.of("Only HR can update the interview completion status."));
+					List.of("Only Recruiter can update the interview completion status."));
 		}
 
 		// Validations
