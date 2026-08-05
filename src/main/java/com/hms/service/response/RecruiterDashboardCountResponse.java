@@ -26,5 +26,7 @@ public class RecruiterDashboardCountResponse {
     private Long atRisk;
 
     private Long overdue;
+    
+    private Double slaCompliance;
 
 }

@@ -97,5 +97,14 @@ public interface RecruiterAssignmentRepository
 	List<RecruiterAssignmentEntity> findByJobIdAndSrId(Integer jobId, String srId);
 
 	List<RecruiterAssignmentEntity> findByUserIdAndStatusIgnoreCase(Integer userId, String status);
-
+	
+	@Query("""
+		       SELECT 
+		          SUM(CASE WHEN r.slaStatus = 'On Track' THEN 1 ELSE 0 END),
+		          SUM(CASE WHEN r.slaStatus = 'At Risk' THEN 1 ELSE 0 END),
+		          SUM(CASE WHEN r.slaStatus = 'Overdue' THEN 1 ELSE 0 END)
+		       FROM RecruiterAssignmentEntity r
+		       WHERE r.userId = :recruiterId
+		       """)
+		List<Object[]> getSlaCounts(@Param("recruiterId") Integer recruiterId);
 }

@@ -842,9 +842,21 @@ public class DashboardServiceImpl implements IDashboardService {
 		        .filter(o -> Boolean.TRUE.equals(o.getOfferReleased()))
 		        .count();
 
+		List<Object[]> slaResult = recruiterAssignmentRepository.getSlaCounts(recruiterId);
+
 		Long onTrack = 0L;
 		Long atRisk = 0L;
 		Long overdue = 0L;
+
+		if (!slaResult.isEmpty()) {
+
+		    Object[] slaCounts = slaResult.get(0);
+
+		    onTrack = slaCounts[0] != null ? ((Number) slaCounts[0]).longValue() : 0L;
+		    atRisk = slaCounts[1] != null ? ((Number) slaCounts[1]).longValue() : 0L;
+		    overdue = slaCounts[2] != null ? ((Number) slaCounts[2]).longValue() : 0L;
+		}
+
 
 		Set<Integer> jobIds = assignments.stream().map(RecruiterAssignmentEntity::getJobId).collect(Collectors.toSet());
 
@@ -891,8 +903,8 @@ public class DashboardServiceImpl implements IDashboardService {
 					response.setPriority(sr.getPriority());
 				}
 
-				response.setFilled(null);
-				response.setRemaining(null);
+				response.setFilled(0);
+				response.setRemaining(0);
 
 				Long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), job.getTargetStartDate());
 
@@ -905,7 +917,6 @@ public class DashboardServiceImpl implements IDashboardService {
 				if (daysLeft < 0) {
 
 					sla = "Overdue";
-					overdue++;
 
 				} else {
 
@@ -925,12 +936,12 @@ public class DashboardServiceImpl implements IDashboardService {
 					if (timePercentage < 50 && hiringPercentage < 50) {
 
 						sla = "At Risk";
-						atRisk++;
+					
 
 					} else {
 
 						sla = "On Track";
-						onTrack++;
+						
 					}
 				}
 
@@ -939,12 +950,21 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			jobs.add(response);
 		}
+		
+		Double slaCompliance = 0.0;
+
+		Long totalSla = onTrack + atRisk + overdue;
+
+		if (totalSla > 0) {
+		    slaCompliance = ((onTrack + atRisk) * 100.0) / totalSla;
+		}
 
 		counts.setTotalAssignments(totalAssignments);
 		counts.setAcceptedAssignments(acceptedAssignments);
 		counts.setRejectedAssignments(rejectedAssignments);
 		counts.setApplicationsAdded(applicationsAdded);
 		counts.setOffersReleased(offersReleased);
+		counts.setSlaCompliance(slaCompliance);
 
 		// Keeping hired null for now
 		counts.setHired(null);
