@@ -76,6 +76,7 @@ import com.hms.service.response.OfferDetailsResponse;
 import com.hms.service.response.OfferNegotiationResponse;
 import com.hms.service.response.PendingApprovalsResponse;
 import com.hms.service.response.RaiseOfferRequestResponse;
+import com.hms.service.response.ReReleaseOfferDetailsResponse;
 import com.hms.service.service.INotificationService;
 import com.hms.service.service.IOfferDetailsService;
 import com.hms.service.utils.JwtService;
@@ -224,6 +225,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		map.put("offerId", offer.getId());
 
 		map.put("applicationId", application.getId());
+		
+		map.put("reReleaseOfferId",offer.getReReleaseOfferId());
 
 		map.put("candidateName", application.getFirstName() + " " + application.getLastName());
 
@@ -2000,6 +2003,136 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	        log.error("Error while viewing supporting document", e);
 	        throw new RuntimeException("Unable to fetch supporting document from MinIO");
 	    }
+	}
+
+	@Override
+	public ApiResponse<?> getReReleaseOfferDetails(Integer reReleaseOfferId) {
+
+		log.info("OfferDetailsServiceImpl :: Inside getReReleaseOfferDetails");
+
+		// 1. Fetch Offer Details using re_release_offer_id
+		OfferDetailsEntity offer = offerDetailsRepository.findByReReleaseOfferId(reReleaseOfferId).orElse(null);
+
+		if (offer == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Re-release offer not found");
+		}
+
+		ReReleaseOfferDetailsResponse response = new ReReleaseOfferDetailsResponse();
+
+		// Offer Details
+		response.setOfferId(offer.getReReleaseOfferId());
+		
+		response.setProbationPeriod(offer.getProbationPeriod());
+		
+		response.setTotalCtc(offer.getTotalCtc());
+
+		// Job Application
+
+		JobApplicationEntity application = offer.getJobApplication();
+
+		if (application == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Job Application not found");
+		}
+
+		// Candidate Details
+
+		CandidateCreationDetailsEntity candidate = application.getCandidate();
+
+		if (candidate != null) {
+
+			response.setCandidateId(candidate.getCandidateId());
+
+			response.setCandidateName(candidate.getFirstName() + " " + candidate.getLastName());
+
+			response.setEmail(candidate.getEmail());
+
+		}
+		// Job Details
+
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(application.getJobId());
+
+		if (job != null) {
+
+			response.setJobTitle(job.getJobTitle());
+
+			response.setEmploymentType(job.getEmploymentType());
+
+			response.setLocation(job.getLocation());
+
+			DepartmentsEntity department = departmentsRepository.findById(job.getDepartmentId()).orElse(null);
+
+			if (department != null) {
+
+				response.setDepartmentName(department.getDepartmentName());
+
+			}
+
+			// Negotiation Details
+
+			NegotiationOfferEntity negotiation = negotiationOfferRepository.findByOffer_Id(offer.getId()).orElse(null);
+
+			if (negotiation != null) {
+
+				response.setJoiningDate(negotiation.getRevisedJoiningDate());
+
+				if (negotiation.getRevisedJoiningDate() != null) {
+
+					response.setOfferValidity(negotiation.getRevisedJoiningDate().plusDays(6));
+
+				}
+
+				List<FinanceRecommendation> financeList = negotiation.getFinanceRecommendations();
+
+				if (financeList == null) {
+					financeList = new ArrayList<>();
+				}
+
+				BudgetAndCompensationEntity budget = budgetAndCompensationRepository.findBySrId(job.getSrId())
+						.orElse(null);
+
+				if (budget != null) {
+					
+					addFinanceComponent(financeList, "Basic Pay", budget.getProposedTotalCompensation() == null ? null
+							: budget.getProposedTotalCompensation().longValue());
+
+					addFinanceComponent(financeList, "Relocation Budget",
+							budget.getRelocationBudgetAmount() == null ? null
+									: budget.getRelocationBudgetAmount().longValue());
+
+					addFinanceComponent(financeList, "Equity",
+							budget.getEquityAmount() == null ? null : budget.getEquityAmount().longValue());
+
+					addFinanceComponent(financeList, "Signing Bonus",
+							budget.getSigningBonusAmount() == null ? null : budget.getSigningBonusAmount().longValue());
+
+				}
+
+				response.setFinanceRecommendations(financeList);
+
+			}
+
+		}
+
+		log.info("OfferDetailsServiceImpl :: Exit getReReleaseOfferDetails");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Re-release Offer Details fetched successfully", response);
+
+	}
+	
+	private void addFinanceComponent(List<FinanceRecommendation> list, String fieldName, Long amount) {
+
+		if (amount == null) {
+			return;
+		}
+
+		boolean exists = list.stream().anyMatch(item -> fieldName.equalsIgnoreCase(item.getFieldName()));
+
+		if (!exists) {
+
+			list.add(new FinanceRecommendation(fieldName, amount));
+
+		}
+
 	}
 
 }

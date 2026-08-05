@@ -96,4 +96,7 @@ public interface OfferDetailsRepository
 			AND o.reReleaseOfferId IS NOT NULL
 			""")
 	Long countNegotiationApprovals();
+	
+	Optional<OfferDetailsEntity> findByReReleaseOfferId(Integer reReleaseOfferId);
+	
 }

@@ -20,5 +20,7 @@ public interface NegotiateOfferRepository
 	List<OfferDetailsEntity> findByApplicant_IdIn(List<Integer> applicationIds);
 	
 	Optional<NegotiationOfferEntity> findByApplicant_Id(Integer applicantId);
+	
+	Optional<NegotiationOfferEntity> findByOffer_Id(Integer offerId);
 
 }

@@ -42,4 +42,6 @@ public interface IOfferDetailsService {
 
 	void viewDocument(String filePath, String action, HttpServletResponse response);
 
+	ApiResponse<?> getReReleaseOfferDetails(Integer reReleaseOfferId);
+
 }
