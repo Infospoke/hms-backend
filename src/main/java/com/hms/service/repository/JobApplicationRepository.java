@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -109,5 +110,19 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	List<JobApplicationEntity> findByJobIdAndCreatedDateBetween(Integer jobId, LocalDateTime fromDate,
 			LocalDateTime toDate);
+
+	List<JobApplicationEntity> findAll(Specification<JobApplicationEntity> recruiterApplicationSpecification);
+
+	@Query("""
+			SELECT j
+			FROM JobApplicationEntity j
+			WHERE j.recruiterId = :recruiterId
+			AND j.jobId = :jobId
+			AND j.createdDate BETWEEN :fromDate AND :toDate
+			""")
+	List<JobApplicationEntity> findApplicationsByRecruiterAndJob(@Param("recruiterId") Integer recruiterId,
+			@Param("jobId") Integer jobId, @Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate);
+
 
 }

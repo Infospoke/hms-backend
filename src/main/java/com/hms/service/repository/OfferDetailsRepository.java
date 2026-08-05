@@ -99,4 +99,6 @@ public interface OfferDetailsRepository
 	
 	Optional<OfferDetailsEntity> findByReReleaseOfferId(Integer reReleaseOfferId);
 	
+	
+	
 }

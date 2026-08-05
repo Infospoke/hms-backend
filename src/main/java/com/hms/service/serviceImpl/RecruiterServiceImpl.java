@@ -2,6 +2,7 @@ package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -414,10 +415,8 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 			Integer recruiterId = userId.intValue();
 
-			
 			List<RecruiterAssignmentEntity> allAssignments = recruiterAssignmentRepository.findAllByUserId(recruiterId);
 
-			
 			List<Integer> allJobIds = allAssignments.stream().map(RecruiterAssignmentEntity::getJobId).distinct()
 					.toList();
 
@@ -462,7 +461,6 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			counts.put("rejected", filteredJobs.stream().map(job -> assignmentMap.get(job.getJobId()))
 					.filter(Objects::nonNull).filter(a -> "REJECTED".equalsIgnoreCase(a.getStatus())).count());
 
-		
 			String status = request.getStatus();
 
 			List<CreateJobDetailsEntity> finalJobs = filteredJobs.stream().filter(job -> {
@@ -521,7 +519,6 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 				map.put("openings", job.getOpenings());
 
-				
 				map.put("createdAt", job.getCreatedAt());
 
 				map.put("status", assignment.getStatus());
@@ -580,6 +577,30 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		Long assignedUserId = recruiterAssignmentEntity.getUserId().longValue();
 
 		log.info("assigned userId is " + assignedUserId);
+		LocalDateTime assignedAt = recruiterAssignmentEntity.getAssignedAt();
+		LocalDateTime respondedAt = recruiterAssignmentEntity.getRespondedAt();
+
+		String sla = "On Track";
+
+		if (assignedAt != null) {
+
+			LocalDateTime endDate = (respondedAt != null) ? respondedAt : LocalDateTime.now();
+
+			long days = ChronoUnit.DAYS.between(assignedAt.toLocalDate(), endDate.toLocalDate());
+
+			if (days <= 1) {
+
+				sla = "On Track";
+
+			} else if (days == 2) {
+
+				sla = "At Risk";
+
+			} else {
+
+				sla = "Overdue";
+			}
+		}
 
 		if (assignedUserId.equals(userId)) {
 
@@ -587,12 +608,17 @@ public class RecruiterServiceImpl implements IRecruiterService {
 			recruiterAssignmentEntity.setComments(request.getComments());
 			recruiterAssignmentEntity.setRespondedAt(LocalDateTime.now());
 
+			recruiterAssignmentEntity.setSlaStatus(sla);
+
 			recruiterAssignmentRepository.save(recruiterAssignmentEntity);
 		}
+
+		recruiterAssignmentEntity.setSlaStatus(sla);
+
 		Optional<CreateJobDetailsEntity> createJobDetails = createJobDetailsRepository.findById(request.getJobId());
-		CreateJobDetailsEntity jobDetailsEntity=createJobDetails.get();
-		Integer departmentId=jobDetailsEntity.getDepartmentId();
-		String jobTitle=jobDetailsEntity.getJobTitle();
+		CreateJobDetailsEntity jobDetailsEntity = createJobDetails.get();
+		Integer departmentId = jobDetailsEntity.getDepartmentId();
+		String jobTitle = jobDetailsEntity.getJobTitle();
 		String departmentName = departmentsRepository.findById(departmentId).get().getDepartmentName();
 		String assignedBy = recruiterAssignmentRepository.findByJobIdAndUserId(request.getJobId(), tokenUserId)
 				.getAssignedBy();
@@ -600,14 +626,11 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		Integer assigerUserId = userRepository.findByUsername(assignedBy).getUserId();
 
 		Integer makerRoleId = assignRolesRepository.findByUserId(assigerUserId).get().getRoleId();
-		
+
 		String recruiter = userRepository.findByUserId(tokenUserId).get().getUsername();
-		
-	
-		
-		
-		//emails 
-		
+
+		// emails
+
 		String makerEmailBody = "";
 		String checkerEmailBody = "";
 		String makerNotificationTitle = "";
@@ -615,48 +638,28 @@ public class RecruiterServiceImpl implements IRecruiterService {
 
 		if ("ACCEPTED".equalsIgnoreCase(request.getStatus())) {
 
-		    makerNotificationTitle = "Recruiter Assignment Accepted";
-		    checkerNotificationTitle = "Recruiter Assignment Accepted";
+			makerNotificationTitle = "Recruiter Assignment Accepted";
+			checkerNotificationTitle = "Recruiter Assignment Accepted";
 
-		    makerEmailBody = String.format(
-		            Constants.RECRUITER_ASSIGNMENT_ACCEPTED_MAIL_BODY,
-		            assignedBy,
-		            jobTitle,
-		            recruiter,
-		            request.getComments() == null ? "-" : request.getComments(),
-		            LocalDateTime.now());
+			makerEmailBody = String.format(Constants.RECRUITER_ASSIGNMENT_ACCEPTED_MAIL_BODY, assignedBy, jobTitle,
+					recruiter, request.getComments() == null ? "-" : request.getComments(), LocalDateTime.now());
 
-		    checkerEmailBody = String.format(
-		            Constants.RECRUITER_ASSIGNMENT_ACCEPTED_CHECKER_MAIL_BODY,
-		            recruiter,
-		            jobTitle,
-		            request.getComments() == null ? "-" : request.getComments(),
-		            LocalDateTime.now());
+			checkerEmailBody = String.format(Constants.RECRUITER_ASSIGNMENT_ACCEPTED_CHECKER_MAIL_BODY, recruiter,
+					jobTitle, request.getComments() == null ? "-" : request.getComments(), LocalDateTime.now());
 
 		} else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
 
-		    makerNotificationTitle = "Recruiter Assignment Rejected";
-		    checkerNotificationTitle = "Recruiter Assignment Rejected";
+			makerNotificationTitle = "Recruiter Assignment Rejected";
+			checkerNotificationTitle = "Recruiter Assignment Rejected";
 
-		    makerEmailBody = String.format(
-		            Constants.RECRUITER_ASSIGNMENT_REJECTED_MAIL_BODY,
-		            assignedBy,
-		            jobTitle,
-		            recruiter,
-		            request.getComments() == null ? "-" : request.getComments(),
-		            LocalDateTime.now());
+			makerEmailBody = String.format(Constants.RECRUITER_ASSIGNMENT_REJECTED_MAIL_BODY, assignedBy, jobTitle,
+					recruiter, request.getComments() == null ? "-" : request.getComments(), LocalDateTime.now());
 
-		    checkerEmailBody = String.format(
-		            Constants.RECRUITER_ASSIGNMENT_REJECTED_CHECKER_MAIL_BODY,
-		            recruiter,
-		            jobTitle,
-		            request.getComments() == null ? "-" : request.getComments(),
-		            LocalDateTime.now());
+			checkerEmailBody = String.format(Constants.RECRUITER_ASSIGNMENT_REJECTED_CHECKER_MAIL_BODY, recruiter,
+					jobTitle, request.getComments() == null ? "-" : request.getComments(), LocalDateTime.now());
 		}
 
-		
-
-         // set to notifications
+		// set to notifications
 		Map<Integer, List<String>> roleEmailMap = new HashMap<>();
 
 		Integer roleId = rolesRepository.findByRoleNameIgnoreCase(roleName).getRoleId();
@@ -672,8 +675,6 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		event.setType("Recruiters");
 		event.setDeptName(departmentName);
 
-		
-
 		event.setMakerRoleId(makerRoleId);
 		event.setMakerRoleName(recruiterAssignmentEntity.getRoleName());
 		event.setMakerMessage("This is maker message");
@@ -686,7 +687,7 @@ public class RecruiterServiceImpl implements IRecruiterService {
 		event.setCheckerNotificationTitle(checkerNotificationTitle);
 		event.setCheckerEmailBody(checkerEmailBody);
 		event.setCheckerMessage("This is checker message");
-        event.setRoleEmailMap(roleEmailMap);
+		event.setRoleEmailMap(roleEmailMap);
 		event.setCheckerRoleName(roleName);
 		notificationService.callNotification(event);
 		log.info("the event is " + event);

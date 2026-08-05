@@ -17,7 +17,9 @@ public class ConversionFunnelDto {
 
     private Long interview;
 
-    private Long offers;
+    private Long offersAccepted;
+    
+    private Long offersReleased;
 
     private Long hired;
 
