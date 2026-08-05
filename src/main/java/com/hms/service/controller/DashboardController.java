@@ -7,10 +7,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IDashboardService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -54,6 +57,12 @@ public class DashboardController {
 			@RequestParam(name = "fromDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fromDate,
 			@RequestParam(name = "toDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate toDate) {
 		return ResponseEntity.ok(iRecuriterDashboardService.getHiringManagerAnalytics(srId, fromDate, toDate));
+	}
+	
+	@PostMapping("/recruiter-dashboard")
+	public ApiResponse<?> getRecruiterDashboard(@RequestBody SpecificationFilterRequest request) {
+
+		return iRecuriterDashboardService.getRecruiterDashboard(request);
 	}
 
 }

@@ -2135,4 +2135,84 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
+	
+	public Specification<RecruiterAssignmentEntity> buildRecruiterDashboardSpecification(Integer recruiterId) {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        predicates.add(cb.equal(root.get("userId"), recruiterId));
+
+	      
+	        Specification<RecruiterAssignmentEntity> dateSpecification = dateSpec("assignedAt");
+
+	        if (dateSpecification != null) {
+
+	            Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+
+	            if (datePredicate != null) {
+	                predicates.add(datePredicate);
+	            }
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
+	public Specification<JobApplicationEntity> buildRecruiterApplicationSpecification(Integer recruiterId) {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        predicates.add(cb.equal(root.get("recruiterId"), recruiterId));
+
+	        Specification<JobApplicationEntity> dateSpecification =
+	                dateSpec("createdDate");
+
+	        if (dateSpecification != null) {
+
+	            Predicate datePredicate =
+	                    dateSpecification.toPredicate(root, query, cb);
+
+	            if (datePredicate != null) {
+	                predicates.add(datePredicate);
+	            }
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
+	
+	public Specification<OfferDetailsEntity> buildRecruiterOfferSpecification(Integer recruiterId) {
+
+	    return (root, query, cb) -> {
+
+	        List<Predicate> predicates = new ArrayList<>();
+
+	        Join<OfferDetailsEntity, JobApplicationEntity> application =
+	                root.join("jobApplication");
+
+	        predicates.add(
+	                cb.equal(application.get("recruiterId"), recruiterId));
+
+	        predicates.add(
+	                cb.isTrue(root.get("offerReleased")));
+
+	        Specification<OfferDetailsEntity> dateSpecification =
+	                dateSpec("offerReleasedAt");
+
+	        if (dateSpecification != null) {
+
+	            Predicate datePredicate =
+	                    dateSpecification.toPredicate(root, query, cb);
+
+	            if (datePredicate != null) {
+	                predicates.add(datePredicate);
+	            }
+	        }
+
+	        return cb.and(predicates.toArray(new Predicate[0]));
+	    };
+	}
 }
