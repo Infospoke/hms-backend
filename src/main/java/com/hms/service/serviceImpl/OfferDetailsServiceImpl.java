@@ -279,6 +279,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setApplicantId(applicant.getId());
 			response.setCandidateName(applicant.getFirstName());
 			response.setEmail(applicant.getEmail());
+			response.setCandidateId(applicant.getCandidate().getCandidateId());
+			
 
 			// Job Details
 			CreateJobDetailsEntity jobDetails = createJobDetailsRepository.findByJobId(applicant.getJobId());
@@ -307,7 +309,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				response.setSigningBonus(
 						Boolean.TRUE.equals(budget.getSigningBonus()) ? budget.getSigningBonusAmount() : 0);
 
-				response.setAnnualRsuEsopValue(Boolean.TRUE.equals(budget.getEquity()) ? budget.getEquityAmount() : 0);
+				response.setEquity(Boolean.TRUE.equals(budget.getEquity()) ? budget.getEquityAmount() : 0);
 
 				response.setOtherBenefits(
 						Boolean.TRUE.equals(budget.getRelocationBudget()) ? budget.getRelocationBudgetAmount() : 0);
@@ -334,6 +336,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 				response.setProbationPeriod(offer.getProbationPeriod());
 				response.setNoticePeriod(offer.getNoticePeriod());
 				response.setJoiningDate(offer.getJoiningDate());
+				response.setOfferLeterPath(offer.getOfferLetterPath());
 
 			}
 			log.info("OfferDetailsServiceImpl ::Exit from the getOfferDetailsByApplicantId");
