@@ -225,6 +225,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		map.put("offerId", offer.getId());
 
 		map.put("applicationId", application.getId());
+		
+		map.put("reReleaseOfferId",offer.getReReleaseOfferId());
 
 		map.put("candidateName", application.getFirstName() + " " + application.getLastName());
 
