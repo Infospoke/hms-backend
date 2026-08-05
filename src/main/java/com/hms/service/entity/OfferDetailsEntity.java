@@ -109,7 +109,7 @@ public class OfferDetailsEntity {
     private LocalDateTime finalApprovalTime;
 
     @Column(name="offer_released")
-    private Boolean offerReleased=false;
+    private Boolean offerReleased;
     
     @Column(name="in_progress")
     private Boolean inProgress;

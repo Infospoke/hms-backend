@@ -110,4 +110,15 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 	List<JobApplicationEntity> findByJobIdAndCreatedDateBetween(Integer jobId, LocalDateTime fromDate,
 			LocalDateTime toDate);
 
+	@Query("""
+			SELECT j
+			FROM JobApplicationEntity j
+			WHERE j.recruiterId = :recruiterId
+			AND j.jobId = :jobId
+			AND j.createdDate BETWEEN :fromDate AND :toDate
+			""")
+	List<JobApplicationEntity> findApplicationsByRecruiterAndJob(@Param("recruiterId") Integer recruiterId,
+			@Param("jobId") Integer jobId, @Param("fromDate") LocalDateTime fromDate,
+			@Param("toDate") LocalDateTime toDate);
+
 }
