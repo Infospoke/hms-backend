@@ -13,6 +13,7 @@ public class OfferDetailsResponse {
 
    
     private Integer applicantId;
+    private String candidateId;
     private String candidateName;
     private String email;
     private String jobTitle;
@@ -23,7 +24,7 @@ public class OfferDetailsResponse {
   
     private Integer basicSalary;
     private Integer signingBonus;
-    private Integer annualRsuEsopValue;
+    private Integer equity;
     private Integer otherBenefits;
     private Integer totalCtc;
     private Long minSalary;
@@ -36,4 +37,5 @@ public class OfferDetailsResponse {
     private String noticePeriod;
     private String workLocation;
     private LocalDate joiningDate;
+    private String offerLeterPath;
 }

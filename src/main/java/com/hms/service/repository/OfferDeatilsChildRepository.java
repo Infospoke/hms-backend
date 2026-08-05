@@ -16,5 +16,7 @@ public interface OfferDeatilsChildRepository extends JpaRepository<OfferDetailsC
 	Optional<OfferDetailsChildEntity> findByOfferId(Integer offerId);
 
 	Optional<OfferDetailsChildEntity> findByJobApplication_IdAndNegotiationFalse(Integer applicantId);
+	
+	Optional<OfferDetailsChildEntity> findByOffer_Id(Integer offerId);
 
 }

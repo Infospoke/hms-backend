@@ -61,5 +61,7 @@ public class NegotiationDetailsResponse {
     private String hrReason;
 
     private LocalDate revisedJoiningDate;
+    
+    private List<NegotiationReviewResponse> approvalStages;
 
 }
