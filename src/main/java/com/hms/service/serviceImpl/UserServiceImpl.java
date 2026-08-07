@@ -813,11 +813,10 @@ public class UserServiceImpl implements IUserService {
 		for (PasswordHistoryEntity history : historyList) {
 
 			if (passwordEncoder.matches(newValue, history.getCredential())) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "New " + type.name().toLowerCase()
-						+ "must be different from your last 5" + type.name().toLowerCase());
+				return ApiResponse.failure(ResponseCode.FAILURE, "The new " + type.name().toLowerCase()
+						+ "must be different from your last five" + type.name().toLowerCase());
 			}
 		}
-
 		return null;
 	}
 
