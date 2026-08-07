@@ -1350,7 +1350,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		log.info("InterviewPlanServiceImpl:Exit from  the scheduleInterview method");
 
-		return ApiResponse.success(ResponseCode.SUCCESS, "Success", "Interview Scheduled Sucessfully");
+		return ApiResponse.success(ResponseCode.SUCCESS,"Interview Scheduled Sucessfully", "Success");
 
 	}
 
@@ -3097,7 +3097,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			currentStageEntity.setInterviewCompletedOn(request.getInterviewCompletedOn());
 			interviewCurrentStageRepository.save(currentStageEntity);
 			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Interview Completed successfully");
+			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Completed successfully","success");
 
 		} else {
 			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
