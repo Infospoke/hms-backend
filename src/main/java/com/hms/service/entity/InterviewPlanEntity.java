@@ -30,9 +30,6 @@ public class InterviewPlanEntity {
 	@Column(name = "job_id")
 	private Integer jobId;
 
-	@Column(name = "plan_id")
-	private Integer planId;
-
 	@Column(name = "sr_id")
 	private String srId;
 	
