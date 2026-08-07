@@ -478,7 +478,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		LocalDate today = LocalDate.now();
 
-		long todaysInterviews = interviewCurrentStageRepository.countByInterviewerIdAndInterviewDate(userId, today);
+		long todaysInterviews = interviewCurrentStageRepository.countByInterviewerIdAndInterviewDateAndInterviewCompletedTrue(userId, today);
 
 		long assignedInterviews = interviewerAssignmentRepository
 				.countByInterviewerUserIdAndRespondedAtIsNull(userId.longValue());

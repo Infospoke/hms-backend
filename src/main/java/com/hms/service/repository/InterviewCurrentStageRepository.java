@@ -38,7 +38,7 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 
 	List<InterviewCurrentStageEntity> findAll(Specification<InterviewCurrentStageEntity> specification);
 
-	long countByInterviewerIdAndInterviewDate(Integer interviewerId, LocalDate interviewDate);
+	long countByInterviewerIdAndInterviewDateAndInterviewCompletedTrue(Integer interviewerId, LocalDate interviewDate);
 
 	long countByInterviewerIdAndToScheduleFalse(Integer interviewerId);
 
