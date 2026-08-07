@@ -1358,17 +1358,21 @@ public class SpecificationFilterRequest {
 
 			// Interview Plan Filter
 			String interviewPlan = getFilter("interviewPlan");
-
+			
+			log.info(interviewPlan);
 			if (interviewPlan != null && !interviewPlan.isBlank()) {
 
 				List<Integer> planIds = interviewPlanRepository.findByPlanNameContainingIgnoreCase(interviewPlan)
-						.stream().map(InterviewPlanEntity::getPlanId).toList();
+						.stream().map(InterviewPlanEntity::getId).toList();
+
+			    log.info("Plan Ids : {}", planIds);
 
 				if (!planIds.isEmpty()) {
 
 					predicates.add(root.get("job").get("planId").in(planIds));
 				}
 			}
+			
 
 			// Priority Filter
 			String priority = getFilter("priority");
