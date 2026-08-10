@@ -1559,7 +1559,10 @@ public class SpecificationFilterRequest {
 		        spec = spec.and((root, query, cb) ->
 		                cb.and(
 		                        cb.isTrue(root.get("approve")),
-		                        cb.isTrue(root.get("negotiation"))
+		                        cb.isFalse(root.get("offerReleased")),
+		                        cb.isNotNull(root.get("reReleaseOfferId"))
+		                        
+		                        
 		                ));
 
 		    } else {
