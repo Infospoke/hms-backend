@@ -2325,12 +2325,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,
 			String currentStageFilter) {
 		
-		Integer jobId = null;
-
-		if (jobFilter != null && !jobFilter.isBlank()) {
-		    jobId = Integer.parseInt(jobFilter);
-		}
-		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
+		
+		
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
 
 		if (job == null) {
 			return null;
@@ -2367,10 +2364,16 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		if (currentStage == null) {
 			return null;
 		}
+		
 
 		if (currentStageFilter != null
 				&& !currentStage.getCurrentStageType().equals(Integer.parseInt(currentStageFilter))) {
 			return null;
+		}
+		
+		if (jobFilter != null && applicant.getJobId().equals(Integer.parseInt(jobFilter))) {
+			return null;
+		    
 		}
 
 		InterviewProgressListResponse dto = new InterviewProgressListResponse();
