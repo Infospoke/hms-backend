@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,14 +46,11 @@ import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.repository.StaffingRequisitionRepository;
-
+import com.hms.service.request.RecuriterPerformanceRequest;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.response.RecruiterAssignmentDashboardResponse;
 import com.hms.service.response.RecruiterDashboardCountResponse;
 import com.hms.service.response.RecruiterDashboardResponse;
-
-import com.hms.service.request.RecuriterPerformanceRequest;
-
 import com.hms.service.service.IDashboardService;
 import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
@@ -834,16 +833,46 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		Long applicationsAdded = (long) applications.size();
 
-		Long offersReleased = applications.stream().filter(app -> {
-			OfferDetailsEntity offer = offerDetailsRepository.findByJobApplication_Id(app.getId()).orElse(null);
+		List<Integer> applicationIds = applications.stream().map(JobApplicationEntity::getId).toList();
 
-			return offer != null && Boolean.TRUE.equals(offer.getOfferReleased());
-		}).count();
+		List<OfferDetailsEntity> offers = applicationIds.isEmpty() ? Collections.emptyList()
+				: offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
+
+		Long offersReleased = offers.stream()
+		        .filter(o -> Boolean.TRUE.equals(o.getOfferReleased()))
+		        .count();
+
+		List<Object[]> slaResult = recruiterAssignmentRepository.getSlaCounts(recruiterId);
 
 		Long onTrack = 0L;
 		Long atRisk = 0L;
 		Long overdue = 0L;
 
+		if (!slaResult.isEmpty()) {
+
+		    Object[] slaCounts = slaResult.get(0);
+
+		    onTrack = slaCounts[0] != null ? ((Number) slaCounts[0]).longValue() : 0L;
+		    atRisk = slaCounts[1] != null ? ((Number) slaCounts[1]).longValue() : 0L;
+		    overdue = slaCounts[2] != null ? ((Number) slaCounts[2]).longValue() : 0L;
+		}
+
+
+		Set<Integer> jobIds = assignments.stream().map(RecruiterAssignmentEntity::getJobId).collect(Collectors.toSet());
+
+		Map<Integer, CreateJobDetailsEntity> jobMap = createJobDetailsRepository.findByJobIdIn(jobIds).stream()
+				.collect(Collectors.toMap(CreateJobDetailsEntity::getJobId, Function.identity()));
+		
+		Set<String> srIds = jobMap.values().stream().map(CreateJobDetailsEntity::getSrId).filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+
+		Map<String, SRPositionBasicsEntity> srMap = staffingRequisitionRepository.findBySrIdIn(srIds).stream()
+				.collect(Collectors.toMap(SRPositionBasicsEntity::getSrId, Function.identity()));
+		
+		Map<Integer, Long> candidateCountMap = applications.stream()
+				.collect(Collectors.groupingBy(JobApplicationEntity::getJobId, Collectors.counting()));
+
+		
 		List<RecruiterAssignmentDashboardResponse> jobs = new ArrayList<>();
 
 		for (RecruiterAssignmentEntity assignment : assignments) {
@@ -852,8 +881,7 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			response.setJobId(assignment.getJobId());
 
-			CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(assignment.getJobId());
-
+			CreateJobDetailsEntity job = jobMap.get(assignment.getJobId());
 			if (job != null) {
 
 				response.setJobTitle(job.getJobTitle());
@@ -868,30 +896,27 @@ public class DashboardServiceImpl implements IDashboardService {
 					response.setAcceptedOn(assignment.getRespondedAt().toLocalDate());
 				}
 
-				SRPositionBasicsEntity sr = staffingRequisitionRepository.findBySrId(job.getSrId());
+				SRPositionBasicsEntity sr = srMap.get(job.getSrId());
 
 				if (sr != null) {
 					response.setSrId(sr.getSrId());
 					response.setPriority(sr.getPriority());
 				}
 
-				// Keeping these null for now
-				response.setFilled(null);
-				response.setRemaining(null);
+				response.setFilled(0);
+				response.setRemaining(0);
 
 				Long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), job.getTargetStartDate());
 
 				response.setDaysLeft(daysLeft);
 
-				Integer myCandidates = (int) applications.stream().filter(a -> a.getJobId().equals(job.getJobId()))
-						.count();
+				Integer myCandidates = candidateCountMap.getOrDefault(job.getJobId(), 0L).intValue();
 
 				String sla;
 
 				if (daysLeft < 0) {
 
 					sla = "Overdue";
-					overdue++;
 
 				} else {
 
@@ -911,12 +936,12 @@ public class DashboardServiceImpl implements IDashboardService {
 					if (timePercentage < 50 && hiringPercentage < 50) {
 
 						sla = "At Risk";
-						atRisk++;
+					
 
 					} else {
 
 						sla = "On Track";
-						onTrack++;
+						
 					}
 				}
 
@@ -925,12 +950,21 @@ public class DashboardServiceImpl implements IDashboardService {
 
 			jobs.add(response);
 		}
+		
+		Double slaCompliance = 0.0;
+
+		Long totalSla = onTrack + atRisk + overdue;
+
+		if (totalSla > 0) {
+		    slaCompliance = ((onTrack + atRisk) * 100.0) / totalSla;
+		}
 
 		counts.setTotalAssignments(totalAssignments);
 		counts.setAcceptedAssignments(acceptedAssignments);
 		counts.setRejectedAssignments(rejectedAssignments);
 		counts.setApplicationsAdded(applicationsAdded);
 		counts.setOffersReleased(offersReleased);
+		counts.setSlaCompliance(slaCompliance);
 
 		// Keeping hired null for now
 		counts.setHired(null);

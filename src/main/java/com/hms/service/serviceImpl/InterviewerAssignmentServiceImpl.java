@@ -478,7 +478,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		LocalDate today = LocalDate.now();
 
-		long todaysInterviews = interviewCurrentStageRepository.countByInterviewerIdAndInterviewDate(userId, today);
+		long todaysInterviews = interviewCurrentStageRepository.countByInterviewerIdAndInterviewDateAndInterviewCompletedFalse(userId, today);
 
 		long assignedInterviews = interviewerAssignmentRepository
 				.countByInterviewerUserIdAndRespondedAtIsNull(userId.longValue());
@@ -486,7 +486,8 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		long toSchedule = interviewCurrentStageRepository.countByInterviewerIdAndToScheduleFalse(userId);
 
 		long upcomingInterview = interviewCurrentStageRepository
-				.countByInterviewerIdAndToScheduleTrueAndInterviewCompletedFalse(userId);
+				.countByInterviewerIdAndToScheduleTrueAndInterviewCompletedFalseAndInterviewDateGreaterThan(userId,
+						LocalDate.now());
 
 		long feedbackInterview = interviewCurrentStageRepository
 				.countByInterviewerIdAndInterviewCompletedTrueAndFeedbackFalse(userId);
@@ -515,7 +516,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		InterviewerAssignmentEntity assignment = interviewerAssignmentRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Interview Assignment Not Found"));
-		
+
 		log.info("Assignment Id : {}", assignment.getId());
 		log.info("Plan Id : {}", assignment.getPlanId());
 		log.info("Stage Type Id : {}", assignment.getStageTypeId());
@@ -526,7 +527,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		if (round == null) {
 			throw new ResourceNotFoundException("Interview stage Not Found");
 		}
-		
+
 		Map<String, Object> response = new LinkedHashMap<>();
 
 		response.put("jobTitle", assignment.getJobTitle());

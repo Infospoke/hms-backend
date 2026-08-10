@@ -27,40 +27,36 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 	List<InterviewCurrentStageEntity> findByApplicationIdIn(List<Integer> applicationIds);
 
 	List<InterviewCurrentStageEntity> findByFeedbackFalseAndInterviewCompletedTrue();
-	
+
 	InterviewCurrentStageEntity findByApplicationIdAndInterviewDate(Integer applicationId, LocalDate now);
- 
-	 
-	InterviewCurrentStageEntity  findByApplicationIdAndFeedbackFalse(Integer applicationId);
-	
+
+	InterviewCurrentStageEntity findByApplicationIdAndFeedbackFalse(Integer applicationId);
+
 	List<InterviewCurrentStageEntity> findByToScheduleFalse();
 
 	Page<InterviewCurrentStageEntity> findByToScheduleFalse(Pageable pageable);
 
 	List<InterviewCurrentStageEntity> findAll(Specification<InterviewCurrentStageEntity> specification);
 
-	long countByInterviewerIdAndInterviewDate(Integer interviewerId, LocalDate interviewDate);
+	long countByInterviewerIdAndInterviewDateAndInterviewCompletedFalse(Integer interviewerId, LocalDate interviewDate);
 
 	long countByInterviewerIdAndToScheduleFalse(Integer interviewerId);
 
-	long countByInterviewerIdAndToScheduleTrueAndInterviewCompletedFalse(Integer interviewerId);
+	long countByInterviewerIdAndToScheduleTrueAndInterviewCompletedFalseAndInterviewDateGreaterThan(
+			Integer interviewerId, LocalDate interviewDate);
 
 	long countByInterviewerIdAndInterviewCompletedTrueAndFeedbackFalse(Integer interviewerId);
 
 	InterviewCurrentStageEntity findByApplicationIdAndToScheduleFalse(String valueOf);
 
 	InterviewCurrentStageEntity findByApplicationIdAndCurrentStageType(Integer applicationId, Integer roundId);
-	
+
 	InterviewCurrentStageEntity findTopByApplicationIdOrderByIdDesc(Integer applicationId);
-	
+
 	List<InterviewCurrentStageEntity> findByApplicationId(Integer applicationId);
 
 	List<InterviewCurrentStageEntity> findByApplicationIdAndInterviewCompletedFalse(Integer applicationId);
 
 	List<InterviewCurrentStageEntity> findByApplicationIdInOrderByRoundOrder(List<Integer> applicationIds);
-	
-
 
 }
-
-

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1706,6 +1707,25 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 							negotiationPage.getTotalPages(), "totalElements", negotiationPage.getTotalElements(),
 							"size", negotiationPage.getSize(), "last", negotiationPage.isLast()));
 		}
+		
+		Set<String> validOfferStatuses = Set.of(
+		        "Pending",
+		        "Accepted",
+		        "Rejected",
+		        "Expired"
+		);
+
+		boolean validStatus = validOfferStatuses.stream()
+		        .anyMatch(s -> s.equalsIgnoreCase(status));
+
+		if (!validStatus) {
+
+		    return ApiResponse.success(
+		            ResponseCode.SUCCESS,
+		            "Invalid status.",
+		            Collections.emptyMap()
+		    );
+		}
 
 		// ================= OFFER =================
 		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(request.buildOfferStatusSpecification(),
@@ -1764,6 +1784,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		JobApplicationEntity application = offer.getJobApplication();
 
 		if (application != null) {
+			
+			 response.setApplicantId(application.getId());
 
 			CandidateCreationDetailsEntity candidate = application.getCandidate();
 
