@@ -2371,9 +2371,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return null;
 		}
 		
-		if (jobFilter != null && job.getJobId().equals(Integer.parseInt(jobFilter))) {
-			return null;
-		    
+		if (jobFilter != null && !job.getJobId().equals(Integer.parseInt(jobFilter))) {
+		    return null;
 		}
 
 		InterviewProgressListResponse dto = new InterviewProgressListResponse();
