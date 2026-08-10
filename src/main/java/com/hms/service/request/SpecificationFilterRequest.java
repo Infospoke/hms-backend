@@ -1812,6 +1812,15 @@ public class SpecificationFilterRequest {
 			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
 
 			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
+			
+			 predicates.add(
+		                cb.equal(root.get("interviewCompletionStatus"), "hired")
+		        );
+
+	
+		        predicates.add(
+		                cb.isTrue(root.get("submitFinancialApproval"))
+		        );
 
 			String approvalType = getFilter("approvalType");
 
