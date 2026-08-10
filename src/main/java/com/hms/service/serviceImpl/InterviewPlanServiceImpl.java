@@ -2244,6 +2244,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			String search = request.getFilter("search");
 			String departmentFilter = request.getFilter("departmentId");
+			String jobFilter=request.getFilter("jobId");
 			String currentStageFilter = request.getFilter("currentStage");
 			List<InterviewCurrentStageEntity> allStages = interviewCurrentStageRepository
 					.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -2297,7 +2298,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 
 				InterviewProgressListResponse response = buildInterviewProgressResponse(applicantOptional.get(), stage,
-						search, departmentFilter, currentStageFilter);
+						search, departmentFilter,jobFilter,currentStageFilter);
 
 				if (response != null) {
 					responseList.add(response);
@@ -2321,7 +2322,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
-			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,
+			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,
 			String currentStageFilter) {
 
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
