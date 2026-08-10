@@ -1,5 +1,6 @@
 package com.hms.service.serviceImpl;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -109,6 +110,7 @@ import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
+import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -2245,6 +2247,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			String search = request.getFilter("search");
 			String departmentFilter = request.getFilter("departmentId");
 			String jobFilter=request.getFilter("jobId");
+			String dateFilter=request.getFilter("dateFilter");
 			String currentStageFilter = request.getFilter("currentStage");
 			List<InterviewCurrentStageEntity> allStages = interviewCurrentStageRepository
 					.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -2298,7 +2301,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 
 				InterviewProgressListResponse response = buildInterviewProgressResponse(applicantOptional.get(), stage,
-						search, departmentFilter,jobFilter,currentStageFilter);
+						search, departmentFilter,jobFilter,dateFilter,currentStageFilter);
 
 				if (response != null) {
 					responseList.add(response);
@@ -2322,7 +2325,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
-			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,
+			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,String dateFilter,
 			String currentStageFilter) {
 		
 		
@@ -2374,7 +2377,43 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		if (jobFilter != null && !job.getJobId().equals(Integer.parseInt(jobFilter))) {
 		    return null;
 		}
+		
+		
+		if (dateFilter != null && !dateFilter.isBlank()
+		        && currentStage.getInterviewCompletedOn() != null) {
 
+		    LocalDate interviewDate =
+		            currentStage.getInterviewCompletedOn().toLocalDate();
+
+		    LocalDate today = LocalDate.now();
+
+		    switch (dateFilter.toUpperCase()) {
+
+		    case "TODAY":
+		        if (!interviewDate.equals(today)) {
+		            return null;
+		        }
+		        break;
+
+		    case "THISWEEK":
+		        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+		        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
+		        if (interviewDate.isBefore(startOfWeek)
+		                || interviewDate.isAfter(endOfWeek)) {
+		            return null;
+		        }
+		        break;
+
+		    case "THISMONTH":
+		        if (interviewDate.getMonth() != today.getMonth()
+		                || interviewDate.getYear() != today.getYear()) {
+		            return null;
+		        }
+		        break;
+		    }
+		}
+		
 		InterviewProgressListResponse dto = new InterviewProgressListResponse();
 
 		dto.setApplicationId(applicant.getApplicationId());
