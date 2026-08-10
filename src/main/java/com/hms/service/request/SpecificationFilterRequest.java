@@ -2118,26 +2118,34 @@ public class SpecificationFilterRequest {
 
 			if (status != null && !status.isBlank()) {
 
-				switch (status.toUpperCase()) {
+			switch (status.toUpperCase()) {
 
-				case "REQUESTED FOR NEGOTIATION":
-					break;
+			case "REQUESTED FOR NEGOTIATION":
+				break;
 
-				case "ACCEPTED":
-				case "REJECTED":
-				case "PENDING":
+			case "ACCEPTED":
+			case "REJECTED":
+			case "PENDING":
 
-				case "EXPIRED":
-					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), status.toUpperCase()));
+				predicates.add(cb.equal(cb.upper(root.get("offerStatus")), status.toUpperCase()));
+				break;
 
-					predicates.add(cb.lessThanOrEqualTo(root.get("offerReleasedAt"), LocalDateTime.now().minusDays(7)));
-					break;
-				}
+			case "EXPIRED":
+
+				predicates.add(cb.equal(cb.upper(root.get("offerStatus")), "EXPIRED"));
+
+				predicates.add(cb.lessThanOrEqualTo(root.get("offerReleasedAt"), LocalDateTime.now().minusDays(7)));
+				break;
 			}
+		}
 
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
-	}
+		return cb.and(predicates.toArray(new Predicate[0]));
+	};
+}
+
+			
+			
+	
 
 	public Specification<RecruiterAssignmentEntity> buildRecruiterDashboardSpecification(Integer recruiterId) {
 

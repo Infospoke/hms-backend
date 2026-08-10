@@ -1764,6 +1764,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		JobApplicationEntity application = offer.getJobApplication();
 
 		if (application != null) {
+			
+			 response.setApplicantId(application.getId());
 
 			CandidateCreationDetailsEntity candidate = application.getCandidate();
 
