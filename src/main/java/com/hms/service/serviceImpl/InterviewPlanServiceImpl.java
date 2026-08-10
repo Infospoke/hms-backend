@@ -2325,8 +2325,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,
 			String currentStageFilter) {
 		
-		Integer jobId=Integer.parseInt(jobFilter);
+		Integer jobId = null;
 
+		if (jobFilter != null && !jobFilter.isBlank()) {
+		    jobId = Integer.parseInt(jobFilter);
+		}
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
 
 		if (job == null) {
