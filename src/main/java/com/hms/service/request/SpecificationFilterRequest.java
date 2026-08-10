@@ -1358,21 +1358,20 @@ public class SpecificationFilterRequest {
 
 			// Interview Plan Filter
 			String interviewPlan = getFilter("interviewPlan");
-			
+
 			log.info(interviewPlan);
 			if (interviewPlan != null && !interviewPlan.isBlank()) {
 
 				List<Integer> planIds = interviewPlanRepository.findByPlanNameContainingIgnoreCase(interviewPlan)
 						.stream().map(InterviewPlanEntity::getId).toList();
 
-			    log.info("Plan Ids : {}", planIds);
+				log.info("Plan Ids : {}", planIds);
 
 				if (!planIds.isEmpty()) {
 
 					predicates.add(root.get("job").get("planId").in(planIds));
 				}
 			}
-			
 
 			// Priority Filter
 			String priority = getFilter("priority");
@@ -1551,22 +1550,21 @@ public class SpecificationFilterRequest {
 
 		Specification<OfferDetailsEntity> spec = (root, query, cb) -> cb.conjunction();
 
-		 String releaseType = getFilter("releaseType");
-		
-		 if ("RE-RELEASE".equalsIgnoreCase(releaseType)) {
+		String releaseType = getFilter("releaseType");
 
-		        // Re-release candidates
-		        spec = spec.and((root, query, cb) ->
-		                cb.and(
-		                        cb.isTrue(root.get("approve")),
-		                        cb.isTrue(root.get("negotiation"))
-		                ));
+		if ("RE-RELEASE".equalsIgnoreCase(releaseType)) {
 
-		    } else {
-		
-		spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
-				cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased")))));
-		    }
+			// Re-release candidates
+			spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
+					cb.isFalse(root.get("offerReleased")), cb.isNotNull(root.get("reReleaseOfferId"))
+
+			));
+
+		} else {
+
+			spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
+					cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased")))));
+		}
 
 		String search = getFilter("search");
 		if (search != null) {
@@ -1812,16 +1810,11 @@ public class SpecificationFilterRequest {
 			Root<CreateJobDetailsEntity> job = query.from(CreateJobDetailsEntity.class);
 
 			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
-			
-			 predicates.add(
-		                cb.equal(root.get("interviewCompletionStatus"), "hired")
-		        );
 
-	
-		        predicates.add(
-		                cb.isTrue(root.get("submitFinancialApproval"))
-		        );
-		        predicates.add(cb.isFalse(root.get("approve")));
+			predicates.add(cb.equal(root.get("interviewCompletionStatus"), "hired"));
+
+			predicates.add(cb.isTrue(root.get("submitFinancialApproval")));
+			predicates.add(cb.isFalse(root.get("approve")));
 
 			String approvalType = getFilter("approvalType");
 
@@ -2134,12 +2127,8 @@ public class SpecificationFilterRequest {
 				case "REJECTED":
 				case "PENDING":
 
-					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), status.toUpperCase()));
-					break;
-
 				case "EXPIRED":
-
-					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), "PENDING"));
+					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), status.toUpperCase()));
 
 					predicates.add(cb.lessThanOrEqualTo(root.get("offerReleasedAt"), LocalDateTime.now().minusDays(7)));
 					break;
@@ -2149,84 +2138,77 @@ public class SpecificationFilterRequest {
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
-	
+
 	public Specification<RecruiterAssignmentEntity> buildRecruiterDashboardSpecification(Integer recruiterId) {
 
-	    return (root, query, cb) -> {
+		return (root, query, cb) -> {
 
-	        List<Predicate> predicates = new ArrayList<>();
+			List<Predicate> predicates = new ArrayList<>();
 
-	        predicates.add(cb.equal(root.get("userId"), recruiterId));
+			predicates.add(cb.equal(root.get("userId"), recruiterId));
 
-	      
-	        Specification<RecruiterAssignmentEntity> dateSpecification = dateSpec("assignedAt");
+			Specification<RecruiterAssignmentEntity> dateSpecification = dateSpec("assignedAt");
 
-	        if (dateSpecification != null) {
+			if (dateSpecification != null) {
 
-	            Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
 
-	            if (datePredicate != null) {
-	                predicates.add(datePredicate);
-	            }
-	        }
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
 
-	        return cb.and(predicates.toArray(new Predicate[0]));
-	    };
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
+
 	public Specification<JobApplicationEntity> buildRecruiterApplicationSpecification(Integer recruiterId) {
 
-	    return (root, query, cb) -> {
+		return (root, query, cb) -> {
 
-	        List<Predicate> predicates = new ArrayList<>();
+			List<Predicate> predicates = new ArrayList<>();
 
-	        predicates.add(cb.equal(root.get("recruiterId"), recruiterId));
+			predicates.add(cb.equal(root.get("recruiterId"), recruiterId));
 
-	        Specification<JobApplicationEntity> dateSpecification =
-	                dateSpec("createdDate");
+			Specification<JobApplicationEntity> dateSpecification = dateSpec("createdDate");
 
-	        if (dateSpecification != null) {
+			if (dateSpecification != null) {
 
-	            Predicate datePredicate =
-	                    dateSpecification.toPredicate(root, query, cb);
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
 
-	            if (datePredicate != null) {
-	                predicates.add(datePredicate);
-	            }
-	        }
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
 
-	        return cb.and(predicates.toArray(new Predicate[0]));
-	    };
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
-	
+
 	public Specification<OfferDetailsEntity> buildRecruiterOfferSpecification(Integer recruiterId) {
 
-	    return (root, query, cb) -> {
+		return (root, query, cb) -> {
 
-	        List<Predicate> predicates = new ArrayList<>();
+			List<Predicate> predicates = new ArrayList<>();
 
-	        Join<OfferDetailsEntity, JobApplicationEntity> application =
-	                root.join("jobApplication");
+			Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
-	        predicates.add(
-	                cb.equal(application.get("recruiterId"), recruiterId));
+			predicates.add(cb.equal(application.get("recruiterId"), recruiterId));
 
-	        predicates.add(
-	                cb.isTrue(root.get("offerReleased")));
+			predicates.add(cb.isTrue(root.get("offerReleased")));
 
-	        Specification<OfferDetailsEntity> dateSpecification =
-	                dateSpec("offerReleasedAt");
+			Specification<OfferDetailsEntity> dateSpecification = dateSpec("offerReleasedAt");
 
-	        if (dateSpecification != null) {
+			if (dateSpecification != null) {
 
-	            Predicate datePredicate =
-	                    dateSpecification.toPredicate(root, query, cb);
+				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
 
-	            if (datePredicate != null) {
-	                predicates.add(datePredicate);
-	            }
-	        }
+				if (datePredicate != null) {
+					predicates.add(datePredicate);
+				}
+			}
 
-	        return cb.and(predicates.toArray(new Predicate[0]));
-	    };
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
 	}
 }
