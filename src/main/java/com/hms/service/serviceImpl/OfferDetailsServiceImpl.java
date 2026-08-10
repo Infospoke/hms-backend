@@ -1,5 +1,7 @@
 package com.hms.service.serviceImpl;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1705,6 +1708,25 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 					Map.of("content", responseList, "currentPage", negotiationPage.getNumber(), "totalPages",
 							negotiationPage.getTotalPages(), "totalElements", negotiationPage.getTotalElements(),
 							"size", negotiationPage.getSize(), "last", negotiationPage.isLast()));
+		}
+		
+		Set<String> validOfferStatuses = Set.of(
+		        "Pending",
+		        "Accepted",
+		        "Rejected",
+		        "Expired"
+		);
+
+		boolean validStatus = validOfferStatuses.stream()
+		        .anyMatch(s -> s.equalsIgnoreCase(status));
+
+		if (!validStatus) {
+
+		    return ApiResponse.success(
+		            ResponseCode.SUCCESS,
+		            "Invalid status.",
+		            Collections.emptyMap()
+		    );
 		}
 
 		// ================= OFFER =================
