@@ -2142,7 +2142,7 @@ public class SpecificationFilterRequest {
 
 				case "EXPIRED":
 
-					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), "PENDING"));
+					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), "EXPIRED"));
 
 					predicates.add(cb.lessThanOrEqualTo(root.get("offerReleasedAt"), LocalDateTime.now().minusDays(7)));
 					break;
