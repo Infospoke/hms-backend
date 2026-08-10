@@ -128,8 +128,8 @@ public class OfferDetailsController {
 	}	
 	
 	@GetMapping("/re-release-offer-details-by-id/{reReleaseOfferId}")
-	
 	public ResponseEntity<ApiResponse<?>> getReReleaseOfferDetails( @PathVariable("reReleaseOfferId") Integer reReleaseOfferId) {
+		
 		ApiResponse<?> response = iOfferDetailsService.getReReleaseOfferDetails(reReleaseOfferId);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);

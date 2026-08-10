@@ -2190,17 +2190,13 @@ public class SpecificationFilterRequest {
 
 	        List<Predicate> predicates = new ArrayList<>();
 
-	        Join<OfferDetailsEntity, JobApplicationEntity> application =
-	                root.join("jobApplication");
+			Join<OfferDetailsEntity, JobApplicationEntity> application = root.join("jobApplication");
 
-	        predicates.add(
-	                cb.equal(application.get("recruiterId"), recruiterId));
+			predicates.add(cb.equal(application.get("recruiterId"), recruiterId));
 
-	        predicates.add(
-	                cb.isTrue(root.get("offerReleased")));
+			predicates.add(cb.isTrue(root.get("offerReleased")));
 
-	        Specification<OfferDetailsEntity> dateSpecification =
-	                dateSpec("offerReleasedAt");
+			Specification<OfferDetailsEntity> dateSpecification = dateSpec("offerReleasedAt");
 
 	        if (dateSpecification != null) {
 
