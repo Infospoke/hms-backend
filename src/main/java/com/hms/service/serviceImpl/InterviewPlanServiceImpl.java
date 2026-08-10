@@ -2324,8 +2324,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
 			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,
 			String currentStageFilter) {
+		
+		Integer jobId = null;
 
-		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
+		if (jobFilter != null && !jobFilter.isBlank()) {
+		    jobId = Integer.parseInt(jobFilter);
+		}
+		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(jobId);
 
 		if (job == null) {
 			return null;
