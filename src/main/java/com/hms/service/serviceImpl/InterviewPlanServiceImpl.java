@@ -2249,6 +2249,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			String jobFilter=request.getFilter("jobId");
 			String dateFilter=request.getFilter("dateFilter");
 			String currentStageFilter = request.getFilter("currentStage");
+			
 			List<InterviewCurrentStageEntity> allStages = interviewCurrentStageRepository
 					.findAll(Sort.by(Sort.Direction.DESC, "id"));
 			Map<Integer, InterviewCurrentStageEntity> latestStageMap = new LinkedHashMap<>();
@@ -2283,15 +2284,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 			uniqueStages.sort(comparator);
-			int start = request.getPage() * request.getSize();
-			int end = Math.min(start + request.getSize(), uniqueStages.size());
+			
+			List<InterviewProgressListResponse> filteredList = new ArrayList<>();
 
-			List<InterviewCurrentStageEntity> pageContent = start >= uniqueStages.size() ? Collections.emptyList()
-					: uniqueStages.subList(start, end);
-
-			List<InterviewProgressListResponse> responseList = new ArrayList<>();
-
-			for (InterviewCurrentStageEntity stage : pageContent) {
+			for (InterviewCurrentStageEntity stage : uniqueStages) {
 
 				Optional<ApplicanDetailsEntity> applicantOptional = applicantDetailsRepository
 						.findByApplicationId(stage.getApplicationId());
@@ -2304,16 +2300,29 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 						search, departmentFilter,jobFilter,dateFilter,currentStageFilter);
 
 				if (response != null) {
-					responseList.add(response);
+					filteredList.add(response);
 				}
 			}
+			
+			
+			
+
+			int totalElements = filteredList.size();
+
+			int totalPages = (int) Math.ceil((double) totalElements / request.getSize());
+
+			int start = request.getPage() * request.getSize();
+			int end = Math.min(start + request.getSize(), totalElements);
+
+			List<InterviewProgressListResponse> responseList = start >= totalElements ? Collections.emptyList()
+					: filteredList.subList(start, end);
 
 			Map<String, Object> result = new LinkedHashMap<>();
 			result.put("content", responseList);
 			result.put("currentPage", request.getPage());
 			result.put("pageSize", request.getSize());
-			result.put("totalElements", uniqueStages.size());
-			result.put("totalPages", (int) Math.ceil((double) uniqueStages.size() / request.getSize()));
+			result.put("totalElements", totalElements);
+			result.put("totalPages", totalPages);
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Progress List fetched successfully", result);
 
@@ -2326,9 +2335,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
 			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,String dateFilter,
-			String currentStageFilter) {
-		
-		
+			String currentStageFilter) {	
 		
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
 
