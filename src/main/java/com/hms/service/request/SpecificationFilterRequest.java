@@ -1821,6 +1821,7 @@ public class SpecificationFilterRequest {
 		        predicates.add(
 		                cb.isTrue(root.get("submitFinancialApproval"))
 		        );
+		        predicates.add(cb.isFalse(root.get("approve")));
 
 			String approvalType = getFilter("approvalType");
 
