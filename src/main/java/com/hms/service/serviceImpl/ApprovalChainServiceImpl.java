@@ -91,7 +91,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		Long pending = approvalChainRepository.countByApprovalIgnoreCase("IN_PROGRESS");
 
 		Long active = approvalChainRepository.countByStatusIgnoreCase("ACTIVE");
-		Long deactive = approvalChainRepository.countByStatusIgnoreCase("DEACTIVE");
+		Long inactive = approvalChainRepository.countByStatusIgnoreCase("INACTIVE");
 		Long totalFunctionalities = functionalityRepository.count();
 
 		Long chainCreatedCount = functionalityRepository.countByIsChaincreatedTrue();
@@ -104,7 +104,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 		response.put("rejected", rejected);
 
 		response.put("active", active);
-		response.put("deactive", deactive);
+		response.put("inactive", inactive);
 		response.put("totalFunctionalities", totalFunctionalities);
 		response.put("chainCreated", chainCreatedCount);
 

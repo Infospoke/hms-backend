@@ -516,9 +516,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 		}
 
-		// DEACTIVATION REQUEST
+		// INACTIVATION REQUEST
 
-		if (request.getStatus() != null && "DEACTIVE".equalsIgnoreCase(request.getStatus())) {
+		if (request.getStatus() != null && "INACTIVE".equalsIgnoreCase(request.getStatus())) {
 
 			if (!"Recruiting Operations".equalsIgnoreCase(roleName)) {
 
@@ -526,10 +526,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 			interviewPlanEntity.setApprovalStatus("INPROGRESS");
-			interviewPlanEntity.setRequestType("PLAN DEACTIVE");
+			interviewPlanEntity.setRequestType("PLAN INACTIVE");
 			interviewPlanEntity.setDeactiveApproval(false);
 			childLinkCommentsEntity.setPlanId(planId);
-			childLinkCommentsEntity.setAction("DEACTIVE");
+			childLinkCommentsEntity.setAction("INACTIVE");
 			childLinkCommentsEntity.setDescription(request.getDescription());
 			childLinkCommentsEntity.setCreatedBy(userName);
 			childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
@@ -555,7 +555,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 					"INTERVIEW PLAN WORKFLOW",
 
-					"Interview Plan deactivation request submitted",
+					"Interview Plan inactivation request submitted",
 
 					planName,
 
@@ -595,7 +595,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			if (Boolean.TRUE.equals(request.getDeactiveApproval())) {
 
-				interviewPlanEntity.setStatus("DEACTIVE");
+				interviewPlanEntity.setStatus("INACTIVE");
 				interviewPlanEntity.setApprovalStatus("APPROVED");
 				interviewPlanEntity.setDeactiveApproval(true);
 				interviewPlanEntity.setActiveApproval(false);
@@ -966,7 +966,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		long activePlans = interviewPlanRepository.countByStatus("ACTIVE");
 
-		long deactivePlans = interviewPlanRepository.countByStatus("DEACTIVE");
+		long deactivePlans = interviewPlanRepository.countByStatus("INACTIVE");
 
 		Map<String, Object> response = new LinkedHashMap<>();
 
@@ -974,7 +974,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		response.put("activePlans", activePlans);
 
-		response.put("deactivePlans", deactivePlans);
+		response.put("inactivePlans", deactivePlans);
 
 		log.info("InterviewPlanServiceImpl :: Exit getInterviewPlanCounts");
 
