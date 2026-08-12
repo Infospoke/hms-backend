@@ -1359,7 +1359,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 			jobApplicationRepository.save(application);
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "success", "Job Applied Successfully.");
+			return ApiResponse.success(ResponseCode.SUCCESS, "Job Applied Successfully.",application.getId());
 
 		} catch (Exception e) {
 
