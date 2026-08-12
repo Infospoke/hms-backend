@@ -17,12 +17,12 @@ public class DashboardCardsDto {
 
     private Integer yetToFill;
 
-    private Integer inProgress;
+    private Integer inProgress=0;
     
-    private Integer filled;
+    private Integer filled=0;
     
-    private Integer my;
+    private Integer my=0;
     
-    private Integer team;
+    private Integer team=0;
 
 }
