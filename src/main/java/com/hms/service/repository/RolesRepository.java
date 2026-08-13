@@ -2,6 +2,7 @@ package com.hms.service.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,6 +33,8 @@ public interface RolesRepository extends JpaRepository<RolesEntity, Integer> {
 		        @Param("roleIds") List<Integer> roleIds);
 
 	List<RolesEntity> findByDepartmentIdIn(List<Integer> departmentIds);
+
+	List<RolesEntity> findAllByRoleIdIn(Set<Integer> finalRoleIds);
 
 
 	
