@@ -1072,10 +1072,10 @@ public class SpecificationFilterRequest {
 				.count(countSpec.and((root, query, cb) -> cb.equal(root.get("status"), "ACTIVE")));
 
 		long deactivePlans = interviewPlanRepository
-				.count(countSpec.and((root, query, cb) -> cb.equal(root.get("status"), "DEACTIVE")));
+				.count(countSpec.and((root, query, cb) -> cb.equal(root.get("status"), "INACTIVE")));
 		counts.put("allPlans", allPlans);
 		counts.put("activePlans", activePlans);
-		counts.put("deactivePlans", deactivePlans);
+		counts.put("inactivePlans", deactivePlans);
 
 		return counts;
 	}

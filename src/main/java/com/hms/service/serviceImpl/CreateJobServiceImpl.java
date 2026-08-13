@@ -1110,7 +1110,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				
 				long interviewCount = interviewAnalysisRepository.countByJobId(jobId);
 				
-				long acceptedCount=0L;
+				long offerCount=0L;
 				
 				List<JobApplicationEntity> applicantList =
 				        jobApplicationRepository.findByJobId(jobId);
@@ -1125,8 +1125,15 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				    List<OfferDetailsEntity> offers =
 				            offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
 
-				    acceptedCount = offers.stream()
-				            .filter(o -> "Accepted".equalsIgnoreCase(o.getOfferStatus()))
+				    offerCount = offers.stream()
+				            .filter(o -> {
+				                String status = o.getOfferStatus();
+
+				                return "Accepted".equalsIgnoreCase(status)
+				                        || "Rejected".equalsIgnoreCase(status)
+				                        || "Pending".equalsIgnoreCase(status)
+				                        || "Requested for Negotiation".equalsIgnoreCase(status);
+				            })
 				            .count();
 				}
 
@@ -1136,7 +1143,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				applicants.setShortlisted(shortlistedCount);
 				applicants.setResumeCount(resumeCompleted);
 				applicants.setHiredCount(0L);
-				applicants.setOfferAccepted(acceptedCount);
+				applicants.setOfferCount(offerCount);
 				applicants.setInterviewCount(interviewCount);
 
 				response.setApplicantsCount(applicants);

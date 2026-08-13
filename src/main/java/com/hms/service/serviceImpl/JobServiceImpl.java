@@ -276,7 +276,8 @@ public class JobServiceImpl implements IJobService {
 
 		long interviews = interviewAnalysisRepository.count();
 		
-		long offersAccepted = offerDetailsRepository.countByOfferStatusIgnoreCase("Accepted");
+		long offerCount = offerDetailsRepository.countOffersByStatuses();
+		 
 		 
 
 //		long offersAccepted = offerRepository.count();
@@ -284,7 +285,7 @@ public class JobServiceImpl implements IJobService {
 		response.setOpenJobs(openJobs);
 		response.setCandidates(applicants);
 		response.setInterviews(interviews);
-		response.setOffersAccepted(offersAccepted);
+		response.setOffersCount(offerCount);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}

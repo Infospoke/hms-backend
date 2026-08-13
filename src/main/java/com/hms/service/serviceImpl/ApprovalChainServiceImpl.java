@@ -440,9 +440,9 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 			}
 		}
 
-		// Deactivate Request
+		// Inactivate Request
 
-		if (request.getStatus() != null && "DEACTIVE".equalsIgnoreCase(request.getStatus())) {
+		if (request.getStatus() != null && "INACTIVE".equalsIgnoreCase(request.getStatus())) {
 
 			if (!approvalChainEntity.getCreatedBy().equalsIgnoreCase(userName)) {
 
@@ -451,10 +451,10 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 			approvalChainEntity.setApproval("In_Progress");
 
-			approvalChainEntity.setRequestType("Chain-Deactive");
+			approvalChainEntity.setRequestType("Chain-Inactive");
 			approvalChainEntity.setDeactiveApproval(false);
 			childLinkCommentsEntity.setChainId(chainId);
-			childLinkCommentsEntity.setAction("Deactive");
+			childLinkCommentsEntity.setAction("Inactive");
 			childLinkCommentsEntity.setDescription(request.getDescription());
 			childLinkCommentsEntity.setCreatedBy(userName);
 			childLinkCommentsEntity.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
@@ -498,7 +498,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 			if (Boolean.TRUE.equals(request.getDeactiveApproval())) {
 
-				approvalChainEntity.setStatus("DEACTIVE");
+				approvalChainEntity.setStatus("INACTIVE");
 				approvalChainEntity.setApproval("Approved");
 				approvalChainEntity.setDeactiveApproval(true);
 				approvalChainEntity.setActiveApproval(false);
@@ -729,7 +729,7 @@ public class ApprovalChainServiceImpl implements IApprovalChainService {
 
 		counts.put("active", approvalChainRepository.count(countSpec.and(statusEquals("ACTIVE"))));
 
-		counts.put("inactive", approvalChainRepository.count(countSpec.and(statusEquals("DEACTIVE"))));
+		counts.put("inactive", approvalChainRepository.count(countSpec.and(statusEquals("INACTIVE"))));
 
 		counts.put("approved", approvalChainRepository.count(countSpec.and(approvalEquals("APPROVED"))));
 
