@@ -3,10 +3,8 @@ package com.hms.service.serviceImpl;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-
 import java.util.ArrayList;
 import java.util.Collections;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,10 +44,10 @@ import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
-
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
@@ -77,6 +75,9 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
+	
+	@Autowired
+	private OfferDetailsRepository offerDetailsRepository;
 
 //	@Autowired
 //	private JwtService jwtService;
@@ -273,13 +274,16 @@ public class JobServiceImpl implements IJobService {
 		long applicants = jobApplicationRepository.count();
 
 		long interviews = interviewAnalysisRepository.count();
+		
+		long offersAccepted = offerDetailsRepository.countByOfferStatusIgnoreCase("Accepted");
+		 
 
 //		long offersAccepted = offerRepository.count();
 
 		response.setOpenJobs(openJobs);
 		response.setCandidates(applicants);
 		response.setInterviews(interviews);
-//		response.setOffersAccepted(offersAccepted);
+		response.setOffersAccepted(offersAccepted);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
