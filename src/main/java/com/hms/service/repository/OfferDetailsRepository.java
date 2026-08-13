@@ -98,6 +98,23 @@ public interface OfferDetailsRepository
 	Optional<OfferDetailsEntity> findByReReleaseOfferId(Integer reReleaseOfferId);
 	
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
+
+
+	
+	@Query("""
+		    SELECT COUNT(o)
+		    FROM OfferDetailsEntity o
+		    WHERE LOWER(o.offerStatus) IN (
+		        'accepted',
+		        'rejected',
+		        'pending',
+		        'requested for negotiation'
+		    )
+		""")
+		long countOffersByStatuses();
+
+	long countByOfferStatusIgnoreCase(String string);
+
 	
 	
 	

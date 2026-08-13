@@ -14,7 +14,7 @@ public class JobsDashboardResponse {
 	    private long openJobs;
 	    private long candidates;
 	    private long interviews;
-	    private long offersAccepted;
+	    private long offersCount;
 
 	
 }

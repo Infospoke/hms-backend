@@ -1,12 +1,9 @@
 package com.hms.service.serviceImpl;
 
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-
 import java.util.ArrayList;
 import java.util.Collections;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,10 +43,10 @@ import com.hms.service.repository.InterviewCurrentStageRepository;
 import com.hms.service.repository.InterviewFeedbackRepository;
 import com.hms.service.repository.InterviewPlanRepository;
 import com.hms.service.repository.InterviewRoundDropDownRepository;
-
 import com.hms.service.repository.InterviewScheduleRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
+import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
@@ -77,6 +74,9 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
+	
+	@Autowired
+	private OfferDetailsRepository offerDetailsRepository;
 
 //	@Autowired
 //	private JwtService jwtService;
@@ -122,13 +122,13 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private CandidateCreationDetailsRepository candidateCreationDetailsRepository;
-	
+
 	@Autowired
 	private ICandidateService iCandidateService;
 
 	@Autowired
 	private MailServiceImpl mailService;
-	
+
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
@@ -180,6 +180,8 @@ public class JobServiceImpl implements IJobService {
 		JobApplicationEntity entity = jobApplicationRepository.findById(id)
 				.orElseThrow(() -> new CustomSystemErrorException(Constants.NO_APPLICANTS_FOUND));
 
+		CandidateCreationDetailsEntity candidate = entity.getCandidate();
+
 		CreateJobDetailsEntity jobs = createJobDetailsRepository.findById(entity.getJobId())
 				.orElseThrow(() -> new CustomSystemErrorException("Job not found"));
 
@@ -197,6 +199,7 @@ public class JobServiceImpl implements IJobService {
 
 		BeanUtils.copyProperties(entity, response);
 
+		response.setCandidateId(entity.getCandidate() != null ? entity.getCandidate().getCandidateId() : null);
 		response.setJobTitle(jobs.getJobTitle());
 		response.setJobCode(jobs.getJobCode());
 		response.setLocation(jobs.getLocation());
@@ -251,7 +254,6 @@ public class JobServiceImpl implements IJobService {
 			aiStage.setStageTypeId(1);
 			aiStage.setStageName("AI Interview");
 
-			
 			completedStageDetails.add(aiStage);
 		}
 
@@ -273,13 +275,17 @@ public class JobServiceImpl implements IJobService {
 		long applicants = jobApplicationRepository.count();
 
 		long interviews = interviewAnalysisRepository.count();
+		
+		long offerCount = offerDetailsRepository.countOffersByStatuses();
+		 
+		 
 
 //		long offersAccepted = offerRepository.count();
 
 		response.setOpenJobs(openJobs);
 		response.setCandidates(applicants);
 		response.setInterviews(interviews);
-//		response.setOffersAccepted(offersAccepted);
+		response.setOffersCount(offerCount);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
@@ -322,7 +328,8 @@ public class JobServiceImpl implements IJobService {
 		log.info("Job Application IDs: {}", applicationIds);
 		log.info("Screened IDs from DB: {}", screenedSet);
 
-	//	List<Object[]> candidateData = candidateCreationDetailsRepository.findStatusByApplicationIds(applicationIds);
+		// List<Object[]> candidateData =
+		// candidateCreationDetailsRepository.findStatusByApplicationIds(applicationIds);
 
 		Map<Integer, String> candidateStatusMap = new HashMap<>();
 
@@ -522,7 +529,7 @@ public class JobServiceImpl implements IJobService {
 				}
 
 				return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId,
-						username, null,candidate);
+						username, null, candidate);
 
 			}
 
@@ -544,7 +551,7 @@ public class JobServiceImpl implements IJobService {
 			candidateCreationDetailsRepository.save(candidate);
 
 			return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId, username,
-					temporaryPassword,candidate);
+					temporaryPassword, candidate);
 
 		} catch (Exception e) {
 
@@ -555,60 +562,58 @@ public class JobServiceImpl implements IJobService {
 	}
 
 	private ApiResponse<?> createJobApplication(JobApplicationRequest request, String resumeKey,
-			String additionalFileKey, Long recruiterId, String username, String temporaryPassword, CandidateCreationDetailsEntity candidate) {
-           
-			Optional<CreateJobDetailsEntity> job = createJobDetailsRepository.findById(request.getJobId());
-			
-			if(job.isEmpty()) {
-				return ApiResponse.failure(ResponseCode.FAILURE, "Job not found for the requested jobId");
-			}
-			CreateJobDetailsEntity jobDetails=job.get();
-			JobApplicationEntity entity = new JobApplicationEntity();
+			String additionalFileKey, Long recruiterId, String username, String temporaryPassword,
+			CandidateCreationDetailsEntity candidate) {
 
-			entity.setJobId(request.getJobId());
-			entity.setFirstName(request.getFirstName());
-			entity.setLastName(request.getLastName());
-			entity.setEmail(request.getEmail());
-			entity.setPhNo(request.getPhNo());
-			entity.setReferral(request.getReferral());
-			entity.setCandidate(candidate);
-			entity.setRecruiterId(recruiterId.intValue());
-			entity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
-			entity.setCurrentStage(Constants.APPLIED);
-			entity.setStageEntryDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+		Optional<CreateJobDetailsEntity> job = createJobDetailsRepository.findById(request.getJobId());
 
-			entity.setResume(resumeKey);
-			entity.setAdditionalFile(additionalFileKey);
+		if (job.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Job not found for the requested jobId");
+		}
+		CreateJobDetailsEntity jobDetails = job.get();
+		JobApplicationEntity entity = new JobApplicationEntity();
 
-			entity = jobApplicationRepository.save(entity);
+		entity.setJobId(request.getJobId());
+		entity.setFirstName(request.getFirstName());
+		entity.setLastName(request.getLastName());
+		entity.setEmail(request.getEmail());
+		entity.setPhNo(request.getPhNo());
+		entity.setReferral(request.getReferral());
+		entity.setCandidate(candidate);
+		entity.setRecruiterId(recruiterId.intValue());
+		entity.setCreatedDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+		entity.setCurrentStage(Constants.APPLIED);
+		entity.setStageEntryDate(LocalDateTime.now(ZoneId.of(Constants.REGION)));
 
-			String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + jobDetails.getJobTitle() + " ("
-					+ jobDetails.getJobCode() + ")";
+		entity.setResume(resumeKey);
+		entity.setAdditionalFile(additionalFileKey);
 
-			String body = String.format(Constants.JOB_APPLICATION_CANDIDATE_MAIL_BODY, request.getFirstName(), // Dear
-					jobDetails.getJobTitle(), // Job Title
-					LocalDateTime.now(ZoneId.of(Constants.REGION)), // Registered On
+		entity = jobApplicationRepository.save(entity);
 
-					username, // Username
-					temporaryPassword == null ? "" : temporaryPassword // Temporary Password
-			);
+		String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + jobDetails.getJobTitle() + " ("
+				+ jobDetails.getJobCode() + ")";
 
-			mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
+		String body = String.format(Constants.JOB_APPLICATION_CANDIDATE_MAIL_BODY, request.getFirstName(), // Dear
+				jobDetails.getJobTitle(), // Job Title
+				LocalDateTime.now(ZoneId.of(Constants.REGION)), // Registered On
 
-			ActivityFeedEntity activity = new ActivityFeedEntity();
-			activity.setTimeStamp(LocalDateTime.now(ZoneId.of(Constants.REGION)));
-			activity.setActivity(Constants.APPLICATION_RECEIVED_FROM + request.getFirstName() + Constants.FOR_THE_JOB
-					+ jobDetails.getJobTitle());
+				username, // Username
+				temporaryPassword == null ? "" : temporaryPassword // Temporary Password
+		);
 
-			activityFeedRepository.save(activity);
+		mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
 
-			log.info("Job application submitted successfully");
+		ActivityFeedEntity activity = new ActivityFeedEntity();
+		activity.setTimeStamp(LocalDateTime.now(ZoneId.of(Constants.REGION)));
+		activity.setActivity(Constants.APPLICATION_RECEIVED_FROM + request.getFirstName() + Constants.FOR_THE_JOB
+				+ jobDetails.getJobTitle());
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Success",
-					Constants.JOB_APPLICATION_SUBMITTED_SUCCESSFULLY);
-            }
- 
-	
+		activityFeedRepository.save(activity);
+
+		log.info("Job application submitted successfully");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Success", Constants.JOB_APPLICATION_SUBMITTED_SUCCESSFULLY);
+	}
 
 	// upload to minio bucket
 	private List<String> uploadToMinio(MultipartFile file, Integer jobId, JobApplicationRequest request)
@@ -660,5 +665,4 @@ public class JobServiceImpl implements IJobService {
 		log.info("JobServiceImpl: Exit from deleteFromMinio method");
 	}
 
-	
 }

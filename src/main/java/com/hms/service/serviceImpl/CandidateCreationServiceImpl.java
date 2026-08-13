@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.constants.Constants;
+import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
@@ -43,6 +44,7 @@ import com.hms.service.exceptions.BadRequestException;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.exceptions.OperationNotAllowedException;
 import com.hms.service.exceptions.ResourceNotFoundException;
+import com.hms.service.repository.ActivityFeedRepository;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewAnalysisRepository;
@@ -131,6 +133,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
+	
+	@Autowired
+	private ActivityFeedRepository activityFeedRepository;
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
@@ -1358,6 +1363,13 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			application.setReuploadStatus(status);
 
 			jobApplicationRepository.save(application);
+			
+			ActivityFeedEntity activityFeedEntity=new ActivityFeedEntity();
+			
+			activityFeedEntity.setTimeStamp(LocalDateTime.now());
+			activityFeedEntity.setActivity(Constants.APPLICATION_RECEIVED_FROM + candidate.getFirstName()
+			+ Constants.FOR_THE_JOB + job.getJobTitle());
+			activityFeedRepository.save(activityFeedEntity);
 
 			return ApiResponse.success(ResponseCode.SUCCESS, "Job Applied Successfully.",application.getId());
 
