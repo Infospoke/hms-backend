@@ -25,6 +25,7 @@ public class JobApplicantsResponse {
 
 	private Integer id;
 	private Integer jobId;
+	private String candidateId;
 	private String jobCode;
 	private String firstName;
 	private String lastName;
@@ -55,7 +56,7 @@ public class JobApplicantsResponse {
 	private Integer currentStageType;
 	private LocalDate rescheduleDate;
 	private LocalTime rescheduleStartTime;
-	private LocalTime rescheduleEndTime;
+	private LocalTime rescheduleEndTime;  
 	private Integer noOfStages;
 
 	private Integer completedStages;
