@@ -1352,7 +1352,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		log.info("InterviewPlanServiceImpl:Exit from  the scheduleInterview method");
 
-		return ApiResponse.success(ResponseCode.SUCCESS,"Interview Scheduled Sucessfully", "Success");
+		return ApiResponse.success(ResponseCode.SUCCESS, "Interview Scheduled Sucessfully", "Success");
 
 	}
 
@@ -1834,38 +1834,34 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		for (InterviewSessionEntity session : sessionPage.getContent()) {
 
-			
+			AIInterviewScheduleResponse response = new AIInterviewScheduleResponse();
 
-				AIInterviewScheduleResponse response = new AIInterviewScheduleResponse();
+			response.setApplicationId(session.getApplicationId());
 
-				response.setApplicationId(session.getApplicationId());
+			if (session.getApplicant() != null) {
 
-				if (session.getApplicant() != null) {
+				response.setCandidateName(session.getApplicant().getCandidateName());
 
-					response.setCandidateName(session.getApplicant().getCandidateName());
+				response.setEmail(session.getApplicant().getEmail());
+			}
 
-					response.setEmail(session.getApplicant().getEmail());
+			Integer planId = null;
+
+			if (session.getJob() != null) {
+
+				response.setJobTitle(session.getJob().getJobTitle());
+
+				planId = session.getJob().getPlanId();
+			}
+
+			if (planId != null) {
+
+				Optional<InterviewPlanEntity> planOptional = interviewPlanRepository.findById(planId);
+
+				if (planOptional.isPresent()) {
+
+					response.setInterviewPlan(planOptional.get().getPlanName());
 				}
-
-				Integer planId = null;
-
-				if (session.getJob() != null) {
-
-					response.setJobTitle(session.getJob().getJobTitle());
-
-					planId = session.getJob().getPlanId();
-				}
-
-				if (planId != null) {
-
-					Optional<InterviewPlanEntity> planOptional = interviewPlanRepository.findById(planId);
-
-					if (planOptional.isPresent()) {
-
-						response.setInterviewPlan(planOptional.get().getPlanName());
-					}
-				
-				
 
 				if (session.getMoveToScheduleDateTime() != null) {
 
@@ -1923,6 +1919,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Candidate Not Found");
 		}
 
+		JobApplicationEntity application = jobApplicationRepository.findById(session.getApplicationId()).orElse(null);
+
+		if (application == null) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "Application Not Found");
+		}
+
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(candidate.getJobId());
 
 		if (job == null) {
@@ -1936,6 +1938,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		Map<String, Object> response = new LinkedHashMap<>();
+
+		response.put("candidateId",
+				application.getCandidate() != null ? application.getCandidate().getCandidateId() : null);
 
 		response.put("candidateName", candidate.getCandidateName());
 
@@ -2246,10 +2251,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			String search = request.getFilter("search");
 			String departmentFilter = request.getFilter("departmentId");
-			String jobFilter=request.getFilter("jobId");
-			String dateFilter=request.getFilter("dateFilter");
+			String jobFilter = request.getFilter("jobId");
+			String dateFilter = request.getFilter("dateFilter");
 			String currentStageFilter = request.getFilter("currentStage");
-			
+
 			List<InterviewCurrentStageEntity> allStages = interviewCurrentStageRepository
 					.findAll(Sort.by(Sort.Direction.DESC, "id"));
 			Map<Integer, InterviewCurrentStageEntity> latestStageMap = new LinkedHashMap<>();
@@ -2284,7 +2289,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 			uniqueStages.sort(comparator);
-			
+
 			List<InterviewProgressListResponse> filteredList = new ArrayList<>();
 
 			for (InterviewCurrentStageEntity stage : uniqueStages) {
@@ -2297,15 +2302,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 
 				InterviewProgressListResponse response = buildInterviewProgressResponse(applicantOptional.get(), stage,
-						search, departmentFilter,jobFilter,dateFilter,currentStageFilter);
+						search, departmentFilter, jobFilter, dateFilter, currentStageFilter);
 
 				if (response != null) {
 					filteredList.add(response);
 				}
 			}
-			
-			
-			
 
 			int totalElements = filteredList.size();
 
@@ -2334,9 +2336,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	}
 
 	private InterviewProgressListResponse buildInterviewProgressResponse(ApplicanDetailsEntity applicant,
-			InterviewCurrentStageEntity currentStage, String search, String departmentFilter,String jobFilter,String dateFilter,
-			String currentStageFilter) {	
-		
+			InterviewCurrentStageEntity currentStage, String search, String departmentFilter, String jobFilter,
+			String dateFilter, String currentStageFilter) {
+
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
 
 		if (job == null) {
@@ -2374,53 +2376,47 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		if (currentStage == null) {
 			return null;
 		}
-		
 
 		if (currentStageFilter != null
 				&& !currentStage.getCurrentStageType().equals(Integer.parseInt(currentStageFilter))) {
 			return null;
 		}
-		
+
 		if (jobFilter != null && !job.getJobId().equals(Integer.parseInt(jobFilter))) {
-		    return null;
+			return null;
 		}
-		
-		
-		if (dateFilter != null && !dateFilter.isBlank()
-		        && currentStage.getInterviewCompletedOn() != null) {
 
-		    LocalDate interviewDate =
-		            currentStage.getInterviewCompletedOn().toLocalDate();
+		if (dateFilter != null && !dateFilter.isBlank() && currentStage.getInterviewCompletedOn() != null) {
 
-		    LocalDate today = LocalDate.now();
+			LocalDate interviewDate = currentStage.getInterviewCompletedOn().toLocalDate();
 
-		    switch (dateFilter.toUpperCase()) {
+			LocalDate today = LocalDate.now();
 
-		    case "TODAY":
-		        if (!interviewDate.equals(today)) {
-		            return null;
-		        }
-		        break;
+			switch (dateFilter.toUpperCase()) {
 
-		    case "THISWEEK":
-		        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
-		        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+			case "TODAY":
+				if (!interviewDate.equals(today)) {
+					return null;
+				}
+				break;
 
-		        if (interviewDate.isBefore(startOfWeek)
-		                || interviewDate.isAfter(endOfWeek)) {
-		            return null;
-		        }
-		        break;
+			case "THISWEEK":
+				LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+				LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
 
-		    case "THISMONTH":
-		        if (interviewDate.getMonth() != today.getMonth()
-		                || interviewDate.getYear() != today.getYear()) {
-		            return null;
-		        }
-		        break;
-		    }
+				if (interviewDate.isBefore(startOfWeek) || interviewDate.isAfter(endOfWeek)) {
+					return null;
+				}
+				break;
+
+			case "THISMONTH":
+				if (interviewDate.getMonth() != today.getMonth() || interviewDate.getYear() != today.getYear()) {
+					return null;
+				}
+				break;
+			}
 		}
-		
+
 		InterviewProgressListResponse dto = new InterviewProgressListResponse();
 
 		dto.setApplicationId(applicant.getApplicationId());
@@ -3056,7 +3052,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		String currentStatus = offerDetails != null ? offerDetails.getInterviewCompletionStatus() : null;
-		
+
 		if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
 
 			if (offerDetails != null) {
@@ -3076,11 +3072,11 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		if (offerDetails == null) {
 
-		    offerDetails = new OfferDetailsEntity();
+			offerDetails = new OfferDetailsEntity();
 
-		    offerDetails.setJobApplication(application);
+			offerDetails.setJobApplication(application);
 		}
-		
+
 		offerDetails.setInterviewCompletionStatus(request.getStatus());
 
 		offerDetails.setInterviewCompletionDate(LocalDateTime.now());
@@ -3093,8 +3089,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			sendInterviewSelectedMail(application);
 
-		} 
-		
+		}
+
 		log.info("InterviewPlanServiceImpl :: Exit updateInterviewCompletionStatus");
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview completion status updated successfully", null);
@@ -3151,7 +3147,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			currentStageEntity.setInterviewCompletedOn(request.getInterviewCompletedOn());
 			interviewCurrentStageRepository.save(currentStageEntity);
 			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
-			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Completed successfully","success");
+			return ApiResponse.success(ResponseCode.SUCCESS, "Interview Completed successfully", "success");
 
 		} else {
 			log.info("InterviewPlanServiceImpl :: Exit from InterviewCompleteMethod");
@@ -3173,12 +3169,16 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		InterviewFeedbackEntity entity = interviewFeedbackRepository
 				.findByApplicantIdAndCurrentStageId(request.getApplicantId(), request.getCurrentStageId());
+
+		JobApplicationEntity application = jobApplicationRepository.findById(request.getApplicantId()).orElse(null);
+
 		ApplicantFeedBackResponse response = new ApplicantFeedBackResponse();
 		if (userIdFromToken != entity.getUserId()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Your are not authorised person to view the details");
 		}
 
 		BeanUtils.copyProperties(entity, response);
+		response.setCandidateId(application != null && application.getCandidate() != null ? application.getCandidate().getCandidateId(): null);
 
 		log.info("InterviewPlanServiceImpl :: Exit from the getApplicantFeedBackById");
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant feedback details fetched successfully", response);
