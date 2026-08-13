@@ -160,10 +160,16 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
 		}
 
-		if (!rolesRepository.existsById(request.getRoleId())) {
+//		if (!rolesRepository.existsById(request.getRoleId())) {
+//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_ROLE_ID));
+//		}
+
+		Optional<RolesEntity> roleOptional = rolesRepository.findByRoleId(request.getRoleId());
+
+		if (roleOptional.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_ROLE_ID));
 		}
-
+		
 		user.setPassword(passwordEncoder.encode(rawPassword));
 		user.setPin(passwordEncoder.encode(rawPin));
 
