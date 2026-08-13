@@ -147,7 +147,7 @@ public class ConfigurationServiceImpl implements IConfigurationService {
 		log.info("ConfigurationServiceImpl::Inside the getRolesByDepartment method");
 
 		List<DropDownResponse> response = rolesRepository.findByDepartmentId(departmentId, Sort.by("id")).stream()
-				.map(role -> new DropDownResponse(role.getId(), role.getRoleName())).toList();
+				.map(role -> new DropDownResponse(role.getRoleId(), role.getRoleName())).toList();
 
 		log.info("ConfigurationServiceImpl::Exit from the getRolesByDepartment method");
 
