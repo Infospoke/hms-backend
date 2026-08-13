@@ -99,6 +99,7 @@ public interface OfferDetailsRepository
 	
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
 
+	long countByOfferStatusIgnoreCase(String string);
 
 	
 	

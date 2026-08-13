@@ -1115,7 +1115,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				List<JobApplicationEntity> applicantList =
 				        jobApplicationRepository.findByJobId(jobId);
 
-				// Get accepted offers for these applicants
+				
 				if (!applicantList.isEmpty()) {
 
 				    List<Integer> applicationIds = applicantList.stream()
