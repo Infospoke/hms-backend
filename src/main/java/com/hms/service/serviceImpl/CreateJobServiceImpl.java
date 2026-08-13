@@ -795,14 +795,14 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		if (departmentIds != null && !departmentIds.isEmpty() && roleIds != null && !roleIds.isEmpty()) {
 
 			List<Integer> mappedRoleIds = rolesRepository.findByDepartmentIdIn(departmentIds).stream()
-					.filter(role -> roleIds.contains(role.getId())).map(RolesEntity::getId).toList();
+					.filter(role -> roleIds.contains(role.getRoleId())).map(RolesEntity::getRoleId).toList();
 
 			finalRoleIds.addAll(mappedRoleIds);
 
 		} else if (departmentIds != null && !departmentIds.isEmpty()) {
 
 			List<Integer> departmentRoleIds = rolesRepository.findByDepartmentIdIn(departmentIds).stream()
-					.map(RolesEntity::getId).toList();
+					.map(RolesEntity::getRoleId).toList();
 
 			finalRoleIds.addAll(departmentRoleIds);
 
@@ -844,9 +844,9 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		Map<Integer, UserEntity> userMap = users.stream()
 				.collect(Collectors.toMap(UserEntity::getUserId, user -> user));
 
-		List<RolesEntity> roles = rolesRepository.findAllById(finalRoleIds);
+		List<RolesEntity> roles = rolesRepository.findAllByRoleIdIn(finalRoleIds);
 
-		Map<Integer, RolesEntity> roleMap = roles.stream().collect(Collectors.toMap(RolesEntity::getId, role -> role));
+		Map<Integer, RolesEntity> roleMap = roles.stream().collect(Collectors.toMap(RolesEntity::getRoleId, role -> role));
 
 		List<Object[]> counts = recruiterAssignmentRepository.findAssignmentCounts(userIds);
 
@@ -900,7 +900,7 @@ public class CreateJobServiceImpl implements ICreateJobService {
 			recruiter.setTotalAssignments(countMap.getOrDefault(user.getUserId(), 0L));
 
 			groupedMap.computeIfAbsent(role.getDepartmentId(), k -> new LinkedHashMap<>())
-					.computeIfAbsent(role.getId(), k -> new ArrayList<>()).add(recruiter);
+					.computeIfAbsent(role.getRoleId(), k -> new ArrayList<>()).add(recruiter);
 		}
 
 		List<Map<String, Object>> departments = new ArrayList<>();
