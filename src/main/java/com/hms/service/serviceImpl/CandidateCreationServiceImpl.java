@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.ActivityFeedEntity;
+import com.hms.service.entity.BudgetAndCompensationEntity;
 import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.InterviewCurrentStageEntity;
@@ -45,6 +46,7 @@ import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.exceptions.OperationNotAllowedException;
 import com.hms.service.exceptions.ResourceNotFoundException;
 import com.hms.service.repository.ActivityFeedRepository;
+import com.hms.service.repository.BudgetAndCompensationRepository;
 import com.hms.service.repository.CandidateCreationDetailsRepository;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.InterviewAnalysisRepository;
@@ -133,12 +135,15 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 	@Autowired
 	private ResumeAnalysisRepository resumeAnalysisRepository;
-	
+
 	@Autowired
 	private ActivityFeedRepository activityFeedRepository;
 
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
+
+	@Autowired
+	private BudgetAndCompensationRepository budgetAndCompensationRepository;
 
 	@Value("${minio.bucketName}")
 	private String bucketName;
@@ -713,6 +718,9 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(request.getJobId());
 
+		BudgetAndCompensationEntity budget = budgetAndCompensationRepository.findBySrId(job.getSrId())
+				.orElseThrow(() -> new RuntimeException("Budget and compensation details not found"));
+
 		Optional<JobApplicationEntity> applicant = jobApplicationRepository.findById(request.getApplicantId());
 		JobApplicationEntity applicants = applicant.get();
 		List<String> documentNames = new ArrayList<>();
@@ -722,11 +730,11 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			for (MultipartFile file : files) {
 
 				String originalFileName = file.getOriginalFilename();
-				
-				log.info("The Original file name" +originalFileName);
+
+				log.info("The Original file name" + originalFileName);
 
 				try {
-					String objectName = Constants.NEGOTIATION_DOCUMENTS + candidateId + "-" + job.getJobId()+"-"
+					String objectName = Constants.NEGOTIATION_DOCUMENTS + candidateId + "-" + job.getJobId() + "-"
 							+ originalFileName;
 
 					minioClient.putObject(PutObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectName)
@@ -743,6 +751,12 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		Long totalRequestedAmount = request.getNegotiation().stream().filter(Objects::nonNull)
 				.map(Negotiation::getRequestedAmount).filter(Objects::nonNull).reduce(0L, Long::sum);
 
+		Long maxSalary = budget.getMaximumSalary();
+
+		if (maxSalary != null && totalRequestedAmount > maxSalary) {
+			throw new BadRequestException("Total requested amount of " + totalRequestedAmount + " exceeds the maximum salary of " + maxSalary);
+		}
+		
 		NegotiationOfferEntity entity = new NegotiationOfferEntity();
 
 		entity.setCandidate(candidate);
@@ -759,7 +773,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		entity.setTotalRequestedAmount(totalRequestedAmount);
 
 		negotiateOfferRepository.save(entity);
-		
+
 		offer.setNegotiation(true);
 		offer.setNegotiationId(entity.getId());
 		offer.setOfferStatus("Requested for Negotiation");
@@ -783,7 +797,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		try {
 
-			List<JobApplicationEntity> applications = jobApplicationRepository.findByCandidateCandidateIdOrderByCreatedDateDesc(candidateId);
+			List<JobApplicationEntity> applications = jobApplicationRepository
+					.findByCandidateCandidateIdOrderByCreatedDateDesc(candidateId);
 
 			if (applications.isEmpty()) {
 				return ApiResponse.failure(ResponseCode.SUCCESS, Constants.NO_DATA_FOUND);
@@ -1081,7 +1096,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			response.setPhoneNumber(candidate.getPhoneNumber());
 			response.setResume(candidate.getResume());
 			response.setAdditionalFile(candidate.getAdditionalFile());
-			
+
 			return ApiResponse.success(ResponseCode.SUCCESS, "Candidate Details Retrieved Successfully", response);
 
 		} catch (Exception e) {
@@ -1363,15 +1378,15 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 			application.setReuploadStatus(status);
 
 			jobApplicationRepository.save(application);
-			
-			ActivityFeedEntity activityFeedEntity=new ActivityFeedEntity();
-			
+
+			ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
+
 			activityFeedEntity.setTimeStamp(LocalDateTime.now());
 			activityFeedEntity.setActivity(Constants.APPLICATION_RECEIVED_FROM + candidate.getFirstName()
-			+ Constants.FOR_THE_JOB + job.getJobTitle());
+					+ Constants.FOR_THE_JOB + job.getJobTitle());
 			activityFeedRepository.save(activityFeedEntity);
 
-			return ApiResponse.success(ResponseCode.SUCCESS, "Job Applied Successfully.",application.getId());
+			return ApiResponse.success(ResponseCode.SUCCESS, "Job Applied Successfully.", application.getId());
 
 		} catch (Exception e) {
 
