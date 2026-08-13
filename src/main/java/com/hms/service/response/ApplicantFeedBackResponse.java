@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 public class ApplicantFeedBackResponse {
 
 	private Integer applicantId;
+	
+	private String candidateId;
 
 	private String interviewType;
 

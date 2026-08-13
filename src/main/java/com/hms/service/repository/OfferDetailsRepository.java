@@ -99,6 +99,7 @@ public interface OfferDetailsRepository
 	
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
 
+
 	
 	@Query("""
 		    SELECT COUNT(o)
@@ -111,6 +112,9 @@ public interface OfferDetailsRepository
 		    )
 		""")
 		long countOffersByStatuses();
+
+	long countByOfferStatusIgnoreCase(String string);
+
 	
 	
 	
