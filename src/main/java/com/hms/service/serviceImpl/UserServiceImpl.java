@@ -160,10 +160,6 @@ public class UserServiceImpl implements IUserService {
 			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_DEPARTMENT_ID));
 		}
 
-//		if (!rolesRepository.existsById(request.getRoleId())) {
-//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of(Constants.INVALID_ROLE_ID));
-//		}
-
 		Optional<RolesEntity> roleOptional = rolesRepository.findByRoleId(request.getRoleId());
 
 		if (roleOptional.isEmpty()) {
@@ -417,7 +413,7 @@ public class UserServiceImpl implements IUserService {
 		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
-		RolesEntity role = rolesRepository.findById(roleEntity.getRoleId())
+		RolesEntity role = rolesRepository.findByRoleId(roleEntity.getRoleId())
 				.orElseThrow(() -> new RuntimeException("Role not found"));
 
 		UserUpdationResponse response = new UserUpdationResponse();
