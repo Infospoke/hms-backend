@@ -129,38 +129,38 @@ ON CONFLICT (id) DO NOTHING;
 -- ROLE
 -- =========================================
 
-INSERT INTO tb_role
-(id, role_id, role_name, department_id, created_date, created_by,
- updated_by, updated_date, business_unit_id, description)
+-- INSERT INTO tb_role
+-- (id, role_id, role_name, department_id, created_date, created_by,
+--  updated_by, updated_date, business_unit_id, description)
 
-VALUES
+-- VALUES
 
-(1, 1, 'Department Head', 5, '2026-04-22', 'admin', NULL, NULL, 2, 'Leads Business Operations'),
-(2, 2, 'Team Lead', 5, '2026-04-22', 'admin', NULL, NULL, 2, 'Manages team operations'),
-(3, 3, 'Talent Acquisition Specialist', 1, '2026-04-22', 'admin', NULL, NULL, 1, 'Handles hiring process'),
-(4, 4, 'Recruiting Operations', 2, '2026-04-22', 'admin', NULL, NULL, 1, 'Manages recruitment workflow'),
-(5, 5, 'HR', 3, '2026-04-22', 'admin', NULL, NULL, 1, 'HR generalist role')
+-- (1, 1, 'Department Head', 5, '2026-04-22', 'admin', NULL, NULL, 2, 'Leads Business Operations'),
+-- (2, 2, 'Team Lead', 5, '2026-04-22', 'admin', NULL, NULL, 2, 'Manages team operations'),
+-- (3, 3, 'Talent Acquisition Specialist', 1, '2026-04-22', 'admin', NULL, NULL, 1, 'Handles hiring process'),
+-- (4, 4, 'Recruiting Operations', 2, '2026-04-22', 'admin', NULL, NULL, 1, 'Manages recruitment workflow'),
+-- (5, 5, 'HR', 3, '2026-04-22', 'admin', NULL, NULL, 1, 'HR generalist role')
 
-ON CONFLICT (id) DO NOTHING;
+-- ON CONFLICT (id) DO NOTHING;
 
 
 -- =========================================
 -- PERMISSION
 -- =========================================
 
-INSERT INTO tb_permission
-(id, permission_id, module_id, role_id,
- can_create, can_view, can_edit, can_delete,
- created_date, created_by)
+-- INSERT INTO tb_permission
+-- (id, permission_id, module_id, role_id,
+--  can_create, can_view, can_edit, can_delete,
+--  created_date, created_by)
 
-VALUES
+-- VALUES
 
-(1, 1, 1, 1, TRUE, TRUE, TRUE, TRUE, '2026-04-22', 'admin'),
-(2, 2, 2, 1, TRUE, TRUE, TRUE, TRUE, '2026-04-22', 'admin'),
-(3, 3, 3, 2, FALSE, TRUE, TRUE, FALSE, '2026-04-22', 'admin'),
-(4, 4, 4, 2, FALSE, TRUE, FALSE, FALSE, '2026-04-22', 'admin')
+-- (1, 1, 1, 1, TRUE, TRUE, TRUE, TRUE, '2026-04-22', 'admin'),
+-- (2, 2, 2, 1, TRUE, TRUE, TRUE, TRUE, '2026-04-22', 'admin'),
+-- (3, 3, 3, 2, FALSE, TRUE, TRUE, FALSE, '2026-04-22', 'admin'),
+-- (4, 4, 4, 2, FALSE, TRUE, FALSE, FALSE, '2026-04-22', 'admin')
 
-ON CONFLICT (id) DO NOTHING;
+-- ON CONFLICT (id) DO NOTHING;
 
 -- =========================================
 -- SENIORITY LEVEL
