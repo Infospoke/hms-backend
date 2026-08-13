@@ -17,7 +17,7 @@ public class ApplicantsCountResponse {
 	
 	private Long interviewCount;
 	
-	private Long offerReleased;
+	private Long offerAccepted;
 	
 	private Long hiredCount;
 

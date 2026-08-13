@@ -44,6 +44,7 @@ import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.JobApplicationEntity;
 import com.hms.service.entity.JobDescriptionEntity;
+import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.entity.RecruiterAssignmentEntity;
 import com.hms.service.entity.RolesAndRequirementsEntity;
 import com.hms.service.entity.RolesEntity;
@@ -57,9 +58,11 @@ import com.hms.service.repository.BusinessUnitRepository;
 import com.hms.service.repository.CategoryRepostiory;
 import com.hms.service.repository.CreateJobDetailsRepository;
 import com.hms.service.repository.DepartmentsRepository;
+import com.hms.service.repository.InterviewAnalysisRepository;
 import com.hms.service.repository.InterviewSessionRepository;
 import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.repository.JobDescriptionRepository;
+import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.PositionBasicsRepository;
 import com.hms.service.repository.RecruiterAssignmentRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
@@ -167,6 +170,12 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 	@Autowired
 	private INotificationService notificationService;
+	
+	@Autowired
+	private OfferDetailsRepository  offerDetailsRepository;
+	
+	@Autowired
+	private InterviewAnalysisRepository interviewAnalysisRepository;
 
 	private String generateJobCode(String srId) {
 
@@ -1098,6 +1107,28 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				long shortlistedCount = resumeAnalysisRepository.countByJobIdAndStatusIgnoreCase(jobId,
 						Constants.SHORTLISTED);
+				
+				long interviewCount = interviewAnalysisRepository.countByJobId(jobId);
+				
+				long acceptedCount=0L;
+				
+				List<JobApplicationEntity> applicantList =
+				        jobApplicationRepository.findByJobId(jobId);
+
+				
+				if (!applicantList.isEmpty()) {
+
+				    List<Integer> applicationIds = applicantList.stream()
+				            .map(JobApplicationEntity::getId)
+				            .toList();
+
+				    List<OfferDetailsEntity> offers =
+				            offerDetailsRepository.findByJobApplication_IdIn(applicationIds);
+
+				    acceptedCount = offers.stream()
+				            .filter(o -> "Accepted".equalsIgnoreCase(o.getOfferStatus()))
+				            .count();
+				}
 
 				ApplicantsCountResponse applicants = new ApplicantsCountResponse();
 
@@ -1105,8 +1136,8 @@ public class CreateJobServiceImpl implements ICreateJobService {
 				applicants.setShortlisted(shortlistedCount);
 				applicants.setResumeCount(resumeCompleted);
 				applicants.setHiredCount(0L);
-				applicants.setOfferReleased(0L);
-				applicants.setInterviewCount(0L);
+				applicants.setOfferAccepted(acceptedCount);
+				applicants.setInterviewCount(interviewCount);
 
 				response.setApplicantsCount(applicants);
 

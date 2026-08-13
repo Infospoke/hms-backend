@@ -98,6 +98,9 @@ public interface OfferDetailsRepository
 	Optional<OfferDetailsEntity> findByReReleaseOfferId(Integer reReleaseOfferId);
 	
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
+
+	long countByOfferStatusIgnoreCase(String string);
+
 	
 	
 	
