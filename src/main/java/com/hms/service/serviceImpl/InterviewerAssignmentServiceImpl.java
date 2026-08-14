@@ -121,7 +121,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 		Integer makerRoleId = assignRolesRepository.findByUserId(userId.intValue())
 				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleId();
 
-		String makerRoleName = rolesRepository.findById(makerRoleId)
+		String makerRoleName = rolesRepository.findByRoleId(makerRoleId)
 				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
 
 		List<NotificationEvent> checkerEvents = new ArrayList<>();
