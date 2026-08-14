@@ -1769,9 +1769,17 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String applicantName = entity.getFirstName();
 		String applicantEmail = entity.getEmail();
 		String applicantMobileNumber = entity.getPhNo();
+		
+		 // Candidate ID
+	    String candidateId = entity.getCandidate() != null
+	            ? entity.getCandidate().getCandidateId()
+	            : null;
+	    
 		Integer jobId = entity.getJobId();
 
 		InterviewApplicantDetailsResponse response = new InterviewApplicantDetailsResponse();
+		
+		response.setCandidateId(candidateId);
 		response.setApplicantName(applicantName);
 		response.setApplicantEmail(applicantEmail);
 		response.setApplicantPhoneNumber(applicantMobileNumber);
