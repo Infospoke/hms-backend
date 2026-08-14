@@ -693,7 +693,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		Integer makerRoleId = makerRole.getRoleId();
 
-		String makerRoleName = rolesRepository.findById(makerRoleId)
+		String makerRoleName = rolesRepository.findByRoleId(makerRoleId)
 				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
 
 		// Assigner (Checker)
@@ -703,7 +703,7 @@ public class InterviewerAssignmentServiceImpl implements IInterviewerAssignmentS
 
 		Integer checkerRoleId = checkerRole.getRoleId();
 
-		String checkerRoleName = rolesRepository.findById(checkerRoleId)
+		String checkerRoleName = rolesRepository.findByRoleId(checkerRoleId)
 				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
 
 		// Checker email map (required by NotificationServiceImpl)
