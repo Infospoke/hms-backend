@@ -42,6 +42,8 @@ public class InterviewApplicantDetailsResponse {
 	private String questionDifficulty;
 	
 	private Integer noOfQuestions;
+
+	private String candidateId;
   	
 	
 
