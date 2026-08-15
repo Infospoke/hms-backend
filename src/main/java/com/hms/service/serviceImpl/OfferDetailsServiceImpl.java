@@ -398,8 +398,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			response = new OfferCommentsResponse();
 			response.setApproverSequence("2");
-			response.setRole(offerDetails.getApprover2Role());
-			response.setApproverName(roleMap.get(childEntity.getRole1()));
+			response.setRole(roleMap.get(childEntity.getRole2()));
+			response.setApproverName(offerDetails.getApprover2By());
 			response.setApproved(offerDetails.getApprover2());
 			response.setApprovedOn(offerDetails.getDateOfApproval2());
 			response.setComments(offerDetails.getApprover2Comments());
@@ -410,13 +410,25 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			response = new OfferCommentsResponse();
 			response.setApproverSequence("3");
-			response.setRole(offerDetails.getApprover3Role());
-			response.setApproverName(roleMap.get(childEntity.getRole1()));
+			response.setRole(roleMap.get(childEntity.getRole3()));
+			response.setApproverName(offerDetails.getApprover3By());
 			response.setApproved(offerDetails.getApprover3());
 			response.setApprovedOn(offerDetails.getDateOfApproval3());
 			response.setComments(offerDetails.getApprover3Comments());
 
 			responseList.add(response);
+
+			log.info("Approver 1 Role ID   : {}", childEntity.getRole1());
+			log.info("Approver 1 Role Name : {}", roleMap.get(childEntity.getRole1()));
+			log.info("Approver 1 Comments  : {}", offerDetails.getApprover1Comments());
+
+			log.info("Approver 2 Role ID   : {}", childEntity.getRole2());
+			log.info("Approver 2 Role Name : {}", roleMap.get(childEntity.getRole2()));
+			log.info("Approver 2 Comments  : {}", offerDetails.getApprover2Comments());
+
+			log.info("Approver 3 Role ID   : {}", childEntity.getRole3());
+			log.info("Approver 3 Role Name : {}", roleMap.get(childEntity.getRole3()));
+			log.info("Approver 3 Comments  : {}", offerDetails.getApprover3Comments());
 
 			log.info("OfferDetailsServiceImpl ::Exit from the getOfferComments");
 
