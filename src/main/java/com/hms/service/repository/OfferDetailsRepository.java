@@ -52,7 +52,7 @@ public interface OfferDetailsRepository
 			SELECT COUNT(DISTINCT o.jobApplication.id)
 			FROM OfferDetailsEntity o
 			WHERE o.submitFinancialApproval = true
-			AND o.approve = false
+			AND o.approve = true
 			AND o.negotiationId IS NULL
 			""")
 	Long countNewOfferApprovals();
@@ -92,7 +92,7 @@ public interface OfferDetailsRepository
 			SELECT COUNT(DISTINCT o.reReleaseOfferId)
 			FROM OfferDetailsEntity o
 			WHERE o.submitFinancialApproval = true
-			AND o.approve = false
+			AND o.approve = true
 			AND o.negotiationId IS NOT NULL
 			""")
 	Long countNegotiationApprovals();
