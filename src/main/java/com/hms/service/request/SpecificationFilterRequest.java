@@ -1811,10 +1811,11 @@ public class SpecificationFilterRequest {
 
 			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
 
-			predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")), "hired"));
+			//predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")), "hired"));
 
 			predicates.add(cb.isTrue(root.get("submitFinancialApproval")));
-//			predicates.add(cb.isFalse(root.get("approve")));
+	     	predicates.add(cb.isFalse(root.get("approve")));
+	     	
 
 			String approvalType = getFilter("approvalType");
 

@@ -51,7 +51,7 @@ public interface OfferDetailsRepository
 			FROM OfferDetailsEntity o
 			WHERE o.submitFinancialApproval = true
 			AND o.approve = false
-			AND o.reReleaseOfferId IS NULL
+			AND o.negotiationId IS NULL
 			""")
 	Long countNewOfferApprovals();
 
@@ -91,7 +91,7 @@ public interface OfferDetailsRepository
 			FROM OfferDetailsEntity o
 			WHERE o.submitFinancialApproval = true
 			AND o.approve = false
-			AND o.reReleaseOfferId IS NOT NULL
+			AND o.negotiationId IS NOT NULL
 			""")
 	Long countNegotiationApprovals();
 
