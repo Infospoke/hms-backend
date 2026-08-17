@@ -2140,13 +2140,13 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			if (child != null) {
 
 				approvals.add(
-						new ApprovalStatusDto(offer.getApprover1Role(), Boolean.TRUE.equals(child.getApprover1())));
+						new ApprovalStatusDto(offer.getApprover1Role(), Boolean.TRUE.equals(offer.getApprover1())));
 
 				approvals.add(
-						new ApprovalStatusDto(offer.getApprover2Role(), Boolean.TRUE.equals(child.getApprover2())));
+						new ApprovalStatusDto(offer.getApprover2Role(), Boolean.TRUE.equals(offer.getApprover2())));
 
 				approvals.add(
-						new ApprovalStatusDto(offer.getApprover3Role(), Boolean.TRUE.equals(child.getApprover3())));
+						new ApprovalStatusDto(offer.getApprover3Role(), Boolean.TRUE.equals(offer.getApprover3())));
 			}
 
 			response.setApprovals(approvals);
