@@ -1,6 +1,7 @@
 package com.hms.service.repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -59,4 +60,7 @@ public interface InterviewCurrentStageRepository extends JpaRepository<Interview
 
 	List<InterviewCurrentStageEntity> findByApplicationIdInOrderByRoundOrder(List<Integer> applicationIds);
 
+	List<InterviewCurrentStageEntity> findByInterviewCompletedTrueAndCurrentStageTypeIn(Collection<Integer> stageTypes);
+
+	List<InterviewCurrentStageEntity> findAllByOrderByIdDesc();
 }

@@ -52,7 +52,7 @@ public interface OfferDetailsRepository
 			SELECT COUNT(DISTINCT o.jobApplication.id)
 			FROM OfferDetailsEntity o
 			WHERE o.submitFinancialApproval = true
-			AND o.approve = false
+			AND o.approve = true
 			AND o.negotiationId IS NULL
 			""")
 	Long countNewOfferApprovals();
@@ -92,7 +92,7 @@ public interface OfferDetailsRepository
 			SELECT COUNT(DISTINCT o.reReleaseOfferId)
 			FROM OfferDetailsEntity o
 			WHERE o.submitFinancialApproval = true
-			AND o.approve = false
+			AND o.approve = true
 			AND o.negotiationId IS NOT NULL
 			""")
 	Long countNegotiationApprovals();
@@ -128,32 +128,33 @@ public interface OfferDetailsRepository
 			""")
 	Optional<OfferDetailsEntity> findPendingOfferForApproval(@Param("applicantId") Integer applicantId);
 
-//	@Query("""
-//			    SELECT newOffer
-//			    FROM OfferDetailsEntity oldOffer
-//			    JOIN OfferDetailsEntity newOffer
-//			        ON newOffer.id = oldOffer.reReleaseOfferId
-//			    WHERE oldOffer.negotiationId IS NOT NULL
-//			      AND oldOffer.reReleaseOfferId IS NOT NULL
-//			      AND newOffer.submitFinancialApproval = true
-//			      AND newOffer.approve = false
-//			      AND newOffer.offerReleased = false
-//			""")
-//	Page<OfferDetailsEntity> findPendingNegotiationApprovals(Pageable pageable);
-//	
-//	@Query("""
-//		    SELECT o
-//		    FROM OfferDetailsEntity o
-//		    WHERE o.jobApplication.id IN (
-//		        SELECT o2.jobApplication.id
-//		        FROM OfferDetailsEntity o2
-//		        GROUP BY o2.jobApplication.id
-//		        HAVING COUNT(o2.id) = 1
-//		    )
-//		    AND o.submitFinancialApproval = true
-//		    AND o.approve = false
-//		""")
-//		Page<OfferDetailsEntity> findNewOfferApprovals(Pageable pageable);
+	@Query("""
+			    SELECT newOffer
+			    FROM OfferDetailsEntity oldOffer
+			    JOIN OfferDetailsEntity newOffer
+			        ON newOffer.id = oldOffer.reReleaseOfferId
+			    WHERE oldOffer.negotiationId IS NOT NULL
+			      AND oldOffer.reReleaseOfferId IS NOT NULL
+			      AND newOffer.submitFinancialApproval = true
+			      AND newOffer.approve = false
+			      AND newOffer.offerReleased = false
+			""")
+	Page<OfferDetailsEntity> findPendingNegotiationApprovals(Pageable pageable);
 	
+	@Query("""
+		    SELECT o
+		    FROM OfferDetailsEntity o
+		    WHERE o.jobApplication.id IN (
+		        SELECT o2.jobApplication.id
+		        FROM OfferDetailsEntity o2
+		        GROUP BY o2.jobApplication.id
+		        HAVING COUNT(o2.id) = 1
+		    )
+		    AND o.submitFinancialApproval = true
+		    AND o.approve = false
+		""")
+		Page<OfferDetailsEntity> findNewOfferApprovals(Pageable pageable);
+
+	Optional<OfferDetailsEntity> findByJobApplication_IdAndReReleaseOfferIdIsNull(Integer applicantId);
 }
 
