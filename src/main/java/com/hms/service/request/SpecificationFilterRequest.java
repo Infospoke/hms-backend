@@ -1566,7 +1566,10 @@ public class SpecificationFilterRequest {
 					cb.isTrue(root.get("approve")),
 
 					// Offer is not released yet
-					cb.isFalse(root.get("offerReleased")),
+					cb.or(
+						    cb.isFalse(root.get("offerReleased")),
+						    cb.isNull(root.get("offerReleased"))
+						),
 
 					// This is the original offer
 					cb.isNull(root.get("reReleaseOfferId"))
@@ -1604,7 +1607,10 @@ public class SpecificationFilterRequest {
 						cb.isTrue(root.get("approve")),
 
 						// new offer is not released
-						cb.isFalse(root.get("offerReleased")),
+						cb.or(
+							    cb.isFalse(root.get("offerReleased")),
+							    cb.isNull(root.get("offerReleased"))
+							),
 
 						// Current row is the re-release row
 						cb.exists(reReleaseSubquery));
