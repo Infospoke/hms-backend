@@ -329,7 +329,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			}
 
 			// Offer Details
-			Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplicationId(applicantId);
+			Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository
+					.findByJobApplication_IdAndReReleaseOfferIdIsNull(applicantId);
 
 			if (offerOptional.isPresent()) {
 
@@ -362,7 +363,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		try {
 
 			Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository
-					.findByJobApplicationId(applicantId);
+					.findByJobApplication_IdAndReReleaseOfferIdIsNull(applicantId);
+	 
 
 			Optional<OfferDetailsChildEntity> offerDetailsChildEntity = offerDeatilsChildRepository
 					.findByJobApplication_Id(applicantId);
@@ -1079,10 +1081,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    boolean approved =
 	            Boolean.TRUE.equals(request.getApprove());
 
-	    // =========================================================
-	    // 9. E-SIGNATURE FOR LEVEL 3
-	    // =========================================================
-
+	    
 	    if (approvalLevel == 3 && approved) {
 
 	        if (request.getESignature() == null
@@ -1296,6 +1295,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	            pos.setApprover3Role(roleName);
 	            pos.setDateOfApproval3(now);
 	            pos.setApprover3Comments(request.getComments());
+	            
 
 	            approverName = pos.getApprover3By();
 	            approvedDate = pos.getDateOfApproval3();
@@ -1304,12 +1304,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	                pos.setApprover3(true);
 
-	                // All 3 approval levels completed
 	                pos.setApprove(true);
 	                pos.setInProgress(false);
 	                pos.setReject(false);
 
 	                approvalStatus = pos.getApprover3();
+
 
 	                pos.setOfferLetterPath(
 	                        request.getOfferLetterPath()
