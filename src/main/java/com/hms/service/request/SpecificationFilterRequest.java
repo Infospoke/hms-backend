@@ -1563,7 +1563,7 @@ public class SpecificationFilterRequest {
 		} else {
 
 			spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
-					cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased")))));
+					cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("reReleaseOfferId")))));
 		}
 
 		String search = getFilter("search");
