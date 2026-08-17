@@ -2568,9 +2568,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		NegotiationOfferEntity negotiation = negotiationDetails.get();
 
-
-		Optional<OfferDetailsEntity> pendingOffer =
-		        offerDetailsRepository.findPendingOfferForApproval(applicantId);
+		Optional<OfferDetailsEntity> pendingOffer = offerDetailsRepository
+				.findByJobApplication_IdAndReReleaseOfferIdIsNull(applicantId);
 		if (pendingOffer.isEmpty()) {
 
 			log.warn("Pending OfferDetails not found for Applicant Id : {}", applicantId);
