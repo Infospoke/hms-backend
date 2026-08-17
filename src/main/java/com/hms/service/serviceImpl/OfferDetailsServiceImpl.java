@@ -1967,7 +1967,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		offerDetails.setCreatedDate(LocalDateTime.now());
 
 		offerDetails.setSubmittedByUserId(userId);
-
+		
+		offerDetails.setOfferStatus("Pending");
+		
 		offerDetails.setCreatedByRoleId(assignRole.getRoleId());
 
 		offerDetailsRepository.save(offerDetails);
