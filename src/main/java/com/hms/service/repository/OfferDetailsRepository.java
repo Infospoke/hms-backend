@@ -117,31 +117,43 @@ public interface OfferDetailsRepository
 
 	List<OfferDetailsEntity> findByJobApplication_IdInAndOfferReleasedTrue(List<Integer> applicantIds);
 
-	
+	@Query("""
+			    SELECT o
+			    FROM OfferDetailsEntity o
+			    WHERE o.jobApplication.id = :applicantId
+			      AND o.offerStatus = 'Pending'
+			      AND o.reject = false
+			      AND o.approve = false
+			    ORDER BY o.id DESC
+			""")
+	Optional<OfferDetailsEntity> findPendingOfferForApproval(@Param("applicantId") Integer applicantId);
+
+	@Query("""
+			    SELECT newOffer
+			    FROM OfferDetailsEntity oldOffer
+			    JOIN OfferDetailsEntity newOffer
+			        ON newOffer.id = oldOffer.reReleaseOfferId
+			    WHERE oldOffer.negotiationId IS NOT NULL
+			      AND oldOffer.reReleaseOfferId IS NOT NULL
+			      AND newOffer.submitFinancialApproval = true
+			      AND newOffer.approve = false
+			      AND newOffer.offerReleased = false
+			""")
+	Page<OfferDetailsEntity> findPendingNegotiationApprovals(Pageable pageable);
 	
 	@Query("""
 		    SELECT o
 		    FROM OfferDetailsEntity o
-		    WHERE o.jobApplication.id = :applicantId
-		      AND o.offerStatus = 'Pending'
-		      AND o.reject = false
-		      AND o.approve = false
-		    ORDER BY o.id DESC
+		    WHERE o.jobApplication.id IN (
+		        SELECT o2.jobApplication.id
+		        FROM OfferDetailsEntity o2
+		        GROUP BY o2.jobApplication.id
+		        HAVING COUNT(o2.id) = 1
+		    )
+		    AND o.submitFinancialApproval = true
+		    AND o.approve = false
 		""")
-		Optional<OfferDetailsEntity> findPendingOfferForApproval(
-		        @Param("applicantId") Integer applicantId
-		);
+		Page<OfferDetailsEntity> findNewOfferApprovals(Pageable pageable);
 	
-	@Query("""
-		    SELECT newOffer
-		    FROM OfferDetailsEntity oldOffer
-		    JOIN OfferDetailsEntity newOffer
-		        ON newOffer.id = oldOffer.reReleaseOfferId
-		    WHERE oldOffer.negotiationId IS NOT NULL
-		      AND newOffer.offerReleased = false
-		      AND newOffer.approve = false
-		""")
-		Page<OfferDetailsEntity> findPendingNegotiationApprovals(Pageable pageable);
-	
-
 }
+
