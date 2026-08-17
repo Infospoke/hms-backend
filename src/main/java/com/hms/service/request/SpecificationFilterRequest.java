@@ -1821,13 +1821,7 @@ public class SpecificationFilterRequest {
 
 			if (approvalType != null && !approvalType.isBlank()) {
 
-				if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
-
-					predicates.add(cb.isNotNull(root.get("negotiationId")));
-					
-//					predicates.add(cb.isFalse(root.get("offerReleased")));
-
-				} else if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
+				if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
 
 					predicates.add(cb.isNull(root.get("negotiationId")));
 				}
