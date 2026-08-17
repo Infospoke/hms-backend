@@ -1811,10 +1811,10 @@ public class SpecificationFilterRequest {
 
 			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
 
-			predicates.add(cb.equal(root.get("interviewCompletionStatus"), "hired"));
+			predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")), "hired"));
 
 			predicates.add(cb.isTrue(root.get("submitFinancialApproval")));
-			predicates.add(cb.isFalse(root.get("approve")));
+//			predicates.add(cb.isFalse(root.get("approve")));
 
 			String approvalType = getFilter("approvalType");
 
@@ -1823,6 +1823,8 @@ public class SpecificationFilterRequest {
 				if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
 
 					predicates.add(cb.isNotNull(root.get("negotiationId")));
+					
+//					predicates.add(cb.isFalse(root.get("offerReleased")));
 
 				} else if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
 
@@ -2118,34 +2120,30 @@ public class SpecificationFilterRequest {
 
 			if (status != null && !status.isBlank()) {
 
-			switch (status.toUpperCase()) {
+				switch (status.toUpperCase()) {
 
-			case "REQUESTED FOR NEGOTIATION":
-				break;
+				case "REQUESTED FOR NEGOTIATION":
+					break;
 
-			case "ACCEPTED":
-			case "REJECTED":
-			case "PENDING":
+				case "ACCEPTED":
+				case "REJECTED":
+				case "PENDING":
 
-				predicates.add(cb.equal(cb.upper(root.get("offerStatus")), status.toUpperCase()));
-				break;
+					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), status.toUpperCase()));
+					break;
 
-			case "EXPIRED":
+				case "EXPIRED":
 
-				predicates.add(cb.equal(cb.upper(root.get("offerStatus")), "EXPIRED"));
+					predicates.add(cb.equal(cb.upper(root.get("offerStatus")), "EXPIRED"));
 
-				predicates.add(cb.lessThanOrEqualTo(root.get("offerReleasedAt"), LocalDateTime.now().minusDays(7)));
-				break;
+					predicates.add(cb.lessThanOrEqualTo(root.get("offerReleasedAt"), LocalDateTime.now().minusDays(7)));
+					break;
+				}
 			}
-		}
 
-		return cb.and(predicates.toArray(new Predicate[0]));
-	};
-}
-
-			
-			
-	
+			return cb.and(predicates.toArray(new Predicate[0]));
+		};
+	}
 
 	public Specification<RecruiterAssignmentEntity> buildRecruiterDashboardSpecification(Integer recruiterId) {
 

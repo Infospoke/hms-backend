@@ -94,28 +94,40 @@ public interface OfferDetailsRepository
 			AND o.reReleaseOfferId IS NOT NULL
 			""")
 	Long countNegotiationApprovals();
-	
+
 	Optional<OfferDetailsEntity> findByReReleaseOfferId(Integer reReleaseOfferId);
-	
+
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
 
-
-	
 	@Query("""
-		    SELECT COUNT(o)
-		    FROM OfferDetailsEntity o
-		    WHERE LOWER(o.offerStatus) IN (
-		        'accepted',
-		        'rejected',
-		        'pending',
-		        'requested for negotiation'
-		    )
-		""")
-		long countOffersByStatuses();
+			    SELECT COUNT(o)
+			    FROM OfferDetailsEntity o
+			    WHERE LOWER(o.offerStatus) IN (
+			        'accepted',
+			        'rejected',
+			        'pending',
+			        'requested for negotiation'
+			    )
+			""")
+	long countOffersByStatuses();
 
 	long countByOfferStatusIgnoreCase(String string);
 
+	List<OfferDetailsEntity> findByJobApplication_IdInAndOfferReleasedTrue(List<Integer> applicantIds);
+
 	
 	
-	
+	@Query("""
+		    SELECT o
+		    FROM OfferDetailsEntity o
+		    WHERE o.jobApplication.id = :applicantId
+		      AND o.offerStatus = 'Pending'
+		      AND o.reject = false
+		      AND o.approve = false
+		    ORDER BY o.id DESC
+		""")
+		Optional<OfferDetailsEntity> findPendingOfferForApproval(
+		        @Param("applicantId") Integer applicantId
+		);
+
 }

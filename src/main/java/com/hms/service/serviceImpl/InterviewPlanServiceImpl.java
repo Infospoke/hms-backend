@@ -2189,10 +2189,12 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 			}
 			if (nextStageid != 0) {
+				
 				InterviewCurrentStageEntity interviewCurrentStageEntity = new InterviewCurrentStageEntity();
 				interviewCurrentStageEntity.setApplicationId(interviewFeedbackRequest.getApplicantId());
 				interviewCurrentStageEntity.setCurrentStageType(nextStageid);
 				interviewCurrentStageEntity.setRoundOrder(roundOrder);
+				log.info("The request body is : "+interviewFeedbackRequest.getJobId()+"plan Id : "+planId+"roundorder "+roundOrder);
 				int interviewerId = interviewerAssignmentRepository
 						.findByJobIdAndPlanIdAndStageTypeId(interviewFeedbackRequest.getJobId(), planId, roundOrder)
 						.getInterviewerUserId().intValue();

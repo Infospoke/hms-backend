@@ -261,7 +261,8 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		List<Integer> applicantIds = jobApplicationRepository.findApplicantIdsByCandidateId(candidateId);
 
-		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(applicantIds);
+		List<OfferDetailsEntity> offers =
+		        offerDetailsRepository.findByJobApplication_IdInAndOfferReleasedTrue(applicantIds);
 
 		List<CandidateOfferResponse> response = offers.stream().map(offer -> {
 

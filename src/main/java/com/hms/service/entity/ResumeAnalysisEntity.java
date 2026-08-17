@@ -88,7 +88,7 @@ public class ResumeAnalysisEntity {
 	    @Column(name = "gap")
 	    private List<String> experienceGaps;
 
-	    @Column(name = "tb_education_level", length = 20)
+	    @Column(name = "education_level", length = 20)
 	    private String educationLevel;
 
 	    @ElementCollection
@@ -166,4 +166,6 @@ public class ResumeAnalysisEntity {
 	    private LocalDateTime updatedAt;
 
 	    private Boolean isDeleted = false;
+	    
+	    
 }
