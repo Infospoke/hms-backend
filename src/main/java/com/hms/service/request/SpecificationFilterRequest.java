@@ -39,6 +39,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -1817,13 +1818,25 @@ public class SpecificationFilterRequest {
 	     	predicates.add(cb.isFalse(root.get("approve")));
 	     	
 
-			String approvalType = getFilter("approvalType");
+	     	String approvalType = getFilter("approvalType");
 
 			if (approvalType != null && !approvalType.isBlank()) {
 
 				if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
 
 					predicates.add(cb.isNull(root.get("negotiationId")));
+
+					Subquery<Integer> subquery = query.subquery(Integer.class);
+
+					Root<OfferDetailsEntity> subOffer = subquery.from(OfferDetailsEntity.class);
+
+					subquery.select(subOffer.get("jobApplication").get("id"));
+
+					subquery.where(
+							cb.equal(subOffer.get("jobApplication").get("id"), root.get("jobApplication").get("id")),
+							cb.isNotNull(subOffer.get("reReleaseOfferId")));
+
+					predicates.add(cb.not(cb.exists(subquery)));
 				}
 			}
 
