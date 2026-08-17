@@ -2029,32 +2029,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 		
-		Page<OfferDetailsEntity> offerPage;
+		Specification<OfferDetailsEntity> specification = request.buildOfferApprovalSpecification();
 
-		String approvalType = request.getFilter("approvalType");
-		
-		log.info("Approval Type : {}", approvalType);
-
-		if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
-
-		    offerPage = offerDetailsRepository.findNewOfferApprovals(pageable);
-
-		} else if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
-
-			 log.info("Fetching offers for negotiation approvals");
-			
-			offerPage = offerDetailsRepository.findPendingNegotiationApprovals(pageable);
-			
-			log.info("Negotiation approval records found : {}", offerPage.getTotalElements());
-
-		} else {
-
-			Specification<OfferDetailsEntity> specification = request.buildOfferApprovalSpecification();
-
-			offerPage = offerDetailsRepository.findAll(specification, pageable);
-			
-			 log.info("New offer approval records found : {}", offerPage.getTotalElements());
-		}
+		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(specification, pageable);
 
 		if (offerPage.isEmpty()) {
 

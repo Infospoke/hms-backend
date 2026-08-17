@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -110,7 +111,6 @@ import com.hms.service.utils.JwtService;
 import com.hms.service.wrappers.ApiResponse;
 import com.hms.service.wrappers.ResponseCode;
 
-import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -1769,16 +1769,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		String applicantName = entity.getFirstName();
 		String applicantEmail = entity.getEmail();
 		String applicantMobileNumber = entity.getPhNo();
-		
-		 // Candidate ID
-	    String candidateId = entity.getCandidate() != null
-	            ? entity.getCandidate().getCandidateId()
-	            : null;
-	    
+
+		// Candidate ID
+		String candidateId = entity.getCandidate() != null ? entity.getCandidate().getCandidateId() : null;
+
 		Integer jobId = entity.getJobId();
 
 		InterviewApplicantDetailsResponse response = new InterviewApplicantDetailsResponse();
-		
+
 		response.setCandidateId(candidateId);
 		response.setApplicantName(applicantName);
 		response.setApplicantEmail(applicantEmail);
@@ -2189,12 +2187,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 			}
 			if (nextStageid != 0) {
-				
+
 				InterviewCurrentStageEntity interviewCurrentStageEntity = new InterviewCurrentStageEntity();
 				interviewCurrentStageEntity.setApplicationId(interviewFeedbackRequest.getApplicantId());
 				interviewCurrentStageEntity.setCurrentStageType(nextStageid);
 				interviewCurrentStageEntity.setRoundOrder(roundOrder);
-				log.info("The request body is : "+interviewFeedbackRequest.getJobId()+"plan Id : "+planId+"roundorder "+roundOrder);
+				log.info("The request body is : " + interviewFeedbackRequest.getJobId() + "plan Id : " + planId
+						+ "roundorder " + roundOrder);
 				int interviewerId = interviewerAssignmentRepository
 						.findByJobIdAndPlanIdAndStageTypeId(interviewFeedbackRequest.getJobId(), planId, roundOrder)
 						.getInterviewerUserId().intValue();
@@ -2516,15 +2515,35 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 	@Override
 	public ApiResponse<InterviewDashboardResponse> getInterviewProgressCount() {
 
-		Object[] result = jobApplicationRepository.getInterviewDashboard().get(0);
+		log.info("InterviewPlanServiceImpl :: Inside getInterviewProgressCount");
+
+		List<InterviewCurrentStageEntity> allStages = interviewCurrentStageRepository.findAllByOrderByIdDesc();
+
+		Map<Integer, InterviewCurrentStageEntity> latestStageMap = new LinkedHashMap<>();
+
+		for (InterviewCurrentStageEntity stage : allStages) {
+
+			if (stage.getApplicationId() != null) {
+				latestStageMap.putIfAbsent(stage.getApplicationId(), stage);
+			}
+		}
+
+		Map<Integer, Integer> stageCounts = latestStageMap.values().stream()
+				.filter(stage -> stage.getCurrentStageType() != null)
+				.collect(Collectors.groupingBy(InterviewCurrentStageEntity::getCurrentStageType,
+						Collectors.collectingAndThen(Collectors.counting(), Long::intValue)));
 
 		InterviewDashboardResponse response = new InterviewDashboardResponse();
 
-		response.setAllClearedCandidates(((Number) result[0]).intValue());
-		response.setAiInterview(((Number) result[1]).intValue());
-		response.setTechnicalRound(((Number) result[2]).intValue());
-		response.setManagerialRound(((Number) result[3]).intValue());
-		response.setHrRound(((Number) result[4]).intValue());
+		response.setAiInterview(stageCounts.getOrDefault(1, 0));
+
+		response.setTechnicalRound(stageCounts.getOrDefault(2, 0));
+
+		response.setManagerialRound(stageCounts.getOrDefault(3, 0));
+
+		response.setHrRound(stageCounts.getOrDefault(4, 0));
+
+		response.setAllClearedCandidates((int) jobApplicationRepository.countByInPersonInterviewsTrue());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Interview progress count fetched successfully", response);
 	}
@@ -3188,7 +3207,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		}
 
 		BeanUtils.copyProperties(entity, response);
-		response.setCandidateId(application != null && application.getCandidate() != null ? application.getCandidate().getCandidateId(): null);
+		response.setCandidateId(
+				application != null && application.getCandidate() != null ? application.getCandidate().getCandidateId()
+						: null);
 
 		log.info("InterviewPlanServiceImpl :: Exit from the getApplicantFeedBackById");
 		return ApiResponse.success(ResponseCode.SUCCESS, "Applicant feedback details fetched successfully", response);
