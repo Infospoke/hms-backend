@@ -965,8 +965,7 @@ public class DashboardServiceImpl implements IDashboardService {
 		counts.setRejectedAssignments(rejectedAssignments);
 		counts.setApplicationsAdded(applicationsAdded);
 		counts.setOffersReleased(offersReleased);
-		counts.setSlaCompliance(slaCompliance);
-
+		counts.setSlaCompliance((double) Math.round(slaCompliance));
 		// Keeping hired null for now
 		counts.setHired(null);
 
