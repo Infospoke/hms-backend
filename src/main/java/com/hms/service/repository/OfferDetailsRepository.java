@@ -156,6 +156,5 @@ public interface OfferDetailsRepository
 		Page<OfferDetailsEntity> findNewOfferApprovals(Pageable pageable);
 
 	Optional<OfferDetailsEntity> findByJobApplication_IdAndReReleaseOfferIdIsNull(Integer applicantId);
-
 }
 

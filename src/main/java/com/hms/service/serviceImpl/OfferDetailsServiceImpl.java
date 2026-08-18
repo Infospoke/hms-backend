@@ -329,7 +329,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			}
 
 			// Offer Details
-			Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository.findByJobApplicationId(applicantId);
+			Optional<OfferDetailsEntity> offerOptional = offerDetailsRepository
+					.findByJobApplication_IdAndReReleaseOfferIdIsNull(applicantId);
 
 			if (offerOptional.isPresent()) {
 
@@ -362,7 +363,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		try {
 
 			Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository
-					.findByJobApplicationId(applicantId);
+					.findByJobApplication_IdAndReReleaseOfferIdIsNull(applicantId);
+	 
 
 			Optional<OfferDetailsChildEntity> offerDetailsChildEntity = offerDeatilsChildRepository
 					.findByJobApplication_Id(applicantId);
@@ -1079,10 +1081,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	    boolean approved =
 	            Boolean.TRUE.equals(request.getApprove());
 
-	    // =========================================================
-	    // 9. E-SIGNATURE FOR LEVEL 3
-	    // =========================================================
-
+	    
 	    if (approvalLevel == 3 && approved) {
 
 	        if (request.getESignature() == null
@@ -1296,6 +1295,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	            pos.setApprover3Role(roleName);
 	            pos.setDateOfApproval3(now);
 	            pos.setApprover3Comments(request.getComments());
+	            
 
 	            approverName = pos.getApprover3By();
 	            approvedDate = pos.getDateOfApproval3();
@@ -1304,12 +1304,12 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	                pos.setApprover3(true);
 
-	                // All 3 approval levels completed
 	                pos.setApprove(true);
 	                pos.setInProgress(false);
 	                pos.setReject(false);
 
 	                approvalStatus = pos.getApprover3();
+
 
 	                pos.setOfferLetterPath(
 	                        request.getOfferLetterPath()
@@ -2029,32 +2029,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
 		
-		Page<OfferDetailsEntity> offerPage;
+		Specification<OfferDetailsEntity> specification = request.buildOfferApprovalSpecification();
 
-		String approvalType = request.getFilter("approvalType");
-		
-		log.info("Approval Type : {}", approvalType);
-
-		if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
-
-		    offerPage = offerDetailsRepository.findNewOfferApprovals(pageable);
-
-		} else if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
-
-			 log.info("Fetching offers for negotiation approvals");
-			
-			offerPage = offerDetailsRepository.findPendingNegotiationApprovals(pageable);
-			
-			log.info("Negotiation approval records found : {}", offerPage.getTotalElements());
-
-		} else {
-
-			Specification<OfferDetailsEntity> specification = request.buildOfferApprovalSpecification();
-
-			offerPage = offerDetailsRepository.findAll(specification, pageable);
-			
-			 log.info("New offer approval records found : {}", offerPage.getTotalElements());
-		}
+		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(specification, pageable);
 
 		if (offerPage.isEmpty()) {
 

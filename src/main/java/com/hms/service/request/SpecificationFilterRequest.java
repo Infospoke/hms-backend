@@ -1549,22 +1549,73 @@ public class SpecificationFilterRequest {
 
 	public Specification<OfferDetailsEntity> buildReadyToReleaseSpecification() {
 
-		Specification<OfferDetailsEntity> spec = (root, query, cb) -> cb.conjunction();
+		Specification<OfferDetailsEntity> spec =
+		        (root, query, cb) -> cb.conjunction();
 
 		String releaseType = getFilter("releaseType");
 
-		if ("RE-RELEASE".equalsIgnoreCase(releaseType)) {
+		if ("PENDING".equalsIgnoreCase(releaseType)) {
 
-			// Re-release candidates
-			spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
-					cb.isFalse(root.get("offerReleased")), cb.isNotNull(root.get("reReleaseOfferId"))
+			// ============================
+			// PENDING - ORIGINAL OFFER
+			// ============================
+
+			spec = spec.and((root, query, cb) -> cb.and(
+
+					// Approval completed
+					cb.isTrue(root.get("approve")),
+
+					// Offer is not released yet
+					cb.or(
+						    cb.isFalse(root.get("offerReleased")),
+						    cb.isNull(root.get("offerReleased"))
+						),
+
+					// This is the original offer
+					cb.isNull(root.get("reReleaseOfferId"))
 
 			));
 
-		} else {
+		} else if ("RE-RELEASE".equalsIgnoreCase(releaseType)) {
 
-			spec = spec.and((root, query, cb) -> cb.and(cb.isTrue(root.get("approve")),
-					cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("reReleaseOfferId")))));
+			// ============================
+			// RE-RELEASE - NEW OFFER
+			// ============================
+
+			spec = spec.and((root, query, cb) -> {
+
+				Subquery<Integer> reReleaseSubquery = query.subquery(Integer.class);
+
+				Root<OfferDetailsEntity> oldOffer = reReleaseSubquery.from(OfferDetailsEntity.class);
+
+				reReleaseSubquery.select(oldOffer.get("reReleaseOfferId"));
+
+				reReleaseSubquery.where(
+
+						// Same application
+						cb.equal(oldOffer.get("jobApplication").get("id"), root.get("jobApplication").get("id")),
+
+						// Old/original row has re-release ID
+						cb.isNotNull(oldOffer.get("reReleaseOfferId")),
+
+						// Old row points to the current row
+						cb.equal(oldOffer.get("reReleaseOfferId"), root.get("id")));
+
+				return cb.and(
+
+						// new offer is approved
+						cb.isTrue(root.get("approve")),
+
+						// new offer is not released
+						cb.or(
+							    cb.isFalse(root.get("offerReleased")),
+							    cb.isNull(root.get("offerReleased"))
+							),
+
+						// Current row is the re-release row
+						cb.exists(reReleaseSubquery));
+			});
+
 		}
 
 		String search = getFilter("search");
@@ -1817,26 +1868,49 @@ public class SpecificationFilterRequest {
 			predicates.add(cb.isTrue(root.get("submitFinancialApproval")));
 	     	predicates.add(cb.isFalse(root.get("approve")));
 	     	
-
-	     	String approvalType = getFilter("approvalType");
+			String approvalType = getFilter("approvalType");
 
 			if (approvalType != null && !approvalType.isBlank()) {
 
+				// NEW OFFER APPROVALS
 				if ("New Offer Approvals".equalsIgnoreCase(approvalType)) {
 
-					predicates.add(cb.isNull(root.get("negotiationId")));
+					Subquery<Long> countSubquery = query.subquery(Long.class);
 
-					Subquery<Integer> subquery = query.subquery(Integer.class);
+					Root<OfferDetailsEntity> subOffer = countSubquery.from(OfferDetailsEntity.class);
 
-					Root<OfferDetailsEntity> subOffer = subquery.from(OfferDetailsEntity.class);
+					countSubquery.select(cb.count(subOffer));
 
-					subquery.select(subOffer.get("jobApplication").get("id"));
+					countSubquery.where(
+							cb.equal(subOffer.get("jobApplication").get("id"), root.get("jobApplication").get("id")));
 
-					subquery.where(
-							cb.equal(subOffer.get("jobApplication").get("id"), root.get("jobApplication").get("id")),
-							cb.isNotNull(subOffer.get("reReleaseOfferId")));
+					// Only applications having ONE offer row
+					predicates.add(cb.equal(countSubquery, 1L));
+				}
 
-					predicates.add(cb.not(cb.exists(subquery)));
+				// NEGOTIATION APPROVALS
+				else if ("Negotiation Approvals".equalsIgnoreCase(approvalType)) {
+
+					Subquery<Integer> reReleaseSubquery = query.subquery(Integer.class);
+
+					Root<OfferDetailsEntity> oldOffer = reReleaseSubquery.from(OfferDetailsEntity.class);
+
+					reReleaseSubquery.select(oldOffer.get("reReleaseOfferId"));
+
+					reReleaseSubquery.where(
+							cb.equal(oldOffer.get("jobApplication").get("id"), root.get("jobApplication").get("id")),
+							cb.isNotNull(oldOffer.get("reReleaseOfferId")),
+							cb.equal(oldOffer.get("reReleaseOfferId"), root.get("id")));
+
+					// Current row must be the re-release offer
+					predicates.add(cb.exists(reReleaseSubquery));
+
+					// Re-release offer must still be pending
+					predicates.add(cb.isTrue(root.get("submitFinancialApproval")));
+
+					predicates.add(cb.isFalse(root.get("approve")));
+
+					predicates.add(cb.isFalse(root.get("offerReleased")));
 				}
 			}
 
