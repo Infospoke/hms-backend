@@ -1560,21 +1560,33 @@ public class SpecificationFilterRequest {
 			// PENDING - ORIGINAL OFFER
 			// ============================
 
-			spec = spec.and((root, query, cb) -> cb.and(
+			spec = spec.and((root, query, cb) -> {
 
-					// Approval completed
-					cb.isTrue(root.get("approve")),
+				Subquery<Integer> reReleaseSubquery = query.subquery(Integer.class);
 
-					// Offer is not released yet
-					cb.or(
-						    cb.isFalse(root.get("offerReleased")),
-						    cb.isNull(root.get("offerReleased"))
-						),
+				Root<OfferDetailsEntity> oldOffer = reReleaseSubquery.from(OfferDetailsEntity.class);
 
-					// This is the original offer
-					cb.isNull(root.get("reReleaseOfferId"))
+				reReleaseSubquery.select(oldOffer.get("reReleaseOfferId"));
 
-			));
+				reReleaseSubquery.where(
+
+						// Same application
+						cb.equal(oldOffer.get("jobApplication").get("id"), root.get("jobApplication").get("id")),
+
+						// Another offer row points to the current row
+						cb.equal(oldOffer.get("reReleaseOfferId"), root.get("id")));
+
+				return cb.and(
+
+						// Approval completed
+						cb.isTrue(root.get("approve")),
+
+						// Offer is not released
+						cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased"))),
+						
+						// Current row must NOT be the re-release row
+						cb.not(cb.exists(reReleaseSubquery)));
+			});
 
 		} else if ("RE-RELEASE".equalsIgnoreCase(releaseType)) {
 
