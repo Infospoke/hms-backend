@@ -82,8 +82,8 @@ public class OfferDetailsController {
 	}
 
 	@GetMapping("/download/offerLetter")
-	public void viewOfferLetter(@RequestParam("appId") Integer appId,@RequestParam(value = "action", defaultValue = "view") String action, HttpServletResponse response) {
-	iOfferDetailsService.viewOfferLetter(appId, action, response);
+	public void viewOfferLetter(@RequestParam("offerId") Integer offerId,@RequestParam(value = "action", defaultValue = "view") String action, HttpServletResponse response) {
+	iOfferDetailsService.viewOfferLetter(offerId, action, response);
 	}
 
 	@PostMapping("/get-pending-approvals")

@@ -87,6 +87,8 @@ import com.hms.service.wrappers.ResponseCode;
 
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -364,7 +366,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 			Optional<OfferDetailsEntity> offerDetailsEntity = offerDetailsRepository
 					.findByJobApplication_IdAndReReleaseOfferIdIsNull(applicantId);
-	 
 
 			Optional<OfferDetailsChildEntity> offerDetailsChildEntity = offerDeatilsChildRepository
 					.findByJobApplication_Id(applicantId);
@@ -859,700 +860,502 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 	@Override
 	public ApiResponse<?> approveOffer(ApproveOfferRequest request) {
 
-	    NotificationEvent event = new NotificationEvent();
+		NotificationEvent event = new NotificationEvent();
 
-	   
+		Optional<OfferDetailsEntity> pendingOfferOpt = offerDetailsRepository
+				.findPendingOfferForApproval(request.getApplicantId());
 
-	    Optional<OfferDetailsEntity> pendingOfferOpt =
-	            offerDetailsRepository.findPendingOfferForApproval(
-	                    request.getApplicantId()
-	            );
+		if (pendingOfferOpt.isEmpty()) {
 
-	    if (pendingOfferOpt.isEmpty()) {
+			return ApiResponse.failure(ResponseCode.FAILURE, "No pending approval record found",
+					List.of("Invalid Applicant Id or no pending offer found"));
+		}
 
-	        return ApiResponse.failure(
-	                ResponseCode.FAILURE,
-	                "No pending approval record found",
-	                List.of("Invalid Applicant Id or no pending offer found")
-	        );
-	    }
+		OfferDetailsEntity pos = pendingOfferOpt.get();
 
-	    OfferDetailsEntity pos = pendingOfferOpt.get();
+		log.info("Pending OfferDetails Id : {}", pos.getId());
+		log.info("Applicant Id : {}", request.getApplicantId());
+		log.info("Offer Status : {}", pos.getOfferStatus());
 
-	    log.info("Pending OfferDetails Id : {}", pos.getId());
-	    log.info("Applicant Id : {}", request.getApplicantId());
-	    log.info("Offer Status : {}", pos.getOfferStatus());
+		Optional<OfferDetailsChildEntity> optional = offerDeatilsChildRepository.findByOffer_Id(pos.getId());
 
+		if (optional.isEmpty()) {
 
-	    Optional<OfferDetailsChildEntity> optional =
-	            offerDeatilsChildRepository.findByOffer_Id(pos.getId());
+			return ApiResponse.failure(ResponseCode.FAILURE, "No approval record found",
+					List.of("Approval configuration not found for this offer"));
+		}
 
-	    if (optional.isEmpty()) {
+		OfferDetailsChildEntity entity = optional.get();
 
-	        return ApiResponse.failure(
-	                ResponseCode.FAILURE,
-	                "No approval record found",
-	                List.of("Approval configuration not found for this offer")
-	        );
-	    }
+		int currentLevel;
 
-	    OfferDetailsChildEntity entity = optional.get();
+		if (!Boolean.TRUE.equals(pos.getApprover1())) {
 
+			currentLevel = 1;
 
-	    int currentLevel;
+		} else if (!Boolean.TRUE.equals(pos.getApprover2())) {
 
-	    if (!Boolean.TRUE.equals(pos.getApprover1())) {
+			currentLevel = 2;
 
-	        currentLevel = 1;
+		} else if (!Boolean.TRUE.equals(pos.getApprover3())) {
 
-	    } else if (!Boolean.TRUE.equals(pos.getApprover2())) {
+			currentLevel = 3;
 
-	        currentLevel = 2;
+		} else {
 
-	    } else if (!Boolean.TRUE.equals(pos.getApprover3())) {
+			return ApiResponse.success("All approvals already completed");
+		}
 
-	        currentLevel = 3;
+		log.info("Current Approval Level : {}", currentLevel);
 
-	    } else {
+		// =========================================================
+		// 4. GET TOKEN USER DETAILS
+		// =========================================================
 
-	        return ApiResponse.success(
-	                "All approvals already completed"
-	        );
-	    }
+		String roleName = getRoleNameFromToken();
+		String username = getUsernameFromToken();
 
-	    log.info("Current Approval Level : {}", currentLevel);
+		Integer expectedRole;
 
-	    // =========================================================
-	    // 4. GET TOKEN USER DETAILS
-	    // =========================================================
+		switch (currentLevel) {
 
-	    String roleName = getRoleNameFromToken();
-	    String username = getUsernameFromToken();
+		case 1:
+			expectedRole = entity.getRole1();
+			break;
 
-	    Integer expectedRole;
+		case 2:
+			expectedRole = entity.getRole2();
+			break;
 
-	    switch (currentLevel) {
+		case 3:
+			expectedRole = entity.getRole3();
+			break;
 
-	        case 1:
-	            expectedRole = entity.getRole1();
-	            break;
+		default:
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid approval level",
+					List.of("Unable to determine approval level"));
+		}
 
-	        case 2:
-	            expectedRole = entity.getRole2();
-	            break;
+		// =========================================================
+		// 5. VALIDATE ROLE
+		// =========================================================
 
-	        case 3:
-	            expectedRole = entity.getRole3();
-	            break;
+		String expectedRoleName = rolesRepository.findByRoleId(expectedRole)
+				.orElseThrow(() -> new RuntimeException("Role not found")).getRoleName();
 
-	        default:
-	            return ApiResponse.failure(
-	                    ResponseCode.FAILURE,
-	                    "Invalid approval level",
-	                    List.of("Unable to determine approval level")
-	            );
-	    }
+		log.info("Token Role : {}", roleName);
+		log.info("Expected Role Id : {}", expectedRole);
+		log.info("Expected Role Name : {}", expectedRoleName);
 
-	    // =========================================================
-	    // 5. VALIDATE ROLE
-	    // =========================================================
+		if (!roleName.equalsIgnoreCase(expectedRoleName)) {
 
-	    String expectedRoleName =
-	            rolesRepository.findByRoleId(expectedRole)
-	                    .orElseThrow(
-	                            () -> new RuntimeException("Role not found")
-	                    )
-	                    .getRoleName();
+			return ApiResponse.failure(ResponseCode.FAILURE, "Unauthorized",
+					List.of("You are not authorized to approve this level"));
+		}
 
-	    log.info("Token Role : {}", roleName);
-	    log.info("Expected Role Id : {}", expectedRole);
-	    log.info("Expected Role Name : {}", expectedRoleName);
+		// =========================================================
+		// 6. MAKER DETAILS
+		// =========================================================
 
-	    if (!roleName.equalsIgnoreCase(expectedRoleName)) {
+		Integer submittedBy = entity.getOfferSubmittedBy();
 
-	        return ApiResponse.failure(
-	                ResponseCode.FAILURE,
-	                "Unauthorized",
-	                List.of("You are not authorized to approve this level")
-	        );
-	    }
+		Long userId = null;
+		String makerRoleName = null;
+		Integer makerRoleId = null;
 
-	    // =========================================================
-	    // 6. MAKER DETAILS
-	    // =========================================================
+		if (submittedBy != null) {
 
-	    Integer submittedBy = entity.getOfferSubmittedBy();
+			Optional<UserEntity> makerOpt = userRepository.findByUserId(submittedBy);
 
-	    Long userId = null;
-	    String makerRoleName = null;
-	    Integer makerRoleId = null;
+			if (makerOpt.isEmpty()) {
 
-	    if (submittedBy != null) {
+				log.error("Maker not found for userId : {}", submittedBy);
 
-	        Optional<UserEntity> makerOpt =
-	                userRepository.findByUserId(submittedBy);
+				return ApiResponse.failure(ResponseCode.FAILURE, "Maker not found");
+			}
 
-	        if (makerOpt.isEmpty()) {
+			UserEntity maker = makerOpt.get();
 
-	            log.error(
-	                    "Maker not found for userId : {}",
-	                    submittedBy
-	            );
+			if (username.equalsIgnoreCase(maker.getUsername())) {
 
-	            return ApiResponse.failure(
-	                    ResponseCode.FAILURE,
-	                    "Maker not found"
-	            );
-	        }
+				return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
+						List.of("You created this Offer, so you cannot approve it"));
+			}
 
-	        UserEntity maker = makerOpt.get();
+			userId = maker.getUserId().longValue();
 
-	        if (username.equalsIgnoreCase(maker.getUsername())) {
+			Optional<AssignRolesEntity> assignRoleOpt = assignRolesRepository.findByUserId(submittedBy);
 
-	            return ApiResponse.failure(
-	                    ResponseCode.FAILURE,
-	                    "Access Denied",
-	                    List.of(
-	                            "You created this Offer, so you cannot approve it"
-	                    )
-	            );
-	        }
+			if (assignRoleOpt.isEmpty()) {
 
-	        userId = maker.getUserId().longValue();
+				return ApiResponse.failure(ResponseCode.FAILURE, "Maker role not found");
+			}
 
-	        Optional<AssignRolesEntity> assignRoleOpt =
-	                assignRolesRepository.findByUserId(submittedBy);
+			makerRoleId = assignRoleOpt.get().getRoleId();
 
-	        if (assignRoleOpt.isEmpty()) {
+			Optional<RolesEntity> roleOpt = rolesRepository.findByRoleId(makerRoleId);
 
-	            return ApiResponse.failure(
-	                    ResponseCode.FAILURE,
-	                    "Maker role not found"
-	            );
-	        }
+			if (roleOpt.isEmpty()) {
 
-	        makerRoleId = assignRoleOpt.get().getRoleId();
+				return ApiResponse.failure(ResponseCode.FAILURE, "Maker role not found");
+			}
 
-	        Optional<RolesEntity> roleOpt =
-	                rolesRepository.findByRoleId(makerRoleId);
+			makerRoleName = roleOpt.get().getRoleName();
+		}
 
-	        if (roleOpt.isEmpty()) {
+		// =========================================================
+		// 7. DETERMINE APPROVAL LEVEL AGAINST PENDING OFFER
+		// =========================================================
 
-	            return ApiResponse.failure(
-	                    ResponseCode.FAILURE,
-	                    "Maker role not found"
-	            );
-	        }
+		int approvalLevel;
 
-	        makerRoleName = roleOpt.get().getRoleName();
-	    }
+		if (!Boolean.TRUE.equals(pos.getApprover1())) {
 
-	    // =========================================================
-	    // 7. DETERMINE APPROVAL LEVEL AGAINST PENDING OFFER
-	    // =========================================================
+			approvalLevel = 1;
 
-	    int approvalLevel;
+		} else if (!Boolean.TRUE.equals(pos.getApprover2())) {
 
-	    if (!Boolean.TRUE.equals(pos.getApprover1())) {
+			approvalLevel = 2;
 
-	        approvalLevel = 1;
+		} else if (!Boolean.TRUE.equals(pos.getApprover3())) {
 
-	    } else if (!Boolean.TRUE.equals(pos.getApprover2())) {
+			approvalLevel = 3;
 
-	        approvalLevel = 2;
+		} else {
 
-	    } else if (!Boolean.TRUE.equals(pos.getApprover3())) {
+			return ApiResponse.success("All approvals already completed");
+		}
 
-	        approvalLevel = 3;
+		log.info("Processing Approval Level : {}", approvalLevel);
 
-	    } else {
+		// =========================================================
+		// 8. APPROVE BOOLEAN
+		// =========================================================
 
-	        return ApiResponse.success(
-	                "All approvals already completed"
-	        );
-	    }
+		boolean approved = Boolean.TRUE.equals(request.getApprove());
 
-	    log.info("Processing Approval Level : {}", approvalLevel);
+		if (approvalLevel == 3 && approved) {
 
-	    // =========================================================
-	    // 8. APPROVE BOOLEAN
-	    // =========================================================
+			if (request.getESignature() == null || request.getESignature().trim().isEmpty()) {
 
-	    boolean approved =
-	            Boolean.TRUE.equals(request.getApprove());
+				return ApiResponse.failure(ResponseCode.FAILURE, "Approval Failed",
+						List.of("HR Head e-signature is mandatory for Level 3 approval."));
+			}
+		}
 
-	    
-	    if (approvalLevel == 3 && approved) {
+		LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 
-	        if (request.getESignature() == null
-	                || request.getESignature().trim().isEmpty()) {
+		String levelName = "";
+		String approverName = "";
+		LocalDateTime approvedDate = null;
+		Object approvalStatus = null;
 
-	            return ApiResponse.failure(
-	                    ResponseCode.FAILURE,
-	                    "Approval Failed",
-	                    List.of(
-	                            "HR Head e-signature is mandatory for Level 3 approval."
-	                    )
-	            );
-	        }
-	    }
+		// =========================================================
+		// 10. PROCESS APPROVAL LEVEL
+		// =========================================================
 
-	    LocalDateTime now =
-	            LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+		switch (approvalLevel) {
 
-	    String levelName = "";
-	    String approverName = "";
-	    LocalDateTime approvedDate = null;
-	    Object approvalStatus = null;
+		// -----------------------------------------------------
+		// LEVEL 1
+		// -----------------------------------------------------
 
-	    // =========================================================
-	    // 10. PROCESS APPROVAL LEVEL
-	    // =========================================================
+		case 1:
 
-	    switch (approvalLevel) {
+			levelName = roleName;
 
-	        // -----------------------------------------------------
-	        // LEVEL 1
-	        // -----------------------------------------------------
+			pos.setApprover1By(username);
+			pos.setApprover1Role(roleName);
+			pos.setDateOfApproval1(now);
+			pos.setApprover1Comments(request.getComments());
 
-	        case 1:
+			// -----------------------------------------------
+			// Negotiation specific processing
+			// -----------------------------------------------
 
-	            levelName = roleName;
+			if ("NEGOTIATION".equalsIgnoreCase(request.getApprovalType())) {
 
-	            pos.setApprover1By(username);
-	            pos.setApprover1Role(roleName);
-	            pos.setDateOfApproval1(now);
-	            pos.setApprover1Comments(request.getComments());
+				if (request.getFinanceRecommendations() == null || request.getFinanceRecommendations().isEmpty()) {
 
-	            // -----------------------------------------------
-	            // Negotiation specific processing
-	            // -----------------------------------------------
+					return ApiResponse.failure(ResponseCode.FAILURE, "Finance recommendations are mandatory");
+				}
 
-	            if ("NEGOTIATION".equalsIgnoreCase(
-	                    request.getApprovalType())) {
+				if (request.getFinanceReason() == null || request.getFinanceReason().isBlank()) {
 
-	                if (request.getFinanceRecommendations() == null
-	                        || request.getFinanceRecommendations().isEmpty()) {
+					return ApiResponse.failure(ResponseCode.FAILURE, "Finance reason is mandatory");
+				}
 
-	                    return ApiResponse.failure(
-	                            ResponseCode.FAILURE,
-	                            "Finance recommendations are mandatory"
-	                    );
-	                }
+				log.info("Request Applicant Id : {}", request.getApplicantId());
 
-	                if (request.getFinanceReason() == null
-	                        || request.getFinanceReason().isBlank()) {
+				Optional<NegotiationOfferEntity> negotiationOpt = negotiationOfferRepository
+						.findByApplicant_Id(request.getApplicantId());
 
-	                    return ApiResponse.failure(
-	                            ResponseCode.FAILURE,
-	                            "Finance reason is mandatory"
-	                    );
-	                }
+				if (negotiationOpt.isPresent()) {
 
-	                log.info(
-	                        "Request Applicant Id : {}",
-	                        request.getApplicantId()
-	                );
+					NegotiationOfferEntity negotiation = negotiationOpt.get();
 
-	                Optional<NegotiationOfferEntity> negotiationOpt =
-	                        negotiationOfferRepository
-	                                .findByApplicant_Id(
-	                                        request.getApplicantId()
-	                                );
+					log.info("Negotiation Id : {}", negotiation.getId());
 
-	                if (negotiationOpt.isPresent()) {
+					negotiation.setFinanceRecommendations(request.getFinanceRecommendations());
 
-	                    NegotiationOfferEntity negotiation =
-	                            negotiationOpt.get();
+					negotiation.setFinanceReason(request.getFinanceReason());
 
-	                    log.info(
-	                            "Negotiation Id : {}",
-	                            negotiation.getId()
-	                    );
+					negotiationOfferRepository.save(negotiation);
 
-	                    negotiation.setFinanceRecommendations(
-	                            request.getFinanceRecommendations()
-	                    );
+					log.info("Negotiation saved successfully");
 
-	                    negotiation.setFinanceReason(
-	                            request.getFinanceReason()
-	                    );
+				} else {
 
-	                    negotiationOfferRepository.save(
-	                            negotiation
-	                    );
+					log.error("Negotiation record not found for applicantId={}", request.getApplicantId());
+				}
+			}
 
-	                    log.info(
-	                            "Negotiation saved successfully"
-	                    );
+			approverName = pos.getApprover1By();
+			approvedDate = pos.getDateOfApproval1();
 
-	                } else {
+			if (approved) {
 
-	                    log.error(
-	                            "Negotiation record not found for applicantId={}",
-	                            request.getApplicantId()
-	                    );
-	                }
-	            }
+				pos.setApprover1(true);
 
-	            approverName = pos.getApprover1By();
-	            approvedDate = pos.getDateOfApproval1();
+				approvalStatus = pos.getApprover1();
 
-	            if (approved) {
+				// Activate Level 2
+				entity.setApprover2(true);
+			}
 
-	                pos.setApprover1(true);
+			break;
 
-	                approvalStatus = pos.getApprover1();
+		// -----------------------------------------------------
+		// LEVEL 2
+		// -----------------------------------------------------
 
-	                // Activate Level 2
-	                entity.setApprover2(true);
-	            }
+		case 2:
 
-	            break;
+			levelName = roleName;
 
-	        // -----------------------------------------------------
-	        // LEVEL 2
-	        // -----------------------------------------------------
+			pos.setApprover2By(username);
+			pos.setApprover2Role(roleName);
+			pos.setDateOfApproval2(now);
+			pos.setApprover2Comments(request.getComments());
 
-	        case 2:
+			// -----------------------------------------------
+			// Negotiation specific processing
+			// -----------------------------------------------
 
-	            levelName = roleName;
+			if ("NEGOTIATION".equalsIgnoreCase(request.getApprovalType())) {
 
-	            pos.setApprover2By(username);
-	            pos.setApprover2Role(roleName);
-	            pos.setDateOfApproval2(now);
-	            pos.setApprover2Comments(request.getComments());
+				Optional<NegotiationOfferEntity> negotiationOpt = negotiationOfferRepository
+						.findByApplicant_Id(request.getApplicantId());
 
-	            // -----------------------------------------------
-	            // Negotiation specific processing
-	            // -----------------------------------------------
+				if (negotiationOpt.isPresent()) {
 
-	            if ("NEGOTIATION".equalsIgnoreCase(
-	                    request.getApprovalType())) {
+					NegotiationOfferEntity negotiation = negotiationOpt.get();
 
-	                Optional<NegotiationOfferEntity> negotiationOpt =
-	                        negotiationOfferRepository
-	                                .findByApplicant_Id(
-	                                        request.getApplicantId()
-	                                );
+					if (negotiation.getFinanceRecommendations() != null) {
 
-	                if (negotiationOpt.isPresent()) {
+						Long basicPay = negotiation.getFinanceRecommendations().stream()
+								.filter(f -> "Basic Pay".equalsIgnoreCase(f.getFieldName()))
+								.map(FinanceRecommendation::getAmount).findFirst().orElse(null);
 
-	                    NegotiationOfferEntity negotiation =
-	                            negotiationOpt.get();
+						if (basicPay != null) {
 
-	                    if (negotiation.getFinanceRecommendations()
-	                            != null) {
+							pos.setTotalCtc(basicPay);
+						}
+					}
+				}
+			}
 
-	                        Long basicPay =
-	                                negotiation
-	                                        .getFinanceRecommendations()
-	                                        .stream()
-	                                        .filter(
-	                                                f -> "Basic Pay"
-	                                                        .equalsIgnoreCase(
-	                                                                f.getFieldName()
-	                                                        )
-	                                        )
-	                                        .map(
-	                                                FinanceRecommendation::getAmount
-	                                        )
-	                                        .findFirst()
-	                                        .orElse(null);
+			approverName = pos.getApprover2By();
+			approvedDate = pos.getDateOfApproval2();
 
-	                        if (basicPay != null) {
+			if (approved) {
 
-	                            pos.setTotalCtc(basicPay);
-	                        }
-	                    }
-	                }
-	            }
+				pos.setApprover2(true);
 
-	            approverName = pos.getApprover2By();
-	            approvedDate = pos.getDateOfApproval2();
+				approvalStatus = pos.getApprover2();
 
-	            if (approved) {
+				// Activate Level 3
+				entity.setApprover3(true);
+			}
 
-	                pos.setApprover2(true);
+			break;
 
-	                approvalStatus = pos.getApprover2();
+		// -----------------------------------------------------
+		// LEVEL 3
+		// -----------------------------------------------------
 
-	                // Activate Level 3
-	                entity.setApprover3(true);
-	            }
+		case 3:
 
-	            break;
+			levelName = roleName;
 
-	        // -----------------------------------------------------
-	        // LEVEL 3
-	        // -----------------------------------------------------
+			pos.setApprover3By(username);
+			pos.setApprover3Role(roleName);
+			pos.setDateOfApproval3(now);
+			pos.setApprover3Comments(request.getComments());
 
-	        case 3:
+			approverName = pos.getApprover3By();
+			approvedDate = pos.getDateOfApproval3();
 
-	            levelName = roleName;
+			if (approved) {
 
-	            pos.setApprover3By(username);
-	            pos.setApprover3Role(roleName);
-	            pos.setDateOfApproval3(now);
-	            pos.setApprover3Comments(request.getComments());
-	            
+				pos.setApprover3(true);
 
-	            approverName = pos.getApprover3By();
-	            approvedDate = pos.getDateOfApproval3();
+				pos.setApprove(true);
+				pos.setInProgress(false);
+				pos.setReject(false);
 
-	            if (approved) {
+				approvalStatus = pos.getApprover3();
 
-	                pos.setApprover3(true);
+				pos.setOfferLetterPath(request.getOfferLetterPath());
+			}
 
-	                pos.setApprove(true);
-	                pos.setInProgress(false);
-	                pos.setReject(false);
+			break;
 
-	                approvalStatus = pos.getApprover3();
+		default:
 
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Approval Level",
+					List.of("Unable to process approval"));
+		}
 
-	                pos.setOfferLetterPath(
-	                        request.getOfferLetterPath()
-	                );
-	            }
+		// =========================================================
+		// 11. APPROVAL / REJECTION STATUS
+		// =========================================================
 
-	            break;
+		if (approved) {
 
-	        default:
+			pos.setReject(false);
 
-	            return ApiResponse.failure(
-	                    ResponseCode.FAILURE,
-	                    "Invalid Approval Level",
-	                    List.of(
-	                            "Unable to process approval"
-	                    )
-	            );
-	    }
+		} else {
 
-	    // =========================================================
-	    // 11. APPROVAL / REJECTION STATUS
-	    // =========================================================
+			pos.setReject(true);
+			pos.setInProgress(true);
+		}
 
-	    if (approved) {
+		// =========================================================
+		// 12. SAVE BOTH RECORDS
+		// =========================================================
 
-	        pos.setReject(false);
+		offerDetailsRepository.save(pos);
 
-	    } else {
+		offerDeatilsChildRepository.save(entity);
 
-	        pos.setReject(true);
-	        pos.setInProgress(true);
-	    }
+		log.info("OfferDetails updated successfully. Offer Id : {}", pos.getId());
 
-	    // =========================================================
-	    // 12. SAVE BOTH RECORDS
-	    // =========================================================
+		// =========================================================
+		// 13. PROCESS APPROVAL CHAIN
+		// =========================================================
 
-	    offerDetailsRepository.save(pos);
+		Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getApplicantId());
 
-	    offerDeatilsChildRepository.save(entity);
+		Integer roleId = null;
 
-	    log.info(
-	            "OfferDetails updated successfully. Offer Id : {}",
-	            pos.getId()
-	    );
+		for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
 
-	    // =========================================================
-	    // 13. PROCESS APPROVAL CHAIN
-	    // =========================================================
+			roleId = entry.getKey();
+		}
 
-	    Map<Integer, List<String>> roleEmailMap =
-	            processApprovalChain(
-	                    request.getApplicantId()
-	            );
+		if (roleId == null) {
 
-	    Integer roleId = null;
+			return ApiResponse.failure(ResponseCode.FAILURE, "Approval role not found");
+		}
 
-	    for (Map.Entry<Integer, List<String>> entry :
-	            roleEmailMap.entrySet()) {
+		String checkerRoleName = rolesRepository.findByRoleId(roleId)
+				.orElseThrow(() -> new RuntimeException("Checker role not found")).getRoleName();
 
-	        roleId = entry.getKey();
-	    }
+		// =========================================================
+		// 14. NOTIFICATION EVENT
+		// =========================================================
 
-	    if (roleId == null) {
+		event.setProcessId(pos.getId().toString());
 
-	        return ApiResponse.failure(
-	                ResponseCode.FAILURE,
-	                "Approval role not found"
-	        );
-	    }
+		event.setType("SR");
 
-	    String checkerRoleName =
-	            rolesRepository.findByRoleId(roleId)
-	                    .orElseThrow(
-	                            () -> new RuntimeException(
-	                                    "Checker role not found"
-	                            )
-	                    )
-	                    .getRoleName();
+		event.setCheckerRoleName(checkerRoleName);
 
-	    // =========================================================
-	    // 14. NOTIFICATION EVENT
-	    // =========================================================
+		event.setRoleEmailMap(roleEmailMap);
 
-	    event.setProcessId(
-	            pos.getId().toString()
-	    );
+		String applicantId = pos.getJobApplication().getId().toString();
 
-	    event.setType("SR");
+		// =========================================================
+		// 15. APPROVED FLOW
+		// =========================================================
 
-	    event.setCheckerRoleName(
-	            checkerRoleName
-	    );
+		if (approved) {
 
-	    event.setRoleEmailMap(
-	            roleEmailMap
-	    );
+			event.setCheckerNotificationTitle("Level " + approvalLevel + " Approved — " + levelName);
 
-	    String applicantId =
-	            pos.getJobApplication()
-	                    .getId()
-	                    .toString();
+			event.setCheckerMessage("A offer is now under your approval flow for review and approval");
 
-	    // =========================================================
-	    // 15. APPROVED FLOW
-	    // =========================================================
+			event.setCheckerEmailBody(String.format(Constants.OFFER_TO_BE_APPROVED_MAIL_BODY, checkerRoleName,
+					applicantId, pos.getJobApplication().getFirstName() + " " + pos.getJobApplication().getLastName(),
+					pos.getJobApplication().getEmail(), pos.getTotalCtc(), pos.getNoticePeriod(),
+					pos.getProbationPeriod(), pos.getSubmittedByUserId(), pos.getCreatedDate()));
 
-	    if (approved) {
+			String makerSubject = "";
+			String makerTitle = "";
+			String makerMailBody = "";
 
-	        event.setCheckerNotificationTitle(
-	                "Level " + approvalLevel
-	                        + " Approved — "
-	                        + levelName
-	        );
+			switch (approvalLevel) {
 
-	        event.setCheckerMessage(
-	                "A offer is now under your approval flow for review and approval"
-	        );
+			case 1:
 
-	        event.setCheckerEmailBody(
-	                String.format(
-	                        Constants.OFFER_TO_BE_APPROVED_MAIL_BODY,
-	                        checkerRoleName,
-	                        applicantId,
-	                        pos.getJobApplication().getFirstName()
-	                                + " "
-	                                + pos.getJobApplication().getLastName(),
-	                        pos.getJobApplication().getEmail(),
-	                        pos.getTotalCtc(),
-	                        pos.getNoticePeriod(),
-	                        pos.getProbationPeriod(),
-	                        pos.getSubmittedByUserId(),
-	                        pos.getCreatedDate()
-	                )
-	        );
+				makerSubject = "Your offer has been approved by Level 1 "
+						+ "(Finance Analyst) and is now under Level 2 approval flow";
 
-	        String makerSubject = "";
-	        String makerTitle = "";
-	        String makerMailBody = "";
+				makerTitle = "Level 1 Approved — " + roleName;
 
-	        switch (approvalLevel) {
+				makerMailBody = Constants.OFFER_LEVEL1_APPROVED_MAIL_BODY;
 
-	            case 1:
+				break;
 
-	                makerSubject =
-	                        "Your offer has been approved by Level 1 "
-	                        + "(Finance Analyst) and is now under Level 2 approval flow";
+			case 2:
 
-	                makerTitle =
-	                        "Level 1 Approved — " + roleName;
+				makerSubject = "Your offer has been approved by Level 2 "
+						+ "(Finance Head) and is now under Level 3 approval flow";
 
-	                makerMailBody =
-	                        Constants.OFFER_LEVEL1_APPROVED_MAIL_BODY;
+				makerTitle = "Level 2 Approved — " + roleName;
 
-	                break;
+				makerMailBody = Constants.OFFER_LEVEL2_APPROVED_MAIL_BODY;
 
-	            case 2:
+				break;
 
-	                makerSubject =
-	                        "Your offer has been approved by Level 2 "
-	                        + "(Finance Head) and is now under Level 3 approval flow";
+			case 3:
 
-	                makerTitle =
-	                        "Level 2 Approved — " + roleName;
+				makerSubject = "Your offer has been fully approved successfully " + "and is now ready to release";
 
-	                makerMailBody =
-	                        Constants.OFFER_LEVEL2_APPROVED_MAIL_BODY;
+				makerTitle = "Level 3 Approved — " + roleName;
 
-	                break;
+				makerMailBody = Constants.OFFER_LEVEL3_APPROVED_MAIL_BODY;
 
-	            case 3:
+				break;
 
-	                makerSubject =
-	                        "Your offer has been fully approved successfully "
-	                        + "and is now ready to release";
+			default:
+				break;
+			}
 
-	                makerTitle =
-	                        "Level 3 Approved — " + roleName;
+			sendMakerMail(applicantId, userId, makerRoleId, makerSubject, makerRoleName, makerTitle, makerMailBody,
+					event);
 
-	                makerMailBody =
-	                        Constants.OFFER_LEVEL3_APPROVED_MAIL_BODY;
+			return ApiResponse.success("Approved successfully at level " + approvalLevel);
+		}
 
-	                break;
+		// =========================================================
+		// 16. REJECTED FLOW
+		// =========================================================
 
-	            default:
-	                break;
-	        }
+		String rejectedMailBody = Constants.OFFER_REJECTED_MAIL_BODY;
 
-	        sendMakerMail(
-	                applicantId,
-	                userId,
-	                makerRoleId,
-	                makerSubject,
-	                makerRoleName,
-	                makerTitle,
-	                makerMailBody,
-	                event
-	        );
+		event.setCheckerNotificationTitle("Level " + approvalLevel + " Rejected — " + levelName);
 
-	        return ApiResponse.success(
-	                "Approved successfully at level "
-	                        + approvalLevel
-	        );
-	    }
+		event.setCheckerMessage("A Offer has been rejected in the approval flow.");
 
-	    // =========================================================
-	    // 16. REJECTED FLOW
-	    // =========================================================
+		event.setCheckerEmailBody(rejectedMailBody);
 
-	    String rejectedMailBody =
-	            Constants.OFFER_REJECTED_MAIL_BODY;
+		sendMakerMail(applicantId, userId, makerRoleId,
+				"Your Offer has been rejected by Level " + approvalLevel + " (" + levelName + ")", makerRoleName,
+				"OFFER Rejected", rejectedMailBody, event);
 
-	    event.setCheckerNotificationTitle(
-	            "Level " + approvalLevel
-	                    + " Rejected — "
-	                    + levelName
-	    );
-
-	    event.setCheckerMessage(
-	            "A Offer has been rejected in the approval flow."
-	    );
-
-	    event.setCheckerEmailBody(
-	            rejectedMailBody
-	    );
-
-	    sendMakerMail(
-	            applicantId,
-	            userId,
-	            makerRoleId,
-	            "Your Offer has been rejected by Level "
-	                    + approvalLevel
-	                    + " (" + levelName + ")",
-	            makerRoleName,
-	            "OFFER Rejected",
-	            rejectedMailBody,
-	            event
-	    );
-
-	    return ApiResponse.success(
-	            "Rejected successfully at level "
-	                    + approvalLevel
-	    );
+		return ApiResponse.success("Rejected successfully at level " + approvalLevel);
 	}
 
 	private Map<Integer, List<String>> processApprovalChain(Integer applicantId) {
@@ -1967,9 +1770,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		offerDetails.setCreatedDate(LocalDateTime.now());
 
 		offerDetails.setSubmittedByUserId(userId);
-		
+
 		offerDetails.setOfferStatus("Pending");
-		
+
 		offerDetails.setCreatedByRoleId(assignRole.getRoleId());
 
 		offerDetailsRepository.save(offerDetails);
@@ -1980,42 +1783,94 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "Raise Offer Request Updated Successfully", null);
 	}
 
+//	@Override
+//	public void viewOfferLetter(Integer appId, String action, HttpServletResponse response) {
+//
+//		log.info("JobsServiceImpl: Inside viewOfferLetter method");
+//
+//		JobApplicationEntity application = jobApplicationRepository.findById(appId)
+//				.orElseThrow(() -> new RuntimeException(Constants.APPLICATION_NOT_FOUND));
+//
+//		String candidateName = application.getFirstName() + "_" + application.getLastName();
+//
+//		String objectKey = "offer-letters/" + appId + "/" + candidateName + "_Offer_Letter.pdf";
+//
+//		String fileName = Paths.get(objectKey).getFileName().toString();
+//
+//		try {
+//
+//			InputStream minioStream = minioClient
+//					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
+//
+//			String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+//
+//			response.setContentType("application/pdf");
+//			response.setCharacterEncoding("UTF-8");
+//
+//			response.setHeader("Content-Disposition", ("view".equalsIgnoreCase(action) ? "inline" : "attachment")
+//					+ "; filename*=UTF-8''" + encodedFileName);
+//
+//			IOUtils.copy(minioStream, response.getOutputStream());
+//
+//			response.flushBuffer();
+//
+//			minioStream.close();
+//
+//		} catch (Exception e) {
+//
+//			log.error("JobsServiceImpl::Exception occurred in viewOfferLetter method", e);
+//
+//			throw new RuntimeException("Error downloading offer letter from MinIO", e);
+//		}
+//	}
 	@Override
-	public void viewOfferLetter(Integer appId, String action, HttpServletResponse response) {
+	public void viewOfferLetter(Integer offerId, String action, HttpServletResponse response) {
 
-		log.info("JobsServiceImpl: Inside viewOfferLetter method");
+		log.info("JobsServiceImpl :: Inside viewOfferLetter");
 
-		JobApplicationEntity application = jobApplicationRepository.findById(appId)
-				.orElseThrow(() -> new RuntimeException(Constants.APPLICATION_NOT_FOUND));
+		OfferDetailsEntity offer = offerDetailsRepository.findById(offerId)
+				.orElseThrow(() -> new RuntimeException("Offer not found"));
 
-		String candidateName = application.getFirstName() + "_" + application.getLastName();
+		String objectKey = offer.getOfferLetterPath();
 
-		String objectKey = "offer-letters/" + appId + "/" + candidateName + "_Offer_Letter.pdf";
+		if (objectKey == null || objectKey.isBlank()) {
+			throw new RuntimeException("Offer letter path not found for offer ID: " + offerId);
+		}
 
-		String fileName = Paths.get(objectKey).getFileName().toString();
+		log.info("Offer ID: {}", offerId);
+		log.info("MinIO Bucket: {}", Constants.BUCKETNAME);
+		log.info("MinIO Object Key: {}", objectKey);
 
 		try {
 
-			InputStream minioStream = minioClient
-					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
+			// First verify that the object exists
+			StatObjectResponse stat = minioClient
+					.statObject(StatObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build());
 
-			String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+			log.info("Offer letter found in MinIO. Size: {} bytes", stat.size());
 
-			response.setContentType("application/pdf");
-			response.setCharacterEncoding("UTF-8");
+			try (InputStream minioStream = minioClient
+					.getObject(GetObjectArgs.builder().bucket(Constants.BUCKETNAME).object(objectKey).build())) {
 
-			response.setHeader("Content-Disposition", ("view".equalsIgnoreCase(action) ? "inline" : "attachment")
-					+ "; filename*=UTF-8''" + encodedFileName);
+				String fileName = Paths.get(objectKey).getFileName().toString();
 
-			IOUtils.copy(minioStream, response.getOutputStream());
+				String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
 
-			response.flushBuffer();
+				response.setContentType("application/pdf");
+				response.setCharacterEncoding("UTF-8");
 
-			minioStream.close();
+				response.setHeader("Content-Disposition", ("view".equalsIgnoreCase(action) ? "inline" : "attachment")
+						+ "; filename*=UTF-8''" + encodedFileName);
+
+				IOUtils.copy(minioStream, response.getOutputStream());
+
+				response.flushBuffer();
+			}
 
 		} catch (Exception e) {
 
-			log.error("JobsServiceImpl::Exception occurred in viewOfferLetter method", e);
+			log.error("JobsServiceImpl :: Error downloading offer letter. " + "offerId={}, objectKey={}, bucket={}",
+					offerId, objectKey, Constants.BUCKETNAME, e);
 
 			throw new RuntimeException("Error downloading offer letter from MinIO", e);
 		}
@@ -2028,7 +1883,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(),
 				Sort.by(Sort.Direction.fromString(request.getDirection()), request.getSortBy()));
-		
+
 		Specification<OfferDetailsEntity> specification = request.buildOfferApprovalSpecification();
 
 		Page<OfferDetailsEntity> offerPage = offerDetailsRepository.findAll(specification, pageable);
@@ -2200,6 +2055,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			offer.setOfferReleasedBy(userId);
 			offer.setOfferReleasedAt(LocalDateTime.now());
 			offer.setOfferStatus("Pending");
+			application.setCurrentStage("offer");
+			jobApplicationRepository.save(application);
 			try {
 
 				String candidateName = application.getFirstName().trim() + "_" + application.getLastName().trim();
@@ -2233,6 +2090,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		}
 
 		// Save all released offers
+
 		offerDetailsRepository.saveAll(offers);
 
 		// Send Notification
@@ -2546,7 +2404,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		log.info("Fetching negotiation details for Applicant Id : {}", applicantId);
 
-		
 		Optional<NegotiationOfferEntity> negotiationDetails = negotiationOfferRepository
 				.findByApplicant_Id(applicantId);
 
@@ -2577,7 +2434,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		log.info("Approver2 : {}", offer.getApprover2());
 		log.info("Approver3 : {}", offer.getApprover3());
 
-
 		NegotiationDetailsResponse response = new NegotiationDetailsResponse();
 
 		BeanUtils.copyProperties(negotiation, response);
@@ -2588,8 +2444,6 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		if (negotiation.getOffer() != null) {
 			response.setOfferReleasedOn(negotiation.getOffer().getCreatedDate());
 		}
-
-	
 
 		OfferDetailsChildEntity child = offerDetailsChildRepository.findByOffer_Id(offer.getId()).orElse(null);
 
