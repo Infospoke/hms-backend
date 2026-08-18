@@ -694,9 +694,7 @@ public class DashboardServiceImpl implements IDashboardService {
 				offer++;
 			}
 
-			if ("Accepted".equalsIgnoreCase(offerDetails.getOfferStatus())) {
-				hired++;
-			}
+			
 		}
 
 		dto.setApplied(applied);
