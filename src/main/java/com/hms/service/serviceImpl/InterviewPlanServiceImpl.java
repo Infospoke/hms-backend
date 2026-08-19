@@ -2530,6 +2530,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		Map<Integer, Integer> stageCounts = latestStageMap.values().stream()
 				.filter(stage -> stage.getCurrentStageType() != null)
+				.filter(stage -> !Boolean.TRUE.equals(stage.getInterviewCompleted()))
 				.collect(Collectors.groupingBy(InterviewCurrentStageEntity::getCurrentStageType,
 						Collectors.collectingAndThen(Collectors.counting(), Long::intValue)));
 
