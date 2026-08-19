@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import com.hms.service.constants.Constants;
 import com.hms.service.entity.AssignRolesEntity;
+import com.hms.service.entity.DepartmentsEntity;
 import com.hms.service.entity.ModuleEntity;
 import com.hms.service.entity.PasswordHistoryEntity;
 import com.hms.service.entity.PermissionEntity;
@@ -404,17 +405,19 @@ public class UserServiceImpl implements IUserService {
 	}
 
 	@Override
-	public ApiResponse<UserUpdationResponse> getUserById(Integer id) {
+	public ApiResponse<UserUpdationResponse> getUserById(Integer userId) {
 
-		log.info("UserServiceImpl::Inside getUserById - Started for userId: {}", id);
+		log.info("UserServiceImpl::Inside getUserById - Started for userId: {}", userId);
 
-		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
 		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
 
 		RolesEntity role = rolesRepository.findByRoleId(roleEntity.getRoleId())
 				.orElseThrow(() -> new RuntimeException("Role not found"));
+		
+		String departmentName=departmentsRepository.findById(user.getDepartmentId()).get().getDepartmentName();
 
 		UserUpdationResponse response = new UserUpdationResponse();
 
@@ -422,10 +425,11 @@ public class UserServiceImpl implements IUserService {
 
 		response.setRoleId(roleEntity.getRoleId());
 		response.setRoleName(role.getRoleName());
+		response.setDepartmentName(departmentName);	
 		response.setAssignedBy(roleEntity.getAssignedBy());
 		response.setAssignedAt(roleEntity.getAssignedAt());
 
-		log.info("UserServiceImpl::Exit getUserById - Completed for userId: {}", id);
+		log.info("UserServiceImpl::Exit getUserById - Completed for userId: {}", userId);
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "User details fetched successfully", response);
 	}

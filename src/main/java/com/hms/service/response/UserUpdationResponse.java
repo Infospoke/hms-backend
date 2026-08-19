@@ -20,6 +20,7 @@ public class UserUpdationResponse {
 	private String alternateContact;
 	private Integer employmentTypeId;
 	private Integer businessUnitId;
+	private String departmentName;
 	private Integer departmentId;
 	private Integer roleId;
 	private String roleName;
