@@ -2037,7 +2037,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 					Collections.singletonList("Application Ids are required"));
 		}
 
-		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdIn(request.getApplicationIds());
+		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdInAndReReleaseOfferIdIsNull(request.getApplicationIds());
+		log.info("The list of Offer details in the :"+offers);
 
 		if (offers.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
@@ -2092,6 +2093,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		// Save all released offers
 
 		offerDetailsRepository.saveAll(offers);
+		log.info("After saving the files the offers are : "+offers);
 
 		// Send Notification
 		OfferDetailsEntity firstOffer = offers.get(0);

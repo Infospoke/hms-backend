@@ -5,6 +5,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
 import com.hms.service.repository.ActivityFeedRepository;
@@ -338,6 +340,26 @@ public class JobServiceImpl implements IJobService {
 //			String dbStatus = (String) obj[1];
 //			candidateStatusMap.put(appId, dbStatus);
 //		}
+		
+		List<OfferDetailsEntity> offerDetails =
+		        offerDetailsRepository
+		                .findByJobApplication_IdInAndReReleaseOfferIdIsNull(applicationIds);
+
+		Set<Integer> offerSet = new HashSet<>();
+
+		Map<Integer, String> offerStatusMap = new HashMap<>();
+
+		for (OfferDetailsEntity offer : offerDetails) {
+
+		    if (offer.getJobApplication() != null) {
+
+		        Integer appId = offer.getJobApplication().getId();
+
+		        offerSet.add(appId);
+
+		        offerStatusMap.put(appId, offer.getOfferStatus());
+		    }
+		}
 
 		List<JobApplicantsResponse> result = new ArrayList<>();
 
@@ -345,7 +367,7 @@ public class JobServiceImpl implements IJobService {
 
 			Integer appId = entity.getId();
 
-			if (!matchesFilter(filter, appId, screenedSet, interviewStatus, candidateStatusMap)) {
+			if (!matchesFilter(filter, appId, screenedSet, interviewStatus, offerSet)) {
 				continue;
 			}
 
@@ -369,25 +391,24 @@ public class JobServiceImpl implements IJobService {
 					break;
 
 				case OFFER:
-					response.setStatus(Constants.OFFER);
-					break;
-
+				    response.setStatus(offerStatusMap.get(appId));
+				    break;
 				case HIRED:
 					response.setStatus(Constants.HIRED);
 					break;
 
 				case APPLIED:
-					response.setStatus(getStatus(appId, screenedSet, interviewStatus, candidateStatusMap));
+					response.setStatus(getStatus(appId, screenedSet, interviewStatus,  offerSet, offerStatusMap));
 					response.setScreenedStatus(screenedSubStatus);
 					break;
 
 				default:
-					response.setStatus(getStatus(appId, screenedSet, interviewStatus, candidateStatusMap));
+					response.setStatus(getStatus(appId, screenedSet, interviewStatus,  offerSet, offerStatusMap));
 					response.setScreenedStatus(screenedSubStatus);
 				}
 
 			} else {
-				response.setStatus(getStatus(appId, screenedSet, interviewStatus, candidateStatusMap));
+				response.setStatus(getStatus(appId, screenedSet, interviewStatus, offerSet, offerStatusMap));
 				response.setScreenedStatus(screenedSubStatus);
 			}
 
@@ -400,16 +421,11 @@ public class JobServiceImpl implements IJobService {
 	}
 
 	private String getStatus(Integer appId, Set<Integer> screenedSet, Map<Integer, String> interviewStatus,
-			Map<Integer, String> candidateStatusMap) {
-
-		if (candidateStatusMap.containsKey(appId)) {
-			String dbStatus = candidateStatusMap.get(appId);
-
-			if (Constants.JOINED.equalsIgnoreCase(dbStatus)) {
-				return Constants.HIRED;
-			} else if (Constants.ACCEPTED.equalsIgnoreCase(dbStatus)) {
-				return Constants.OFFER;
-			}
+			 Set<Integer> offerSet,
+		        Map<Integer, String> offerStatusMap) {
+		
+		if (offerSet.contains(appId)) {
+		    return offerStatusMap.get(appId);
 		}
 
 		if (interviewStatus.containsKey(appId)) {
@@ -424,7 +440,7 @@ public class JobServiceImpl implements IJobService {
 	}
 
 	private boolean matchesFilter(FilterApplicantEnum filter, Integer appId, Set<Integer> screenedSet,
-			Map<Integer, String> interviewStatus, Map<Integer, String> candidateStatusMap) {
+			Map<Integer, String> interviewStatus,  Set<Integer> offerSet) {
 
 		if (filter == null)
 			return true;
@@ -439,20 +455,12 @@ public class JobServiceImpl implements IJobService {
 
 		case INTERVIEW:
 			return interviewStatus.containsKey(appId);
-
+			
 		case OFFER:
-			if (candidateStatusMap.containsKey(appId)) {
-				String status = candidateStatusMap.get(appId);
-				return Constants.ACCEPTED.equalsIgnoreCase(status) || Constants.JOINED.equalsIgnoreCase(status);
-			}
-			return false;
+		    return offerSet.contains(appId);
 
 		case HIRED:
-			if (candidateStatusMap.containsKey(appId)) {
-				String status = candidateStatusMap.get(appId);
-				return Constants.JOINED.equalsIgnoreCase(status);
-			}
-			return false;
+	         return false;
 
 		default:
 			return false;

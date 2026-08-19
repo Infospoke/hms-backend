@@ -108,7 +108,7 @@ public interface OfferDetailsRepository
 	Optional<OfferDetailsEntity> findByReReleaseOfferId(Integer reReleaseOfferId);
 
 	List<OfferDetailsEntity> findByJobApplication_IdIn(List<Integer> applicationIds);
-
+	
 	@Query("""
 			    SELECT COUNT(o)
 			    FROM OfferDetailsEntity o
@@ -164,4 +164,6 @@ public interface OfferDetailsRepository
 	Page<OfferDetailsEntity> findNewOfferApprovals(Pageable pageable);
 
 	Optional<OfferDetailsEntity> findByJobApplication_IdAndReReleaseOfferIdIsNull(Integer applicantId);
+
+	List<OfferDetailsEntity> findByJobApplication_IdInAndReReleaseOfferIdIsNull(List<Integer> applicationIds);
 }
