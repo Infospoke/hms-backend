@@ -2217,7 +2217,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				activityFeedEntity.setTimeStamp(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				String jobTitle = createJobDetailsRepository.findByJobId(applicationEntity.getJobId()).getJobTitle();
 				activityFeedEntity
-						.setActivity(applicationEntity.getFirstName() + "finished all interview rounds for" + jobTitle);
+						.setActivity(applicationEntity.getFirstName() +" "+ "finished all interview rounds for" + " "+jobTitle);
 				activityFeedRepository.save(activityFeedEntity);
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 				log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
