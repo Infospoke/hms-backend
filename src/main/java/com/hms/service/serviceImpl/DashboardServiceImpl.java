@@ -448,7 +448,7 @@ public class DashboardServiceImpl implements IDashboardService {
 
 		Long userId = jwtService.extractUserId(token);
 
-		List<SRPositionBasicsEntity> srList = staffingRequisitionRepository.findByUserId(userId);
+		List<SRPositionBasicsEntity> srList = staffingRequisitionRepository.findByUserIdAndApprovedTrue(userId);
 
 		if (srList.isEmpty()) {
 

@@ -28,4 +28,6 @@ public class AIInterviewScheduleResponse {
     private String priority;
 
     private LocalDate dueDate;
+    
+    private String candidateId;
 }

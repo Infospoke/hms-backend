@@ -33,5 +33,6 @@ public class InterviewSummaryResponse {
     private Integer roundId;
     private LocalDateTime interviewCompletedOn;
     private Integer jobId;
+    private String candidateId;
 
 }

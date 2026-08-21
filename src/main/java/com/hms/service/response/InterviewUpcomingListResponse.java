@@ -38,4 +38,5 @@ public class InterviewUpcomingListResponse {
 	
 	private String roundProgress;
 
+	private String candidateId;
 }

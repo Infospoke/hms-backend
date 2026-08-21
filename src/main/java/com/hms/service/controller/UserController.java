@@ -55,9 +55,9 @@ public class UserController {
 	     return iUserService.getUserCounts();
 	 }
 	 
-	 @GetMapping("/details/{id}")
-	 public ResponseEntity<ApiResponse<UserUpdationResponse>> getUserById(@PathVariable("id") Integer id) {
-	     return ResponseEntity.ok(iUserService.getUserById(id));
+	 @GetMapping("/details/{userId}")
+	 public ResponseEntity<ApiResponse<UserUpdationResponse>> getUserById(@PathVariable("userId") Integer userId) {
+	     return ResponseEntity.ok(iUserService.getUserById(userId));
 	 }
 	 
 }

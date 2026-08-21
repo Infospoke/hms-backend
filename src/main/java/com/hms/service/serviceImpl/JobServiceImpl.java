@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,7 +77,7 @@ public class JobServiceImpl implements IJobService {
 
 	@Autowired
 	private InterviewPlanRepository interviewPlanRepository;
-	
+
 	@Autowired
 	private OfferDetailsRepository offerDetailsRepository;
 
@@ -277,10 +278,8 @@ public class JobServiceImpl implements IJobService {
 		long applicants = jobApplicationRepository.count();
 
 		long interviews = interviewAnalysisRepository.count();
-		
+
 		long offerCount = offerDetailsRepository.countOffersByStatuses();
-		 
-		 
 
 //		long offersAccepted = offerRepository.count();
 
@@ -292,6 +291,134 @@ public class JobServiceImpl implements IJobService {
 		return ApiResponse.success(ResponseCode.SUCCESS, "success", response);
 	}
 
+//	@Override
+//	public ApiResponse<?> getAllJobApplicants(Integer jobId, FilterApplicantEnum filter) {
+//
+//		log.info("JobsServiceImpl: Inside getAllJobApplicants ");
+//
+//		List<JobApplicationEntity> jobApplications = jobApplicationRepository.findByJobIdOrderByCreatedDateDesc(jobId);
+//
+//		if (jobApplications.isEmpty()) {
+//			return ApiResponse.success(ResponseCode.SUCCESS, Collections.emptyList());
+//		}
+//
+//		List<Integer> applicationIds = jobApplications.stream().map(JobApplicationEntity::getId)
+//				.collect(Collectors.toList());
+//		
+//
+//		List<Object[]> screenedData = resumeAnalysisRepository.findScreenStatuses(applicationIds);
+//		Map<Integer, String> screenedStatusMap = new HashMap<>();
+//
+//		for (Object[] obj : screenedData) {
+//			Integer appId = (Integer) obj[0];
+//			String status = (String) obj[1];
+//			screenedStatusMap.put(appId, status);
+//		}
+//
+//		Set<Integer> screenedSet = screenedStatusMap.keySet();
+//
+//		List<Object[]> interviewData = interviewSessionRepository.findApplicationIdAndStatus(applicationIds);
+//
+//		Map<Integer, String> interviewStatus = new HashMap<>();
+//
+//		for (Object[] obj : interviewData) {
+//			Integer appId = (Integer) obj[0];
+//			String status = (String) obj[1];
+//			interviewStatus.put(appId, status.toUpperCase().replace("_", " "));
+//		}
+//
+//		log.info("Job Application IDs: {}", applicationIds);
+//		log.info("Screened IDs from DB: {}", screenedSet);
+//
+//		// List<Object[]> candidateData =
+//		// candidateCreationDetailsRepository.findStatusByApplicationIds(applicationIds);
+//
+//		Map<Integer, String> candidateStatusMap = new HashMap<>();
+//
+////		for (Object[] obj : candidateData) {
+////			Integer appId = (Integer) obj[0];
+////			String dbStatus = (String) obj[1];
+////			candidateStatusMap.put(appId, dbStatus);
+////		}
+//
+//		List<OfferDetailsEntity> offerDetails = offerDetailsRepository
+//				.findByJobApplication_IdInAndReReleaseOfferIdIsNull(applicationIds);
+//
+//		Set<Integer> offerSet = new HashSet<>();
+//
+//		Map<Integer, String> offerStatusMap = new HashMap<>();
+//
+//		for (OfferDetailsEntity offer : offerDetails) {
+//
+//			if (offer.getJobApplication() != null) {
+//
+//				Integer appId = offer.getJobApplication().getId();
+//
+//				offerSet.add(appId);
+//
+//				offerStatusMap.put(appId, offer.getOfferStatus());
+//			}
+//		}
+//
+//		List<JobApplicantsResponse> result = new ArrayList<>();
+//
+//		for (JobApplicationEntity entity : jobApplications) {
+//
+//			Integer appId = entity.getId();
+//
+//			if (!matchesFilter(filter, appId, screenedSet, interviewStatus, offerSet)) {
+//				continue;
+//			}
+//
+//			JobApplicantsResponse response = new JobApplicantsResponse();
+//			BeanUtils.copyProperties(entity, response);
+//			response.setCurrentStage(entity.getCurrentStage());
+//			response.setCandidateIds(candidateIds);
+//
+//			String screenedSubStatus = screenedStatusMap.get(appId);
+//
+//			if (filter != null) {
+//
+//				switch (filter) {
+//
+//				case SCREENED:
+//					response.setStatus(Constants.SCREENED);
+//					response.setScreenedStatus(screenedSubStatus);
+//					break;
+//
+//				case INTERVIEW:
+//					response.setStatus(interviewStatus.get(appId));
+//					break;
+//
+//				case OFFER:
+//					response.setStatus(offerStatusMap.get(appId));
+//					break;
+//				case HIRED:
+//					response.setStatus(Constants.HIRED);
+//					break;
+//
+//				case APPLIED:
+//					response.setStatus(getStatus(appId, screenedSet, interviewStatus, offerSet, offerStatusMap));
+//					response.setScreenedStatus(screenedSubStatus);
+//					break;
+//
+//				default:
+//					response.setStatus(getStatus(appId, screenedSet, interviewStatus, offerSet, offerStatusMap));
+//					response.setScreenedStatus(screenedSubStatus);
+//				}
+//
+//			} else {
+//				response.setStatus(getStatus(appId, screenedSet, interviewStatus, offerSet, offerStatusMap));
+//				response.setScreenedStatus(screenedSubStatus);
+//			}
+//
+//			result.add(response);
+//		}
+//
+//		log.info("JobsServiceImpl: Exit getAllJobApplicants");
+//		log.info("Interview Map: {}", interviewStatus);
+//		return ApiResponse.success(ResponseCode.SUCCESS, result);
+//	}
 	@Override
 	public ApiResponse<?> getAllJobApplicants(Integer jobId, FilterApplicantEnum filter) {
 
@@ -307,6 +434,7 @@ public class JobServiceImpl implements IJobService {
 				.collect(Collectors.toList());
 
 		List<Object[]> screenedData = resumeAnalysisRepository.findScreenStatuses(applicationIds);
+
 		Map<Integer, String> screenedStatusMap = new HashMap<>();
 
 		for (Object[] obj : screenedData) {
@@ -330,35 +458,23 @@ public class JobServiceImpl implements IJobService {
 		log.info("Job Application IDs: {}", applicationIds);
 		log.info("Screened IDs from DB: {}", screenedSet);
 
-		// List<Object[]> candidateData =
-		// candidateCreationDetailsRepository.findStatusByApplicationIds(applicationIds);
-
 		Map<Integer, String> candidateStatusMap = new HashMap<>();
 
-//		for (Object[] obj : candidateData) {
-//			Integer appId = (Integer) obj[0];
-//			String dbStatus = (String) obj[1];
-//			candidateStatusMap.put(appId, dbStatus);
-//		}
-		
-		List<OfferDetailsEntity> offerDetails =
-		        offerDetailsRepository
-		                .findByJobApplication_IdInAndReReleaseOfferIdIsNull(applicationIds);
+		List<OfferDetailsEntity> offerDetails = offerDetailsRepository
+				.findByJobApplication_IdInAndReReleaseOfferIdIsNull(applicationIds);
 
 		Set<Integer> offerSet = new HashSet<>();
-
 		Map<Integer, String> offerStatusMap = new HashMap<>();
 
 		for (OfferDetailsEntity offer : offerDetails) {
 
-		    if (offer.getJobApplication() != null) {
+			if (offer.getJobApplication() != null) {
 
-		        Integer appId = offer.getJobApplication().getId();
+				Integer appId = offer.getJobApplication().getId();
 
-		        offerSet.add(appId);
-
-		        offerStatusMap.put(appId, offer.getOfferStatus());
-		    }
+				offerSet.add(appId);
+				offerStatusMap.put(appId, offer.getOfferStatus());
+			}
 		}
 
 		List<JobApplicantsResponse> result = new ArrayList<>();
@@ -372,8 +488,17 @@ public class JobServiceImpl implements IJobService {
 			}
 
 			JobApplicantsResponse response = new JobApplicantsResponse();
+
 			BeanUtils.copyProperties(entity, response);
+
 			response.setCurrentStage(entity.getCurrentStage());
+
+			// Get candidateId only for the current applicant
+			if (entity.getCandidate() != null) {
+				response.setCandidateId(entity.getCandidate().getCandidateId());
+			} else {
+				response.setCandidateId(null);
+			}
 
 			String screenedSubStatus = screenedStatusMap.get(appId);
 
@@ -382,33 +507,44 @@ public class JobServiceImpl implements IJobService {
 				switch (filter) {
 
 				case SCREENED:
+
 					response.setStatus(Constants.SCREENED);
 					response.setScreenedStatus(screenedSubStatus);
 					break;
 
 				case INTERVIEW:
+
 					response.setStatus(interviewStatus.get(appId));
 					break;
 
 				case OFFER:
-				    response.setStatus(offerStatusMap.get(appId));
-				    break;
+
+					response.setStatus(offerStatusMap.get(appId));
+					break;
+
 				case HIRED:
+
 					response.setStatus(Constants.HIRED);
 					break;
 
 				case APPLIED:
-					response.setStatus(getStatus(appId, screenedSet, interviewStatus,  offerSet, offerStatusMap));
+
+					response.setStatus(getStatus(appId, screenedSet, interviewStatus, offerSet, offerStatusMap));
+
 					response.setScreenedStatus(screenedSubStatus);
 					break;
 
 				default:
-					response.setStatus(getStatus(appId, screenedSet, interviewStatus,  offerSet, offerStatusMap));
+
+					response.setStatus(getStatus(appId, screenedSet, interviewStatus, offerSet, offerStatusMap));
+
 					response.setScreenedStatus(screenedSubStatus);
 				}
 
 			} else {
+
 				response.setStatus(getStatus(appId, screenedSet, interviewStatus, offerSet, offerStatusMap));
+
 				response.setScreenedStatus(screenedSubStatus);
 			}
 
@@ -417,15 +553,15 @@ public class JobServiceImpl implements IJobService {
 
 		log.info("JobsServiceImpl: Exit getAllJobApplicants");
 		log.info("Interview Map: {}", interviewStatus);
+
 		return ApiResponse.success(ResponseCode.SUCCESS, result);
 	}
 
 	private String getStatus(Integer appId, Set<Integer> screenedSet, Map<Integer, String> interviewStatus,
-			 Set<Integer> offerSet,
-		        Map<Integer, String> offerStatusMap) {
-		
+			Set<Integer> offerSet, Map<Integer, String> offerStatusMap) {
+
 		if (offerSet.contains(appId)) {
-		    return offerStatusMap.get(appId);
+			return offerStatusMap.get(appId);
 		}
 
 		if (interviewStatus.containsKey(appId)) {
@@ -440,7 +576,7 @@ public class JobServiceImpl implements IJobService {
 	}
 
 	private boolean matchesFilter(FilterApplicantEnum filter, Integer appId, Set<Integer> screenedSet,
-			Map<Integer, String> interviewStatus,  Set<Integer> offerSet) {
+			Map<Integer, String> interviewStatus, Set<Integer> offerSet) {
 
 		if (filter == null)
 			return true;
@@ -455,12 +591,12 @@ public class JobServiceImpl implements IJobService {
 
 		case INTERVIEW:
 			return interviewStatus.containsKey(appId);
-			
+
 		case OFFER:
-		    return offerSet.contains(appId);
+			return offerSet.contains(appId);
 
 		case HIRED:
-	         return false;
+			return false;
 
 		default:
 			return false;
@@ -597,8 +733,8 @@ public class JobServiceImpl implements IJobService {
 		entity.setAdditionalFile(additionalFileKey);
 
 		entity = jobApplicationRepository.save(entity);
-		
-		Integer applicantId=entity.getId();
+
+		Integer applicantId = entity.getId();
 
 		String subject = Constants.YOUR_JOB_APPLICATION_HAS_BEEN_RECEIVED + jobDetails.getJobTitle() + " ("
 				+ jobDetails.getJobCode() + ")";
@@ -622,7 +758,7 @@ public class JobServiceImpl implements IJobService {
 
 		log.info("Job application submitted successfully");
 
-		return ApiResponse.success(ResponseCode.SUCCESS, Constants.JOB_APPLICATION_SUBMITTED_SUCCESSFULLY,applicantId);
+		return ApiResponse.success(ResponseCode.SUCCESS, Constants.JOB_APPLICATION_SUBMITTED_SUCCESSFULLY, applicantId);
 	}
 
 	// upload to minio bucket
