@@ -51,5 +51,7 @@ public class InterviewDetailsResponse {
     private String venueDetails;
     
     private Integer jobId;
+    
+    private String candidateId;
 
 }

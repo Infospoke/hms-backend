@@ -10,6 +10,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.hms.service.dto.CompletedStageDto;
+import com.hms.service.entity.CandidateCreationDetailsEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -62,4 +63,5 @@ public class JobApplicantsResponse {
 	private Integer completedStages;
 
 	private List<CompletedStageDto> completedStageDetails;
+	
 }

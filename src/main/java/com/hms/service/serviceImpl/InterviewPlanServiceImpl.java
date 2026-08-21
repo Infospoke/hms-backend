@@ -39,6 +39,7 @@ import com.hms.service.entity.ActivityFeedEntity;
 import com.hms.service.entity.ApplicanDetailsEntity;
 import com.hms.service.entity.ApprovalChainEntity;
 import com.hms.service.entity.AssignRolesEntity;
+import com.hms.service.entity.CandidateCreationDetailsEntity;
 import com.hms.service.entity.ChildLinkCommentsEntity;
 import com.hms.service.entity.CreateJobDetailsEntity;
 import com.hms.service.entity.DepartmentsEntity;
@@ -1427,6 +1428,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			}
 
 			String applicantName = applicantMap.get(applicationId);
+			
+			String candidateId=application.getCandidate().getCandidateId();
 
 			Integer jobId = application.getJobId();
 
@@ -1465,6 +1468,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 			interviewData.put("startTime", stage.getStartTime());
 			interviewData.put("endTime", stage.getEndTime());
 			interviewData.put("round", roundOrder);
+			interviewData.put("candidateId",candidateId); 
 
 			responseList.add(interviewData);
 		}
@@ -1482,6 +1486,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 					||
 
 					String.valueOf(item.getOrDefault("jobTitle", "")).toLowerCase().contains(keyword)
+					
+					||
+					
+					String.valueOf(item.getOrDefault("candidateId", "")).contains(keyword)
 
 			).toList();
 		}
@@ -1529,6 +1537,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		Integer jobId = entity.getJobId();
 
+		JobApplicationEntity jobApplicationEntity=jobApplicationRepository.findById(request.getApplicantId()).get();
+		
+	    String candidateId=jobApplicationEntity.getCandidate().getCandidateId();
+	    
+	    if(candidateId==null) {
+	    	return null;
+	    }
 		Optional<CreateJobDetailsEntity> jobDetailsEnity = createJobDetailsRepository.findById(jobId);
 		CreateJobDetailsEntity createJobDetailsEntity = jobDetailsEnity.get();
 		Integer deptId = createJobDetailsEntity.getDepartmentId();
@@ -1566,6 +1581,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		response.setDepartment(department);
 		response.setInterviewMode(interviewMode);
 
+		response.setCandidateId(candidateId);
 		response.setInterviewRound(interviewRound);
 		response.setInterviewType(currentStageName);
 		response.setDuration(durationText);
@@ -1656,10 +1672,14 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 				String candidateName = null;
 				String jobTitle = null;
+				
+				String candidateId=null;
 
 				if (application != null) {
 
 					candidateName = application.getFirstName();
+					
+					candidateId=application.getCandidate().getCandidateId();
 
 					CreateJobDetailsEntity job = createJobDetailsRepository.findById(application.getJobId())
 							.orElse(null);
@@ -1683,6 +1703,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				map.put("round", roundName);
 				map.put("requestedOn", stage.getCreatedOn());
 				map.put("roundId", stage.getCurrentStageType());
+				map.put("candidateId", candidateId);
 
 				map.put("priority", stage.getCreatedOn() != null ? calculatePriority(stage.getCreatedOn()) : "Low");
 
@@ -1703,8 +1724,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 					String candidateName = String.valueOf(map.getOrDefault("candidateName", "")).toLowerCase();
 
 					String jobTitle = String.valueOf(map.getOrDefault("jobTitle", "")).toLowerCase();
+					
+					String candidateId=String.valueOf(map.getOrDefault("candidateId", "")).toLowerCase();
 
-					return candidateName.contains(searchText) || jobTitle.contains(searchText);
+					return candidateName.contains(searchText) || jobTitle.contains(searchText)|| candidateId.contains(searchText);
 
 				}).toList();
 			}
@@ -1835,6 +1858,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		Page<InterviewSessionEntity> sessionPage = interviewSessionRepository
 				.findAll(request.buildAIScheduleInterviewSpecification(interviewPlanRepository), pageable);
+		
+	
 
 		List<AIInterviewScheduleResponse> responseList = new ArrayList<>();
 
@@ -1849,6 +1874,15 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				response.setCandidateName(session.getApplicant().getCandidateName());
 
 				response.setEmail(session.getApplicant().getEmail());
+				
+				String candidateId=jobApplicationRepository.findById(session.getApplicationId()).get().getCandidate().getCandidateId();
+				
+				if(candidateId==null)
+				{
+					return null;
+				}
+				
+				response.setCandidateId(candidateId);
 			}
 
 			Integer planId = null;
@@ -1994,6 +2028,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				}
 
 				JobApplicationEntity application = applicationOpt.get();
+				
+				String candidateId=application.getCandidate().getCandidateId();
+				
+				if(candidateId==null)
+				{
+					return null;
+				}
 
 				CreateJobDetailsEntity job = createJobDetailsRepository.findById(application.getJobId()).orElse(null);
 				log.info("InterviewPlanServiceImpl :: retrived data from CreateJobDetailsEntity ");
@@ -2018,6 +2059,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				response.put("endTime", stage.getEndTime());
 
 				response.put("feedbackStatus", stage.getFeedbackStatus());
+				
+				response.put("candidateId",candidateId);
 
 				response.put("jobId", job.getJobId());
 				Integer deptId = job.getDepartmentId();
@@ -2069,6 +2112,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 								||
 
 								String.valueOf(item.getOrDefault("jobTitle", "")).toLowerCase().contains(keyword)
+								
+								||
+								
+								String.valueOf(item.getOrDefault("candidateId", "")).toLowerCase().contains(keyword)
 
 						).toList();
 			}
@@ -2216,8 +2263,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				ActivityFeedEntity activityFeedEntity = new ActivityFeedEntity();
 				activityFeedEntity.setTimeStamp(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 				String jobTitle = createJobDetailsRepository.findByJobId(applicationEntity.getJobId()).getJobTitle();
-				activityFeedEntity
-						.setActivity(applicationEntity.getFirstName() +" "+ "finished all interview rounds for" + " "+jobTitle);
+				activityFeedEntity.setActivity(
+						applicationEntity.getFirstName() + " " + "finished all interview rounds for" + " " + jobTitle);
 				activityFeedRepository.save(activityFeedEntity);
 				log.info("InterviewPlanServiceImpl :: All Rounds of the Applicant are Completed");
 				log.info("InterviewPlanServiceImpl :: Exit from the updateInterviewFeedback");
@@ -2350,6 +2397,13 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 		CreateJobDetailsEntity job = createJobDetailsRepository.findByJobId(applicant.getJobId());
 
+		String candidateId = jobApplicationRepository.findById(applicant.getApplicationId())
+				.map(JobApplicationEntity::getCandidate).map(CandidateCreationDetailsEntity::getCandidateId)
+				.orElse(null);
+
+		if (candidateId == null) {
+			return null;
+		}
 		if (job == null) {
 			return null;
 		}
@@ -2357,6 +2411,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		if (search != null && !search.trim().isEmpty()) {
 
 			String keyword = search.trim().toLowerCase();
+			
+			log.info("Application ID: {}", applicant.getApplicationId());
+			log.info("Candidate ID: {}", candidateId);
+			log.info("Search keyword: {}", keyword);
 
 			boolean matches = false;
 
@@ -2368,14 +2426,21 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				matches = true;
 			}
 
-			if (!matches && job.getJobTitle() != null && job.getJobTitle().toLowerCase().contains(keyword)) {
+			if (!matches && job.getJobTitle() != null && job.getJobTitle().contains(keyword)) {
 				matches = true;
 			}
 
+			if (!matches && candidateId != null && keyword != null
+					&& candidateId.trim().equalsIgnoreCase(keyword.trim())) {
+
+				matches = true;
+			}
 			if (!matches) {
 				return null;
 			}
+			
 		}
+		
 
 		if (departmentFilter != null && job.getDepartmentId() != null
 				&& !job.getDepartmentId().equals(Integer.parseInt(departmentFilter))) {
@@ -2436,6 +2501,7 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		dto.setCurrentStageId(currentStage.getCurrentStageType());
 		dto.setCurrentStage(getStageName(currentStage.getCurrentStageType()));
 		dto.setLastActivity(currentStage.getInterviewCompletedOn());
+		dto.setCandidateId(candidateId);
 
 		buildRoundDetails(dto, job.getPlanId(), currentStage);
 
@@ -2617,15 +2683,26 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 
 			Map<Integer, Long> totalRoundsMap = rounds.stream()
 					.collect(Collectors.groupingBy(round -> round.getInterviewPlan().getId(), Collectors.counting()));
+			
+			
 
 			List<InterviewUpcomingListResponse> response = new ArrayList<>();
 
 			for (InterviewScheduleEntity schedule : schedules) {
 
 				JobApplicationEntity application = applicationMap.get(schedule.getApplicantId());
+				
+				
 
 				if (application == null) {
 					continue;
+				}
+
+                 String candidate=application.getCandidate().getCandidateId();
+				
+				if(candidate==null)
+				{
+					return null;
 				}
 
 				CreateJobDetailsEntity job = jobMap.get(application.getJobId());
@@ -2645,6 +2722,9 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 				dto.setScheduleId(schedule.getId());
 				dto.setApplicantId(application.getId());
 				dto.setCandidateName(application.getFirstName() + " " + application.getLastName());
+				
+								
+				dto.setCandidateId(candidate);
 
 				dto.setJobTitle(job.getJobTitle());
 
@@ -2688,8 +2768,10 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 					String candidateName = Optional.ofNullable(dto.getCandidateName()).orElse("").toLowerCase();
 
 					String jobTitle = Optional.ofNullable(dto.getJobTitle()).orElse("").toLowerCase();
+					
+					String candidateId=Optional.ofNullable(dto.getCandidateId()).orElse("").toLowerCase();
 
-					if (!candidateName.contains(search) && !jobTitle.contains(search)) {
+					if (!candidateName.contains(search) && !jobTitle.contains(search) && !candidateId.contains(search)) {
 
 						continue;
 					}
@@ -2866,6 +2948,8 @@ public class InterviewPlanServiceImpl implements IInterviewPlanService {
 		dto.setRoundId((Integer) obj[19]);
 
 		dto.setJobId((Integer) obj[20]);
+		
+		dto.setCandidateId((String) obj[21]);
 
 		return dto;
 	}

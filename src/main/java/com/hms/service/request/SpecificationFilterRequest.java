@@ -1240,11 +1240,18 @@ public class SpecificationFilterRequest {
 
 				String keyword = "%" + search.trim().toLowerCase() + "%";
 
+				Subquery<Integer> candidateSearchSubquery = query.subquery(Integer.class);
+
+				Root<JobApplicationEntity> applicationRoot = candidateSearchSubquery.from(JobApplicationEntity.class);
+
+				candidateSearchSubquery.select(applicationRoot.get("id")).where(
+						cb.equal(applicationRoot.get("id"), root.get("applicationId")),
+						cb.like(cb.lower(applicationRoot.join("candidate", JoinType.LEFT).get("candidateId")),
+								keyword));
+
 				predicates.add(cb.or(cb.like(cb.lower(applicantJoin.get("candidateName")), keyword),
-
-						cb.like(cb.lower(jobJoin.get("jobTitle")), keyword)));
+						cb.like(cb.lower(jobJoin.get("jobTitle")), keyword), cb.exists(candidateSearchSubquery)));
 			}
-
 			String jobTitle = getFilter("jobTitle");
 
 			if (jobTitle != null && !jobTitle.isBlank()) {
@@ -1302,12 +1309,27 @@ public class SpecificationFilterRequest {
 
 				Join<InterviewSessionEntity, ResumeAnalysisEntity> applicant = root.join("applicant", JoinType.LEFT);
 
-				Predicate candidateName = cb.like(cb.lower(applicant.get("candidateName")),
-						"%" + search.toLowerCase().trim() + "%");
+				String keyword = "%" + search.toLowerCase().trim() + "%";
 
-				Predicate email = cb.like(cb.lower(applicant.get("email")), "%" + search.toLowerCase().trim() + "%");
+				Predicate candidateName = cb.like(cb.lower(applicant.get("candidateName")), keyword);
 
-				predicates.add(cb.or(candidateName, email));
+				Predicate email = cb.like(cb.lower(applicant.get("email")), keyword);
+
+				// Candidate ID search
+				Subquery<Integer> candidateSearchSubquery = query.subquery(Integer.class);
+
+				Root<JobApplicationEntity> applicationRoot = candidateSearchSubquery.from(JobApplicationEntity.class);
+
+				Join<JobApplicationEntity, CandidateCreationDetailsEntity> candidateJoin = applicationRoot
+						.join("candidate", JoinType.LEFT);
+
+				candidateSearchSubquery.select(applicationRoot.get("id")).where(
+						cb.equal(applicationRoot.get("id"), root.get("applicationId")),
+						cb.like(cb.lower(candidateJoin.get("candidateId")), keyword));
+
+				Predicate candidateId = cb.exists(candidateSearchSubquery);
+
+				predicates.add(cb.or(candidateName, email, candidateId));
 			}
 
 			Specification<InterviewSessionEntity> dateSpecification = dateSpec("scheduledTime");
@@ -1337,17 +1359,29 @@ public class SpecificationFilterRequest {
 			predicates.add(cb.isTrue(root.get("moveToSchedule")));
 
 			// Search
+			// Search
 			String search = getFilter("search");
 
 			if (search != null && !search.isBlank()) {
 
 				String keyword = "%" + search.toLowerCase().trim() + "%";
 
+				Subquery<Integer> candidateSearchSubquery = query.subquery(Integer.class);
+
+				Root<JobApplicationEntity> applicationRoot = candidateSearchSubquery.from(JobApplicationEntity.class);
+
+				Join<JobApplicationEntity, CandidateCreationDetailsEntity> candidateJoin = applicationRoot
+						.join("candidate", JoinType.LEFT);
+
+				candidateSearchSubquery.select(applicationRoot.get("id")).where(
+						cb.equal(applicationRoot.get("id"), root.get("applicationId")),
+						cb.like(cb.lower(candidateJoin.get("candidateId")), keyword));
+
 				predicates.add(cb.or(cb.like(cb.lower(root.get("applicant").get("candidateName")), keyword),
 						cb.like(cb.lower(root.get("applicant").get("email")), keyword),
-						cb.like(cb.lower(root.get("job").get("jobTitle")), keyword)));
+						cb.like(cb.lower(root.get("job").get("jobTitle")), keyword),
+						cb.exists(candidateSearchSubquery)));
 			}
-
 			// Job Title Filter
 			String jobTitle = getFilter("jobTitle");
 
@@ -1549,8 +1583,7 @@ public class SpecificationFilterRequest {
 
 	public Specification<OfferDetailsEntity> buildReadyToReleaseSpecification() {
 
-		Specification<OfferDetailsEntity> spec =
-		        (root, query, cb) -> cb.conjunction();
+		Specification<OfferDetailsEntity> spec = (root, query, cb) -> cb.conjunction();
 
 		String releaseType = getFilter("releaseType");
 
@@ -1583,7 +1616,7 @@ public class SpecificationFilterRequest {
 
 						// Offer is not released
 						cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased"))),
-						
+
 						// Current row must NOT be the re-release row
 						cb.not(cb.exists(reReleaseSubquery)));
 			});
@@ -1619,10 +1652,7 @@ public class SpecificationFilterRequest {
 						cb.isTrue(root.get("approve")),
 
 						// new offer is not released
-						cb.or(
-							    cb.isFalse(root.get("offerReleased")),
-							    cb.isNull(root.get("offerReleased"))
-							),
+						cb.or(cb.isFalse(root.get("offerReleased")), cb.isNull(root.get("offerReleased"))),
 
 						// Current row is the re-release row
 						cb.exists(reReleaseSubquery));
@@ -1875,11 +1905,12 @@ public class SpecificationFilterRequest {
 
 			Root<DepartmentsEntity> department = query.from(DepartmentsEntity.class);
 
-			//predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")), "hired"));
+			// predicates.add(cb.equal(cb.lower(root.get("interviewCompletionStatus")),
+			// "hired"));
 
 			predicates.add(cb.isTrue(root.get("submitFinancialApproval")));
-	     	predicates.add(cb.isFalse(root.get("approve")));
-	     	
+			predicates.add(cb.isFalse(root.get("approve")));
+
 			String approvalType = getFilter("approvalType");
 
 			if (approvalType != null && !approvalType.isBlank()) {
