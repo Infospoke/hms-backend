@@ -20,6 +20,8 @@ private Integer offerId;
 	
 	private Integer applicationId;
 	
+	private String candidateId;
+	
 	private String applicantName;
 	
 	private String applicantEmail;

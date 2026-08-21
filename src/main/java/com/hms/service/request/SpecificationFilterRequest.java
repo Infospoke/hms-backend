@@ -1656,10 +1656,16 @@ public class SpecificationFilterRequest {
 				Predicate email = cb.like(cb.lower(application.get("email")), like);
 
 				Predicate jobTitle = cb.like(cb.lower(job.get("jobTitle")), like);
+				
+				Join<JobApplicationEntity, CandidateCreationDetailsEntity> candidate = application.join("candidate",
+						JoinType.LEFT);
 
-				return cb.and(jobJoin, cb.or(candidateName, firstName, lastName, email, jobTitle));
+				Predicate candidateId = cb.like(cb.lower(cb.coalesce(candidate.get("candidateId"), "")), like);
+
+				return cb.and(jobJoin, cb.or(candidateName, firstName, lastName, email, jobTitle, candidateId));
 			});
 		}
+		
 		String jobId = getFilter("jobId");
 
 		if (jobId != null) {
@@ -1776,8 +1782,10 @@ public class SpecificationFilterRequest {
 						keyword);
 
 				Predicate email = cb.like(cb.lower(application.get("email")), keyword);
+				
+				Predicate candidateId = cb.like(cb.lower(application.get("candidate").get("candidateId")), keyword);
 
-				predicates.add(cb.or(candidateName, email));
+				predicates.add(cb.or(candidateName, email, candidateId));
 			}
 
 			// Job Filter
@@ -1933,6 +1941,9 @@ public class SpecificationFilterRequest {
 			if (search != null && !search.isBlank()) {
 
 				String keyword = "%" + search.trim().toLowerCase() + "%";
+				
+				Join<JobApplicationEntity, CandidateCreationDetailsEntity> candidate = application.join("candidate",
+						JoinType.LEFT);
 
 				Predicate applicantName = cb
 						.like(cb.lower(cb.concat(cb.concat(cb.coalesce(application.get("firstName"), ""), " "),
@@ -1943,8 +1954,10 @@ public class SpecificationFilterRequest {
 				Predicate lastName = cb.like(cb.lower(cb.coalesce(application.get("lastName"), "")), keyword);
 
 				Predicate email = cb.like(cb.lower(cb.coalesce(application.get("email"), "")), keyword);
+				
+				Predicate candidateId = cb.like(cb.lower(cb.coalesce(candidate.get("candidateId"), "")), keyword);
 
-				predicates.add(cb.or(applicantName, firstName, lastName, email));
+				predicates.add(cb.or(applicantName, firstName, lastName, email, candidateId));
 			}
 
 			String jobId = getFilter("jobId");
@@ -2108,79 +2121,80 @@ public class SpecificationFilterRequest {
 	}
 
 	public Specification<NegotiationOfferEntity> buildOfferNegotiationSpecification() {
-
+		 
 		return (root, query, cb) -> {
-
+ 
 			query.distinct(false);
-
+ 
 			List<Predicate> predicates = new ArrayList<>();
-
+ 
 			Join<NegotiationOfferEntity, CandidateCreationDetailsEntity> candidate = root.join("candidate",
 					JoinType.LEFT);
-
+ 
 			Join<NegotiationOfferEntity, CreateJobDetailsEntity> job = root.join("job", JoinType.LEFT);
-
+ 
 			Join<NegotiationOfferEntity, OfferDetailsEntity> offer = root.join("offer", JoinType.LEFT);
-
+ 
 			String search = getFilter("search");
-
+ 
 			if (search != null && !search.trim().isEmpty()) {
-
+ 
 				String keyword = "%" + search.trim().toLowerCase() + "%";
-
+ 
 				predicates.add(cb.or(cb.like(cb.lower(candidate.get("firstName")), keyword),
 						cb.like(cb.lower(candidate.get("email")), keyword)));
 			}
-
+ 
 			String jobId = getFilter("jobId");
-
+ 
 			if (jobId != null && !jobId.isBlank()) {
 				predicates.add(cb.equal(job.get("jobId"), Integer.valueOf(jobId)));
 			}
-
+ 
 			String priority = getFilter("priority");
-
+ 
 			if (priority != null && !priority.isBlank()) {
-
+ 
 				LocalDate today = LocalDate.now();
-
+ 
 				switch (priority.toUpperCase()) {
-
+ 
 				case "LOW":
 					predicates.add(cb.greaterThanOrEqualTo(root.get("offerNegotiatedDate"), today.minusDays(1)));
 					break;
-
+ 
 				case "MEDIUM":
 					predicates.add(cb.between(root.get("offerNegotiatedDate"), today.minusDays(2), today.minusDays(2)));
 					break;
-
+ 
 				case "HIGH":
 					predicates.add(cb.lessThanOrEqualTo(root.get("offerNegotiatedDate"), today.minusDays(3)));
 					break;
 				}
 			}
-
+ 
 			Specification<NegotiationOfferEntity> dateSpecification = dateSpec("offerNegotiatedDate");
-
+ 
 			if (dateSpecification != null) {
-
+ 
 				Predicate datePredicate = dateSpecification.toPredicate(root, query, cb);
-
+ 
 				if (datePredicate != null) {
 					predicates.add(datePredicate);
 				}
 			}
-
+ 
 			String status = getFilter("status");
-
+ 
 			if (status != null && !status.isBlank()) {
-
+ 
 				predicates.add(cb.equal(cb.upper(offer.get("offerStatus")), status.toUpperCase()));
 			}
-
+ 
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}
+ 
 
 	public Specification<OfferDetailsEntity> buildOfferStatusSpecification() {
 
@@ -2192,17 +2206,28 @@ public class SpecificationFilterRequest {
 
 			Join<JobApplicationEntity, CandidateCreationDetailsEntity> candidate = application.join("candidate",
 					JoinType.LEFT);
-
+			
 			String search = getFilter("search");
 
 			if (search != null && !search.trim().isEmpty()) {
 
 				String keyword = "%" + search.trim().toLowerCase() + "%";
 
-				predicates.add(cb.or(cb.like(cb.lower(candidate.get("firstName")), keyword),
-						cb.like(cb.lower(candidate.get("email")), keyword)));
-			}
+				predicates.add(cb.or(
 
+						cb.like(cb.lower(cb.coalesce(candidate.get("firstName"), "")), keyword),
+
+						cb.like(cb.lower(cb.coalesce(candidate.get("email"), "")), keyword),
+
+						cb.like(cb.lower(cb.coalesce(candidate.get("candidateId"), "")), keyword),
+
+						cb.like(cb.lower(cb.coalesce(application.get("firstName"), "")), keyword),
+
+						cb.like(cb.lower(cb.coalesce(application.get("lastName"), "")), keyword),
+
+						cb.like(cb.lower(cb.coalesce(application.get("email"), "")), keyword)));
+			}
+			
 			String jobId = getFilter("jobId");
 
 			if (jobId != null && !jobId.isBlank()) {

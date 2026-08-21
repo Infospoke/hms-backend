@@ -234,7 +234,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		map.put("applicationId", application.getId());
 
 		map.put("reReleaseOfferId", offer.getReReleaseOfferId());
+		
+		CandidateCreationDetailsEntity candidate = application.getCandidate();
 
+		if (candidate != null) {
+		    map.put("candidateId", candidate.getCandidateId());
+		} else {
+		    map.put("candidateId", null);
+		}
+		
 		map.put("candidateName", application.getFirstName() + " " + application.getLastName());
 
 		map.put("email", application.getEmail());
@@ -250,6 +258,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		map.put("priority", calculatePriority(offer.getDateOfApproval3()));
 
 		map.put("totalCtc", offer.getTotalCtc());
+		log.info(""+map);
 
 		return map;
 
@@ -1601,6 +1610,8 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setOfferId(offer.getId());
 
 			response.setApplicantId(application.getId());
+			
+			response.setCandidateId(application.getCandidate() != null ? application.getCandidate().getCandidateId() : null);
 
 			response.setCandidateName(application.getFirstName() + " " + application.getLastName());
 
@@ -1943,6 +1954,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			if (application != null) {
 
 				response.setApplicationId(application.getId());
+				
+				response.setCandidateId(
+						application.getCandidate() != null ? application.getCandidate().getCandidateId() : null);
 
 				response.setApplicantName((application.getFirstName() == null ? "" : application.getFirstName()) + " "
 						+ (application.getLastName() == null ? "" : application.getLastName()));

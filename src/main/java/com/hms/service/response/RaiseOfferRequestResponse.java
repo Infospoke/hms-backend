@@ -14,6 +14,8 @@ public class RaiseOfferRequestResponse {
 	    private Integer offerId;
 
 	    private Integer applicantId;
+	    
+	    private String candidateId;
 
 	    private String candidateName;
 
