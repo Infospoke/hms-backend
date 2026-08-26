@@ -1,14 +1,39 @@
 -- =========================================
 -- MODULE
 -- =========================================
-
-INSERT INTO tb_module 
+INSERT INTO tb_module
 (id, module_id, parent_id, module_name, created_date, created_by, updated_by, updated_date)
 VALUES
-(1, 1, 0, 'Admin', '2026-04-22', 'admin', NULL, NULL),
-(2, 2, 0, 'HR', '2026-04-22', 'admin', NULL, NULL),
-(3, 3, 1, 'User Management', '2026-04-22', 'admin', NULL, NULL),
-(4, 4, 2, 'Employee Management', '2026-04-22', 'admin', NULL, NULL)
+(1, 1, 0, 'Demand', '2026-04-22', 'admin', NULL, NULL),
+(2, 2, 0, 'Supply', '2026-04-22', 'admin', NULL, NULL),
+(3, 3, 0, 'System & Admins', '2026-04-22', 'admin', NULL, NULL),
+(4, 4, 1, 'My Srs', '2026-04-22', 'admin', NULL, NULL),
+(5, 5, 2, 'Kanban', '2026-04-22', 'admin', NULL, NULL),
+(6, 6, 2, 'Hiring Dashboard', '2026-04-22', 'admin', NULL, NULL),
+(7, 7, 2, 'Job Details', '2026-04-22', 'admin', NULL, NULL),
+(8, 8, 3, 'Users', '2026-04-22', 'admin', NULL, NULL),
+(9, 9, 3, 'Roles & Permissions', '2026-04-22', 'admin', NULL, NULL),
+(10, 10, 0, 'My Approval', '2026-05-07', 'admin', NULL, NULL),
+(11, 11, 10, 'SR Approvals', '2026-05-07', 'admin', NULL, NULL),
+(12, 12, 10, 'Hierarchy Approvals', '2026-05-07', 'admin', NULL, NULL),
+(13, 13, 3, 'Approval Chain Configuration', '2026-05-07', 'admin', NULL, NULL),
+(14, 14, 1, 'Job Requisitions', '2026-05-20', 'admin', NULL, NULL),
+(15, 15, 1, 'Recruiter Assignment management', '2026-05-21', 'admin', NULL, NULL),
+(16, 16, 2, 'My Job Assignments', '2026-05-21', 'admin', NULL, NULL),
+(17, 17, 1, 'Interview Plan Config', '2026-05-28', 'admin', NULL, NULL),
+(18, 18, 10, 'Interview Plan Approvals', '2026-05-28', 'admin', NULL, NULL),
+(19, 19, 1, 'Assign Interviewers', '2026-04-22', 'admin', NULL, NULL),
+(20, 20, 2, 'My Interview Requests', '2026-06-09', 'admin', NULL, NULL),
+(21, 21, 22, 'AI Interview Zone', '2026-06-23', 'admin', NULL, NULL),
+(22, 22, 0, 'Candidate Management', '2026-06-23', 'admin', NULL, NULL),
+(23, 23, 22, 'In Person Interview', '2026-07-07', 'admin', NULL, NULL),
+(24, 24, 22, 'Interview Pipeline', '2026-07-07', 'admin', NULL, NULL),
+(25, 25, 22, 'Offer Management', '2026-07-15', 'admin', NULL, NULL),
+(26, 26, 10, 'Offer Approvals', '2026-08-05', 'admin', NULL, NULL),
+(27, 27, 0, 'My DashBoards', '2026-08-07', 'admin', NULL, NULL),
+(28, 28, 27, 'HM DashBoard', '2026-08-07', 'admin', NULL, NULL),
+(29, 29, 27, 'Recruiter DashBoard', '2026-08-07', 'admin', NULL, NULL),
+(30, 30, 27, 'Recruiters Performance DashBoard', '2026-08-07', 'admin', NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 
@@ -124,6 +149,50 @@ VALUES
 
 ON CONFLICT (id) DO NOTHING;
 
+---Role Administrator
+INSERT INTO tb_role
+(id, role_id, role_name, department_id, created_date, created_by, updated_by, updated_date, business_unit_id, description)
+VALUES
+(1, 1, 'Administrator', NULL, '2026-08-26', 'admin', NULL, NULL, NULL,
+ 'Administrator role with full permissions ')
+ON CONFLICT (id) DO NOTHING;
+
+---Administrator permissions
+INSERT INTO tb_permission
+(id, permission_id, module_id, role_id, can_create, can_view, can_edit, can_delete, can_export, created_date, created_by, updated_by, updated_date)
+VALUES
+(1, 1, 1, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(2, 2, 2, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(3, 3, 3, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(4, 4, 4, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(5, 5, 5, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(6, 6, 6, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(7, 7, 7, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(8, 8, 8, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(9, 9, 9, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(10, 10, 10, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(11, 11, 11, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(12, 12, 12, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(13, 13, 13, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(14, 14, 14, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(15, 15, 15, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(16, 16, 16, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(17, 17, 17, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(18, 18, 18, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(19, 19, 19, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(20, 20, 20, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(21, 21, 21, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(22, 22, 22, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(23, 23, 23, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(24, 24, 24, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(25, 25, 25, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(26, 26, 26, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(27, 27, 27, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(28, 28, 28, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(29, 29, 29, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL),
+(30, 30, 30, 1, true, true, true, true, false, '2026-08-26', 'admin', NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
+
 
 -- =========================================
 -- ROLE
@@ -193,4 +262,88 @@ VALUES
 (3, '10-25%'),
 (4, '25-50%'),
 (5, '50%+')
+ON CONFLICT (id) DO NOTHING;
+
+---Role
+INSERT INTO tb_user
+(
+    id,
+    user_id,
+    user_type_id,
+    first_name,
+    last_name,
+    employee_id,
+    email,
+    mobile_number,
+    alternate_contact,
+    employment_type_id,
+    department_id,
+    password,
+    pin,
+    updated_by,
+    updated_at,
+    active,
+    deactivated,
+    username,
+    failed_attempts,
+    account_locked,
+    lock_time,
+    force_password_reset,
+    password_updated_at,
+    candidate_id,
+    pin_updated_at,
+    first_time_web_login,
+    first_time_mobile_login
+)
+VALUES
+(
+    1,
+    1,
+    1,
+    'sai',
+    'narasimha',
+    1,
+    'spmproject66@gmail.com',
+    '9876543210',
+    NULL,
+    1,
+    1,
+    '$2a$10$Z2wbNTAQF76MaL4un0RI/.8oFU/ZB/QD0e0W6IkSPz.XyTULwoz72',
+    '$2a$10$/jqt2hrOvl0j5Hzi4t1DHeHk3Cz5rr.XfQpzErRE1ujzXqt74xaiC',
+    NULL,
+    NULL,
+    true,
+    false,
+    'sainarasimha',
+    0,
+    false,
+    NULL,
+    false,
+    NULL,
+    NULL,
+    NULL,
+    true,
+    true
+)
+ON CONFLICT (id) DO NOTHING;
+
+
+INSERT INTO tb_assign_roles
+(
+    id,
+    assign_role_id,
+    user_id,
+    role_id,
+    assigned_by,
+    assigned_at
+)
+VALUES
+(
+    1,
+    1,
+    1,
+    1,
+    'admin',
+    '2026-08-26'
+)
 ON CONFLICT (id) DO NOTHING;
