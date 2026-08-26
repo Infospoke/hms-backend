@@ -278,6 +278,7 @@ INSERT INTO tb_user
     alternate_contact,
     employment_type_id,
     department_id,
+    business_unit_id,
     password,
     pin,
     updated_by,
@@ -306,6 +307,7 @@ VALUES
     'spmproject66@gmail.com',
     '9876543210',
     NULL,
+    1,
     1,
     1,
     '$2a$10$Z2wbNTAQF76MaL4un0RI/.8oFU/ZB/QD0e0W6IkSPz.XyTULwoz72',
@@ -346,4 +348,15 @@ VALUES
     'admin',
     '2026-08-26'
 )
+ON CONFLICT (id) DO NOTHING;
+
+---functionality
+
+INSERT INTO tb_functionality
+(id, functionality_name, is_chain_created)
+VALUES
+(1, 'SR_Approvals', false),
+(2, 'Supply Module', false),
+(3, 'Interview Plan', false),
+(4, 'Offer Plan', false)
 ON CONFLICT (id) DO NOTHING;
