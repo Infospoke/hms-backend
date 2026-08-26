@@ -122,6 +122,10 @@ public class KanbanFilterServiceImpl implements IKanbanService {
 				kanbanFilterResponse.setSlaColor(null);
 			}
 
+			
+			if (job.getCandidate() != null) {
+				kanbanFilterResponse.setCandidateId(job.getCandidate().getCandidateId());
+			}
 			kanbanFilterResponse.setId(job.getId());
 			kanbanFilterResponse.setJobId(job.getJobId());
 			kanbanFilterResponse.setFirstName(job.getFirstName());

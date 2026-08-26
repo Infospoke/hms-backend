@@ -37,7 +37,9 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 			    cs.interview_completed_on,
 			    bc.proposed_total_compensation,
 			    cs.current_stage_type,
-			    j.job_id
+			    j.job_id,
+			    ja.candidate_id
+			    
 
 			FROM tb_job_applications ja
 
@@ -69,6 +71,8 @@ public interface InterviewScheduleRepository extends JpaRepository<InterviewSche
 
 			LEFT JOIN tb_interview_round_dropdown rd
 			    ON rd.id = cs.current_stage_type
+			    
+			    
 
 			WHERE ja.id = :applicationId
 			""", nativeQuery = true)

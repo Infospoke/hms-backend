@@ -32,5 +32,7 @@ public class InterviewProgressListResponse {
 	private LocalDateTime lastActivity;
 
 	private List<InterviewRoundResponse> roundDetails;
+	
+	private String candidateId;
 
 }

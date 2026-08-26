@@ -44,4 +44,6 @@ public class KanbanFilterResponse {
     private String slaDisplay;
 
     private Boolean rejected;
+    
+    private String candidateId;
 }

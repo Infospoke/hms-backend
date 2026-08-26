@@ -20,6 +20,7 @@ import com.hms.service.entity.AIInterviewQuestionsEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.repository.AInterviewQuestionsRepository;
 import com.hms.service.repository.InterviewSessionRepository;
+import com.hms.service.repository.JobApplicationRepository;
 import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IAIInterviewZoneService;
 import com.hms.service.wrappers.ApiResponse;
@@ -36,6 +37,9 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 
 	@Autowired
 	private AInterviewQuestionsRepository aInterviewQuestionsRepository;
+	
+	@Autowired
+	private JobApplicationRepository jobApplicationRepository;
 
 	@Override
 	public ApiResponse<?> getAiInterviewZoneList(SpecificationFilterRequest request) {
@@ -58,6 +62,15 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 			Boolean questionStatus = session.getQuestionsStatus();
 
 			Integer numberOfQuestions = 0;
+			
+			Integer ApplicantId=session.getApplicant().getApplicationId();
+			
+			String candidateId=jobApplicationRepository.findById(ApplicantId).get().getCandidate().getCandidateId();
+			
+			if(candidateId==null)
+			{
+				return null;
+			}
 
 			if (aiQuestion != null) {
 				numberOfQuestions = aiQuestion.getNumberOfQuestions();
@@ -79,7 +92,7 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 					session.getJob() != null ? session.getJob().getJobTitle() : null,
 
 					numberOfQuestions, questionStatus, updatedDate,
-					session.getApplicant() != null ? session.getApplicant().getEmail() : null);
+					session.getApplicant() != null ? session.getApplicant().getEmail() : null,candidateId);
 
 		}).toList();
 
@@ -133,6 +146,13 @@ public class AIInterviewZoneServiceImpl implements IAIInterviewZoneService {
 			map.put("scheduledBy", session.getScheduledBy());
 			
 			map.put("applicationId", session.getApplicationId());
+			
+			
+			String candidateId=jobApplicationRepository.findById(session.getApplicationId()).get().getCandidate().getCandidateId();
+			if(candidateId==null) {
+				return null;
+			}
+			map.put("candidateId",candidateId);
 
 			content.add(map);
 		}
