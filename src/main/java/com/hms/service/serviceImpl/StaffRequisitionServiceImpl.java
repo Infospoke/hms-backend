@@ -1038,8 +1038,12 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return ApiResponse.failure(ResponseCode.FAILURE, Constants.SR_ID_IS_REQUIRED,
 						List.of(Constants.SR_ID_CANNOT_BE_NULL_OR_EMPTY));
 			}
+			
+			log.info("SR ID received = [{}]", srId);
 
 			SRPositionBasicsEntity srPositionBasicsEntity = positionBasicsRepository.findBySrId(srId).orElse(null);
+			
+			log.info("SR Position Basics found = {}", srPositionBasicsEntity != null);
 			BusinessJustificationEntity businessJustificationEntity = businessJustificationRepository.findBySrId(srId)
 					.orElse(null);
 			BudgetAndCompensationEntity budgetAndCompensationEntity = budgetAndCompensationRepository.findBySrId(srId)
