@@ -1670,23 +1670,23 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		// MAKER CHECKER VALIDATION
 
-		Long submittedBy = entity.getSubmittedBy();
-
-		if (submittedBy != null) {
-
-			Optional<UserEntity> submittedUserOpt = userRepository.findByUserId(submittedBy);
-
-			if (submittedUserOpt.isPresent()) {
-
-				UserEntity submittedUser = submittedUserOpt.get();
-
-				if (username.equalsIgnoreCase(submittedUser.getUsername())) {
-
-					return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
-							List.of("You created this SR, so you cannot approve it"));
-				}
-			}
-		}
+//		Long submittedBy = entity.getSubmittedBy();
+//
+//		if (submittedBy != null) {
+//
+//			Optional<UserEntity> submittedUserOpt = userRepository.findByUserId(submittedBy);
+//
+//			if (submittedUserOpt.isPresent()) {
+//
+//				UserEntity submittedUser = submittedUserOpt.get();
+//
+//				if (username.equalsIgnoreCase(submittedUser.getUsername())) {
+//
+//					return ApiResponse.failure(ResponseCode.FAILURE, "Access Denied",
+//							List.of("You created this SR, so you cannot approve it"));
+//				}
+//			}
+//		}
 
 		// FETCH SR
 
@@ -1805,6 +1805,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		// COMMON SAVE
 
+		
 		if (approved) {
 
 			pos.setRejected(false);
@@ -1812,6 +1813,11 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		} else {
 
 			pos.setRejected(true);
+			pos.setInProgress(true);
+		}
+		if(request.getFinalApprovalStatus())
+		{
+			pos.setApproved(true);
 			pos.setInProgress(true);
 		}
 

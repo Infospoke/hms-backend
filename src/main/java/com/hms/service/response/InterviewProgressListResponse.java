@@ -33,6 +33,6 @@ public class InterviewProgressListResponse {
 
 	private List<InterviewRoundResponse> roundDetails;
 	
-	private String CandidateId;
+	private String candidateId;
 
 }

@@ -17,5 +17,7 @@ public class UpdateSrRequest {
 	
 	private String comments;
 	
+	private Boolean finalApprovalStatus;
+	
 	
 }
