@@ -153,7 +153,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO tb_role
 (id, role_id, role_name, department_id, created_date, created_by, updated_by, updated_date, business_unit_id, description)
 VALUES
-(1, 1, 'Administrator', NULL, '2026-08-26', 'admin', NULL, NULL, NULL,
+(1, 1, 'Administrator', 43, '2026-08-26', 'admin', NULL, NULL, NULL,
  'Administrator role with full permissions ')
 ON CONFLICT (id) DO NOTHING;
 
@@ -278,7 +278,6 @@ INSERT INTO tb_user
     alternate_contact,
     employment_type_id,
     department_id,
-    business_unit_id,
     password,
     pin,
     updated_by,
@@ -308,8 +307,7 @@ VALUES
     '9876543210',
     NULL,
     1,
-    1,
-    1,
+    43,
     '$2a$10$Z2wbNTAQF76MaL4un0RI/.8oFU/ZB/QD0e0W6IkSPz.XyTULwoz72',
     '$2a$10$/jqt2hrOvl0j5Hzi4t1DHeHk3Cz5rr.XfQpzErRE1ujzXqt74xaiC',
     NULL,
