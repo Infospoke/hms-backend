@@ -1596,6 +1596,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 	}
 
 	@Override
+	@Transactional
 	public ApiResponse<?> srApproval(UpdateSrRequest request) {
 
 		Optional<ApprovalsChildEntity> optional = approvalsChildRepository.findByProcessId(request.getSrId());
@@ -1810,6 +1811,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			pos.setRejected(true);
 			pos.setInProgress(true);
 		}
+		
+		//This if block is added for the Single Level approval and it can be removed for the 3 level approvals
 		if(request.getFinalApprovalStatus())
 		{
 			pos.setApproved(true);
@@ -1820,93 +1823,95 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		approvalsChildRepository.save(entity);
 
 		// COMMON MAIL DATA
+		//THis code is commented for the Single Level Approval 
 
-		Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getSrId());
-		Integer roleId = null;
-		for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
-			roleId = entry.getKey();
-		}
-
-		String checkerRoleName = rolesRepository.findByRoleId(roleId).get().getRoleName();
-		Integer deptId = pos.getDepartmentId();
-
-		String deptName = departmentsRepository.findById(deptId).get().getDepartmentName();
-
-		event.setProcessId(srId);
-		event.setDeptName(deptName);
-		event.setType("SR");
-		event.setCheckerRoleName(checkerRoleName);
-		event.setRoleEmailMap(roleEmailMap);
+//		Map<Integer, List<String>> roleEmailMap = processApprovalChain(request.getSrId());
+//		Integer roleId = null;
+//		for (Map.Entry<Integer, List<String>> entry : roleEmailMap.entrySet()) {
+//			roleId = entry.getKey();
+//		}
+//
+//		String checkerRoleName = rolesRepository.findByRoleId(roleId).get().getRoleName();
+//		Integer deptId = pos.getDepartmentId();
+//
+//		String deptName = departmentsRepository.findById(deptId).get().getDepartmentName();
+//
+//		event.setProcessId(srId);
+//		event.setDeptName(deptName);
+//		event.setType("SR");
+//		event.setCheckerRoleName(checkerRoleName);
+//		event.setRoleEmailMap(roleEmailMap);
 
 		// APPROVED FLOW
 
 		if (approved) {
-
-			event.setCheckerNotificationTitle("Level " + approvalLevel + " Approved — " + levelName);
-
-			event.setCheckerMessage("A Staffing Requisition is now under your approval flow for review and approval");
-
-			event.setCheckerEmailBody(String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, pos.getSrId(),
-					pos.getJobTitle(), deptName, pos.getCreatedBy(), pos.getOpenings(), pos.getLocation(),
-					pos.getEmploymentType(), pos.getPriority(), pos.getCreatedOn()));
-
-			String makerSubject = "";
-			String makerTitle = "";
-			String makerMailBody = "";
-
-			if (approvalLevel == 1) {
-
-				makerSubject = "Your Staffing Requisition has been approved by Level 1 (Department Head) and is now under Level 2 approval flow";
-
-				makerTitle = "Level 1 Approved — "+ roleName;
-
-				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
-						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
-						pos.getEmploymentType(), pos.getPriority(), approverName, approvalStatus, approvedDate);
-
-			} else if (approvalLevel == 2) {
-
-				makerSubject = "Your Staffing Requisition has been approved by Level 2 (HRBP) and is now under Level 3 approval flow";
-
-				makerTitle = "Level 2 Approved — "+ roleName;
-
-				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
-						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
-						pos.getEmploymentType(), pos.getPriority(), approverName, approvalStatus, approvedDate);
-
-			} else if (approvalLevel == 3) {
-
-				makerSubject = "Your Staffing Requisition has been fully approved successfully and is now ready for Recruiter Assignment and Job Creation";
-
-				makerTitle = "Level 3 Approved — "+ roleName;
-
-				makerMailBody = String.format(Constants.SR_FULLY_APPROVED_NOTIFY, pos.getCreatedBy(), pos.getSrId(),
-						pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(), pos.getEmploymentType(),
-						pos.getPriority(), approvedDate);
-			}
-
-			sendMakerMail(srId, userId, makerRoleId, makerSubject, makerRoleName, makerTitle, makerMailBody, event);
-
+			//This code is commented for the Single level approval
+//			event.setCheckerNotificationTitle("Level " + approvalLevel + " Approved — " + levelName);
+//
+//			event.setCheckerMessage("A Staffing Requisition is now under your approval flow for review and approval");
+//
+//			event.setCheckerEmailBody(String.format(Constants.SR_TO_BE_APPROVED_MAIL_BODY, pos.getSrId(),
+//					pos.getJobTitle(), deptName, pos.getCreatedBy(), pos.getOpenings(), pos.getLocation(),
+//					pos.getEmploymentType(), pos.getPriority(), pos.getCreatedOn()));
+//
+//			String makerSubject = "";
+//			String makerTitle = "";
+//			String makerMailBody = "";
+//
+//			if (approvalLevel == 1) {
+//
+//				makerSubject = "Your Staffing Requisition has been approved by Level 1 (Department Head) and is now under Level 2 approval flow";
+//
+//				makerTitle = "Level 1 Approved — "+ roleName;
+//
+//				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
+//						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
+//						pos.getEmploymentType(), pos.getPriority(), approverName, approvalStatus, approvedDate);
+//
+//			} else if (approvalLevel == 2) {
+//
+//				makerSubject = "Your Staffing Requisition has been approved by Level 2 (HRBP) and is now under Level 3 approval flow";
+//
+//				makerTitle = "Level 2 Approved — "+ roleName;
+//
+//				makerMailBody = String.format(Constants.SR_APPROVED_NOTIFY, pos.getCreatedBy(), approverName,
+//						pos.getSrId(), pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(),
+//						pos.getEmploymentType(), pos.getPriority(), approverName, approvalStatus, approvedDate);
+//
+//			} else if (approvalLevel == 3) {
+//
+//				makerSubject = "Your Staffing Requisition has been fully approved successfully and is now ready for Recruiter Assignment and Job Creation";
+//
+//				makerTitle = "Level 3 Approved — "+ roleName;
+//
+//				makerMailBody = String.format(Constants.SR_FULLY_APPROVED_NOTIFY, pos.getCreatedBy(), pos.getSrId(),
+//						pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(), pos.getEmploymentType(),
+//						pos.getPriority(), approvedDate);
+//			}
+//
+//			sendMakerMail(srId, userId, makerRoleId, makerSubject, makerRoleName, makerTitle, makerMailBody, event);
+//
 			return ApiResponse.success("Approved successfully at level " + approvalLevel);
 		}
 
 		// REJECT FLOW
 
 		else {
-
-			String rejectedMailBody = String.format(Constants.SR_REJECTED_NOTIFY, pos.getCreatedBy(), pos.getSrId(),
-					pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(), pos.getEmploymentType(),
-					pos.getPriority(), levelName, approverName, approvedDate, request.getComments());
-
-			event.setCheckerNotificationTitle("Level " + approvalLevel + " Rejected — " + levelName);
-
-			event.setCheckerMessage("A Staffing Requisition has been rejected in the approval flow.");
-
-			event.setCheckerEmailBody(rejectedMailBody);
-
-			sendMakerMail(srId, userId, makerRoleId,
-					"Your Staffing Requisition has been rejected by Level " + approvalLevel + " (" + levelName + ")",
-					makerRoleName, "SR Rejected", rejectedMailBody, event);
+			
+			//This code is commented for the Single level approval
+//			String rejectedMailBody = String.format(Constants.SR_REJECTED_NOTIFY, pos.getCreatedBy(), pos.getSrId(),
+//					pos.getJobTitle(), deptName, pos.getOpenings(), pos.getLocation(), pos.getEmploymentType(),
+//					pos.getPriority(), levelName, approverName, approvedDate, request.getComments());
+//
+//			event.setCheckerNotificationTitle("Level " + approvalLevel + " Rejected — " + levelName);
+//
+//			event.setCheckerMessage("A Staffing Requisition has been rejected in the approval flow.");
+//
+//			event.setCheckerEmailBody(rejectedMailBody);
+//
+//			sendMakerMail(srId, userId, makerRoleId,
+//					"Your Staffing Requisition has been rejected by Level " + approvalLevel + " (" + levelName + ")",
+//					makerRoleName, "SR Rejected", rejectedMailBody, event);
 
 			return ApiResponse.success("Rejected successfully at level " + approvalLevel);
 		}
