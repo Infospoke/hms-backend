@@ -1132,7 +1132,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 					ApprovalsChildEntity childEntity = optionalChildEntity.get();
 
 //					List<Integer> roleIds = List.of(childEntity.getRole1(), childEntity.getRole2(),
-//							childEntity.getRole3());
+//					childEntity.getRole3());
 					
 					List<Integer> roleIds = Stream
 							.of(childEntity.getRole1(), childEntity.getRole2(), childEntity.getRole3())
