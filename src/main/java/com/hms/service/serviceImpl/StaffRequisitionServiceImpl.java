@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -1037,8 +1038,12 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return ApiResponse.failure(ResponseCode.FAILURE, Constants.SR_ID_IS_REQUIRED,
 						List.of(Constants.SR_ID_CANNOT_BE_NULL_OR_EMPTY));
 			}
+			
+			log.info("SR ID received = [{}]", srId);
 
 			SRPositionBasicsEntity srPositionBasicsEntity = positionBasicsRepository.findBySrId(srId).orElse(null);
+			
+			log.info("SR Position Basics found = {}", srPositionBasicsEntity != null);
 			BusinessJustificationEntity businessJustificationEntity = businessJustificationRepository.findBySrId(srId)
 					.orElse(null);
 			BudgetAndCompensationEntity budgetAndCompensationEntity = budgetAndCompensationRepository.findBySrId(srId)
@@ -1126,8 +1131,12 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 					ApprovalsChildEntity childEntity = optionalChildEntity.get();
 
-					List<Integer> roleIds = List.of(childEntity.getRole1(), childEntity.getRole2(),
-							childEntity.getRole3());
+//					List<Integer> roleIds = List.of(childEntity.getRole1(), childEntity.getRole2(),
+//					childEntity.getRole3());
+					
+					List<Integer> roleIds = Stream
+							.of(childEntity.getRole1(), childEntity.getRole2(), childEntity.getRole3())
+							.filter(Objects::nonNull).toList();
 
 					List<Object[]> roles = rolesRepository.findRoleNamesByIds(roleIds);
 
