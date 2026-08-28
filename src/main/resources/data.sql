@@ -358,3 +358,11 @@ VALUES
 (3, 'Interview Plan', false),
 (4, 'Offer Plan', false)
 ON CONFLICT (id) DO NOTHING;
+
+--Interview Dropdown
+INSERT INTO tb_interview_round_dropdown (id, round_name)
+VALUES
+(1, 'AI Interview Round'),
+(2, 'Technical Round'),
+(3, 'Managerial Round'),
+(4, 'HR Round');
