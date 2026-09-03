@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,6 +48,19 @@ public class ClientManagementController {
 	    ApiResponse<?> response = clientService.getClientById(id);
 
 	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PutMapping("/update")
+	public ResponseEntity<ApiResponse<?>> updateClient(
+	        @Valid @RequestBody ClientRequest request) {
+
+	    ApiResponse<?> response =
+	            clientService.updateClient(request);
+
+	    return new ResponseEntity<>(
+	            response,
+	            HttpStatus.OK
+	    );
 	}
 
 }

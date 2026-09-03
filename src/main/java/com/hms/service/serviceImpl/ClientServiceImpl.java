@@ -103,4 +103,59 @@ public class ClientServiceImpl implements IClientService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Client fetched successfully", client.get());
 	}
+	
+	@Override
+	public ApiResponse<?> updateClient(ClientRequest request) {
+
+	    if (request.getId() == null) {
+	        return ApiResponse.success(
+	                ResponseCode.FAILURE,
+	                "Client ID is required",
+	                null
+	        );
+	    }
+
+	    Optional<ClientManagementDetailsEntity> optionalClient =
+	            clientRepository.findById(request.getId());
+
+	    if (optionalClient.isEmpty()) {
+	        return ApiResponse.success(
+	                ResponseCode.FAILURE,
+	                "Client not found",
+	                null
+	        );
+	    }
+
+	    ClientManagementDetailsEntity client =
+	            optionalClient.get();
+
+	    client.setClientName(request.getClientName());
+	    client.setIndustry(request.getIndustry());
+	    client.setTeamSize(request.getTeamSize());
+	    client.setClientStatus(request.getClientStatus());
+	    client.setAgreementStatus(request.getAgreementStatus());
+	    client.setAgreementStartDate(request.getAgreementStartDate());
+	    client.setAgreementEndDate(request.getAgreementEndDate());
+	    client.setBdm(request.getBdm());
+	    client.setBusinessProposed(request.getBusinessProposed());
+	    client.setClientManager(request.getClientManager());
+	    client.setDesignation(request.getDesignation());
+	    client.setContactNo(request.getContactNo());
+	    client.setEmail(request.getEmail());
+	    client.setLocation(request.getLocation());
+
+	    // JSONB POC
+	    client.setPoc(request.getPoc());
+
+	    client.setRemarks(request.getRemarks());
+
+	    ClientManagementDetailsEntity updatedClient =
+	            clientRepository.save(client);
+
+	    return ApiResponse.success(
+	            ResponseCode.SUCCESS,
+	            "Client updated successfully",
+	            "Success"
+	    );
+	}
 }

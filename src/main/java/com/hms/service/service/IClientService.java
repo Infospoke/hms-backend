@@ -15,4 +15,6 @@ public interface IClientService {
 
 	ApiResponse<?> getClientById(Integer id);
 
+	ApiResponse<?> updateClient(@Valid ClientRequest request);
+
 }

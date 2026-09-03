@@ -38,6 +38,8 @@ public class ClientRequest {
     private String contactNo;
 
     private String email;
+    
+    private Integer id;
 
     private String location;
 
