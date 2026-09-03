@@ -214,6 +214,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			srPositionBasicsEntity.setEmploymentType(positonBasicsRequest.getEmploymentType());
 			srPositionBasicsEntity.setWorkMode(positonBasicsRequest.getWorkMode());
 			srPositionBasicsEntity.setPriority(positonBasicsRequest.getPriority());
+			srPositionBasicsEntity.setClientName(positonBasicsRequest.getClientName());
+			srPositionBasicsEntity.setClientPoc(positonBasicsRequest.getClientPoc());
 
 			srPositionBasicsEntity = positionBasicsRepository.save(srPositionBasicsEntity);
 		}
@@ -1123,6 +1125,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				positonBasicsResponse.setCommentsByApprover1(srPositionBasicsEntity.getCommentsByApprover1());
 				positonBasicsResponse.setCommentsByApprover2(srPositionBasicsEntity.getCommentsByApprover2());
 				positonBasicsResponse.setCommentsByApprover3(srPositionBasicsEntity.getCommentsByApprover3());
+				positonBasicsResponse.setClientName(srPositionBasicsEntity.getClientName());
+				positonBasicsResponse.setClientPoc(srPositionBasicsEntity.getClientPoc());
 
 				Optional<ApprovalsChildEntity> optionalChildEntity = approvalsChildRepository
 						.findByProcessId(srPositionBasicsEntity.getSrId());

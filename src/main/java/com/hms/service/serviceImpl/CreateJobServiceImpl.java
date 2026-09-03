@@ -398,11 +398,11 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 					AgencyDetailsRequest agencyReq = request.getAgencyDetailsRequest();
 
-					ApiResponse<?> agencyError = validateAgencyDetailsRequest(agencyReq);
-
-					if (agencyError != null) {
-						return agencyError;
-					}
+//					ApiResponse<?> agencyError = validateAgencyDetailsRequest(agencyReq);
+//
+//					if (agencyError != null) {
+//						return agencyError;
+//					}
 
 					String agencyIds = agencyReq.getAgencyIds().stream().map(String::valueOf)
 							.collect(Collectors.joining(","));
@@ -741,42 +741,42 @@ public class CreateJobServiceImpl implements ICreateJobService {
 		return null;
 	}
 
-	// Agency details validation
-	private ApiResponse<?> validateAgencyDetailsRequest(AgencyDetailsRequest req) {
-
-		ApiResponse<?> error;
-
-		if (req.getAgencyIds() == null) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("agencyIds is required"));
-		}
-
-		if (req.getAgencyIds().isEmpty()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("agencyIds cannot be empty"));
-		}
-
-		Set<Integer> uniqueAgencyIds = new HashSet<>(req.getAgencyIds());
-
-		if (uniqueAgencyIds.size() != req.getAgencyIds().size()) {
-			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Duplicate agencyIds are not allowed"));
-		}
-
-		// Validate every agencyId
-		for (Integer agencyId : req.getAgencyIds()) {
-
-			error = validateObject(agencyId, "agencyId");
-
-			if (error != null) {
-				return error;
-			}
-
-			if (!agencyDetailsRepository.existsById(agencyId)) {
-
-				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid agencyId : " + agencyId));
-			}
-		}
-
-		return null;
-	}
+//	// Agency details validation
+//	private ApiResponse<?> validateAgencyDetailsRequest(AgencyDetailsRequest req) {
+//
+//		ApiResponse<?> error;
+//
+//		if (req.getAgencyIds() == null) {
+//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("agencyIds is required"));
+//		}
+//
+//		if (req.getAgencyIds().isEmpty()) {
+//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("agencyIds cannot be empty"));
+//		}
+//
+//		Set<Integer> uniqueAgencyIds = new HashSet<>(req.getAgencyIds());
+//
+//		if (uniqueAgencyIds.size() != req.getAgencyIds().size()) {
+//			return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Duplicate agencyIds are not allowed"));
+//		}
+//
+//		// Validate every agencyId
+//		for (Integer agencyId : req.getAgencyIds()) {
+//
+//			error = validateObject(agencyId, "agencyId");
+//
+//			if (error != null) {
+//				return error;
+//			}
+//
+//			if (!agencyDetailsRepository.existsById(agencyId)) {
+//
+//				return ApiResponse.failure(ResponseCode.FAILURE, "Failure", List.of("Invalid agencyId : " + agencyId));
+//			}
+//		}
+//
+//		return null;
+//	}
 
 	@Override
 	public ApiResponse<?> getRecruiters(SpecificationFilterRequest request) {

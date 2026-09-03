@@ -219,7 +219,7 @@ public class Constants {
 
 	public static final String FORGOT_PASSWORD_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
-			+ "<p>This is to inform you that your password for the Nexus HMS Portal has been successfully reset.</p>"
+			+ "<p>This is to inform you that your password for the Infospoke Integrated Solutions Portal has been successfully reset.</p>"
 
 			+ "<p>Please use the temporary password below to log in:</p>"
 
@@ -234,13 +234,13 @@ public class Constants {
 
 			+ "<p>For any assistance, please contact the IT Support Team </p>"
 
-			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Infospoke Integrated Solutions</p>"
 
 			+ "</body></html>";
 
 	public static final String FORGOT_PIN_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
-			+ "<p>This is to inform you that your Mobile PIN for accessing the Nexus HMS application has been successfully reset.</p>"
+			+ "<p>This is to inform you that your Mobile PIN for accessing the Infospoke Integrated Solutions application has been successfully reset.</p>"
 
 			+ "<p>Please find your temporary Mobile PIN below:</p>"
 
@@ -256,7 +256,7 @@ public class Constants {
 
 			+ "<p>For any assistance, please contact IT Support </p>"
 
-			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Infospoke Integrated Solutions</p>"
 
 			+ "</body></html>";
 
@@ -269,9 +269,9 @@ public class Constants {
 
 			"<p>Dear <b>%s</b>,</p>" +
 
-			"<p>Greetings from the HR Team at <b>Nexus HMS</b>.</p>" +
+			"<p>Greetings from the HR Team at <b>Infospoke Integrated Solutions</b>.</p>" +
 
-			"<p>This is to inform you that your user account for the <b>Nexus HMS Portal</b> has been successfully created.</p>"
+			"<p>This is to inform you that your user account for the <b>Infospoke Integrated Solutions Portal</b> has been successfully created.</p>"
 			+
 
 			"<p>Please find your system-generated login credentials below:</p>" +
@@ -296,9 +296,9 @@ public class Constants {
 			"<p>If you encounter any issues while accessing the portal, please contact the HR/IT Support Team at "
 			+ ".</p>" +
 
-			"<p>We wish you a successful and rewarding journey with Nexus HMS.</p>" +
+			"<p>We wish you a successful and rewarding journey with Infospoke Integrated Solutions.</p>" +
 
-			"<br>" + "<p>Warm regards,<br><b>HR Team</b><br>Nexus HMS</p>" +
+			"<br>" + "<p>Warm regards,<br><b>HR Team</b><br>Infospoke Integrated Solutions</p>" +
 
 			"</div></div>";
 	public static final String EMPLOYEE_ID_SIZE = "Employee id must be between 1 and 4 characters";
@@ -323,7 +323,7 @@ public class Constants {
 	public static final String SR_TO_BE_APPROVED_BY_FIRST_APPROVER_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
 			+ "<p>A new Staffing Requisition (SR) has been successfully submitted by the Hiring Manager "
-			+ "and is currently pending your review and approval in the Nexus Hiring Management System (HMS).</p>"
+			+ "and is currently pending your review and approval in the Infospoke Integrated Solutions.</p>"
 
 			+ "<p>Please find the requisition summary below:</p>"
 
@@ -339,7 +339,7 @@ public class Constants {
 
 			+ "<p>If additional clarification is required, please coordinate with the respective Hiring Manager.</p>"
 
-			+ "<br/>" + "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<br/>" + "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>"
 
@@ -348,7 +348,7 @@ public class Constants {
 	public static final String SR_TO_BE_APPROVED_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
 			+ "<p>The below Staffing Requisition (SR) has been reviewed and approved by "
 			+ "the previous approver and is now pending your review and approval in the "
-			+ "Nexus Hiring Management System (HMS).</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
+			+ "Infospoke Integrated Solutions.</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
 			+ "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
 			+ "<li><b>Hiring Manager:</b> %s</li>" + "<li><b>Number of Positions:</b> %s</li>"
 			+ "<li><b>Job Location:</b> %s</li>" + "<li><b>Employment Type:</b> %s</li>"
@@ -356,13 +356,13 @@ public class Constants {
 			+ "<p>The approval workflow is currently with you for further action.</p>"
 			+ "<p>Kindly review the requisition and take the necessary action at your " + "earliest convenience.</p>"
 			+ "<p>For any additional clarification, please contact the respective " + "Hiring Manager.</p>" + "<br/>"
-			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
 	public static final String SR_FULLY_APPROVED_NOTIFY = "<html><body>" + "<p>Dear %s,</p>"
 			+ "<p>We are pleased to inform you that the below Staffing Requisition (SR) "
 			+ "has been successfully approved by all required approvers in the "
-			+ "Nexus Hiring Management System (HMS).</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
+			+ "Infospoke Integrated Solutions.</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
 			+ "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
 			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
 			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
@@ -370,12 +370,12 @@ public class Constants {
 			+ "<li><b>Approved On:</b> %s</li>" + "<li><b>Recruitment Status:</b> Open for Hiring</li>" + "</ul>"
 			+ "<p>The requisition approval workflow has been completed successfully, "
 			+ "and the SR is now available for the recruitment and recruiter assignment process.</p>" + "<br/>"
-			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
 	public static final String SR_REJECTED_NOTIFY = "<html><body>" + "<p>Dear %s,</p>"
 			+ "<p>The below Staffing Requisition (SR) has been reviewed and rejected "
-			+ "during the approval process in the Nexus Hiring Management System (HMS).</p>"
+			+ "during the approval process in the Infospoke Integrated Solutions.</p>"
 			+ "<p><b>Requisition Summary:</b></p>" + "<ul>" + "<li><b>SR ID:</b> %s</li>"
 			+ "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
 			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
@@ -385,14 +385,14 @@ public class Constants {
 			+ "<li><b>Reviewed On:</b> %s</li>" + "</ul>" + "<p><b>Reviewer Comments / Remarks:</b><br/>%s</p>"
 			+ "<p>The approval workflow has been stopped due to the rejection at the " + "above approval stage.</p>"
 			+ "<p>Kindly review the comments provided and make the necessary corrections "
-			+ "before resubmitting the requisition, if required.</p>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "before resubmitting the requisition, if required.</p>" + "Infospoke Integrated Solutions</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
 	public static final String SR_APPROVED_NOTIFY = "<html><body>"
 
 			+ "<p>Dear %s,</p>"
 
-			+ "<p>The below Staffing Requisition (SR) has been reviewed and approved by %s in the Nexus Hiring Management System (HMS).</p>"
+			+ "<p>The below Staffing Requisition (SR) has been reviewed and approved by %s in the Infospoke Integrated Solutions.</p>"
 
 			+ "<p><b>Requisition Summary:</b></p>"
 
@@ -411,7 +411,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
@@ -424,7 +424,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "Your approval chain configuration has been created successfully "
-			+ "in the Nexus Hiring Management System(HMS) and submitted for approval." + "</p>"
+			+ "in the Infospoke Integrated Solutions(HMS) and submitted for approval." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -439,7 +439,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -454,7 +454,7 @@ public class Constants {
 			+ "<p>Dear Administrator,</p>"
 
 			+ "<p>" + "A new approval chain configuration has been created and submitted "
-			+ "for approval in the Nexus Hiring Management System(HMS)." + "</p>"
+			+ "for approval in the Infospoke Integrated Solutions(HMS)." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -472,7 +472,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -514,7 +514,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "Your request for activation of the below approval chain "
-			+ "has been successfully submitted in Nexus HMS." + "</p>"
+			+ "has been successfully submitted in Infospoke Integrated Solutions." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -528,11 +528,11 @@ public class Constants {
 
 			+ "<p>" + "You will receive further notifications based on " + "the approval workflow status." + "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -545,7 +545,7 @@ public class Constants {
 			+ "<p>Dear Administrator,</p>"
 
 			+ "<p>" + "A request for the deactivation of the below approval chain "
-			+ "has been submitted in the Nexus Hiring Management System and is awaiting your review." + "</p>"
+			+ "has been submitted in the Infospoke Integrated Solutions and is awaiting your review." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -564,7 +564,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -579,7 +579,7 @@ public class Constants {
 			+ "<p>Dear Administrator,</p>"
 
 			+ "<p>" + "A request for activation of the below approval chain "
-			+ "has been submitted and is awaiting your review in Nexus Hiring Management System(HMS)." + "</p>"
+			+ "has been submitted and is awaiting your review in Infospoke Integrated Solutions(HMS)." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -591,11 +591,11 @@ public class Constants {
 
 			+ "<p>" + "Kindly review the request and take the necessary action." + "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -609,7 +609,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "Your request for the deactivation of the below approval chain "
-			+ "has been successfully submitted in the Nexus Hiring Management System(HMS)." + "</p>"
+			+ "has been successfully submitted in the Infospoke Integrated Solutions(HMS)." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -627,7 +627,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -640,7 +640,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that the below approval chain "
-			+ "has been rejected in Nexus Hiring Management System(HMS)." + "</p>"
+			+ "has been rejected in Infospoke Integrated Solutions(HMS)." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -653,11 +653,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain has not been activated in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -670,7 +670,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that the below approval chain "
-			+ "has been successfully approved in Nexus HMS." + "</p>"
+			+ "has been successfully approved in Infospoke Integrated Solutions." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -682,11 +682,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -699,7 +699,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that you have successfully approved "
-			+ "the below approval chain in Nexus Hiring Management System(HMS)." + "</p>"
+			+ "the below approval chain in Infospoke Integrated Solutions(HMS)." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -711,11 +711,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -728,7 +728,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that you have successfully rejected "
-			+ "the below approval chain in Nexus Hiring Management System(HMS)." + "</p>"
+			+ "the below approval chain in Infospoke Integrated Solutions(HMS)." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -741,11 +741,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain has not been activated in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -758,7 +758,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that the deactivation request raised "
-			+ "for the below approval chain has been reviewed and rejected " + "in Nexus Hiring Management System(HMS)."
+			+ "for the below approval chain has been reviewed and rejected " + "in Infospoke Integrated Solutions(HMS)."
 			+ "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
@@ -774,11 +774,11 @@ public class Constants {
 			+ "<p>" + "The approval chain will remain active as the deactivation " + "request was not approved."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -791,7 +791,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "You have successfully approved the below approval chain deactivation "
-			+ "request in the Nexus Hiring Management System(HMS)" + "</p>"
+			+ "request in the Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -808,7 +808,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -821,7 +821,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that the below approval chain "
-			+ "has been successfully deactivated by the Administrator " + "in Nexus Hiring Management System(HMS)."
+			+ "has been successfully deactivated by the Administrator " + "in Infospoke Integrated Solutions(HMS)."
 			+ "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
@@ -834,11 +834,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now inactive and will no longer " + "be available for workflow processing."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -850,7 +850,7 @@ public class Constants {
 			+ "<p>Dear Administrator,</p>"
 
 			+ "<p>" + "You have successfully rejected the deactivation request "
-			+ "for the below approval chain in Nexus Hiring Management System(HMS)" + "</p>"
+			+ "for the below approval chain in Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -864,11 +864,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain will remain active in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -881,7 +881,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that the activation request for the below "
-			+ "approval chain has been successfully approved in Nexus Hiring Management System(HMS)." + "</p>"
+			+ "approval chain has been successfully approved in Infospoke Integrated Solutions(HMS)." + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -894,11 +894,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -910,7 +910,7 @@ public class Constants {
 			+ "<p>Dear Administrator,</p>"
 
 			+ "<p>" + "This is to inform you that you have successfully approved "
-			+ "the activation request for the below approval chain in Nexus Hiring Management System(HMS)" + "</p>"
+			+ "the activation request for the below approval chain in Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -923,11 +923,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -940,7 +940,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that the activation request for the below "
-			+ "approval chain has been rejected inNexus Hiring Management System(HMS)" + "</p>"
+			+ "approval chain has been rejected inInfospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -954,11 +954,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain will remain inactive in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -971,7 +971,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "This is to inform you that you have successfully rejected "
-			+ "the activation request for the below approval chain in Nexus Hiring Management System(HMS)" + "</p>"
+			+ "the activation request for the below approval chain in Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<p><b>Chain Configuration Details:</b></p>"
 
@@ -985,11 +985,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain will remain inactive in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Nexus HMS portal for additional details." + "</p>"
+			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -1098,7 +1098,7 @@ public class Constants {
 
 			<p>
 			Thank you for taking the time to participate in our interview process for the below position in
-			Nexus Hiring Management System (HMS).
+			Infospoke Integrated Solutions.
 			</p>
 
 			<p><b>Interview Details:</b></p>
@@ -1122,14 +1122,14 @@ public class Constants {
 			<br/>
 
 			<p>
-			Please log in to the Nexus HMS portal for additional details.
+			Please log in to the Infospoke Integrated Solutions portal for additional details.
 			</p>
 
 			<br/>
 
 			<p>
 			Regards,<br/>
-			Nexus Hiring Management System (HMS)
+			Infospoke Integrated Solutions
 			</p>
 
 			<br/>
@@ -1149,7 +1149,7 @@ public class Constants {
 			<p>Dear %s,</p>
 
 			<p>
-			Congratulations! We are delighted to inform you that you have successfully completed all stages of the interview process for the below position in Nexus Hiring Management System (HMS).
+			Congratulations! We are delighted to inform you that you have successfully completed all stages of the interview process for the below position in Infospoke Integrated Solutions.
 			</p>
 
 			<p><b>Interview Details:</b></p>
@@ -1173,14 +1173,14 @@ public class Constants {
 			<br/>
 
 			<p>
-			Please log in to the Nexus HMS portal for additional details.
+			Please log in to the Infospoke Integrated Solutions portal for additional details.
 			</p>
 
 			<br/>
 
 			<p>
 			Regards,<br/>
-			Nexus Hiring Management System (HMS)
+			Infospoke Integrated Solutions
 			</p>
 
 			<br/>
@@ -1323,12 +1323,12 @@ public class Constants {
 	public static final String OFFER_PLAN = "Offer Plan";
 
 	public static final String CANDIDATE_REJECTION_MAIL_BODY = "Dear %s,\n\n"
-			+ "Thank you for taking the time to participate in the interview process for the %s position at Nexus Hms.\n\n"
+			+ "Thank you for taking the time to participate in the interview process for the %s position at Infospoke Integrated Solutions.\n\n"
 			+ "We sincerely appreciate your interest in joining our team and the time you invested in the selection process.\n\n"
 			+ "After careful consideration, we regret to inform you that you have not been selected to move forward in the recruitment process. "
 			+ "This decision was a difficult one, as we received applications from many qualified candidates.\n\n"
-			+ "We truly appreciate your interest in Nexus Hms and encourage you to apply for future opportunities that match your skills and experience.\n\n"
-			+ "We wish you every success in your career and thank you again for considering Nexus Hms as a potential employer.\n\n"
+			+ "We truly appreciate your interest in Infospoke Integrated Solutions and encourage you to apply for future opportunities that match your skills and experience.\n\n"
+			+ "We wish you every success in your career and thank you again for considering Infospoke Integrated Solutions as a potential employer.\n\n"
 			+ "Best Regards,\n" + "HR Team";
 
 	public static final String OFFER_LEVEL1_APPROVED_MAIL_BODY = "<html><body>"
@@ -1336,7 +1336,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "Your Offer Request has been approved by <b>Level 1 Approver (%s)</b> "
-			+ "in the Nexus Hiring Management System (HMS)." + "</p>"
+			+ "in the Infospoke Integrated Solutions." + "</p>"
 
 			+ "<p><b>Offer Approval Details:</b></p>"
 
@@ -1349,7 +1349,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<br/>"
 
@@ -1362,7 +1362,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "Your Offer Request has been approved by <b>Level 2 Approver (%s)</b> "
-			+ "in the Nexus Hiring Management System (HMS)." + "</p>"
+			+ "in the Infospoke Integrated Solutions." + "</p>"
 
 			+ "<p><b>Offer Approval Details:</b></p>"
 
@@ -1375,7 +1375,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<br/>"
 
@@ -1388,7 +1388,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "Your Offer Request has been approved by <b>Level 3 Approver (%s)</b> "
-			+ "in the Nexus Hiring Management System (HMS)." + "</p>"
+			+ "in the Infospoke Integrated Solutions." + "</p>"
 
 			+ "<p><b>Offer Approval Details:</b></p>"
 
@@ -1402,7 +1402,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<br/>"
 
@@ -1415,7 +1415,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "Your Offer Request has been <b>Rejected</b> by "
-			+ "<b>Level %s Approver (%s)</b> in the Nexus Hiring Management System (HMS)." + "</p>"
+			+ "<b>Level %s Approver (%s)</b> in the Infospoke Integrated Solutions." + "</p>"
 
 			+ "<p><b>Offer Rejection Details:</b></p>"
 
@@ -1429,7 +1429,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>Regards,<br/>" + "Nexus Hiring Management System (HMS)</p>"
+			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<br/>"
 
@@ -1440,7 +1440,7 @@ public class Constants {
 
 			+ "<p>Dear %s,</p>"
 
-			+ "<p>" + "An Offer Request has been submitted in the Nexus Hiring Management System (HMS) "
+			+ "<p>" + "An Offer Request has been submitted in the Infospoke Integrated Solutions "
 			+ "and is awaiting your approval." + "</p>"
 
 			+ "<p><b>Offer Request Details:</b></p>"
@@ -1455,7 +1455,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -1482,7 +1482,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -1507,7 +1507,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -1533,7 +1533,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -1559,7 +1559,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System(HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
 
@@ -1572,7 +1572,7 @@ public class Constants {
 			+ "<p>Dear %s,</p>"
 
 			+ "<p>" + "We are pleased to inform you that your profile has been registered in the "
-			+ "Nexus Hiring Management System (HMS) for the following job opportunity." + "</p>"
+			+ "Infospoke Integrated Solutions for the following job opportunity." + "</p>"
 
 			+ "<p><b>Job Details:</b></p>"
 
@@ -1581,7 +1581,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "An account has been created for you in the Nexus Hiring Management System. "
+			+ "<p>" + "An account has been created for you in the Infospoke Integrated Solutions. "
 			+ "You can use the credentials below to access your account." + "</p>"
 
 			+ "<p><b>Login Credentials:</b></p>"
@@ -1599,7 +1599,7 @@ public class Constants {
 
 			+ "<br/>"
 
-			+ "<p>" + "Regards,<br/>" + "Nexus Hiring Management System (HMS)" + "</p>"
+			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
 			+ "<br/>"
 
@@ -1612,7 +1612,7 @@ public class Constants {
 	
 	public static final String CANDIDATE_FORGOT_PASSWORD_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
-			+ "<p>This is to inform you that your password for the Nexus HMS Candidate Portal has been successfully reset.</p>"
+			+ "<p>This is to inform you that your password for the Infospoke Integrated Solutions Candidate Portal has been successfully reset.</p>"
 
 			+ "<p>Please use the temporary password below to log in:</p>"
 
@@ -1627,7 +1627,7 @@ public class Constants {
 
 			+ "<p>For any assistance, please contact the IT Support Team </p>"
 
-			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Nexus HMS</p>"
+			+ "<br/>" + "<p>Regards,<br/>IT Support Team<br/>Infospoke Integrated Solutions</p>"
 
 			+ "</body></html>";
 }

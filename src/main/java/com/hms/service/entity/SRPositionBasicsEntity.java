@@ -159,5 +159,11 @@ public class SRPositionBasicsEntity {
 	
 	@Column(name="job_submit")
 	private Boolean jobSubmit=false;
+	
+	@Column(name="client_name")
+	private String clientName;
+	
+	@Column(name="client_poc")
+	private String clientPoc;
 
 }

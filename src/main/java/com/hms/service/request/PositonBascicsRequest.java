@@ -36,6 +36,11 @@ public class PositonBascicsRequest {
 	private String srId;
 	
 	private String country;
+		
+    private String clientName;
+    
+    private String clientPoc;
+    
 
 
 }
