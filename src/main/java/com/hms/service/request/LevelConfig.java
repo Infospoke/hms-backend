@@ -17,3 +17,4 @@ public class LevelConfig {
     @NotNull(message = "Role is required")
     private Integer roleId;
 }
+

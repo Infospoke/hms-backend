@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.service.request.ClientRequest;
+import com.hms.service.request.SpecificationFilterRequest;
 import com.hms.service.service.IClientService;
 import com.hms.service.wrappers.ApiResponse;
 
@@ -18,19 +19,23 @@ import jakarta.validation.Valid;
 @RequestMapping("/hms/client")
 
 public class ClientManagementController {
-	
-    @Autowired
-    private IClientService clientService;
 
+	@Autowired
+	private IClientService clientService;
 
-    @PostMapping("/add-client")
-    public ResponseEntity<ApiResponse<?>> createClient(
-            @Valid @RequestBody ClientRequest request) {
+	@PostMapping("/add-client")
+	public ResponseEntity<ApiResponse<?>> createClient(@Valid @RequestBody ClientRequest request) {
 
-        ApiResponse<?> response = clientService.createClient(request);
+		ApiResponse<?> response = clientService.createClient(request);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-    
-    
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@PostMapping("/list")
+	public ResponseEntity<ApiResponse<?>> getClientList(@RequestBody SpecificationFilterRequest request) {
+		ApiResponse<?> response = clientService.getClientList(request);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
+
 }
