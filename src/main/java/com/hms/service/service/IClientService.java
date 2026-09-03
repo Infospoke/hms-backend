@@ -13,4 +13,6 @@ public interface IClientService {
 	ApiResponse<?>  getClientList(
 	            SpecificationFilterRequest request);
 
+	ApiResponse<?> getClientById(Integer id);
+
 }

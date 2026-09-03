@@ -2,6 +2,7 @@ package com.hms.service.serviceImpl;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -89,5 +90,17 @@ public class ClientServiceImpl implements IClientService {
 		response.put("totalElements", clientPage.getTotalElements());
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Client list fetched successfully", response);
+	}
+
+	@Override
+	public ApiResponse<?> getClientById(Integer id) {
+
+		Optional<ClientManagementDetailsEntity> client = clientRepository.findById(id);
+
+		if (client.isEmpty()) {
+			return ApiResponse.success(ResponseCode.FAILURE, "Client not found", null);
+		}
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Client fetched successfully", client.get());
 	}
 }
