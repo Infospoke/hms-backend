@@ -73,13 +73,6 @@ public class JobsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@GetMapping("/get-jobs-by-country/{country}")
-	public ResponseEntity<ApiResponse<?>> getJobsByCountry(@PathVariable("country") String country) {
-
-		ApiResponse<?> response = iJobService.getJobsByCountry(country);
-
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
 
 
 

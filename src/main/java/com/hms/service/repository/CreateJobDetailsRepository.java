@@ -55,7 +55,7 @@ public interface CreateJobDetailsRepository
 	
 	List<CreateJobDetailsEntity> findByJobIdIn(Set<Integer> jobIds);
 	
-	 List<CreateJobDetailsEntity> findByCountryIgnoreCase(String country);
+	
 
 	
 
