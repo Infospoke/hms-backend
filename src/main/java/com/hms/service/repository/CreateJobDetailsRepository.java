@@ -55,6 +55,8 @@ public interface CreateJobDetailsRepository
 	
 	List<CreateJobDetailsEntity> findByJobIdIn(Set<Integer> jobIds);
 
+	List<CreateJobDetailsEntity> findByCountryAndIsOpenTrueOrderByCreatedAtDesc(String jobCountry);
+
 	
 
 	

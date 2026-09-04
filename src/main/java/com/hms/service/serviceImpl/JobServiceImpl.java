@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +33,7 @@ import com.hms.service.entity.InterviewRoundDropDownEntity;
 import com.hms.service.entity.InterviewScheduleEntity;
 import com.hms.service.entity.InterviewSessionEntity;
 import com.hms.service.entity.JobApplicationEntity;
+import com.hms.service.entity.JobDescriptionEntity;
 import com.hms.service.entity.OfferDetailsEntity;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.exceptions.CustomSystemErrorException;
@@ -53,6 +53,7 @@ import com.hms.service.repository.OfferDetailsRepository;
 import com.hms.service.repository.ResumeAnalysisRepository;
 import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
+import com.hms.service.response.JobsCountryResponse;
 import com.hms.service.response.JobsDashboardResponse;
 import com.hms.service.service.ICandidateService;
 import com.hms.service.service.IJobService;
@@ -811,4 +812,23 @@ public class JobServiceImpl implements IJobService {
 		log.info("JobServiceImpl: Exit from deleteFromMinio method");
 	}
 
+	@Override
+	public ApiResponse<List<JobsCountryResponse>> getAllJobsByCountry(String jobCountry) {
+
+		log.info("JobsServiceImpl::Inside the getAllJobsByCountry method");
+
+		List<CreateJobDetailsEntity> jobEntities = createJobDetailsRepository
+				.findByCountryAndIsOpenTrueOrderByCreatedAtDesc(jobCountry);
+
+		List<JobsCountryResponse> responseList = jobEntities.stream().map(jobEntity -> {
+			JobsCountryResponse response = new JobsCountryResponse();
+			BeanUtils.copyProperties(jobEntity, response);
+
+			return response;
+		}).collect(Collectors.toList());
+
+		log.info("JobsServiceImpl::Exit from the getAllJobsByCountry method");
+
+		return ApiResponse.success(ResponseCode.SUCCESS, "Sucess", responseList);
+	}
 }
