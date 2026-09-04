@@ -74,16 +74,10 @@ public class JobsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-<<<<<<< HEAD
 	@GetMapping("/get-all-jobs-by-country")
 	public ResponseEntity<?> getAllJobsByCountry(
 			@RequestParam("jobCountry") String jobCountry) {
 		ApiResponse<?> response = iJobService.getAllJobsByCountry(jobCountry);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-=======
->>>>>>> 9d0fe560f6ad61bdb56242f3416c0d7ef5da5807
-
-
-
 }
