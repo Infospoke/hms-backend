@@ -811,4 +811,16 @@ public class JobServiceImpl implements IJobService {
 		log.info("JobServiceImpl: Exit from deleteFromMinio method");
 	}
 
+	@Override
+	public ApiResponse<?> getJobsByCountry(String country) {
+
+		List<CreateJobDetailsEntity> jobs = createJobDetailsRepository.findByCountryIgnoreCase(country);
+
+		if (jobs.isEmpty()) {
+			return new ApiResponse<>(ResponseCode.FAILURE,"No jobs found for country: " + country,"failure");
+		}
+
+		return new ApiResponse<>(ResponseCode.SUCCESS,"Jobs fetched successfully", jobs);
+	}
+
 }
