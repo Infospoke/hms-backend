@@ -812,6 +812,7 @@ public class JobServiceImpl implements IJobService {
 		log.info("JobServiceImpl: Exit from deleteFromMinio method");
 	}
 
+
 	@Override
 	public ApiResponse<List<JobsCountryResponse>> getAllJobsByCountry(String jobCountry) {
 
@@ -831,4 +832,5 @@ public class JobServiceImpl implements IJobService {
 
 		return ApiResponse.success(ResponseCode.SUCCESS, "Sucess", responseList);
 	}
+
 }
