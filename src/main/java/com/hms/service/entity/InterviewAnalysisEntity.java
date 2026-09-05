@@ -67,6 +67,15 @@ public class InterviewAnalysisEntity {
 
 	    @Column(name = "created_date")
 	    private LocalDateTime createdDate;
+	    
+	    @Column(name = "final_decision", length = 20)
+	    private String finalDecision = "";
+
+	    @Column(name = "interview_analysis_date")
+	    private LocalDateTime interviewAnalysisDate;
+
+	    @Column(name = "interview_started_datetime")
+	    private LocalDateTime interviewStartedDatetime;
 
 
 }

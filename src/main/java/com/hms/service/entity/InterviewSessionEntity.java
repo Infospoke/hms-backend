@@ -83,8 +83,14 @@ public class InterviewSessionEntity {
 	@Column(name="move_to_schedule_datetime")
 	private LocalDateTime moveToScheduleDateTime;
 	
-	@Column(name="interview_link")
+	@Column(name = "interview_link", length = 500)
 	private String interviewLink;
+	
+	@Column(name = "min_pass_percentage")
+	private Integer minPassPercentage;
 
+	@Column(name = "acceptable_score_range", length = 50)
+	private String acceptableScoreRange;
+	
 
 }

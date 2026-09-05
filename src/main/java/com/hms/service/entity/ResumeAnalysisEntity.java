@@ -3,169 +3,186 @@ package com.hms.service.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.persistence.CollectionTable;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-@Entity
-@Table(name="tb_resume_analysis")
 
+@Entity
+@Table(name = "tb_resume_analysis")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResumeAnalysisEntity {
-	
-	    @Id
-	    @GeneratedValue(strategy = GenerationType.IDENTITY)
-	    private Integer id;
 
-	    @Column(name = "application_id", unique = true, nullable = false)
-	    private Integer applicationId;
-	    
-	    @Column(name="jobId")
-	    private Integer jobId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-	    @Column(name = "candidate_name", length = 150)
-	    private String candidateName;
+    @Column(name = "application_id", unique = true)
+    private Integer applicationId;
 
-	    @Column(length = 255)
-	    private String email;
-	    
-	    @Column(name="status")
-	    private String status;
+    @Column(name = "candidate_name", length = 150)
+    private String candidateName;
 
-	    @Column(name = "contact_number", length = 50)
-	    private String contactNumber;
+    @Column(name = "email", length = 255)
+    private String email;
 
-	    private Double finalScore;
-	    private Double skillsMatch;
-	    private Double experienceScore;
-	    private Double educationScore;
-	    private Double keywordsMatch;
-	    private Double overallFit;
-	    private Double growthPotential;
+    @Column(name = "contact_number", length = 50)
+    private String contactNumber;
 
-	    @Column(name = "recommendation_decision", length = 20)
-	    private String recommendationDecision;
+    @Column(name = "final_score")
+    private Double finalScore;
 
-	    @Column(name = "recommendation_reason", columnDefinition = "TEXT")
-	    private String recommendationReason;
+    @Column(name = "skills_match")
+    private Double skillsMatch;
 
-	    @Column(name = "recommendation_confidence", length = 20)
-	    private String recommendationConfidence;
+    @Column(name = "experience_score")
+    private Double experienceScore;
 
-	    private Double skillMatchPercentage;
+    @Column(name = "education_score")
+    private Double educationScore;
 
-	    // JSON-like fields (stored as separate tables)
-	    @ElementCollection
-	    @CollectionTable(name = "tb_matching_skills", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "skill")
-	    private List<String> matchingSkills;
+    @Column(name = "keywords_match")
+    private Double keywordsMatch;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_missing_skills", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "skill")
-	    private List<String> missingSkills;
+    @Column(name = "overall_fit")
+    private Double overallFit;
 
-	    @Column(name = "experience_level", length = 20)
-	    private String experienceLevel;
+    @Column(name = "growth_potential")
+    private Double growthPotential;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_matching_experience", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "experience")
-	    private List<String> matchingExperience;
+    @Column(name = "recommendation_decision", length = 20)
+    private String recommendationDecision;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_experience_gaps", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "gap")
-	    private List<String> experienceGaps;
+    @Column(name = "recommendation_reason", columnDefinition = "TEXT")
+    private String recommendationReason;
 
-	    @Column(name = "education_level", length = 20)
-	    private String educationLevel;
+    @Column(name = "recommendation_confidence", length = 20)
+    private String recommendationConfidence;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_education_highlights", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "highlight")
-	    private List<String> educationHighlights;
+    @Column(name = "skill_match_percentage")
+    private Double skillMatchPercentage;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_matching_education", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "education")
-	    private List<String> matchingEducation;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_matching_skills", columnDefinition = "jsonb")
+    private List<String> matchingSkills;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_missing_education", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "education")
-	    private List<String> missingEducation;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_missing_skills", columnDefinition = "jsonb")
+    private List<String> missingSkills;
 
-	    private Boolean isFresher = true;
+    @Column(name = "experience_level", length = 20)
+    private String experienceLevel;
 
-	    private Integer firstJobStartYear;
-	    private Integer lastJobEndYear;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_matching_experience", columnDefinition = "jsonb")
+    private List<String> matchingExperience;
 
-	    private Integer totalJobsCount = 0;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_experience_gaps", columnDefinition = "jsonb")
+    private List<String> experienceGaps;
 
-	    @Column(name = "average_job_change", length = 50)
-	    private String averageJobChange;
+    @Column(name = "education_level", length = 20)
+    private String educationLevel;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_strengths", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "value")
-	    private List<String> strengths;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_education_highlights", columnDefinition = "jsonb")
+    private List<String> educationHighlights;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_weaknesses", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "value")
-	    private List<String> weaknesses;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_matching_education", columnDefinition = "jsonb")
+    private List<String> matchingEducation;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_red_flags", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "value")
-	    private List<String> redFlags;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_missing_education", columnDefinition = "jsonb")
+    private List<String> missingEducation;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_cultural_fit_indicators", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "value")
-	    private List<String> culturalFitIndicators;
+    @Column(name = "is_fresher")
+    private Boolean isFresher = true;
 
-	    @Column(name = "salary_expectation_alignment", length = 20)
-	    private String salaryExpectationAlignment;
+    @Column(name = "first_job_start_year")
+    private Integer firstJobStartYear;
 
-	    @Column(name = "onboarding_priority", length = 20)
-	    private String onboardingPriority;
+    @Column(name = "last_job_end_year")
+    private Integer lastJobEndYear;
 
-	    @ElementCollection
-	    @CollectionTable(name = "tb_interview_focus_areas", joinColumns = @JoinColumn(name = "resume_analysis_id"))
-	    @Column(name = "value")
-	    private List<String> interviewFocusAreas;
+    @Column(name = "total_jobs_count")
+    private Integer totalJobsCount = 0;
 
-	    private Double processingTime;
+    @Column(name = "average_job_change", length = 50)
+    private String averageJobChange;
 
-	    private LocalDateTime processedAt;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_strengths", columnDefinition = "jsonb")
+    private List<String> strengths;
 
-	    @Column(name = "file_path", columnDefinition = "TEXT")
-	    private String filePath;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_weaknesses", columnDefinition = "jsonb")
+    private List<String> weaknesses;
 
-	    private Double fileSize;
-	    private Integer wordCount;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_red_flags", columnDefinition = "jsonb")
+    private List<String> redFlags;
 
-	    private Boolean success = true;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_cultural_fit_indicators", columnDefinition = "jsonb")
+    private List<String> culturalFitIndicators;
 
-	    @Column(name = "error_message", columnDefinition = "TEXT")
-	    private String errorMessage;
+    @Column(name = "salary_expectation_alignment", length = 20)
+    private String salaryExpectationAlignment;
 
-	    private LocalDateTime createdAt;
-	    private LocalDateTime updatedAt;
+    @Column(name = "onboarding_priority", length = 20)
+    private String onboardingPriority;
 
-	    private Boolean isDeleted = false;
-	    
-	    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tb_interview_focus_areas", columnDefinition = "jsonb")
+    private List<String> interviewFocusAreas;
+
+    @Column(name = "processing_time")
+    private Double processingTime;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
+
+    @Column(name = "file_path", columnDefinition = "TEXT")
+    private String filePath;
+
+    @Column(name = "file_size")
+    private Double fileSize;
+
+    @Column(name = "word_count")
+    private Integer wordCount;
+
+    @Column(name = "success")
+    private Boolean success = true;
+
+    @Column(name = "error_message", columnDefinition = "TEXT")
+    private String errorMessage;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "status", length = 20)
+    private String status = "Not Shortlisted";
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
+    @Column(name = "job_id")
+    private Integer jobId;
+
+    @Column(name = "email_sent")
+    private Boolean emailSent = false;
 }
