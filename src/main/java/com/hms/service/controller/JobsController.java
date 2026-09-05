@@ -16,9 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 import com.hms.service.enums.FilterApplicantEnum;
 import com.hms.service.request.JobApplicationRequest;
 import com.hms.service.response.JobApplicantsResponse;
+import com.hms.service.response.JobsCountryResponse;
 import com.hms.service.service.IJobService;
 import com.hms.service.wrappers.ApiResponse;
-
+import java.util.List;
 import jakarta.validation.Valid;
 
 
@@ -73,14 +74,10 @@ public class JobsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@GetMapping("/get-jobs-by-country/{country}")
-	public ResponseEntity<ApiResponse<?>> getJobsByCountry(@PathVariable("country") String country) {
-
-		ApiResponse<?> response = iJobService.getJobsByCountry(country);
-
+	@GetMapping("/get-all-jobs-by-country")
+	public ResponseEntity<?> getAllJobsByCountry(
+			@RequestParam("jobCountry") String jobCountry) {
+		ApiResponse<?> response = iJobService.getAllJobsByCountry(jobCountry);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
-
-
 }
