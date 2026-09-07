@@ -405,23 +405,28 @@ public class SpecificationFilterRequest {
 
 		if (filters != null && filters.containsKey("isRead")) {
 
-			Boolean isRead =
+	        String isRead = filters.get("isRead").toString();
 
-					Boolean.parseBoolean(
+	        if ("true".equalsIgnoreCase(isRead)) {
 
-							filters.get("isRead").toString()
+	     
+	            spec = spec.and(
+	                    (r, q, c) ->
+	                            c.equal(r.get("isRead"), true)
+	            );
 
-					);
+	        } else if ("false".equalsIgnoreCase(isRead)) {
 
-			spec = spec.and(
+	
+	            spec = spec.and(
+	                    (r, q, c) ->
+	                            c.equal(r.get("isRead"), false)
+	            );
 
-					(r, q, c) ->
+	        } else if ("all".equalsIgnoreCase(isRead)) {
 
-					c.equal(r.get("isRead"), isRead)
-
-			);
-
-		}
+	        }
+	    }
 
 		String search = getFilter("search");
 
@@ -656,7 +661,7 @@ public class SpecificationFilterRequest {
 
 		Specification<SRPositionBasicsEntity> dateSpec =
 
-				dateSpec("dateOfApproval3");
+				dateSpec("dateOfApproval1");
 
 		if (dateSpec != null) {
 

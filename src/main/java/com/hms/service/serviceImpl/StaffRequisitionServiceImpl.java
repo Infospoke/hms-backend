@@ -2242,7 +2242,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 
 		int size = request.getSize() != null ? request.getSize() : 10;
 
-		String sortBy = request.getSortBy() != null ? request.getSortBy() : "dateOfApproval3";
+		String sortBy = request.getSortBy() != null ? request.getSortBy() : "dateOfApproval1";
 
 		Sort.Direction direction = "ASC".equalsIgnoreCase(request.getDirection()) ? Sort.Direction.ASC
 				: Sort.Direction.DESC;
@@ -2279,7 +2279,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		}
 
 		return new ApprovedSrResponse(entity.getSrId(), entity.getJobTitle(), departmentName, entity.getCreatedBy(),
-				entity.getDateOfApproval3());
+				entity.getDateOfApproval1());
 	}
 
 }
