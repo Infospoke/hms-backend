@@ -911,14 +911,13 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return error;
 
 		}
-		
-		  if (req.getProposedTotalCompensation() != null
-		            && req.getProposedTotalCompensation() > Long.MAX_VALUE) {
+		 if (req.getProposedTotalCompensation() != null
+		            && req.getProposedTotalCompensation() > Integer.MAX_VALUE) {
 
 		        return ApiResponse.failure(
 		                ResponseCode.FAILURE,
 		                "Invalid proposedTotalCompensation",
-		                List.of("proposedTotalCompensation cannot exceed " + Long.MAX_VALUE)
+		                List.of("proposedTotalCompensation cannot exceed " + Integer.MAX_VALUE)
 		        );
 		    }
 
