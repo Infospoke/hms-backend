@@ -26,7 +26,7 @@ public class BudgetAndCompensationEntity {
 	private String srId;
 	
 	@Column(name="proposed_total_compensation")
-	private Integer proposedTotalCompensation;
+	private Long proposedTotalCompensation;
 	
 	@Column(name="signing_bonus")
 	private Boolean signingBonus;

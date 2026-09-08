@@ -12,7 +12,7 @@ public class BudgetAndCompensationResponse {
     private Integer id;
     private String srId;
 
-    private Integer proposedTotalCompensation;
+    private Long proposedTotalCompensation;
     private Boolean signingBonus;
     private Boolean equity;
     private Boolean relocationBudget;

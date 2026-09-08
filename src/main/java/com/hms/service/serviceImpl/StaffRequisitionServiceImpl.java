@@ -911,6 +911,16 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 				return error;
 
 		}
+		
+		  if (req.getProposedTotalCompensation() != null
+		            && req.getProposedTotalCompensation() > Long.MAX_VALUE) {
+
+		        return ApiResponse.failure(
+		                ResponseCode.FAILURE,
+		                "Invalid proposedTotalCompensation",
+		                List.of("proposedTotalCompensation cannot exceed " + Long.MAX_VALUE)
+		        );
+		    }
 
 		if (Boolean.TRUE.equals(req.getSigningBonus())) {
 			if (req.getSigningBonusAmount() == null) {
@@ -935,7 +945,7 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 			}
 		}
 
-		int total =
+		Long total =
 
 				(req.getProposedTotalCompensation() != null ? req.getProposedTotalCompensation() : 0)
 						+ (req.getSigningBonusAmount() != null ? req.getSigningBonusAmount() : 0)
