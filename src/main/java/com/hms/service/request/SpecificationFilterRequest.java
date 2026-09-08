@@ -403,30 +403,52 @@ public class SpecificationFilterRequest {
 
 				Specification.allOf();
 
+//		if (filters != null && filters.containsKey("isRead")) {
+//
+//	        String isRead = filters.get("isRead").toString();
+//
+//	        if ("true".equalsIgnoreCase(isRead)) {
+//
+//	     
+//	            spec = spec.and(
+//	                    (r, q, c) ->
+//	                            c.equal(r.get("isRead"), true)
+//	            );
+//
+//	        } else if ("false".equalsIgnoreCase(isRead)) {
+//
+//	
+//	            spec = spec.and(
+//	                    (r, q, c) ->
+//	                            c.equal(r.get("isRead"), false)
+//	            );
+//
+//	        } else if ("all".equalsIgnoreCase(isRead)) {
+//
+//	        }
+//	    }
+		
 		if (filters != null && filters.containsKey("isRead")) {
 
-	        String isRead = filters.get("isRead").toString();
+		    String isReadValue = filters.get("isRead").toString();
 
-	        if ("true".equalsIgnoreCase(isRead)) {
+		    if ("true".equalsIgnoreCase(isReadValue)) {
 
-	     
-	            spec = spec.and(
-	                    (r, q, c) ->
-	                            c.equal(r.get("isRead"), true)
-	            );
+		 
+		        spec = spec.and((root, query, cb) ->
+		                cb.isTrue(root.get("isRead"))
+		        );
 
-	        } else if ("false".equalsIgnoreCase(isRead)) {
+		    } else if ("false".equalsIgnoreCase(isReadValue)) {
 
-	
-	            spec = spec.and(
-	                    (r, q, c) ->
-	                            c.equal(r.get("isRead"), false)
-	            );
+		        spec = spec.and((root, query, cb) ->
+		                cb.isFalse(root.get("isRead"))
+		        );
 
-	        } else if ("all".equalsIgnoreCase(isRead)) {
+		    } else if ("all".equalsIgnoreCase(isReadValue)) {
 
-	        }
-	    }
+		    }
+		}
 
 		String search = getFilter("search");
 
