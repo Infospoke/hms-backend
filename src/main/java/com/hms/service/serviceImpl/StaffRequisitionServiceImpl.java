@@ -910,8 +910,8 @@ public class StaffRequisitionServiceImpl implements IStaffingRequisitionService 
 		}
 		if (req.getProposedTotalCompensation() != null && req.getProposedTotalCompensation() > Integer.MAX_VALUE) {
 
-			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid proposedTotalCompensation",
-					List.of("proposedTotalCompensation cannot exceed " + Integer.MAX_VALUE));
+			return ApiResponse.failure(ResponseCode.FAILURE, "Invalid Proposed Total Compensation",
+					List.of("Proposed Total Compensation cannot exceed " + Integer.MAX_VALUE));
 		}
 
 		if (Boolean.TRUE.equals(req.getSigningBonus())) {
