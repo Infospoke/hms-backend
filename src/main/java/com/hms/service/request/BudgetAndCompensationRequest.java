@@ -17,7 +17,7 @@ public class BudgetAndCompensationRequest {
 	
 	private Long maxSalary;
 
-	private Integer proposedTotalCompensation;
+	private Long proposedTotalCompensation;
 	
 	private Boolean signingBonus;
 	

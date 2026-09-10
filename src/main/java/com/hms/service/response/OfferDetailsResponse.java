@@ -22,11 +22,11 @@ public class OfferDetailsResponse {
     private LocalDate requestedOn;
 
   
-    private Integer basicSalary;
+    private Long basicSalary;
     private Integer signingBonus;
     private Integer equity;
     private Integer otherBenefits;
-    private Integer totalCtc;
+    private Long totalCtc;
     private Long minSalary;
     private Long maxSalary;
     

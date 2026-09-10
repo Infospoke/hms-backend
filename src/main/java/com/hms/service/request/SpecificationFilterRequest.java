@@ -403,24 +403,51 @@ public class SpecificationFilterRequest {
 
 				Specification.allOf();
 
+//		if (filters != null && filters.containsKey("isRead")) {
+//
+//	        String isRead = filters.get("isRead").toString();
+//
+//	        if ("true".equalsIgnoreCase(isRead)) {
+//
+//	     
+//	            spec = spec.and(
+//	                    (r, q, c) ->
+//	                            c.equal(r.get("isRead"), true)
+//	            );
+//
+//	        } else if ("false".equalsIgnoreCase(isRead)) {
+//
+//	
+//	            spec = spec.and(
+//	                    (r, q, c) ->
+//	                            c.equal(r.get("isRead"), false)
+//	            );
+//
+//	        } else if ("all".equalsIgnoreCase(isRead)) {
+//
+//	        }
+//	    }
+		
 		if (filters != null && filters.containsKey("isRead")) {
 
-			Boolean isRead =
+		    String isReadValue = filters.get("isRead").toString();
 
-					Boolean.parseBoolean(
+		    if ("true".equalsIgnoreCase(isReadValue)) {
 
-							filters.get("isRead").toString()
+		 
+		        spec = spec.and((root, query, cb) ->
+		                cb.isTrue(root.get("isRead"))
+		        );
 
-					);
+		    } else if ("false".equalsIgnoreCase(isReadValue)) {
 
-			spec = spec.and(
+		        spec = spec.and((root, query, cb) ->
+		                cb.isFalse(root.get("isRead"))
+		        );
 
-					(r, q, c) ->
+		    } else if ("all".equalsIgnoreCase(isReadValue)) {
 
-					c.equal(r.get("isRead"), isRead)
-
-			);
-
+		    }
 		}
 
 		String search = getFilter("search");
@@ -656,7 +683,7 @@ public class SpecificationFilterRequest {
 
 		Specification<SRPositionBasicsEntity> dateSpec =
 
-				dateSpec("dateOfApproval3");
+				dateSpec("dateOfApproval1");
 
 		if (dateSpec != null) {
 

@@ -35,7 +35,9 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
 
 	List<JobApplicationEntity> findByIdIn(Collection<Integer> ids);
 
-	Optional<JobApplicationEntity> findByPhNoAndEmailAndJobId(String phNo, String email, Integer jobId);
+	 boolean existsByPhNoAndJobId(String phNo, Integer jobId);
+
+	 boolean existsByEmailAndJobId(String email, Integer jobId);
 
 	@Query("""
 			SELECT j.id
