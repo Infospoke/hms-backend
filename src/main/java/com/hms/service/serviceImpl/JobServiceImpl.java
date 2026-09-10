@@ -754,8 +754,9 @@ public class JobServiceImpl implements IJobService {
 				username, // Username
 				temporaryPassword == null ? "" : temporaryPassword // Temporary Password
 		);
-
-		mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
+		
+		//candidate login credentials email was disabled
+	//	mailService.sendMail(fromEmail, request.getEmail(), null, subject, body, null);
 
 		ActivityFeedEntity activity = new ActivityFeedEntity();
 		activity.setTimeStamp(LocalDateTime.now(ZoneId.of(Constants.REGION)));
