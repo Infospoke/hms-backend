@@ -661,6 +661,7 @@ public class JobServiceImpl implements IJobService {
 
 			String username = request.getEmail();
 			String temporaryPassword = null;
+			String title=request.getTitle();
 
 			// Candidate Exists
 			if (candidate != null) {
@@ -682,8 +683,9 @@ public class JobServiceImpl implements IJobService {
 			
 
 				return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId,
-						username, null, candidate);
+						username, null, candidate,title);
 			}
+			
 
 			// Candidate Doesn't Exist
 			log.info("creating candidate");
@@ -692,7 +694,7 @@ public class JobServiceImpl implements IJobService {
 
 			candidate = new CandidateCreationDetailsEntity();
 			candidate.setCandidateId(candidateId);
-			candidate.setFirstName(request.getFirstName());
+			candidate.setFirstName(title+request.getFirstName());
 			candidate.setLastName(request.getLastName());
 			candidate.setEmail(request.getEmail());
 			candidate.setPhoneNumber(request.getPhNo());
@@ -703,7 +705,7 @@ public class JobServiceImpl implements IJobService {
 			candidateCreationDetailsRepository.save(candidate);
 
 			return createJobApplication(request, applicationResumeKey, applicationAdditionalFileKey, userId, username,
-					temporaryPassword, candidate);
+					temporaryPassword, candidate,title);
 
 		} catch (Exception e) {
 
@@ -715,7 +717,7 @@ public class JobServiceImpl implements IJobService {
 
 	private ApiResponse<?> createJobApplication(JobApplicationRequest request, String resumeKey,
 			String additionalFileKey, Long recruiterId, String username, String temporaryPassword,
-			CandidateCreationDetailsEntity candidate) {
+			CandidateCreationDetailsEntity candidate,String title) {
 
 		Optional<CreateJobDetailsEntity> job = createJobDetailsRepository.findById(request.getJobId());
 
@@ -724,9 +726,11 @@ public class JobServiceImpl implements IJobService {
 		}
 		CreateJobDetailsEntity jobDetails = job.get();
 		JobApplicationEntity entity = new JobApplicationEntity();
+		
+		
 
 		entity.setJobId(request.getJobId());
-		entity.setFirstName(request.getFirstName());
+		entity.setFirstName(title+request.getFirstName());
 		entity.setLastName(request.getLastName());
 		entity.setEmail(request.getEmail());
 		entity.setPhNo(request.getPhNo());

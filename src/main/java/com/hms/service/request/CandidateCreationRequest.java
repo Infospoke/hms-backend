@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CandidateCreationRequest {
+	
+	@NotBlank(message="Title required")
+	private String title;
 
     @NotBlank(message = "First Name is required")
     private String firstName;

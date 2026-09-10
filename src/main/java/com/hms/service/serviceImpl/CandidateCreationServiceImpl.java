@@ -186,6 +186,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		String resumePath = null;
 		String additionalFilePath = null;
+		String title=request.getTitle();
 
 		try {
 
@@ -232,7 +233,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 		CandidateCreationDetailsEntity entity = new CandidateCreationDetailsEntity();
 
 		entity.setCandidateId(candidateId);
-		entity.setFirstName(request.getFirstName().trim());
+		entity.setFirstName(title+request.getFirstName().trim());
 		entity.setLastName(request.getLastName().trim());
 		entity.setPhoneNumber(request.getPhoneNumber());
 		entity.setEmail(request.getEmail().trim());
@@ -302,7 +303,7 @@ public class CandidateCreationServiceImpl implements ICandidateService {
 
 		Long sequence = candidateCreationDetailsRepository.getNextCandidateSequence();
 
-		return String.format("CID-%d-%04d", Year.now().getValue(), sequence);
+		return String.format("C%d%04d", Year.now().getValue(), sequence);
 	}
 
 	@Override
