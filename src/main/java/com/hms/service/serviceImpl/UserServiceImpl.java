@@ -316,7 +316,7 @@ public class UserServiceImpl implements IUserService {
 
 		log.info("UserServiceImpl:: Inside the updateUser method - Started for userId: {}", id);
 
-		UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+		UserEntity user = userRepository.findByUserId(id).orElseThrow(() -> new RuntimeException("User not found"));
 
 		AssignRolesEntity roleEntity = assignRolesRepository.findByUserId(user.getUserId())
 				.orElseThrow(() -> new RuntimeException("Role mapping not found"));
