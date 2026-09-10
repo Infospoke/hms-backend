@@ -234,15 +234,15 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		map.put("applicationId", application.getId());
 
 		map.put("reReleaseOfferId", offer.getReReleaseOfferId());
-		
+
 		CandidateCreationDetailsEntity candidate = application.getCandidate();
 
 		if (candidate != null) {
-		    map.put("candidateId", candidate.getCandidateId());
+			map.put("candidateId", candidate.getCandidateId());
 		} else {
-		    map.put("candidateId", null);
+			map.put("candidateId", null);
 		}
-		
+
 		map.put("candidateName", application.getFirstName() + " " + application.getLastName());
 
 		map.put("email", application.getEmail());
@@ -258,7 +258,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		map.put("priority", calculatePriority(offer.getDateOfApproval3()));
 
 		map.put("totalCtc", offer.getTotalCtc());
-		log.info(""+map);
+		log.info("" + map);
 
 		return map;
 
@@ -1610,8 +1610,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			response.setOfferId(offer.getId());
 
 			response.setApplicantId(application.getId());
-			
-			response.setCandidateId(application.getCandidate() != null ? application.getCandidate().getCandidateId() : null);
+
+			response.setCandidateId(
+					application.getCandidate() != null ? application.getCandidate().getCandidateId() : null);
 
 			response.setCandidateName(application.getFirstName() + " " + application.getLastName());
 
@@ -1954,7 +1955,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 			if (application != null) {
 
 				response.setApplicationId(application.getId());
-				
+
 				response.setCandidateId(
 						application.getCandidate() != null ? application.getCandidate().getCandidateId() : null);
 
@@ -2051,8 +2052,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 					Collections.singletonList("Application Ids are required"));
 		}
 
-		List<OfferDetailsEntity> offers = offerDetailsRepository.findByJobApplication_IdInAndReReleaseOfferIdIsNull(request.getApplicationIds());
-		log.info("The list of Offer details in the :"+offers);
+		List<OfferDetailsEntity> offers = offerDetailsRepository
+				.findByJobApplication_IdInAndReReleaseOfferIdIsNull(request.getApplicationIds());
+		log.info("The list of Offer details in the :" + offers);
 
 		if (offers.isEmpty()) {
 			return ApiResponse.failure(ResponseCode.FAILURE, "failure", Collections.singletonList("No offers found"));
@@ -2107,7 +2109,7 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 		// Save all released offers
 
 		offerDetailsRepository.saveAll(offers);
-		log.info("After saving the files the offers are : "+offers);
+		log.info("After saving the files the offers are : " + offers);
 
 		// Send Notification
 		OfferDetailsEntity firstOffer = offers.get(0);
@@ -2746,16 +2748,27 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 	@Override
 	public void viewDocument(String filePath, String action, HttpServletResponse response) {
-
 		log.info("Inside viewSupportingDocument");
 
 		try (InputStream inputStream = minioClient
 				.getObject(GetObjectArgs.builder().bucket("infospokejobapplicationsbucket").object(filePath).build())) {
 
 			String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+			String contentType;
 
-			response.setContentType("application/pdf");
+			if (fileName.toLowerCase().endsWith(".pdf")) {
+				contentType = "application/pdf";
+			} else if (fileName.toLowerCase().endsWith(".doc")) {
+				contentType = "application/msword";
+			} else if (fileName.toLowerCase().endsWith(".docx")) {
+				contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+			} else {
+				contentType = "application/octet-stream";
+			}
 
+			response.setContentType(contentType);
+
+			// View in browser for "view", otherwise download
 			response.setHeader("Content-Disposition",
 					("view".equalsIgnoreCase(action) ? "inline" : "attachment") + "; filename=\"" + fileName + "\"");
 
@@ -2765,8 +2778,9 @@ public class OfferDetailsServiceImpl implements IOfferDetailsService {
 
 		} catch (Exception e) {
 			log.error("Error while viewing supporting document", e);
-			throw new RuntimeException("Unable to fetch supporting document from MinIO");
+			throw new RuntimeException("Unable to fetch supporting document from MinIO", e);
 		}
+
 	}
 
 	@Override
