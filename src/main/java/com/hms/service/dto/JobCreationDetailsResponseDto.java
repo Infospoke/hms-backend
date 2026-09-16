@@ -25,4 +25,8 @@ public class JobCreationDetailsResponseDto {
     private RecruitersResponse recruiters;
     
     private ApplicantsCountResponse applicantsCount;
+    
+    private String clientName;
+
+    private String clientPoc;
 }
