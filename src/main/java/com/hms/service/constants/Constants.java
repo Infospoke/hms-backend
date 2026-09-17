@@ -223,7 +223,6 @@ public class Constants {
 	public static final String HMS_PORTAL_LINK =
 	        "<p>Please login to the Infospoke Integrated Solutions Portal using the link below:</p>"
 	        + "<p><a href=\"" + HMS_PORTAL_URL + "\" target=\"_blank\">"
-	        + "style=\"color:#0000EE; text-decoration:underline;\">"
 	        + "<b>Click here to login</b>"
 	        + "</a></p>";
 
