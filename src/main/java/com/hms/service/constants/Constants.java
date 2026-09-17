@@ -217,6 +217,11 @@ public class Constants {
 	public static final String APPLICATION_RECEIVED_FROM = "Application received from ";
 	public static final String FOR_THE_JOB = " for the Job ";
 
+	public static final String HMS_PORTAL_URL = "https://nexus.infospoke.in/auth/login";
+
+	public static final String HMS_PORTAL_LINK = "<p>Please login to the Infospoke Integrated Solutions Portal using the link below:</p>"
+			+ "<p><a href=\"" + HMS_PORTAL_URL + "\" target=\"_blank\">" + "Click here to login" + "</a></p>";
+
 	public static final String FORGOT_PASSWORD_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
 			+ "<p>This is to inform you that your password for the Infospoke Integrated Solutions Portal has been successfully reset.</p>"
@@ -224,6 +229,8 @@ public class Constants {
 			+ "<p>Please use the temporary password below to log in:</p>"
 
 			+ "<p><b>Username:</b> %s<br/>" + "<b>Temporary Password:</b> %s</p>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>You are required to log in and change your password immediately. "
 			+ "This temporary password is valid for a limited time and will expire after first use or as per system policy.</p>"
@@ -245,6 +252,8 @@ public class Constants {
 			+ "<p>Please find your temporary Mobile PIN below:</p>"
 
 			+ "<p><b>Username:</b> %s<br/>" + "<b>Temporary Mobile PIN:</b> %s</p>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>You are required to log in to the mobile application and update your PIN immediately. "
 			+ "This temporary PIN is valid for a limited duration and will expire after first use or as per system policy.</p>"
@@ -284,6 +293,8 @@ public class Constants {
 
 			"</div>" +
 
+			HMS_PORTAL_LINK +
+
 			"<p style='color:#C0392B;'><b>Note:</b> These credentials are valid only for 24 hours from the time of issuance.</p>"
 			+
 
@@ -317,7 +328,7 @@ public class Constants {
 			+ "<p>The requisition has been successfully submitted and forwarded for the "
 			+ "approval process as per the configured workflow.</p>"
 			+ "<p>You will receive further notifications on the approval status and " + "subsequent actions.</p>"
-			+ "<br/>" + "<p>Regards,<br/>" + "Hiring Management System (HMS)</p>"
+			+ HMS_PORTAL_LINK + "<br/>" + "<p>Regards,<br/>" + "Hiring Management System (HMS)</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
 	public static final String SR_TO_BE_APPROVED_BY_FIRST_APPROVER_MAIL_BODY = "<html><body>" + "<p>Dear %s,</p>"
@@ -337,6 +348,8 @@ public class Constants {
 
 			+ "<p>Kindly review the requisition and take the necessary action at your earliest convenience.</p>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>If additional clarification is required, please coordinate with the respective Hiring Manager.</p>"
 
 			+ "<br/>" + "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
@@ -355,21 +368,27 @@ public class Constants {
 			+ "<li><b>Priority:</b> %s</li>" + "</ul>"
 			+ "<p>The approval workflow is currently with you for further action.</p>"
 			+ "<p>Kindly review the requisition and take the necessary action at your " + "earliest convenience.</p>"
+
+			+ HMS_PORTAL_LINK
+
 			+ "<p>For any additional clarification, please contact the respective " + "Hiring Manager.</p>" + "<br/>"
 			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
 	public static final String SR_FULLY_APPROVED_NOTIFY = "<html><body>" + "<p>Dear %s,</p>"
 			+ "<p>We are pleased to inform you that the below Staffing Requisition (SR) "
-			+ "has been successfully approved by all required approvers in the "
-			+ "Infospoke Integrated Solutions.</p>" + "<p><b>Requisition Summary:</b></p>" + "<ul>"
-			+ "<li><b>SR ID:</b> %s</li>" + "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
+			+ "has been successfully approved by all required approvers in the " + "Infospoke Integrated Solutions.</p>"
+			+ "<p><b>Requisition Summary:</b></p>" + "<ul>" + "<li><b>SR ID:</b> %s</li>"
+			+ "<li><b>Job Title:</b> %s</li>" + "<li><b>Department:</b> %s</li>"
 			+ "<li><b>Number of Positions:</b> %s</li>" + "<li><b>Job Location:</b> %s</li>"
 			+ "<li><b>Employment Type:</b> %s</li>" + "<li><b>Priority:</b> %s</li>" + "</ul>"
 			+ "<p><b>Approval Status:</b></p>" + "<ul>" + "<li><b>Final Approval Status:</b> Approved</li>"
 			+ "<li><b>Approved On:</b> %s</li>" + "<li><b>Recruitment Status:</b> Open for Hiring</li>" + "</ul>"
 			+ "<p>The requisition approval workflow has been completed successfully, "
 			+ "and the SR is now available for the recruitment and recruiter assignment process.</p>" + "<br/>"
+
+			+ HMS_PORTAL_LINK
+
 			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
@@ -385,7 +404,8 @@ public class Constants {
 			+ "<li><b>Reviewed On:</b> %s</li>" + "</ul>" + "<p><b>Reviewer Comments / Remarks:</b><br/>%s</p>"
 			+ "<p>The approval workflow has been stopped due to the rejection at the " + "above approval stage.</p>"
 			+ "<p>Kindly review the comments provided and make the necessary corrections "
-			+ "before resubmitting the requisition, if required.</p>" + "Infospoke Integrated Solutions</p>"
+			+ "before resubmitting the requisition, if required.</p>" + HMS_PORTAL_LINK
+			+ "Infospoke Integrated Solutions</p>"
 			+ "<p><i>This is a system-generated email. Please do not reply to this email.</i></p>" + "</body></html>";
 
 	public static final String SR_APPROVED_NOTIFY = "<html><body>"
@@ -408,6 +428,8 @@ public class Constants {
 
 			+ "<p>The requisition has been successfully moved to the next step in the "
 			+ "approval workflow for further review and processing.</p>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<br/>"
 
@@ -436,6 +458,8 @@ public class Constants {
 
 			+ "<p>" + "The approval chain is currently under review and awaiting approval " + "from the Administrator."
 			+ "</p>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<br/>"
 
@@ -469,6 +493,8 @@ public class Constants {
 
 			+ "<p>" + "Kindly review the configuration and take the necessary action " + "at your earliest convenience."
 			+ "</p>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<br/>"
 
@@ -528,7 +554,9 @@ public class Constants {
 
 			+ "<p>" + "You will receive further notifications based on " + "the approval workflow status." + "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+		//	+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<br/>"
 
@@ -562,6 +590,8 @@ public class Constants {
 			+ "<p>" + "Kindly review the configuration and take the necessary action " + "at your earliest convenience."
 			+ "</p>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<br/>"
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
@@ -591,7 +621,9 @@ public class Constants {
 
 			+ "<p>" + "Kindly review the request and take the necessary action." + "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+			+ HMS_PORTAL_LINK
+
+		//	+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
 
@@ -627,6 +659,8 @@ public class Constants {
 
 			+ "<br/>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
@@ -653,9 +687,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain has not been activated in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+			//+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -682,9 +718,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+		//	+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -711,9 +749,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+		//	+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -741,9 +781,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain has not been activated in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+		//	+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -774,9 +816,11 @@ public class Constants {
 			+ "<p>" + "The approval chain will remain active as the deactivation " + "request was not approved."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+		//	+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -808,6 +852,8 @@ public class Constants {
 
 			+ "<br/>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
@@ -834,9 +880,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now inactive and will no longer " + "be available for workflow processing."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+	//		+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -864,9 +912,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain will remain active in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+	//		+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -894,9 +944,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+	//		+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -923,9 +975,11 @@ public class Constants {
 			+ "<p>" + "The approval chain is now active and available " + "for workflow processing in the system."
 			+ "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+	//		+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -954,9 +1008,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain will remain inactive in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+	//		+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -985,9 +1041,11 @@ public class Constants {
 
 			+ "<p>" + "The approval chain will remain inactive in the system." + "</p>"
 
-			+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
+	//		+ "<p>" + "Please log in to the Infospoke Integrated Solutions portal for additional details." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -1084,7 +1142,7 @@ public class Constants {
 	public static final String ADDITIONAL = "Additional";
 	public static final String BUCKETNAME = "infospokejobapplicationsbucket";
 	public static final String MOVE_TO_NEXT_ROUND = "Move to Next Round";
-	public static final String NEGOTIATION_DOCUMENTS="negotiation-documents/";
+	public static final String NEGOTIATION_DOCUMENTS = "negotiation-documents/";
 
 	public static final String INTERVIEW_SELECTED_SUBJECT = "Congratulations! Interview Cleared";
 
@@ -1175,6 +1233,7 @@ public class Constants {
 			<p>
 			Please log in to the Infospoke Integrated Solutions portal for additional details.
 			</p>
+
 
 			<br/>
 
@@ -1349,6 +1408,8 @@ public class Constants {
 
 			+ "<br/>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<br/>"
@@ -1374,6 +1435,8 @@ public class Constants {
 			+ "<p>" + "The Offer Request has now been forwarded to the Level 3 Approver for final approval." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
@@ -1402,6 +1465,8 @@ public class Constants {
 
 			+ "<br/>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<br/>"
@@ -1429,6 +1494,8 @@ public class Constants {
 
 			+ "<br/>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>Regards,<br/>" + "Infospoke Integrated Solutions</p>"
 
 			+ "<br/>"
@@ -1454,6 +1521,8 @@ public class Constants {
 			+ "<p>" + "Please review the Offer Request and take the necessary action." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions" + "</p>"
 
@@ -1482,6 +1551,8 @@ public class Constants {
 
 			+ "<br/>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
@@ -1506,6 +1577,8 @@ public class Constants {
 			+ "<p>" + "Please review the assignment and assign another recruiter if required." + "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
@@ -1533,6 +1606,8 @@ public class Constants {
 
 			+ "<br/>"
 
+			+ HMS_PORTAL_LINK
+
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
 			+ "<br/>"
@@ -1558,6 +1633,8 @@ public class Constants {
 			+ "</p>"
 
 			+ "<br/>"
+
+			+ HMS_PORTAL_LINK
 
 			+ "<p>" + "Regards,<br/>" + "Infospoke Integrated Solutions(HMS)" + "</p>"
 
@@ -1609,14 +1686,14 @@ public class Constants {
 	public static final String CANDIDATE_BUCKET_FOLDER = "candidate-documents/";
 
 	public static final String APPLICATION_FOLDER = "job-application/";
-	
+
 	public static final String CANDIDATE_FORGOT_PASSWORD_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
 			+ "<p>This is to inform you that your password for the Infospoke Integrated Solutions Candidate Portal has been successfully reset.</p>"
 
 			+ "<p>Please use the temporary password below to log in:</p>"
 
-			+ "<p><b>Candidate ID:</b> %s<br/>" + "<b>Email:</b> %s</p>"+"<p><b>Temporary Password:</b> %s<br/>"
+			+ "<p><b>Candidate ID:</b> %s<br/>" + "<b>Email:</b> %s</p>" + "<p><b>Temporary Password:</b> %s<br/>"
 
 			+ "<p>You are required to log in and change your password immediately. "
 			+ "This temporary password is valid for a limited time upto 15 minutes and will expire after first use or as per system policy.</p>"
