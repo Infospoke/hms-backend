@@ -217,10 +217,14 @@ public class Constants {
 	public static final String APPLICATION_RECEIVED_FROM = "Application received from ";
 	public static final String FOR_THE_JOB = " for the Job ";
 
-	public static final String HMS_PORTAL_URL = "https://nexus.infospoke.in/auth/login";
+	public static final String HMS_PORTAL_URL =
+	        "https://nexus.infospoke.in/auth/login";
 
-	public static final String HMS_PORTAL_LINK = "<p>Please login to the Infospoke Integrated Solutions Portal using the link below:</p>"
-			+ "<p><a href=\"" + HMS_PORTAL_URL + "\" target=\"_blank\">" + "Click here to login" + "</a></p>";
+	public static final String HMS_PORTAL_LINK =
+	        "<p>Please login to the Infospoke Integrated Solutions Portal using the link below:</p>"
+	        + "<p><a href=\"" + HMS_PORTAL_URL + "\" target=\"_blank\">"
+	        + "<b>Click here to login</b>"
+	        + "</a></p>";
 
 	public static final String FORGOT_PASSWORD_BODY = "<html><body>" + "<p>Dear %s,</p>"
 
