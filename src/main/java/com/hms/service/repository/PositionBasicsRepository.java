@@ -39,7 +39,4 @@ public interface PositionBasicsRepository extends JpaRepository<SRPositionBasics
 			List<ApprovalsChildEntity> findAllByRole(@Param("roleId") Integer roleId);
 
 	List<SRPositionBasicsEntity> findByUserId(Long userId);
-
-
-
 }

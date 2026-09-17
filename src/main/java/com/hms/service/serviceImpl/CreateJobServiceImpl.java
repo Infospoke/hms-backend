@@ -1030,6 +1030,17 @@ public class CreateJobServiceImpl implements ICreateJobService {
 
 				response.setJobOverview(jobOverviewResponse);
 			}
+			
+			Optional<SRPositionBasicsEntity> srPositionBasics =
+			        positionBasicsRepository.findBySrId(createJobDetailsEntity.getSrId());
+			
+			if (srPositionBasics.isPresent()) {
+
+			    SRPositionBasicsEntity srEntity = srPositionBasics.get();
+
+			    response.setClientName(srEntity.getClientName());
+			    response.setClientPoc(srEntity.getClientPoc());
+			}
 
 			// JOB DESCRIPTION
 			if (descriptionEntity != null) {
